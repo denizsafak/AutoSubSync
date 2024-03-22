@@ -433,6 +433,8 @@ select_subtitle_at_startup()
 min_width = label_drop_box.winfo_reqwidth() + 90  # Add some padding
 min_height = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, label_milliseconds, button_sync, check_save_to_desktop, check_replace_original)) + 60  # Add padding and adjust as needed
 root.minsize(min_width, min_height)  # Set minimum size for the window
-root.iconbitmap('icon.ico')
+# if icon exists, set it as the window icon
+if os.path.exists('icon.ico'):
+    root.iconbitmap('icon.ico')
 root.deiconify() # Show the window after it's been built
 root.mainloop()
