@@ -6,11 +6,9 @@ set RUN=SubtitleSync.pyw
 set "requirementsFile=requirements.txt"
 set VENV_PATH=.venv
 set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
-:: Check if any command-line arguments are passed
-set SUBTITLE_FILE=
+
+:: Display provided argument if any
 if not "%~1"=="" (
-    set SUBTITLE_FILE=%~1
-    :: Echo the subtitle file path
     echo Open with: "%~1"
 )
 
@@ -98,10 +96,11 @@ for /f "tokens=1,* delims==" %%i in (%requirementsFile%) do (
 
 :: Run the program
 echo Starting %NAME%...
-start /B "" "%VENV_PATH%\Scripts\pythonw.exe" %RUN% %SUBTITLE_FILE% > nul 2>&1
+start /B "" "%VENV_PATH%\Scripts\pythonw.exe" %RUN% %* > nul 2>&1
 if errorlevel 1 (
     echo Failed to start %NAME%. Please try again.
     pause
     exit /b
 )
+
 exit /b
