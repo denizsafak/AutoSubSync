@@ -22,8 +22,9 @@ SubtitleSync is a Python based application designed to effortlessly synchronize 
 ## `Useage`
 1) Drag and Drop: Drag and drop a subtitle file onto the interface.
 2) Browse: Alternatively, click on the interface to browse your system and select a subtitle file.
-3) Set Milliseconds: Enter the number of milliseconds by which you want to shift the subtitles.
-4) Choose Options: Select whether you want to save the shifted subtitle to the desktop or replace the original file.
+3) Easy Open: You can also drag and drop the subtitle file on run.bat or .exe file before opening, the program starts with that file selected. 
+4) Set Milliseconds: Enter the number of milliseconds by which you want to shift the subtitles.
+5) Choose Options: Select whether you want to save the shifted subtitle to the desktop or replace the original file.
 4) Click Sync: Click on the "Shift Subtitle" button to synchronize the subtitle file.
 
 ## `Features`
