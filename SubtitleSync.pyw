@@ -1,10 +1,11 @@
 import os
+import sys
+import html
+import chardet
+import threading
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
-import chardet
-import html
-import sys
 
 # Dictionary to store total shifted milliseconds for each subtitle file
 total_shifted_milliseconds = {}
@@ -123,7 +124,8 @@ def sync_subtitle():
                 if save_to_desktop and replace_original:
                     log_message("Please select only one option: Save to Desktop or Replace Original Subtitle.", "error")
                     return
-                shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_original)
+                # Shift subtitle in a separate thread to keep the GUI responsive
+                threading.Thread(target=shift_subtitle, args=(subtitle_file, milliseconds, save_to_desktop, replace_original)).start()
             except ValueError:
                 log_message("Please enter a valid number of milliseconds.", "error")
     else:
@@ -138,7 +140,7 @@ def on_drop(event):
         label_drop_box.config(bg="lightgreen")  # Change background color to light green
         log_message("", "info")
     else:
-        log_message("Please drop a valid subtitle file.", "error")
+        log_message("Please drop a subtitle file.", "error")
         label_drop_box.config(bg="lightgray")  # Restore background color to light gray
 
 def browse_file(event=None):
@@ -291,33 +293,51 @@ class ToolTip:
         if self.tooltip is None:
             # Get the position of the widget
             x_pos = self.widget.winfo_rootx()
-            y_pos = self.widget.winfo_rooty() - 55  # Adjust tooltip position above the widget
+            y_pos = self.widget.winfo_rooty() + self.widget.winfo_height()  # Adjust tooltip position below the widget
             # Calculate the screen dimensions
             screen_width = self.widget.winfo_screenwidth()
-            # Calculate the size of the tooltip
-            tooltip_width = 200  # Adjust as needed
-            tooltip_height = 50  # Adjust as needed
+            screen_height = self.widget.winfo_screenheight()
+            # Create a temporary label to calculate the width based on content
+            temp_label = tk.Label(text=self.text, font=("tahoma", "8", "normal"))
+            temp_label.update_idletasks()
+            content_width = temp_label.winfo_reqwidth()  # Get the required width of the content
+            # Set the tooltip width based on content width, limited to a maximum of 200
+            tooltip_width = min(content_width, 200)
+            # Calculate wraplength dynamically
+            wraplength = min(content_width, 200)
             # Create the tooltip at the calculated position
             self.tooltip = tk.Toplevel(self.widget)
             self.tooltip.wm_overrideredirect(True)
+            self.tooltip.attributes("-topmost", True)  # Make the tooltip window topmost
             # Adjust tooltip position to stay within the screen bounds
             if x_pos + tooltip_width > screen_width:
-                x_pos = screen_width - tooltip_width - 3
+                x_pos = screen_width - tooltip_width
+            if y_pos + self.widget.winfo_height() > screen_height:
+                y_pos = screen_height - self.widget.winfo_height() - 3
+            # Adjust tooltip position to avoid covering the button
             if y_pos < 0:
                 y_pos = 0
-            # Adjust tooltip position to avoid covering the button
-            if y_pos < tooltip_height:
-                y_pos = tooltip_height
             # Adjust tooltip position if too far to the left
             if x_pos < 0:
                 x_pos = 0
-            elif x_pos + tooltip_width > screen_width:
-                x_pos = screen_width - tooltip_width
             self.tooltip.wm_geometry("+%d+%d" % (x_pos, y_pos))
-            # Adjust wrap length based on available width
-            wrap_length = min(tooltip_width, 200)  # Adjust as needed
-            label = tk.Label(self.tooltip, text=self.text, justify=tk.LEFT, wraplength=wrap_length, background="#ffffe0", relief=tk.SOLID, borderwidth=1, font=("tahoma", "8", "normal"))
+            label = tk.Label(self.tooltip, text=self.text, justify=tk.LEFT, wraplength=wraplength, background="#ffffe0", relief=tk.SOLID, borderwidth=1, font=("tahoma", "8", "normal"))
             label.pack(ipadx=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def hide_tooltip(self, event=None):
         if self.tooltip:
             self.tooltip.destroy()
@@ -400,9 +420,10 @@ check_replace_original = tk.Checkbutton(root, text="Replace original subtitle", 
 check_replace_original.grid(row=4, column=1, columnspan=5, padx=(10,0), pady=(0, 10), sticky="w")
 label_drop_box.bind("<Configure>", update_wraplengt)
 label_message.bind("<Configure>", update_wraplengt)
-# Create tooltips for checkboxes
+# Create tooltips for checkboxes and entry field
 tooltip_save_to_desktop = ToolTip(check_save_to_desktop, TOOLTIP_SAVE_TO_DESKTOP)
 tooltip_replace_original = ToolTip(check_replace_original, TOOLTIP_REPLACE_ORIGINAL)
+tooltip_milliseconds = ToolTip(entry_milliseconds, "1 second = 1000ms")
 # Place the window at the top right corner of the screen
 root.update_idletasks()
 place_window_top_right()
@@ -412,5 +433,6 @@ select_subtitle_at_startup()
 min_width = label_drop_box.winfo_reqwidth() + 90  # Add some padding
 min_height = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, label_milliseconds, button_sync, check_save_to_desktop, check_replace_original)) + 60  # Add padding and adjust as needed
 root.minsize(min_width, min_height)  # Set minimum size for the window
+root.iconbitmap('icon.ico')
 root.deiconify() # Show the window after it's been built
 root.mainloop()
