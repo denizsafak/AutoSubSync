@@ -1,5 +1,5 @@
 # SubtitleSync: Subtitle Shift / Subtitle Synchronization Tool
-Subtitle Synchronization Tool is a Python application designed to effortlessly synchronize subtitle files by shifting them by a specified number of milliseconds. Whether you need to adjust subtitles for a movie or a video, this tool offers a simple and intuitive interface to perform the task efficiently.
+SubtitleSync is a Python based application designed to effortlessly synchronize subtitle files by shifting them by a specified number of milliseconds. Whether you need to adjust subtitles for a movie or a video, this tool offers a simple and intuitive interface to perform the task efficiently.
 
 <img title="SubtitleShift" src='images/SubtitleSync.png'><img title="SubtitleShift" src='images/test.png'>
 
