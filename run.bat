@@ -173,9 +173,9 @@ if exist "%LAST_DIR_FILE%" (
                 echo Recreating virtual environment...
                 rmdir /s /q %VENV_PATH%
                 python -m venv %VENV_PATH%
+				:: Update the last directory file
+				echo %CURRENT_DIR% > "%LAST_DIR_FILE%"
             )
-            :: Update the last directory file
-            echo %CURRENT_DIR% > "%LAST_DIR_FILE%"
         )
     )
 ) else (
