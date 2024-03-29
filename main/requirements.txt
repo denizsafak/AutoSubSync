@@ -1,0 +1,4 @@
+chardet==5.2.0
+tkinterdnd2==0.3.0
+ffsubsync==0.4.25
+setuptools==69.2.0
