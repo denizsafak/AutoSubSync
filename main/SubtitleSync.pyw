@@ -224,10 +224,7 @@ def clear_entry(event):
         entry_milliseconds.delete(0, tk.END)
 
 def on_enter(event):
-    if hasattr(event.widget, 'tooltip_text'):
-        event.widget.config(bg="lightgreen")  # Change background color to light green
-    else:
-        event.widget.config(bg="lightblue")  # Change background color to light blue
+    event.widget.config(bg="lightblue")
 
 def on_leave(event):
     if hasattr(event.widget, 'tooltip_text'):
