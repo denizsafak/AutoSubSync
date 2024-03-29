@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
-set NAME=SubtitleSync
-set RUN=main\SubtitleSync.pyw
+set NAME=AutoSubSync
+set RUN=main\AutoSubSync.pyw
 set requirementsFile=main\requirements.txt
 set VENV_PATH=.venv
 set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
