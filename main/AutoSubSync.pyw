@@ -490,8 +490,14 @@ def start_automatic_sync():
     global process
     subtitle_file = getattr(label_subtitle, 'tooltip_text', None)
     video_file = getattr(label_video, 'tooltip_text', None)
-    if not subtitle_file or not video_file:
+    if not subtitle_file and not video_file:
         log_message("Please select a subtitle and a video file.", "error", tab='auto')
+        return
+    if not subtitle_file:
+        log_message("Please select a subtitle file.", "error", tab='auto')
+        return
+    if not video_file:
+        log_message("Please select a video file.", "error", tab='auto')
         return
     if not os.path.exists(subtitle_file):
         log_message("Subtitle file does not exist.", "error", tab='auto')
@@ -510,7 +516,7 @@ def start_automatic_sync():
         replace_confirmation = tk.messagebox.askyesno("File Exists", f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?")
         if not replace_confirmation:
             return
-    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}" --gss'
+    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
     def cancel_automatic_sync():
         global process
         if process:
@@ -544,6 +550,10 @@ def start_automatic_sync():
         root.update_idletasks()
 
     def generate_again():
+        label_subtitle.config(text="Drag and drop subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
+        del label_subtitle.tooltip_text
+        label_video.config(text="Drag and drop video file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
+        del label_video.tooltip_text
         label_subtitle.grid()
         label_video.grid()
         check_save_to_desktop_auto.grid()
@@ -670,8 +680,8 @@ check_save_to_desktop_auto = tk.Checkbutton(automatic_tab, text="Save to Desktop
 check_replace_original_auto = tk.Checkbutton(automatic_tab, text="Replace original subtitle", variable=replace_original_var_auto, command=lambda: checkbox_selected_auto(replace_original_var_auto))
 tooltip_save_to_desktop = ToolTip(check_save_to_desktop_auto, TOOLTIP_SAVE_TO_DESKTOP)
 tooltip_replace_original = ToolTip(check_replace_original_auto, TOOLTIP_REPLACE_ORIGINAL)
-label_subtitle.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
-label_video.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
+label_subtitle.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
+label_video.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
 button_start_automatic_sync.grid(row=2, column=0, padx=10, pady=10, sticky="ew", columnspan=2)
 check_save_to_desktop_auto.grid(row=3, column=0, columnspan=5, padx=10, pady=5, sticky="w")
 check_replace_original_auto.grid(row=3, column=1, columnspan=5, padx=10, pady=5, sticky="w")
