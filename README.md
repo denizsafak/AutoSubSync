@@ -30,8 +30,10 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync. This is just a GUI application for Windows that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
 - Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
 
+> [!IMPORTANT]
+> - The automatic sync feature is not perfect. I recommend you to check the subtitle after syncing.
+
 > [!NOTE]
 > - This script is primarily intended for Windows. Adaptations might be needed for other operating systems.
-> - The automatic sync feature is not perfect I recommend you to check the subtitle after syncing.
 
 > Tags: automatic subtitle synchronization, autosubsync, automatic sub sync, subtitle synchronization, subtitle shifter, subtitle adjuster, subtitle tools, subtitle utilities, synchronize subtitles, adjust subtitle timing, subtitle management, Python subtitle tool, subtitle manipulation, subtitle synchronization script.
