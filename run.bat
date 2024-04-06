@@ -2,13 +2,14 @@
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 set NAME=AutoSubSync
-set RUN=main\AutoSubSync.pyw
-set requirementsFile=main\requirements.txt
+set PROJECTFOLDER=main
+set RUN=%PROJECTFOLDER%\AutoSubSync.pyw
+set requirementsFile=%PROJECTFOLDER%\requirements.txt
 set VENV_PATH=.venv
 set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
 set CURRENT_DIR=%CD%
-set LAST_DIR_FILE=main\last_known_directory.txt
-set refrenv=main\refrenv.bat
+set LAST_DIR_FILE=%PROJECTFOLDER%\last_known_directory.txt
+set refrenv=%PROJECTFOLDER%\refrenv.bat
 set PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe
 
 :: Display provided argument if any
@@ -53,12 +54,12 @@ if not "%python_installed%"=="true" (
         if errorlevel 1 (
             echo Download failed using winget method. Trying to download manually...
             :bothwingetfailed
-            if not exist "main\python_installer.exe" (
+            if not exist "%PROJECTFOLDER%\python_installer.exe" (
                 echo Downloading Python from %PYTHON_DOWNLOAD_URL%
-                curl %PYTHON_DOWNLOAD_URL% -o main\python_installer.exe
-                if not exist "main\python_installer.exe" (
+                curl %PYTHON_DOWNLOAD_URL% -o %PROJECTFOLDER%\python_installer.exe
+                if not exist "%PROJECTFOLDER%\python_installer.exe" (
                     echo Download failed using curl. Trying with the powershell method
-                    powershell -Command "& {Invoke-WebRequest -Uri '%PYTHON_DOWNLOAD_URL%' -OutFile 'main\python_installer.exe'}"
+                    powershell -Command "& {Invoke-WebRequest -Uri '%PYTHON_DOWNLOAD_URL%' -OutFile '%PROJECTFOLDER%\python_installer.exe'}"
                     if errorlevel 1 (
                         echo Failed to install Python. Please install Python manually and try again.
                         pause
@@ -67,13 +68,13 @@ if not "%python_installed%"=="true" (
                 )
             )
             echo Installing Python. Please wait...
-            start /wait main\python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+            start /wait %PROJECTFOLDER%\python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
             if errorlevel 1 (
                 echo Failed to install Python. Please install Python manually and try again.
                 pause
                 exit /b
             )
-            del main\python_installer.exe
+            del %PROJECTFOLDER%\python_installer.exe
             goto python_ok
         )
     ) else (
@@ -135,6 +136,7 @@ if not "%ffmpeg_installed%"=="true" (
 :: Check if virtual environment exists
 IF NOT EXIST %VENV_PATH% (
     echo Creating virtual environment...
+    echo %CURRENT_DIR% > "%LAST_DIR_FILE%"
     python -m venv %VENV_PATH%
 ) ELSE (
     goto check_python
