@@ -7,7 +7,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 > You can download the latest version of the same script from this link.
 
 ## `How to Run?`
-
+- Extract the zip.
 - Run "run.bat" file.
 - After installing the requirements, AutoSubSync will start automatically.
 
