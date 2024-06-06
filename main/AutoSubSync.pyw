@@ -515,6 +515,10 @@ def start_automatic_sync():
     global process
     subtitle_file = getattr(label_subtitle, 'tooltip_text', None)
     video_file = getattr(label_video, 'tooltip_text', None)
+    #if video_file and subtitle_file are same
+    if subtitle_file == video_file:
+        log_message("Please select different subtitle files.", "error", tab='auto')
+        return
     if not subtitle_file and not video_file:
         log_message("Please select both video/reference subtitle and subtitle file.", "error", tab='auto')
         return
