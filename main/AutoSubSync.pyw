@@ -255,7 +255,7 @@ def log_message(message, msg_type=None, filepath=None, tab='both'):
     if tab in ['both', 'auto']:
         label_message_auto.config(text=message, fg=color, bg=bg_color, font=font_style)
         if message:
-            label_message_auto.grid(row=5, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
+            label_message_auto.grid(row=10, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
         else:
             label_message_auto.grid_forget()
     if tab in ['both', 'manual']:
@@ -367,8 +367,11 @@ def on_manual_tab_selected(event=None):
 # Define tooltip text for checkboxes
 TOOLTIP_SAVE_TO_DESKTOP = "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the original subtitle's folder."
 TOOLTIP_REPLACE_ORIGINAL = "Check this box if you want to replace the original subtitle file with the new one. Please be careful. It will overwrite the current subtitle."
+TOOLTIP_GSS = "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)"
+TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases."
+TOOLTIP_FRAMERATE = "--no-fix-framerate: Try to sync assuming identical video / subtitle framerates. This can be useful when the video and subtitle framerates are the same, only the subtitles are out of sync."
 root = TkinterDnD.Tk()
-root.title("AutoSubSync")
+root.title("AutoSubSync v2.1")
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)  # Allow label_drop_box to fill empty space
 root.withdraw() # Hide the window while it's being built
@@ -388,6 +391,10 @@ tab_control.add(automatic_tab, text='Automatic Sync')
 tab_control.add(manual_tab, text='Manual Sync')
 # Place tab_control
 tab_control.grid(row=0, column=0, sticky="nsew")
+# Add "GitHub" label on the right side of the tabs
+github_label = ttk.Label(root, text="GitHub", cursor="hand2", foreground="#007FFF", background="SystemButtonFace", underline=True)
+github_label.bind("<Button-1>", lambda event: os.system("start https://github.com/denizsafak/AutoSubSync"))
+github_label.grid(row=0, column=0, sticky="ne", padx=10, pady=(10,0))
 # Customizing the style of the tabs
 style = ttk.Style()
 # Define colors
@@ -454,16 +461,45 @@ def browse_subtitle(event=None):
             label_subtitle.config(bg="lightgray")
 
 def browse_video(event=None):
-    video_file = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4;*.mkv;*.avi")])
+    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
     if video_file:
         label_video.config(text=video_file, font=("Calibri", 10, "bold"))
         label_video.tooltip_text = video_file
         label_video.config(bg="lightgreen")
         log_message("", "info", tab='auto')
+        if video_file.lower().endswith('.srt'):
+            # If the video file is a subtitle, disable parameters
+            ffsubsync_option_gss.config(state=tk.DISABLED)
+            ffsubsync_option_vad.config(state=tk.DISABLED)
+            ffsubsync_option_framerate.config(state=tk.DISABLED)
+        else:
+            ffsubsync_option_gss.config(state=tk.NORMAL)
+            ffsubsync_option_vad.config(state=tk.NORMAL)
+            ffsubsync_option_framerate.config(state=tk.NORMAL)
+
     else:
         if video_file != '':
-            log_message("Please select a video", "error", tab='auto')
+            log_message("Please select a video or subtitle.", "error", tab='auto')
             label_video.config(bg="lightgray")
+
+def on_video_drop(event):
+    filepath = event.data.strip("{}")
+    if filepath.lower().endswith(('.srt','.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+        label_video.config(text=filepath, font=("Calibri", 10, "bold"))
+        label_video.tooltip_text = filepath
+        label_video.config(bg="lightgreen")
+        log_message("", "info", tab='auto')
+        if filepath.lower().endswith('.srt'):
+            # If the video file is a subtitle, disable parameters
+            ffsubsync_option_gss.config(state=tk.DISABLED)
+            ffsubsync_option_vad.config(state=tk.DISABLED)
+            ffsubsync_option_framerate.config(state=tk.DISABLED)
+        else:
+            ffsubsync_option_gss.config(state=tk.NORMAL)
+            ffsubsync_option_vad.config(state=tk.NORMAL)
+            ffsubsync_option_framerate.config(state=tk.NORMAL)
+    else:
+        log_message("Please drop a video or subtitle.", "error", tab='auto')
 
 def on_subtitle_drop(event):
     filepath = event.data.strip("{}")
@@ -474,30 +510,19 @@ def on_subtitle_drop(event):
         log_message("", "info", tab='auto')
     else:
         log_message("Please drop a subtitle file.", "error", tab='auto')
-
-def on_video_drop(event):
-    filepath = event.data.strip("{}")
-    if filepath.lower().endswith(('.mp4', '.mkv', '.avi')):
-        label_video.config(text=filepath, font=("Calibri", 10, "bold"))
-        label_video.tooltip_text = filepath
-        label_video.config(bg="lightgreen")
-        log_message("", "info", tab='auto')
-    else:
-        log_message("Please drop a video file.", "error", tab='auto')
-
 process = None
 def start_automatic_sync():
     global process
     subtitle_file = getattr(label_subtitle, 'tooltip_text', None)
     video_file = getattr(label_video, 'tooltip_text', None)
     if not subtitle_file and not video_file:
-        log_message("Please select a subtitle and a video file.", "error", tab='auto')
+        log_message("Please select both video/reference subtitle and subtitle file.", "error", tab='auto')
         return
     if not subtitle_file:
         log_message("Please select a subtitle file.", "error", tab='auto')
         return
     if not video_file:
-        log_message("Please select a video file.", "error", tab='auto')
+        log_message("Please select a video or reference subtitle file.", "error", tab='auto')
         return
     if not os.path.exists(subtitle_file):
         log_message("Subtitle file does not exist.", "error", tab='auto')
@@ -517,8 +542,16 @@ def start_automatic_sync():
         if not replace_confirmation:
             return
     cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+    # if the video_file is a subtitle, don't add parameters
+    if not video_file.lower().endswith('.srt'):
+        if ffsubsync_option_framerate_var.get():
+            cmd += " --no-fix-framerate"
+        if ffsubsync_option_gss_var.get():
+            cmd += (" --gss")
+        if ffsubsync_option_vad_var.get():
+            cmd += (" --vad=auditok")
     def cancel_automatic_sync():
-        global process
+        global process, ffsubsync_option_vad, ffsubsync_option_gss, ffsubsync_option_framerate
         if process:
             try:
                 subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -534,7 +567,6 @@ def start_automatic_sync():
             cancel_automatic_sync()
         root.destroy()
         os._exit(0)
-
     root.protocol("WM_DELETE_WINDOW", cancel_process_on_window_close)
 
     def restore_window():
@@ -543,6 +575,9 @@ def start_automatic_sync():
         check_save_to_desktop_auto.grid()
         check_replace_original_auto.grid()
         button_start_automatic_sync.grid()
+        ffsubsync_option_gss.grid()
+        ffsubsync_option_vad.grid()
+        ffsubsync_option_framerate.grid()
         log_window.grid_remove()
         progress_bar.grid_remove()
         button_generate_again.grid_remove()
@@ -550,20 +585,26 @@ def start_automatic_sync():
         root.update_idletasks()
 
     def generate_again():
-        label_subtitle.config(text="Drag and drop subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
+        label_subtitle.config(text="Drag and drop the unsynchronized subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
         del label_subtitle.tooltip_text
-        label_video.config(text="Drag and drop video file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
+        label_video.config(text="Drag and drop video or reference subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
         del label_video.tooltip_text
         label_subtitle.grid()
         label_video.grid()
         check_save_to_desktop_auto.grid()
         check_replace_original_auto.grid()
         button_start_automatic_sync.grid()
+        ffsubsync_option_gss.grid()
+        ffsubsync_option_vad.grid()
+        ffsubsync_option_framerate.grid()
         log_window.grid_remove()
         progress_bar.grid_remove()
         button_generate_again.grid_remove()
         button_cancel_automatic_sync.grid_remove()
         label_message_auto.grid_remove()
+        ffsubsync_option_gss.config(state=tk.NORMAL)
+        ffsubsync_option_vad.config(state=tk.NORMAL)
+        ffsubsync_option_framerate.config(state=tk.NORMAL)
         root.update_idletasks()
 
     def run_subprocess():
@@ -571,6 +612,18 @@ def start_automatic_sync():
         try:
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             progress_bar["value"] = 1
+            
+            # if video file is not a subtitle
+            if video_file.lower().endswith('.srt'):
+                log_window.insert(tk.END, "Using reference subtitle for syncing...\n")
+            else:
+                log_window.insert(tk.END, "Using video for syncing...\n")
+                if ffsubsync_option_framerate_var.get():
+                    log_window.insert(tk.END, "Enabled: No fixed framerate.\n")
+                if ffsubsync_option_gss_var.get():
+                    log_window.insert(tk.END, "Enabled: Golden-section search.\n")
+                if ffsubsync_option_vad_var.get():
+                    log_window.insert(tk.END, "Enabled: Using auditok instead of WebRTC's VAD.\n") 
             log_window.insert(tk.END, "Syncing started:\n")
             progress_line_number = log_window.index(tk.END).split(".")[0]  # Get the current line number
             for output in process.stdout:
@@ -590,14 +643,17 @@ def start_automatic_sync():
                 if process.returncode == 0:
                     log_message(f"Success! Synchronized subtitle saved to: {output_subtitle_file}", "success", output_subtitle_file, tab='auto')
                     button_cancel_automatic_sync.grid_remove()
+                    log_window.grid(pady=(10, 10), rowspan=2)
                     button_generate_again.grid()
                 else:
                     log_message("Error occurred during synchronization. Please check the log messages.", "error", tab='auto')
                     button_cancel_automatic_sync.grid_remove()
+                    log_window.grid(pady=(10, 10), rowspan=2)
                     button_generate_again.grid()
         except Exception as e:
             log_message(f"Error occurred: {e}", "error", tab='auto')
         progress_bar.grid_remove()
+        log_window.see(tk.END)
         automatic_tab.rowconfigure(1, weight=1)
         root.update_idletasks()
 
@@ -610,6 +666,9 @@ def start_automatic_sync():
         check_save_to_desktop_auto.grid_remove()
         check_replace_original_auto.grid_remove()
         button_start_automatic_sync.grid_remove()
+        ffsubsync_option_gss.grid_remove()
+        ffsubsync_option_vad.grid_remove()
+        ffsubsync_option_framerate.grid_remove()
         label_message_auto.grid_remove()
         button_cancel_automatic_sync = tk.Button(
             automatic_tab,
@@ -640,7 +699,7 @@ def start_automatic_sync():
             borderwidth=2,
             cursor="hand2"
         )
-        button_generate_again.grid(row=7, column=0, padx=10, pady=(00,10), sticky="ew", columnspan=2)
+        button_generate_again.grid(row=11, column=0, padx=10, pady=(00,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
         log_window.config(font=("Arial", 7))
@@ -654,9 +713,9 @@ def start_automatic_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
 label_message_auto = tk.Label(automatic_tab, text="", fg="black", anchor="center")
-label_subtitle = tk.Label(automatic_tab, text="Drag and drop subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
-label_video = tk.Label(automatic_tab, text="Drag and drop video file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
-label_video_text = tk.Label(automatic_tab, text="Video", fg="black", relief="ridge", padx=5, borderwidth=1)
+label_subtitle = tk.Label(automatic_tab, text="Drag and drop the unsynchronized subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
+label_video = tk.Label(automatic_tab, text="Drag and drop video or reference subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
+label_video_text = tk.Label(automatic_tab, text="Video/Reference subtitle", fg="black", relief="ridge", padx=5, borderwidth=1)
 label_video_text.place(in_=label_video, relx=0, rely=0, anchor="nw")
 label_subtitle_text = tk.Label(automatic_tab, text="Subtitle", fg="black", relief="ridge", padx=5, borderwidth=1) 
 label_subtitle_text.place(in_=label_subtitle, relx=0, rely=0, anchor="nw")
@@ -674,17 +733,29 @@ button_start_automatic_sync = tk.Button(
     borderwidth=2,
     cursor="hand2"
 )
+ffsubsync_option_framerate_var = tk.BooleanVar()
+ffsubsync_option_gss_var = tk.BooleanVar()
+ffsubsync_option_vad_var = tk.BooleanVar()
 save_to_desktop_var_auto = tk.BooleanVar()
 replace_original_var_auto = tk.BooleanVar()
+ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text="No fixed framerate", variable=ffsubsync_option_framerate_var)
+ffsubsync_option_gss = tk.Checkbutton(automatic_tab, text="Use golden-section search", variable=ffsubsync_option_gss_var)
+ffsubsync_option_vad = tk.Checkbutton(automatic_tab, text="Use auditok instead of WebRTC's VAD", variable=ffsubsync_option_vad_var)
 check_save_to_desktop_auto = tk.Checkbutton(automatic_tab, text="Save to Desktop", variable=save_to_desktop_var_auto, command=lambda: checkbox_selected_auto(save_to_desktop_var_auto))
 check_replace_original_auto = tk.Checkbutton(automatic_tab, text="Replace original subtitle", variable=replace_original_var_auto, command=lambda: checkbox_selected_auto(replace_original_var_auto))
+tooltip_ffsubsync_option_framerate = ToolTip(ffsubsync_option_framerate, TOOLTIP_FRAMERATE)
+tooltip_ffsubsync_option_gss = ToolTip(ffsubsync_option_gss, TOOLTIP_GSS)
+tooltip_ffsubsync_option_vad = ToolTip(ffsubsync_option_vad, TOOLTIP_VAD)
 tooltip_save_to_desktop = ToolTip(check_save_to_desktop_auto, TOOLTIP_SAVE_TO_DESKTOP)
 tooltip_replace_original = ToolTip(check_replace_original_auto, TOOLTIP_REPLACE_ORIGINAL)
-label_subtitle.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
 label_video.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
-button_start_automatic_sync.grid(row=2, column=0, padx=10, pady=10, sticky="ew", columnspan=2)
-check_save_to_desktop_auto.grid(row=3, column=0, columnspan=5, padx=10, pady=5, sticky="w")
-check_replace_original_auto.grid(row=3, column=1, columnspan=5, padx=10, pady=5, sticky="w")
+label_subtitle.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
+ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
+ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+button_start_automatic_sync.grid(row=5, column=0, padx=10, pady=10, sticky="ew", columnspan=2)
+check_save_to_desktop_auto.grid(row=6, column=0, columnspan=5, padx=10, pady=5, sticky="w")
+check_replace_original_auto.grid(row=6, column=1, columnspan=5, padx=10, pady=5, sticky="w")
 label_subtitle.drop_target_register(DND_FILES)
 label_subtitle.dnd_bind('<<Drop>>', on_subtitle_drop)
 label_subtitle.bind("<Button-1>", browse_subtitle)
@@ -784,7 +855,7 @@ place_window_top_right()
 select_subtitle_at_startup()
 # Calculate minimum width and height based on elements inside
 min_width = label_drop_box.winfo_reqwidth() + 95 
-min_height_automatic = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, button_sync, check_save_to_desktop)) + 50
+min_height_automatic = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, button_sync, check_save_to_desktop)) + 200
 min_height_manual = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, label_milliseconds, entry_milliseconds, button_minus, button_plus, button_sync, check_save_to_desktop, check_replace_original))
 min_height = max(min_height_automatic, min_height_manual)
 root.minsize(min_width, min_height)  # Set minimum size for the window
