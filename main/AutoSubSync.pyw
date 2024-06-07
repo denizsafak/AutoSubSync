@@ -369,7 +369,7 @@ TOOLTIP_SAVE_TO_DESKTOP = "Check this box if you want to save the new subtitle t
 TOOLTIP_REPLACE_ORIGINAL = "Check this box if you want to replace the original subtitle file with the new one. Please be careful. It will overwrite the current subtitle."
 TOOLTIP_GSS = "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)"
 TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases."
-TOOLTIP_FRAMERATE = "--no-fix-framerate: Try to sync assuming identical video / subtitle framerates. This can be useful when the video and subtitle framerates are the same, only the subtitles are out of sync."
+TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync."
 root = TkinterDnD.Tk()
 root.title("AutoSubSync v2.1")
 root.columnconfigure(0, weight=1)
@@ -623,7 +623,7 @@ def start_automatic_sync():
             else:
                 log_window.insert(tk.END, "Using video for syncing...\n")
                 if ffsubsync_option_framerate_var.get():
-                    log_window.insert(tk.END, "Enabled: No fixed framerate.\n")
+                    log_window.insert(tk.END, "Enabled: Don't fix framerate.\n")
                 if ffsubsync_option_gss_var.get():
                     log_window.insert(tk.END, "Enabled: Golden-section search.\n")
                 if ffsubsync_option_vad_var.get():
@@ -742,7 +742,7 @@ ffsubsync_option_gss_var = tk.BooleanVar()
 ffsubsync_option_vad_var = tk.BooleanVar()
 save_to_desktop_var_auto = tk.BooleanVar()
 replace_original_var_auto = tk.BooleanVar()
-ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text="No fixed framerate", variable=ffsubsync_option_framerate_var)
+ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text="Don't fix framerate", variable=ffsubsync_option_framerate_var)
 ffsubsync_option_gss = tk.Checkbutton(automatic_tab, text="Use golden-section search", variable=ffsubsync_option_gss_var)
 ffsubsync_option_vad = tk.Checkbutton(automatic_tab, text="Use auditok instead of WebRTC's VAD", variable=ffsubsync_option_vad_var)
 check_save_to_desktop_auto = tk.Checkbutton(automatic_tab, text="Save to Desktop", variable=save_to_desktop_var_auto, command=lambda: checkbox_selected_auto(save_to_desktop_var_auto))
