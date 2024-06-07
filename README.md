@@ -12,7 +12,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - After installing the requirements, AutoSubSync will start automatically.
 
 ## `Useage`
-1) Drag and Drop: Drag and drop subtitle and video files onto the interface.
+1) Drag and Drop: Drag and drop subtitle and video/reference subtitle files onto the interface.
 2) Browse: Alternatively, click on the interface to browse your system and select subtitle or video files.
 3) Easy Open: Before opening the program, you can also drag and drop the subtitle file on run.bat. The program starts with that file selected. 
 4) Set Milliseconds: In manual tab, enter the number of milliseconds by which you want to shift the subtitles.
@@ -20,7 +20,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 4) Click Sync: Click on the "Shift Subtitle" button to synchronize the subtitle file.
 
 ## `Features`
-- Automatic Subtitle Synchronization: Automatically sync the subtitles with the video, using [ffsubsync](https://github.com/smacke/ffsubsync).
+- Automatic Subtitle Synchronization: Automatically sync the subtitles with the video/reference subtitle, using [ffsubsync](https://github.com/smacke/ffsubsync).
 - Subtitle Shifting: Easily adjust subtitle timing by specifying the number of milliseconds to shift.
 - Drag and Drop: Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
 - Customization Options: Choose whether to save the shifted subtitle file to the desktop or replace the original file.
