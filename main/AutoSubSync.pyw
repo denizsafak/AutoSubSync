@@ -732,14 +732,7 @@ def start_automatic_sync():
         replace_confirmation = tk.messagebox.askyesno("File Exists", f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?")
         if not replace_confirmation:
             return
-    # if the video_file is a subtitle, don't add parameters
-    if not video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
-        if ffsubsync_option_framerate_var.get():
-            cmd += " --no-fix-framerate"
-        if ffsubsync_option_gss_var.get():
-            cmd += (" --gss")
-        if ffsubsync_option_vad_var.get():
-            cmd += (" --vad=auditok")
+    
     def cancel_automatic_sync():
         global process, ffsubsync_option_vad, ffsubsync_option_gss, ffsubsync_option_framerate
         if process:
@@ -1054,6 +1047,14 @@ def start_automatic_sync():
                 output_subtitle_file = output_subtitle_file.rsplit('.', 1)[0] + '.srt'
             cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             #log_window.insert(tk.END, 'Running command: \n"' + cmd +'"\n')
+            # if the video_file is a subtitle, don't add parameters
+            if not video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                if ffsubsync_option_framerate_var.get():
+                    cmd += " --no-fix-framerate"
+                if ffsubsync_option_gss_var.get():
+                    cmd += (" --gss")
+                if ffsubsync_option_vad_var.get():
+                    cmd += (" --vad=auditok")
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             progress_bar["value"] = 1
             # if video file is not a subtitle
