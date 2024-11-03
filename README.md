@@ -20,6 +20,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 4) Click Sync: Click on the "Shift Subtitle" button to synchronize the subtitle file.
 
 ## `Features`
+- Support for different subtitle types: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .stl.
 - Automatic Subtitle Synchronization: Automatically sync the subtitles with the video/reference subtitle, using [ffsubsync](https://github.com/smacke/ffsubsync).
 - Subtitle Shifting: Easily adjust subtitle timing by specifying the number of milliseconds to shift.
 - Drag and Drop: Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
