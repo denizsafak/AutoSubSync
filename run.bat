@@ -10,7 +10,7 @@ set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
 set CURRENT_DIR=%CD%
 set LAST_DIR_FILE=%PROJECTFOLDER%\last_known_directory.txt
 set refrenv=%PROJECTFOLDER%\refrenv.bat
-set PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe
+set PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe
 
 :: Display provided argument if any
 if not "%~1"=="" (
@@ -207,6 +207,7 @@ if errorlevel 1 (
 
 :: Get the list of installed packages using pip freeze
 echo Checking the requirements...
+:: python.exe -m pip install --upgrade pip --quiet
 for /f "tokens=1,* delims==" %%i in ('pip freeze --all') do (
     set installed[%%i]=%%j
 )
