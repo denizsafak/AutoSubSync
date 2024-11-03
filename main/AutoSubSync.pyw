@@ -1,17 +1,23 @@
 import os
 import sys
 import re
-import html
 import chardet
 import subprocess
 import threading
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
+import xml.etree.ElementTree as ET
+program_name = "AutoSubSync"
+version = "v2.3"
 os.chdir(os.path.dirname(__file__))
+# Shift Subtitle Start
 total_shifted_milliseconds = {}
+def log_message(message, level, tab='manual'):
+    print(f"[{level.upper()}] {message}")
 def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_original):
     global total_shifted_milliseconds
+    # Load file with encoding detection
     try:
         with open(subtitle_file, 'rb') as file:
             raw_data = file.read()
@@ -20,72 +26,142 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
     except Exception as e:
         log_message(f"Error loading subtitle file: {str(e)}", "error", tab='manual')
         return
-    directory_path = os.path.dirname(subtitle_file)
+    file_extension = os.path.splitext(subtitle_file)[-1].lower()
     filename = os.path.basename(subtitle_file)
     new_lines = []
-    # Calculate total shifted milliseconds for the current subtitle file
+    # Calculate total shift if replace_original is used
     if replace_original and subtitle_file in total_shifted_milliseconds:
         total_shifted = total_shifted_milliseconds[subtitle_file] + milliseconds
     else:
         total_shifted = milliseconds
-    for raw_line in lines:
-        if isinstance(raw_line, bytes):  # Check if line is still bytes and needs decoding
-            try:
-                line = raw_line.decode(encoding)
-            except UnicodeDecodeError:
-                log_message("Error decoding line, skipping...", "error", tab='manual')
-                continue
+    # Function to apply time shifting based on format
+    def shift_time_srt_vtt(line, format_type):
+        def replacer(match):
+            start = shift_timestamp(match.group(1), format_type)
+            end = shift_timestamp(match.group(2), format_type)
+            separator = " --> " if format_type == 'srt' else " --> "
+            return f"{start}{separator}{end}"
+        return re.sub(
+            r'(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})',
+            replacer,
+            line
+        )
+    def shift_time_sbv(line):
+        def replacer(match):
+            start = shift_timestamp(match.group(1), 'sbv')
+            end = shift_timestamp(match.group(2), 'sbv')
+            return f"{start},{end}"
+        return re.sub(
+            r'(\d+:\d{2}:\d{2}\.\d{3}),(\d+:\d{2}:\d{2}\.\d{3})',
+            replacer,
+            line
+        )
+    def shift_time_sub(line):
+        def replacer(match):
+            start = shift_timestamp(match.group(1), 'sub')
+            end = shift_timestamp(match.group(2), 'sub')
+            return f"{start},{end}"
+        return re.sub(
+            r'(\d{2}:\d{2}:\d{2}\.\d{2})\s*,\s*(\d{2}:\d{2}:\d{2}\.\d{2})',
+            replacer,
+            line
+        )
+    def shift_time_stl(line):
+        def replacer(match):
+            start = shift_timestamp(match.group(1), 'stl')
+            end = shift_timestamp(match.group(2), 'stl')
+            suffix = match.group(3)  # Preserve the remaining text
+            return f"{start} , {end}{suffix}"
+        return re.sub(
+            r'(\d{1,2}:\d{2}:\d{2}:\d{2})\s*,\s*(\d{1,2}:\d{2}:\d{2}:\d{2})(.*)',
+            replacer,
+            line
+        )
+    def shift_time_dfxp(line):
+        def replacer(match):
+            start = shift_timestamp(match.group(1), "dfxp")
+            end = shift_timestamp(match.group(2), "dfxp")
+            return f'begin="{start}" end="{end}"'
+        return re.sub(
+            r'begin="([\d:,\.]+)"\s+end="([\d:,\.]+)"',
+            replacer,
+            line
+        )
+    def shift_time_ttml(line):
+        # Replace the 'begin' attribute
+        line = re.sub(
+            r'\bbegin="([\d.]+)s"',
+            lambda m: f'begin="{shift_timestamp(m.group(1), "ttml")}"',
+            line
+        )
+        # Replace the 'end' attribute
+        line = re.sub(
+            r'\bend="([\d.]+)s"',
+            lambda m: f'end="{shift_timestamp(m.group(1), "ttml")}"',
+            line
+        )
+        return line
+    def shift_time_ass_ssa(line):
+        def replacer(match):
+            start = shift_timestamp(match.group(1), 'ass_ssa')
+            end = shift_timestamp(match.group(2), 'ass_ssa')
+            return f"{start},{end}"
+        return re.sub(
+            r'(\d{1,2}:\d{2}:\d{2}\.\d{2}),(\d{1,2}:\d{2}:\d{2}\.\d{2})',
+            replacer,
+            line
+        )
+    # Helper to shift individual timestamps
+    def shift_timestamp(timestamp, format_type):
+        ms = time_to_milliseconds(timestamp, format_type)
+        if ms is None:
+            log_message(f"Failed to convert timestamp '{timestamp}' for format '{format_type}'", "error")
+            return timestamp  # Return the original timestamp if conversion fails
+        ms += milliseconds
+        ms = max(ms, 0)
+        shifted_timestamp = milliseconds_to_time(ms, format_type)
+        return shifted_timestamp
+    # Process each line based on format type
+    for line in lines:
+        if file_extension == '.srt':
+            new_lines.append(shift_time_srt_vtt(line, 'srt') if '-->' in line else line)
+        elif file_extension == '.vtt':
+            new_lines.append(shift_time_srt_vtt(line, 'vtt') if '-->' in line else line)
+        elif file_extension == '.sbv':
+            new_lines.append(shift_time_sbv(line) if ',' in line else line)
+        elif file_extension == '.sub':
+            new_lines.append(shift_time_sub(line) if ',' in line else line)
+        elif file_extension == '.stl':
+            new_lines.append(shift_time_stl(line) if ',' in line else line)
+        elif file_extension == '.dfxp':
+            new_lines.append(shift_time_dfxp(line))
+        elif file_extension == '.ttml':
+            new_lines.append(shift_time_ttml(line))
+        elif file_extension in ['.ass', '.ssa']:
+            new_lines.append(shift_time_ass_ssa(line))
         else:
-            line = raw_line
-        if '-->' in line:  # Check if the line contains time information
-            # Split the time information from the line
-            parts = line.strip().split(' --> ')
-            start_time, end_time = parts
-            # Parse time string to milliseconds
-            start_hours, start_minutes, start_seconds_milliseconds = start_time.split(':')
-            end_hours, end_minutes, end_seconds_milliseconds = end_time.split(':')
-            start_seconds, start_milliseconds = start_seconds_milliseconds.split(',')
-            end_seconds, end_milliseconds = end_seconds_milliseconds.split(',')
-            start_total_milliseconds = (int(start_hours) * 3600 + int(start_minutes) * 60 + int(start_seconds)) * 1000 + int(start_milliseconds)
-            end_total_milliseconds = (int(end_hours) * 3600 + int(end_minutes) * 60 + int(end_seconds)) * 1000 + int(end_milliseconds)
-            # Shift the time by the specified milliseconds
-            start_total_milliseconds += milliseconds
-            end_total_milliseconds += milliseconds
-            # Convert negative milliseconds to positive if needed
-            start_total_milliseconds = max(start_total_milliseconds, 0)
-            end_total_milliseconds = max(end_total_milliseconds, 0)
-            # Convert milliseconds to time string format
-            shifted_start_time = "{:02d}:{:02d}:{:02d},{:03d}".format(
-                (start_total_milliseconds // 3600000),
-                (start_total_milliseconds // 60000) % 60,
-                (start_total_milliseconds // 1000) % 60,
-                start_total_milliseconds % 1000
-            )
-            shifted_end_time = "{:02d}:{:02d}:{:02d},{:03d}".format(
-                (end_total_milliseconds // 3600000),
-                (end_total_milliseconds // 60000) % 60,
-                (end_total_milliseconds // 1000) % 60,
-                end_total_milliseconds % 1000
-            )
-            new_line = f"{shifted_start_time} --> {shifted_end_time}"
-            new_lines.append(new_line)
-        else:
-            # Preserve HTML tags in subtitle text
-            line = html.unescape(line)
             new_lines.append(line)
+    # Define file save location and handle existing files
     if replace_original:
         new_subtitle_file = subtitle_file
-        if subtitle_file in total_shifted_milliseconds and total_shifted_milliseconds[subtitle_file] != 0:
-            response = messagebox.askyesno("Subtitle Change Confirmation", f"Adjusting again by {milliseconds}ms, will make a total difference of {total_shifted}ms. Proceed?")
+        if subtitle_file in total_shifted_milliseconds:
+            response = messagebox.askyesno(
+                "Subtitle Change Confirmation",
+                f"Adjusting again by {milliseconds}ms, will make a total difference of {total_shifted}ms. Proceed?"
+            )
             if not response:
                 return
     elif save_to_desktop:
         desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
         new_subtitle_file = os.path.join(desktop_path, f"{total_shifted}ms_{filename}")
     else:
-        new_subtitle_file = os.path.join(directory_path, f"{total_shifted}ms_{filename}")
+        new_subtitle_file = os.path.join(os.path.dirname(subtitle_file), f"{total_shifted}ms_{filename}")
+
     if os.path.exists(new_subtitle_file) and not replace_original:
-        replace = messagebox.askyesno("File Exists", f"A file with the name '{os.path.basename(new_subtitle_file)}' already exists. Do you want to replace it?")
+        replace = messagebox.askyesno(
+            "File Exists",
+            f"A file with the name '{os.path.basename(new_subtitle_file)}' already exists. Do you want to replace it?"
+        )
         if not replace:
             return
     def update_progress(progress_bar, value):
@@ -98,7 +174,7 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
             log_message(f"Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}", "success", new_subtitle_file, tab='manual')
     try:
         # Write to file after progress bar is fully loaded
-        with open(new_subtitle_file, 'wb') as file:  # Open in binary mode to preserve encoding
+        with open(new_subtitle_file, 'wb') as file:
             file.write('\n'.join(new_lines).encode(encoding))
         # Hide current log message
         label_message_manual.grid_forget()
@@ -110,6 +186,69 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
             total_shifted_milliseconds[subtitle_file] = total_shifted
     except Exception as e:
         log_message(f"Error saving subtitle file: {str(e)}", "error", tab='manual')
+
+# Time conversion functions to handle various formats accurately
+def time_to_milliseconds(time_str, format_type):
+    try:
+        if format_type in ['srt', 'vtt']:
+            parts = re.split(r'[:,.]', time_str)
+            h, m, s = map(int, parts[:3])
+            ms = int(parts[3])
+            return (h * 3600 + m * 60 + s) * 1000 + ms
+        elif format_type == 'sbv':
+            parts = re.split(r'[:.]', time_str)
+            h, m, s, ms = map(int, parts)
+            return (h * 3600 + m * 60 + s) * 1000 + ms
+        elif format_type == 'sub':
+            parts = re.split(r'[:.]', time_str)
+            h, m, s, cs = map(int, parts)
+            return (h * 3600 + m * 60 + s) * 1000 + (cs * 10)
+        elif format_type == 'stl':
+            parts = re.split(r'[:.]', time_str)
+            h, m, s, f = map(int, parts)
+            return (h * 3600 + m * 60 + s) * 1000 + (f * 40)  # Assuming 25 fps
+        elif format_type == 'dfxp':
+            parts = re.split(r'[:.,]', time_str)
+            h, m, s = map(int, parts[:3])
+            ms = int(parts[3].replace(',', '')) if len(parts) > 3 else 0
+            return (h * 3600 + m * 60 + s) * 1000 + ms
+        elif format_type == 'ttml':
+            ms = float(time_str) * 1000
+            return int(ms)
+        elif format_type == 'ass_ssa':
+            parts = re.split(r'[:.]', time_str)
+            h, m, s, cs = map(int, parts)
+            return (h * 3600 + m * 60 + s) * 1000 + (cs * 10)
+    except (ValueError, IndexError) as e:
+        log_message(f"Error parsing time string '{time_str}' for format '{format_type}': {str(e)}", "error", tab='manual')
+        return None
+
+def milliseconds_to_time(ms, format_type):
+    h = ms // 3600000
+    m = (ms // 60000) % 60
+    s = (ms // 1000) % 60
+    ms_remainder = ms % 1000
+    if format_type == 'srt':
+        return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
+    elif format_type == 'vtt':
+        return f"{h:02}:{m:02}:{s:02}.{ms_remainder:03}"
+    elif format_type == 'sbv':
+        return f"{h}:{m:02}:{s:02}.{ms_remainder:03}"
+    elif format_type == 'sub':
+        cs = ms_remainder // 10
+        return f"{h:02}:{m:02}:{s:02}.{cs:02}"
+    elif format_type == 'stl':
+        f = ms_remainder // 40  # Assuming 25 fps
+        return f"{h:02}:{m:02}:{s:02}:{f:02}"
+    elif format_type == 'dfxp':
+        return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
+    elif format_type == 'ttml':
+        seconds = ms / 1000
+        return f"{seconds:.2f}s"
+    elif format_type == 'ass_ssa':
+        cs = ms_remainder // 10
+        return f"{h:02}:{m:02}:{s:02}.{cs:02}"
+# Shift Subtitle End
 
 def sync_subtitle():
     if hasattr(label_drop_box, 'tooltip_text'):
@@ -135,7 +274,7 @@ def sync_subtitle():
 def on_drop(event):
     filepath = event.data.strip("{}")  # Remove curly braces from the path
     # Check if the dropped file has the .srt extension
-    if filepath.lower().endswith('.srt'):
+    if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl')):
         label_drop_box.config(text=filepath, font=("Calibri", 10, "bold"))
         label_drop_box.tooltip_text = filepath
         label_drop_box.config(bg="lightgreen")  # Change background color to light green
@@ -145,7 +284,7 @@ def on_drop(event):
         label_drop_box.config(bg="lightgray")  # Restore background color to light gray
 
 def browse_file(event=None):
-    subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt")])
+    subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.stl")])
     if subtitle_file:
         label_drop_box.config(text=subtitle_file, font=("Calibri", 10, "bold"))
         label_drop_box.tooltip_text = subtitle_file
@@ -351,7 +490,6 @@ class ToolTip:
             self.tooltip.wm_geometry("+%d+%d" % (x_pos, y_pos))
             label = tk.Label(self.tooltip, text=self.text, justify=tk.LEFT, wraplength=wraplength, background="#ffffe0", relief=tk.SOLID, borderwidth=1, font=("tahoma", "8", "normal"))
             label.pack(ipadx=1)
-
     def hide_tooltip(self, event=None):
         if self.tooltip:
             self.tooltip.destroy()
@@ -371,7 +509,7 @@ TOOLTIP_GSS = "--gss: Use golden-section search to find the optimal ratio betwee
 TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases."
 TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync."
 root = TkinterDnD.Tk()
-root.title("AutoSubSync v2.2")
+root.title(program_name +" "+version)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)  # Allow label_drop_box to fill empty space
 root.withdraw() # Hide the window while it's being built
@@ -438,7 +576,6 @@ style.theme_create("custom", parent="alt", settings={
             "borderwidth": 1
         }
     }
-
 })
 style.theme_use("custom")
 add_separator = ttk.Separator(automatic_tab, orient='horizontal')
@@ -449,7 +586,8 @@ style.map("TSeparator", background=[("","SystemButtonFace")])
 
 # ---------------- Automatic Tab ---------------- #
 def browse_subtitle(event=None):
-    subtitle_file_auto = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt")])
+    subtitle_file_auto = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.stl")])
+    filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.stl")]
     if subtitle_file_auto:
         label_subtitle.config(text=subtitle_file_auto, font=("Calibri", 10, "bold"))
         label_subtitle.tooltip_text = subtitle_file_auto
@@ -461,13 +599,13 @@ def browse_subtitle(event=None):
             label_subtitle.config(bg="lightgray")
 
 def browse_video(event=None):
-    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
     if video_file:
         label_video.config(text=video_file, font=("Calibri", 10, "bold"))
         label_video.tooltip_text = video_file
         label_video.config(bg="lightgreen")
         log_message("", "info", tab='auto')
-        if video_file.lower().endswith('.srt'):
+        if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl')):
             # If the video file is a subtitle, disable parameters
             ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
@@ -476,7 +614,6 @@ def browse_video(event=None):
             ffsubsync_option_gss.config(state=tk.NORMAL)
             ffsubsync_option_vad.config(state=tk.NORMAL)
             ffsubsync_option_framerate.config(state=tk.NORMAL)
-
     else:
         if video_file != '':
             log_message("Please select a video or subtitle.", "error", tab='auto')
@@ -484,12 +621,12 @@ def browse_video(event=None):
 
 def on_video_drop(event):
     filepath = event.data.strip("{}")
-    if filepath.lower().endswith(('.srt','.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+    if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl', '.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
         label_video.config(text=filepath, font=("Calibri", 10, "bold"))
         label_video.tooltip_text = filepath
         label_video.config(bg="lightgreen")
         log_message("", "info", tab='auto')
-        if filepath.lower().endswith('.srt'):
+        if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl')):
             # If the video file is a subtitle, disable parameters
             ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
@@ -503,19 +640,19 @@ def on_video_drop(event):
 
 def on_subtitle_drop(event):
     filepath = event.data.strip("{}")
-    if filepath.lower().endswith('.srt'):
+    if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl')):
         label_subtitle.config(text=filepath, font=("Calibri", 10, "bold"))
         label_subtitle.tooltip_text = filepath
         label_subtitle.config(bg="lightgreen")
         log_message("", "info", tab='auto')
     else:
         log_message("Please drop a subtitle file.", "error", tab='auto')
+        
 process = None
 def start_automatic_sync():
-    global process
+    global process, subtitle_file, video_file, output_subtitle_file
     subtitle_file = getattr(label_subtitle, 'tooltip_text', None)
     video_file = getattr(label_video, 'tooltip_text', None)
-    #if video_file and subtitle_file are same
     if subtitle_file == video_file:
         log_message("Please select different subtitle files.", "error", tab='auto')
         return
@@ -545,9 +682,8 @@ def start_automatic_sync():
         replace_confirmation = tk.messagebox.askyesno("File Exists", f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?")
         if not replace_confirmation:
             return
-    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
     # if the video_file is a subtitle, don't add parameters
-    if not video_file.lower().endswith('.srt'):
+    if not video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl')):
         if ffsubsync_option_framerate_var.get():
             cmd += " --no-fix-framerate"
         if ffsubsync_option_gss_var.get():
@@ -612,13 +748,250 @@ def start_automatic_sync():
         root.update_idletasks()
 
     def run_subprocess():
-        global process, progress_line_number
+        global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file
+        # Convert subtitles to SRT Begin
+        def convert_to_srt(subtitle_file):
+            file_extension = os.path.splitext(subtitle_file)[-1].lower()
+            base_name = os.path.basename(os.path.splitext(subtitle_file)[0])
+            srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
+            log_window.insert(tk.END, f"Preparing " + base_name + file_extension + " for automatic sync...\n")
+            if file_extension == '.ttml':
+                convert_ttml_or_dfxo_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.dfxp':
+                convert_ttml_or_dfxo_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.vtt':
+                convert_vtt_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.sbv':
+                convert_sbv_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.sub':
+                convert_sub_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.ass':
+                convert_ass_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.ssa':
+                convert_ass_to_srt(subtitle_file, srt_file)
+            elif file_extension == '.stl':
+                convert_stl_to_srt(subtitle_file, srt_file)
+            else:
+                log_window.insert(tk.END, f"Error: Conversion for {file_extension} is not supported.\n")
+                return None
+            log_window.insert(tk.END, f"Subtitle successfully converted and saved to: {srt_file}.\n")
+            return srt_file
+
+        def convert_sub_to_srt(input_file, output_file):
+            try:
+                log_window.insert(tk.END, f"Converting SUB to SRT...\n")
+                with open(input_file, 'r', encoding='utf-8') as sub, open(output_file, 'w', encoding='utf-8') as srt:
+                    srt_counter = 1
+                    while True:
+                        timestamps = sub.readline().strip()
+                        if not timestamps:
+                            break
+                        text_lines = []
+                        while True:
+                            line = sub.readline().strip()
+                            if not line:
+                                break
+                            text_lines.append(line.replace('[br]', '\n'))
+                        start, end = timestamps.split(',')
+                        formatted_start = format_sub_time(start)
+                        formatted_end = format_sub_time(end)
+                        srt.write(f"{srt_counter}\n")
+                        srt.write(f"{formatted_start} --> {formatted_end}\n")
+                        srt.write('\n'.join(text_lines) + '\n\n')
+                        srt_counter += 1
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting SUB to SRT: {str(e)}\n")
+
+        def convert_ass_to_srt(input_file, output_file):
+            try:
+                log_window.insert(tk.END, f"Converting ASS/SSA to SRT...\n")
+                with open(input_file, 'r', encoding='utf-8') as ass, open(output_file, 'w', encoding='utf-8') as srt:
+                    srt_counter = 1
+                    buffer = ""
+                    collecting = False
+                    for line in ass:
+                        if line.startswith("Dialogue:"):
+                            collecting = True
+                            if buffer:
+                                srt.write(f"{buffer}\n\n")
+                                srt_counter += 1
+                            parts = line.split(",", 9)
+                            start = parts[1].strip()
+                            end = parts[2].strip()
+                            text = parts[9].replace("\\N", "\n").strip()
+                            buffer = f"{srt_counter}\n{format_ass_time(start)} --> {format_ass_time(end)}\n{text}"
+                        elif collecting:
+                            buffer += f"\n{line.strip()}"
+                    if buffer:
+                        srt.write(f"{buffer}\n\n")
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting ASS/SSA to SRT: {str(e)}\n")
+
+        def strip_namespace(tag):
+            if '}' in tag:
+                return tag.split('}', 1)[1]
+            return tag
+
+        def convert_ttml_or_dfxo_to_srt(input_file, output_file):
+            try:
+                log_window.insert(tk.END, f"Converting TTML/DFXP to SRT...\n")
+                tree = ET.parse(input_file)
+                root = tree.getroot()
+
+                captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == 'p']
+
+                with open(output_file, 'w', encoding='utf-8') as srt:
+                    for idx, caption in enumerate(captions, 1):
+                        begin = format_ttml_time(caption.attrib.get('begin'))
+                        end = format_ttml_time(caption.attrib.get('end'))
+                        
+                        # Handle text and line breaks
+                        text_parts = []
+                        for elem in caption.iter():
+                            if strip_namespace(elem.tag) == 'br':
+                                text_parts.append('\n')
+                            elif elem.text:
+                                text_parts.append(elem.text.strip())
+                            if elem.tail:
+                                text_parts.append(elem.tail.strip())
+                        
+                        # Join parts with space only between text (not newlines)
+                        text = ''
+                        for i, part in enumerate(text_parts):
+                            if part:
+                                if i > 0 and part != '\n' and text_parts[i-1] != '\n':
+                                    text += ' '
+                                text += part
+
+                        srt.write(f"{idx}\n")
+                        srt.write(f"{begin} --> {end}\n")
+                        srt.write(f"{text}\n\n")
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting TTML/DFXP to SRT: {str(e)}\n")
+
+        def convert_vtt_to_srt(input_file, output_file):
+            try:
+                log_window.insert(tk.END, f"Converting VTT to SRT...\n")
+                with open(input_file, 'r', encoding='utf-8') as vtt, open(output_file, 'w', encoding='utf-8') as srt:
+                    srt_counter = 1
+                    for line in vtt:
+                        if re.match(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}', line):
+                            start, end = line.strip().split(' --> ')
+                            srt.write(f"{srt_counter}\n")
+                            srt.write(f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n")
+                            srt_counter += 1
+                            text = ""
+                            while True:
+                                next_line = next(vtt).strip()
+                                if not next_line:
+                                    break
+                                text += next_line + "\n"
+                            srt.write(f"{text.strip()}\n\n")
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting VTT to SRT: {str(e)}\n")
+
+        def convert_sbv_to_srt(input_file, output_file):
+            try:
+                log_window.insert(tk.END, f"Converting SBV to SRT...\n")
+                with open(input_file, 'r', encoding='utf-8') as sbv, open(output_file, 'w', encoding='utf-8') as srt:
+                    srt_counter = 1
+                    while True:
+                        timestamps = sbv.readline().strip()
+                        if not timestamps:
+                            break
+                        text_lines = []
+                        while True:
+                            line = sbv.readline().strip()
+                            if not line:
+                                break
+                            text_lines.append(line)
+                        start, end = timestamps.split(',')
+                        srt.write(f"{srt_counter}\n")
+                        srt.write(f"{format_sbv_time(start)} --> {format_sbv_time(end)}\n")
+                        srt.write('\n'.join(text_lines) + '\n\n')
+                        srt_counter += 1
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting SBV to SRT: {str(e)}\n")
+
+        def convert_stl_to_srt(input_file, output_file):
+            try:
+                log_window.insert(tk.END, f"Converting STL to SRT...\n")
+                with open(input_file, 'rb') as stl, open(output_file, 'w', encoding='utf-8') as srt:
+                    stl_data = stl.read()
+                    encoding = chardet.detect(stl_data)['encoding']
+                    lines = stl_data.decode(encoding).splitlines()
+                    srt_counter = 1
+                    for line in lines:
+                        parts = line.strip().split(',', 2)  # Split only on the first two commas
+                        if len(parts) >= 3:
+                            start = convert_stl_time(parts[0].strip())
+                            end = convert_stl_time(parts[1].strip())
+                            text = parts[2].strip().replace('| ', '\n').replace('|', '\n')  # Replace '|' with newline
+                            if text:  # Ensure text is not empty
+                                srt.write(f"{srt_counter}\n")
+                                srt.write(f"{start} --> {end}\n")
+                                srt.write(f"{text}\n\n")
+                                srt_counter += 1
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting STL to SRT: {str(e)}\n")
+
+        def format_ttml_time(timestamp):
+            # Remove 's' suffix if present
+            timestamp = timestamp.replace('s', '')
+            # Check if already in HH:MM:SS format
+            if ':' in timestamp:
+                return timestamp.replace('.', ',')
+            # Convert from seconds to HH:MM:SS,mmm
+            try:
+                seconds = float(timestamp)
+                hours = int(seconds // 3600)
+                minutes = int((seconds % 3600) // 60)
+                seconds = seconds % 60
+                return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}".replace('.', ',')
+            except ValueError:
+                return timestamp
+
+        def format_sub_time(time_str):
+            parts = re.split(r'[:.]', time_str)
+            h, m, s, ms = parts
+            ms = ms.ljust(3, '0')[:3]  # Pad with zeros on the right and truncate to three digits
+            return f"{int(h):02}:{int(m):02}:{int(s):02},{ms}"
+
+        def format_sbv_time(time_str):
+            h, m, s = time_str.split(':')
+            s = s.replace('.', ',')
+            return f"{int(h):02}:{int(m):02}:{s}"
+
+        def format_ass_time(time_str):
+            t = time_str.split(':')
+            hours = int(t[0])
+            minutes = int(t[1])
+            seconds = float(t[2])
+            return f"{hours:02}:{minutes:02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
+
+        def convert_stl_time(time_str):
+            h, m, s, f = map(int, time_str.split(':'))
+            total_seconds = h * 3600 + m * 60 + s + f / 30
+            ms = int((total_seconds - int(total_seconds)) * 1000)
+            return f"{int(total_seconds)//3600:02}:{(int(total_seconds)%3600)//60:02}:{int(total_seconds)%60:02},{ms:03}"
+        # Convert subtitles to SRT End
+
+        # .ass and .ssa excluded because ffsubsync can work with them.
+        if subtitle_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.stl')):
+            subtitle_file = convert_to_srt(subtitle_file)
+        if video_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.stl')):
+            video_file = convert_to_srt(video_file)
+
         try:
+            # FFSUBSYNC CAN ONLY OUTPUT .ASS AND .SRT, SO THIS IS NECESSARY.
+            if not output_subtitle_file.lower().endswith(('.srt', '.ass', '.ssa')):
+                output_subtitle_file = output_subtitle_file.rsplit('.', 1)[0] + '.srt'
+            cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            #log_window.insert(tk.END, 'Running command: \n"' + cmd +'"\n')
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             progress_bar["value"] = 1
-            
             # if video file is not a subtitle
-            if video_file.lower().endswith('.srt'):
+            if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.stl')):
                 log_window.insert(tk.END, "Using reference subtitle for syncing...\n")
             else:
                 log_window.insert(tk.END, "Using video for syncing...\n")
