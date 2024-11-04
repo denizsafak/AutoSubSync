@@ -799,11 +799,11 @@ def start_automatic_sync():
             srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
             log_window.insert(tk.END, f"Preparing " + base_name + file_extension + " for automatic sync...\n")
             if file_extension == '.ttml':
-                convert_ttml_or_dfxo_to_srt(subtitle_file, srt_file)
+                convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
             elif file_extension == '.dfxp':
-                convert_ttml_or_dfxo_to_srt(subtitle_file, srt_file)
+                convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
             elif file_extension == '.itt':
-                convert_ttml_or_dfxo_to_srt(subtitle_file, srt_file)
+                convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
             elif file_extension == '.vtt':
                 convert_vtt_to_srt(subtitle_file, srt_file)
             elif file_extension == '.sbv':
@@ -864,9 +864,18 @@ def start_automatic_sync():
                             start = parts[1].strip()
                             end = parts[2].strip()
                             text = parts[9].replace("\\N", "\n").strip()
+                            # Replace ASS/SSA tags with SRT tags
+                            text = text.replace("{i}", "<i>").replace("{/i}", "</i>")
+                            text = text.replace("{u}", "<u>").replace("{/u}", "</u>")
+                            text = text.replace("{b}", "<b>").replace("{/b}", "</b>")
                             buffer = f"{srt_counter}\n{format_ass_time(start)} --> {format_ass_time(end)}\n{text}"
                         elif collecting:
-                            buffer += f"\n{line.strip()}"
+                            line = line.strip()
+                            # Replace ASS/SSA tags with SRT tags
+                            line = line.replace("{i}", "<i>").replace("{/i}", "</i>")
+                            line = line.replace("{u}", "<u>").replace("{/u}", "</u>")
+                            line = line.replace("{b}", "<b>").replace("{/b}", "</b>")
+                            buffer += f"\n{line}"
                     if buffer:
                         srt.write(f"{buffer}\n\n")
             except Exception as e:
@@ -877,65 +886,90 @@ def start_automatic_sync():
                 return tag.split('}', 1)[1]
             return tag
 
-        def convert_ttml_or_dfxo_to_srt(input_file, output_file):
+        def convert_ttml_or_dfxp_to_srt(input_file, output_file):
             try:
-                log_window.insert(tk.END, f"Converting TTML/DFXP/ITT to SRT...\n")
+                log_window.insert(tk.END, "Converting TTML/DFXP/ITT to SRT...\n")
                 tree = ET.parse(input_file)
                 root = tree.getroot()
-
                 captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == 'p']
-
                 with open(output_file, 'w', encoding='utf-8') as srt:
                     for idx, caption in enumerate(captions, 1):
                         begin = format_ttml_time(caption.attrib.get('begin'))
                         end = format_ttml_time(caption.attrib.get('end'))
-                        # Handle text and line breaks
-                        text_parts = []
-                        for elem in caption.iter():
-                            if strip_namespace(elem.tag) == 'br':
-                                text_parts.append('\n')
-                            elif elem.text:
-                                text_parts.append(elem.text.strip())
+                        def process_element(elem):
+                            text = ''
+                            tag = strip_namespace(elem.tag)
+                            end_tags = []
+                            # Handle start tags
+                            if tag == 'br':
+                                text += '\n'
+                            elif tag in ['b', 'i', 'u', 'font']:
+                                text += f"<{tag}>"
+                                end_tags.insert(0, f"</{tag}>")
+                            elif tag == 'span':
+                                style = elem.attrib.get('style', '')
+                                styles = style.strip().lower().split()
+                                for style_attr in styles:
+                                    if style_attr == 'bold':
+                                        text += '<b>'
+                                        end_tags.insert(0, '</b>')
+                                    elif style_attr == 'italic':
+                                        text += '<i>'
+                                        end_tags.insert(0, '</i>')
+                                    elif style_attr == 'underline':
+                                        text += '<u>'
+                                        end_tags.insert(0, '</u>')
+                                if 'color' in elem.attrib:
+                                    color = elem.attrib['color']
+                                    text += f'<font color="{color}">'
+                                    end_tags.insert(0, '</font>')
+                            # Add text content
+                            if elem.text:
+                                text += elem.text
+                            # Recursively process child elements
+                            for child in elem:
+                                text += process_element(child)
+                            # Handle end tags
+                            for end_tag in end_tags:
+                                text += end_tag
+                            # Add tail text
                             if elem.tail:
-                                text_parts.append(elem.tail.strip())
-                        # Join parts with space only between text (not newlines)
-                        text = ''
-                        for i, part in enumerate(text_parts):
-                            if part:
-                                if i > 0 and part != '\n' and text_parts[i-1] != '\n':
-                                    text += ' '
-                                text += part
+                                text += elem.tail
+                            return text
+                        # Process caption content
+                        text = process_element(caption)
                         srt.write(f"{idx}\n")
                         srt.write(f"{begin} --> {end}\n")
-                        srt.write(f"{text}\n\n")
+                        srt.write(f"{text.strip()}\n\n")
             except Exception as e:
-                log_window.insert(tk.END, f"Error converting TTML/DFXP/ITT to SRT: {str(e)}\n")
+                log_window.insert(tk.END, f"Error converting TTML/DFXP/ITT to SRT: {e}\n")
 
         def convert_vtt_to_srt(input_file, output_file):
             try:
                 log_window.insert(tk.END, f"Converting VTT to SRT...\n")
                 with open(input_file, 'r', encoding='utf-8') as vtt, open(output_file, 'w', encoding='utf-8') as srt:
                     srt_counter = 1
-                    in_cue = False
+                    allowed_tags = ['b', 'i', 'u', 'font']
+                    tag_pattern = re.compile(r'</?(?!' + '|'.join(allowed_tags) + r')\w+[^>]*>')
+
                     for line in vtt:
                         match = re.match(r'(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})', line)
                         if match:
-                            in_cue = True
                             start, end = match.groups()
                             srt.write(f"{srt_counter}\n")
                             srt.write(f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n")
                             srt_counter += 1
                             text = ""
                             while True:
-                                next_line = next(vtt).strip()
+                                try:
+                                    next_line = next(vtt).strip()
+                                except StopIteration:
+                                    break
                                 if not next_line:
                                     break
-                                text += re.sub(r'<[^>]+>', '', next_line) + "\n"
+                                cleaned_line = tag_pattern.sub('', next_line)
+                                text += cleaned_line + "\n"
                             srt.write(f"{text.strip()}\n\n")
-                        elif in_cue:
-                            continue
-                        elif line.strip() == "":
-                            in_cue = False
             except Exception as e:
                 log_window.insert(tk.END, f"Error converting VTT to SRT: {str(e)}\n")
 
@@ -944,6 +978,9 @@ def start_automatic_sync():
                 log_window.insert(tk.END, f"Converting SBV to SRT...\n")
                 with open(input_file, 'r', encoding='utf-8') as sbv, open(output_file, 'w', encoding='utf-8') as srt:
                     srt_counter = 1
+                    allowed_tags = ['b', 'i', 'u', 'font']
+                    tag_pattern = re.compile(r'</?(?!' + '|'.join(allowed_tags) + r')\w+[^>]*>')
+
                     while True:
                         timestamps = sbv.readline().strip()
                         if not timestamps:
@@ -953,7 +990,8 @@ def start_automatic_sync():
                             line = sbv.readline().strip()
                             if not line:
                                 break
-                            text_lines.append(line)
+                            cleaned_line = tag_pattern.sub('', line)
+                            text_lines.append(cleaned_line)
                         start, end = timestamps.split(',')
                         srt.write(f"{srt_counter}\n")
                         srt.write(f"{format_sbv_time(start)} --> {format_sbv_time(end)}\n")
