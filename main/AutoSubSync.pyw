@@ -9,7 +9,7 @@ from tkinter import filedialog, ttk, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
 program_name = "AutoSubSync"
-version = "v2.4"
+version = "v2.5"
 os.chdir(os.path.dirname(__file__))
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
@@ -356,9 +356,9 @@ def select_subtitle_at_startup():
             label_drop_box.config(bg="lightgreen")
             log_message("", "info", tab='manual')
             # For automatic tab
-            label_subtitle.config(text=subtitle_file, font=("Calibri", 10, "bold"))
-            label_subtitle.tooltip_text = subtitle_file
-            label_subtitle.config(bg="lightgreen")
+            subtitle_input.config(text=subtitle_file, font=("Calibri", 10, "bold"))
+            subtitle_input.tooltip_text = subtitle_file
+            subtitle_input.config(bg="lightgreen")
             log_message("", "info", tab='auto')
         elif not os.path.isfile(subtitle_file):
             log_message("File specified in the argument does not exist.", "error", tab='manual')
@@ -455,7 +455,6 @@ def log_message(message, msg_type=None, filepath=None, tab='both'):
             label_message_manual.grid_forget()
     if msg_type == "success" and filepath:
         message += f" Click to open: {filepath}"
-    if msg_type == "success":
         label_message_auto.config(cursor="hand2")
         label_message_manual.config(cursor="hand2")
         label_message_auto.bind("<Button-1>", lambda event: open_directory(filepath))
@@ -635,25 +634,1046 @@ add_separator.grid(row=0, column=0, sticky="new", padx=11, pady=0, columnspan=6)
 style.map("TSeparator", background=[("","SystemButtonFace")])
 
 # ---------------- Automatic Tab ---------------- #
+# Convert subtitles to SRT Begin
+def convert_sub_to_srt(input_file, output_file):
+    with open(input_file, 'rb') as sub_file:
+        sub_data = sub_file.read()
+        encoding = chardet.detect(sub_data)['encoding']
+    with open(input_file, 'r', encoding=encoding, errors='replace') as sub, open(output_file, 'w', encoding='utf-8') as srt:
+        srt_counter = 1
+        while True:
+            timestamps = sub.readline().strip()
+            if not timestamps:
+                break
+            text_lines = []
+            while True:
+                line = sub.readline().strip()
+                if not line:
+                    break
+                text_lines.append(line.replace('[br]', '\n'))
+            start, end = timestamps.split(',')
+            formatted_start = format_sub_time(start)
+            formatted_end = format_sub_time(end)
+            srt.write(f"{srt_counter}\n")
+            srt.write(f"{formatted_start} --> {formatted_end}\n")
+            srt.write('\n'.join(text_lines) + '\n\n')
+            srt_counter += 1
+
+def convert_ass_to_srt(input_file, output_file):
+    with open(input_file, 'rb') as ass_file:
+        ass_data = ass_file.read()
+        encoding = chardet.detect(ass_data)['encoding']
+    with open(input_file, 'r', encoding=encoding, errors='replace') as ass, open(output_file, 'w', encoding='utf-8') as srt:
+        srt_counter = 1
+        buffer = ""
+        collecting = False
+        for line in ass:
+            if line.startswith("Dialogue:"):
+                collecting = True
+                if buffer:
+                    srt.write(f"{buffer}\n\n")
+                    srt_counter += 1
+                parts = line.split(",", 9)
+                start = parts[1].strip()
+                end = parts[2].strip()
+                text = parts[9].replace("\\N", "\n").strip()
+                # Replace ASS/SSA tags with SRT tags
+                text = text.replace("{i}", "<i>").replace("{/i}", "</i>")
+                text = text.replace("{u}", "<u>").replace("{/u}", "</u>")
+                text = text.replace("{b}", "<b>").replace("{/b}", "</b>")
+                buffer = f"{srt_counter}\n{format_ass_time(start)} --> {format_ass_time(end)}\n{text}"
+            elif collecting:
+                line = line.strip()
+                # Replace ASS/SSA tags with SRT tags
+                line = line.replace("{i}", "<i>").replace("{/i}", "</i>")
+                line = line.replace("{u}", "<u>").replace("{/u}", "</u>")
+                line = line.replace("{b}", "<b>").replace("{/b}", "</b>")
+                buffer += f"\n{line}"
+        if buffer:
+            srt.write(f"{buffer}\n\n")
+
+def convert_ttml_or_dfxp_to_srt(input_file, output_file):
+    try:
+        with open(input_file, 'rb') as file:
+            data = file.read()
+            encoding = chardet.detect(data)['encoding']
+            content = data.decode(encoding, errors='replace')
+        root = ET.fromstring(content)
+    except ET.ParseError as e:
+        print(f"Error parsing XML: {e}")
+        return
+    captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == 'p']
+    with open(output_file, 'w', encoding='utf-8') as srt:
+        for idx, caption in enumerate(captions, 1):
+            begin = format_ttml_time(caption.attrib.get('begin'))
+            end = format_ttml_time(caption.attrib.get('end'))
+            def process_element(elem):
+                text = ''
+                tag = strip_namespace(elem.tag)
+                end_tags = []
+                # Handle start tags
+                if tag == 'br':
+                    text += '\n'
+                elif tag in ['b', 'i', 'u', 'font']:
+                    text += f"<{tag}>"
+                    end_tags.insert(0, f"</{tag}>")
+                elif tag == 'span':
+                    style = elem.attrib.get('style', '')
+                    styles = style.strip().lower().split()
+                    for style_attr in styles:
+                        if style_attr == 'bold':
+                            text += '<b>'
+                            end_tags.insert(0, '</b>')
+                        elif style_attr == 'italic':
+                            text += '<i>'
+                            end_tags.insert(0, '</i>')
+                        elif style_attr == 'underline':
+                            text += '<u>'
+                            end_tags.insert(0, '</u>')
+                    if 'color' in elem.attrib:
+                        color = elem.attrib['color']
+                        text += f'<font color="{color}">'
+                        end_tags.insert(0, '</font>')
+                # Add text content
+                if elem.text:
+                    text += elem.text
+                # Recursively process child elements
+                for child in elem:
+                    text += process_element(child)
+                # Handle end tags
+                for end_tag in end_tags:
+                    text += end_tag
+                # Add tail text
+                if elem.tail:
+                    text += elem.tail
+                return text
+            # Process caption content
+            text = process_element(caption)
+            srt.write(f"{idx}\n")
+            srt.write(f"{begin} --> {end}\n")
+            srt.write(f"{text.strip()}\n\n")
+
+def convert_vtt_to_srt(input_file, output_file):
+    with open(input_file, 'rb') as vtt_file:
+        vtt_data = vtt_file.read()
+        encoding = chardet.detect(vtt_data)['encoding']
+    with open(input_file, 'r', encoding=encoding, errors='replace') as vtt, open(output_file, 'w', encoding='utf-8') as srt:
+        srt_counter = 1
+        allowed_tags = ['b', 'i', 'u', 'font']
+        tag_pattern = re.compile(r'</?(?!' + '|'.join(allowed_tags) + r')\w+[^>]*>')
+        for line in vtt:
+            match = re.match(r'(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})', line)
+            if match:
+                start, end = match.groups()
+                srt.write(f"{srt_counter}\n")
+                srt.write(f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n")
+                srt_counter += 1
+                text = ""
+                while True:
+                    try:
+                        next_line = next(vtt).strip()
+                    except StopIteration:
+                        break
+                    if not next_line:
+                        break
+                    cleaned_line = tag_pattern.sub('', next_line)
+                    text += cleaned_line + "\n"
+                srt.write(f"{text.strip()}\n\n")
+
+def convert_sbv_to_srt(input_file, output_file):
+    with open(input_file, 'rb') as sbv_file:
+        sbv_data = sbv_file.read()
+        encoding = chardet.detect(sbv_data)['encoding']
+    with open(input_file, 'r', encoding=encoding, errors='replace') as sbv, open(output_file, 'w', encoding='utf-8') as srt:
+        srt_counter = 1
+        allowed_tags = ['b', 'i', 'u', 'font']
+        tag_pattern = re.compile(r'</?(?!' + '|'.join(allowed_tags) + r')\w+[^>]*>')
+        timestamp_pattern = re.compile(r'\d+:\d+:\d+\.\d+,\d+:\d+:\d+\.\d+')
+        while True:
+            timestamps = sbv.readline()
+            if not timestamps:
+                break
+            timestamps = timestamps.strip()
+            if not timestamps or not timestamp_pattern.match(timestamps):
+                continue
+            text_lines = []
+            while True:
+                position = sbv.tell()
+                line = sbv.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if timestamp_pattern.match(line):
+                    sbv.seek(position)
+                    break
+                cleaned_line = tag_pattern.sub('', line)
+                text_lines.append(cleaned_line)
+            if ',' in timestamps:
+                start, end = timestamps.split(',')
+                srt.write(f"{srt_counter}\n")
+                srt.write(f"{format_sbv_time(start)} --> {format_sbv_time(end)}\n")
+                srt.write('\n'.join(text_lines) + '\n')
+                srt_counter += 1
+
+def convert_stl_to_srt(input_file, output_file):
+    with open(input_file, 'rb') as stl:
+        stl_data = stl.read()
+        encoding = chardet.detect(stl_data)['encoding']
+        lines = stl_data.decode(encoding, errors='replace').splitlines()
+    with open(output_file, 'w', encoding='utf-8') as srt:
+        srt_counter = 1
+        for line in lines:
+            parts = line.strip().split(',', 2)  # Split only on the first two commas
+            if len(parts) >= 3:
+                start = convert_stl_time(parts[0].strip())
+                end = convert_stl_time(parts[1].strip())
+                text = parts[2].strip().replace('| ', '\n').replace('|', '\n')  # Replace '|' with newline
+                if text:  # Ensure text is not empty
+                    srt.write(f"{srt_counter}\n")
+                    srt.write(f"{start} --> {end}\n")
+                    srt.write(f"{text}\n\n")
+                    srt_counter += 1
+
+def format_ttml_time(timestamp):
+    # Remove 's' suffix if present
+    timestamp = timestamp.replace('s', '')
+    # Check for SMPTE format HH:MM:SS:FF
+    if timestamp.count(':') == 3:
+        try:
+            hours, minutes, seconds, frames = map(int, timestamp.split(':'))
+            frame_rate = 25  # Adjust frame rate as needed
+            milliseconds = int((frames / frame_rate) * 1000)
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+        except ValueError:
+            return timestamp
+    # Check if already in HH:MM:SS format
+    elif ':' in timestamp:
+        return timestamp.replace('.', ',')
+    # Convert from seconds to HH:MM:SS,mmm
+    else:
+        try:
+            seconds = float(timestamp)
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            seconds = seconds % 60
+            return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}".replace('.', ',')
+        except ValueError:
+            return timestamp
+
+def format_sub_time(time_str):
+    parts = re.split(r'[:.]', time_str)
+    h, m, s, ms = parts
+    ms = ms.ljust(3, '0')[:3] # Ensure milliseconds are 3 digits
+    return f"{int(h):02}:{int(m):02}:{int(s):02},{ms}"
+
+def format_sbv_time(time_str):
+    h, m, s = time_str.split(':')
+    s = s.replace('.', ',')
+    return f"{int(h):02}:{int(m):02}:{s}"
+
+def format_ass_time(time_str):
+    t = time_str.split(':')
+    hours = int(t[0])
+    minutes = int(t[1])
+    seconds = float(t[2])
+    return f"{hours:02}:{minutes:02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
+
+def convert_stl_time(time_str):
+    h, m, s, f = map(int, time_str.split(':'))
+    total_seconds = h * 3600 + m * 60 + s + f / 30
+    ms = int((total_seconds - int(total_seconds)) * 1000)
+    return f"{int(total_seconds)//3600:02}:{(int(total_seconds)%3600)//60:02}:{int(total_seconds)%60:02},{ms:03}"
+
+def strip_namespace(tag):
+    if '}' in tag:
+        return tag.split('}', 1)[1]
+    return tag
+# Convert subtitles to SRT End
+
+def start_batch_sync():
+    global process_list, output_subtitle_files
+    process_list = []
+    output_subtitle_files = []
+    tree_items = treeview.get_children()
+    if not tree_items:
+        log_message("No files to sync. Please add files to the batch list.", "error", tab='auto')
+        return
+
+    # Step 1: Count valid pairs
+    valid_pairs = 0
+    for parent in tree_items:
+        parent_values = treeview.item(parent, "values")
+        if not parent_values:
+            continue
+        video_file = parent_values[0] if len(parent_values) > 0 else ""
+        subtitles = treeview.get_children(parent)
+        for sub in subtitles:
+            values = treeview.item(sub, "values")
+            if not values:
+                continue
+            subtitle_file = values[0] if len(values) > 0 else ""
+            if (video_file and subtitle_file):
+                valid_pairs += 1
+    if valid_pairs == 0:
+        log_message("No valid file pairs to sync.", "error", tab='auto')
+        return
+    
+    total_items = valid_pairs
+    completed_items = 0
+    cancel_flag = False
+
+    def cancel_batch_sync():
+        nonlocal cancel_flag
+        cancel_flag = True
+        for process in process_list:
+            if process and process.poll() is None:
+                try:
+                    subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                     creationflags=subprocess.CREATE_NO_WINDOW)
+                except Exception as e:
+                    log_message(f"Error occurred during process termination: {e}", "error", tab='auto')
+        log_message("Batch synchronization cancelled.", "error", tab='auto')
+        restore_window()
+
+    def restore_window():
+        batch_input.grid()
+        button_start_automatic_sync.grid()
+        batch_mode_button.grid()
+        check_save_to_desktop_auto.grid()
+        check_replace_original_auto.grid()
+        ffsubsync_option_gss.grid()
+        ffsubsync_option_vad.grid()
+        ffsubsync_option_framerate.grid()
+        log_window.grid_remove()
+        progress_bar.grid_remove()
+        button_generate_again.grid_remove()
+        button_cancel_batch_sync.grid_remove()
+        tree_frame.grid()  # Show tree_frame
+        automatic_tab.columnconfigure(0, weight=0)
+        root.update_idletasks()
+
+    def generate_again():
+        # Clear all tree items
+        treeview.delete(*treeview.get_children())
+        batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
+        tree_frame.grid_remove()
+        button_start_automatic_sync.grid()
+        batch_mode_button.grid()
+        log_window.grid_remove()
+        progress_bar.grid_remove()
+        button_generate_again.grid_remove()
+        check_save_to_desktop_auto.grid()
+        check_replace_original_auto.grid()
+        ffsubsync_option_gss.grid()
+        ffsubsync_option_vad.grid()
+        ffsubsync_option_framerate.grid()
+        label_message_auto.grid_remove()
+        automatic_tab.columnconfigure(0, weight=0)
+        root.update_idletasks()
+
+    def run_batch_process():
+        nonlocal completed_items
+        for parent in tree_items:
+            if cancel_flag:
+                restore_window()
+                return
+            parent_values = treeview.item(parent, "values")
+            if not parent_values:
+                log_window.insert(tk.END, "Invalid parent item with no values.\n")
+                continue
+            video_file = parent_values[0] if len(parent_values) > 0 else ""
+            subtitles = treeview.get_children(parent)
+            for sub in subtitles:
+                if cancel_flag:
+                    restore_window()
+                    return
+                values = treeview.item(sub, "values")
+                subtitle_file = values[0] if len(values) > 0 else ""
+                if not subtitle_file and not video_file:
+                    log_window.insert(tk.END, "\nSkipping entry with no video and no subtitle.\n")
+                    continue
+                elif not subtitle_file:
+                    log_window.insert(tk.END, f"\nSkipping '{os.path.basename(video_file)}': No subtitle file.\n")
+                    continue
+                elif not video_file:
+                    log_window.insert(tk.END, f"\nSkipping '{os.path.basename(subtitle_file)}': No video/reference file.\n")
+                    continue
+                elif not values:
+                    log_window.insert(tk.END, "\nUnpaired item skipped.\n")
+                    continue
+                # Convert files if necessary
+                def convert_to_srt(subtitle_file):
+                    file_extension = os.path.splitext(subtitle_file)[-1].lower()
+                    base_name = os.path.basename(os.path.splitext(subtitle_file)[0])
+                    srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
+                    log_window.insert(tk.END, f"Preparing {base_name}{file_extension} for automatic sync...\n")
+                    converters = {
+                        '.ttml': convert_ttml_or_dfxp_to_srt,
+                        '.dfxp': convert_ttml_or_dfxp_to_srt,
+                        '.itt': convert_ttml_or_dfxp_to_srt,
+                        '.vtt': convert_vtt_to_srt,
+                        '.sbv': convert_sbv_to_srt,
+                        '.sub': convert_sub_to_srt,
+                        '.ass': convert_ass_to_srt,
+                        '.ssa': convert_ass_to_srt,
+                        '.stl': convert_stl_to_srt
+                    }
+                    converter = converters.get(file_extension)
+                    if converter:
+                        try:
+                            log_window.insert(tk.END, f"Converting {file_extension.upper()} to SRT...\n")
+                            converter(subtitle_file, srt_file)
+                        except Exception as e:
+                            log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+                            return None
+                        log_window.insert(tk.END, f"Subtitle successfully converted and saved to: {srt_file}.\n")
+                        return srt_file
+                    else:
+                        log_window.insert(tk.END, f"Error: Conversion for {file_extension} is not supported.\n")
+                        return None
+                def convert_files():
+                    nonlocal subtitle_file, video_file
+                    # Convert subtitle file if necessary
+                    if subtitle_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
+                        subtitle_file_converted = convert_to_srt(subtitle_file)
+                        if subtitle_file_converted:
+                            subtitle_file = subtitle_file_converted
+                        else:
+                            log_window.insert(tk.END, f"Failed to convert subtitle file: {subtitle_file}\n")
+                            return False
+                    # Convert video file if necessary
+                    if video_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
+                        video_file_converted = convert_to_srt(video_file)
+                        if video_file_converted:
+                            video_file = video_file_converted
+                        else:
+                            log_window.insert(tk.END, f"Failed to convert video/reference file: {video_file}\n")
+                            return False
+                    return True
+                if not convert_files():
+                    continue
+                # Prepare output file path
+                if save_to_desktop_var_auto.get():
+                    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+                    output_subtitle_file = os.path.join(desktop_path, f"autosync_{os.path.basename(subtitle_file)}")
+                elif replace_original_var_auto.get():
+                    output_subtitle_file = subtitle_file
+                else:
+                    output_subtitle_file = os.path.join(os.path.dirname(subtitle_file), f"autosync_{os.path.basename(subtitle_file)}")
+                if os.path.exists(output_subtitle_file) and not replace_original_var_auto.get():
+                    replace_confirmation = tk.messagebox.askyesno("File Exists",
+                                                                 f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?")
+                    if not replace_confirmation:
+                        log_window.insert(tk.END, f"Skipping {os.path.basename(subtitle_file)}: Output file exists.\n")
+                        continue
+                if not output_subtitle_file.lower().endswith(('.srt', '.ass', '.ssa')):
+                    output_subtitle_file = os.path.splitext(output_subtitle_file)[0] + '.srt'
+                cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                if not video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                    if ffsubsync_option_framerate_var.get():
+                        cmd += " --no-fix-framerate"
+                    if ffsubsync_option_gss_var.get():
+                        cmd += " --gss"
+                    if ffsubsync_option_vad_var.get():
+                        cmd += " --vad=auditok"
+                log_window.insert(tk.END, f"\n[{completed_items + 1}/{total_items}] Syncing {os.path.basename(subtitle_file)} with {os.path.basename(video_file)}...\n")
+                try:
+                    if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                        log_window.insert(tk.END, "Using reference subtitle for syncing...\n")
+                    else:
+                        log_window.insert(tk.END, "Using video for syncing...\n")
+                        if ffsubsync_option_framerate_var.get():
+                            log_window.insert(tk.END, "Enabled: Don't fix framerate.\n")
+                        if ffsubsync_option_gss_var.get():
+                            log_window.insert(tk.END, "Enabled: Golden-section search.\n")
+                        if ffsubsync_option_vad_var.get():
+                            log_window.insert(tk.END, "Enabled: Using auditok instead of WebRTC's VAD.\n") 
+                    log_window.insert(tk.END, "Syncing started:\n")
+                    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+                    process_list.append(process)
+                except Exception as e:
+                    log_window.insert(tk.END, f"Failed to start process: {e}\n")
+                    log_message(f"Failed to start process: {e}", "error", tab='auto')
+                    continue
+
+                for output in process.stdout:
+                    if cancel_flag:
+                        process.kill()
+                        restore_window()
+                        return
+                    match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
+                    if match_percentage:
+                        percentage = float(match_percentage.group(1))
+                        adjusted_value = min(97, max(1, percentage))
+                        progress_increment = (adjusted_value / 100) * (100 / total_items)
+                        progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
+                    if "%" in output:
+                        log_window.delete("end-2l", "end-1l")
+                        log_window.insert(tk.END, output)
+                    else:
+                        log_window.insert(tk.END, output)
+                    log_window.see(tk.END)
+                process.wait()
+                if cancel_flag:
+                    process_list.remove(process)
+                    restore_window()
+                    return
+                if process.returncode == 0:
+                    log_window.insert(tk.END, f"Success! Synchronized subtitle saved to: {output_subtitle_file}\n\n")
+                else:
+                    log_window.insert(tk.END, f"Error occurred during synchronization of {os.path.basename(subtitle_file)}\n")
+                    log_message(f"Error occurred during synchronization of {os.path.basename(subtitle_file)}", "error", tab='auto')
+                process_list.remove(process)
+                completed_items +=1  # Increment only for valid processed pair
+                progress_bar["value"] = (completed_items / total_items) * 100
+                root.update_idletasks()
+        log_window.see(tk.END)
+        log_window.insert(tk.END, "\nBatch syncing completed.\n")
+        log_message("Batch syncing completed.", "success", tab='auto')
+        button_cancel_batch_sync.grid_remove()
+        log_window.grid(pady=(10, 10), rowspan=2)
+        button_generate_again.grid()  # Show the Generate Again button
+        progress_bar.grid_remove()
+
+    try:
+        batch_input.grid_remove()
+        tree_frame.grid_remove()
+        button_start_automatic_sync.grid_remove()
+        batch_mode_button.grid_remove()
+        label_message_auto.grid_remove()
+        check_save_to_desktop_auto.grid_remove()
+        check_replace_original_auto.grid_remove()
+        ffsubsync_option_gss.grid_remove()
+        ffsubsync_option_vad.grid_remove()
+        ffsubsync_option_framerate.grid_remove()
+        button_cancel_batch_sync = tk.Button(
+            automatic_tab,
+            text="Cancel",
+            command=cancel_batch_sync,
+            padx=10,
+            pady=10,
+            fg="white",
+            bg="#707070",
+            activebackground="#616161",
+            activeforeground="white",
+            relief=tk.RAISED,
+            borderwidth=2,
+            cursor="hand2"
+        )
+        button_cancel_batch_sync.grid(row=6, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
+        button_generate_again = tk.Button(
+            automatic_tab,
+            text="Generate Again",
+            command=generate_again,
+            padx=10,
+            pady=10,
+            fg="white",
+            bg="#007FFF",
+            activebackground="#0061c2",
+            activeforeground="white",
+            relief=tk.RAISED,
+            borderwidth=2,
+            cursor="hand2"
+        )
+        button_generate_again.grid(row=11, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
+        button_generate_again.grid_remove()
+        log_window = tk.Text(automatic_tab, wrap="word")
+        log_window.config(font=("Arial", 7))
+        log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
+        progress_bar = ttk.Progressbar(automatic_tab, orient="horizontal", length=200, mode="determinate")
+        progress_bar.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="ew", columnspan=2)
+        root.update_idletasks()
+        threading.Thread(target=run_batch_process).start()
+    except Exception as e:
+        log_message(f"Error occurred: {e}", "error", tab='auto')
+    automatic_tab.rowconfigure(0, weight=1)
+    automatic_tab.rowconfigure(1, weight=0)
+    automatic_tab.columnconfigure(0, weight=1)
+
+def toggle_batch_mode():
+    if treeview.get_children():
+        log_message("", "info", tab='auto')
+        if batch_mode_var.get():
+            batch_mode_var.set(False)
+            batch_mode_button.config(text="Batch Mode", bg="slate blue", activebackground="SlateBlue4")
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg="#007FFF", activebackground="#0061c2", command=start_automatic_sync)
+            subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
+            video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
+            batch_input.grid_remove()
+            tree_frame.grid_remove()
+            automatic_tab.rowconfigure(1, weight=1)
+            root.update_idletasks()
+        else:
+            batch_mode_var.set(True)
+            batch_mode_button.config(text="Normal Mode", bg="#007FFF", activebackground="#0061c2")
+            button_start_automatic_sync.config(text="Start Batch Sync", bg="slate blue", activebackground="SlateBlue4", command=start_batch_sync)
+            subtitle_input.grid_remove()
+            video_input.grid_remove()
+            batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
+            tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+    else:
+        log_message("", "info", tab='auto')
+        if batch_mode_var.get():
+            batch_mode_var.set(False)
+            batch_mode_button.config(text="Batch Mode", bg="slate blue", activebackground="SlateBlue4")
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg="#007FFF", activebackground="#0061c2", command=start_automatic_sync)
+            subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
+            video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
+            batch_input.grid_remove()
+            tree_frame.grid_remove()
+            automatic_tab.rowconfigure(1, weight=1)
+            root.update_idletasks()
+        else:
+            batch_mode_var.set(True)
+            batch_mode_button.config(text="Normal Mode", bg="#007FFF", activebackground="#0061c2")
+            button_start_automatic_sync.config(text="Start Batch Sync", bg="slate blue", activebackground="SlateBlue4", command=start_batch_sync)
+            subtitle_input.grid_remove()
+            video_input.grid_remove()
+            batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
+            tree_frame.grid_remove()
+
+def browse_batch(event=None):
+    paths = filedialog.askopenfilenames(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    if paths:
+        process_files(paths)
+
+def on_batch_drop(event):
+    filepaths = automatic_tab.tk.splitlist(event.data)
+    process_files(filepaths)
+
+def process_files(filepaths):
+    subtitle_files = []
+    video_files = []
+    # Separate the files into video and subtitle lists
+    for filepath in filepaths:
+        if os.path.isdir(filepath):
+            for root, _, files in os.walk(filepath):
+                for file in files:
+                    full_path = os.path.join(root, file)
+                    if full_path.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                        subtitle_files.append(full_path)
+                    elif full_path.lower().endswith(('.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+                        video_files.append(full_path)
+        else:
+            if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                subtitle_files.append(filepath)
+            elif filepath.lower().endswith(('.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+                video_files.append(filepath)
+    # Check if there are any video or subtitle files
+    if not subtitle_files and not video_files:
+        log_message("Please drop valid subtitle and video files.", "error", tab='auto')
+        batch_input.config(bg="lightgray")
+        return
+    max_length = max(len(subtitle_files), len(video_files))
+    subtitle_files.extend([None] * (max_length - len(subtitle_files)))
+    video_files.extend([None] * (max_length - len(video_files)))
+    pairs_added = 0
+    files_not_paired = 0
+    duplicates = 0
+    existing_pairs = set()
+    for parent in treeview.get_children():
+        parent_values = treeview.item(parent, "values")
+        if parent_values and parent_values[0]:
+            video_file = os.path.normpath(parent_values[0].lower())
+            subtitles = treeview.get_children(parent)
+            for sub in subtitles:
+                values = treeview.item(sub, "values")
+                if values and values[0]:
+                    subtitle_file = os.path.normpath(values[0].lower())
+                    existing_pairs.add((video_file, subtitle_file))
+    incomplete_pairs = []
+    complete_pairs = []
+    # Pair videos with subtitles based on the same filename (search within the same directory first, then parent directories)
+    for video_file in sorted(video_files, key=lambda x: os.path.basename(x) if x else ''):
+        video_name = os.path.basename(video_file) if video_file else "[no video]"
+        subtitle_name = "[no subtitle]"
+        subtitle_file = None
+        if video_file:
+            video_dir = os.path.dirname(video_file)
+            # First, check if there is a subtitle in the same directory with the same name as the video
+            base_name = os.path.splitext(os.path.basename(video_file))[0]
+            for sub_file in subtitle_files[:]:
+                if sub_file and os.path.dirname(sub_file) == video_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
+                    subtitle_file = sub_file
+                    subtitle_name = os.path.basename(subtitle_file)
+                    subtitle_files.remove(sub_file)  # Remove paired subtitle from the list
+                    break
+            # If no subtitle is found in the same directory, check parent directories
+            if not subtitle_file:
+                parent_dir = video_dir
+                while parent_dir != os.path.dirname(parent_dir):  # Check parent directories until root
+                    parent_dir = os.path.dirname(parent_dir)
+                    for sub_file in subtitle_files[:]:
+                        if sub_file and os.path.dirname(sub_file) == parent_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
+                            subtitle_file = sub_file
+                            subtitle_name = os.path.basename(subtitle_file)
+                            subtitle_files.remove(sub_file)  # Remove paired subtitle from the list
+                            break
+                    if subtitle_file:
+                        break
+            if subtitle_file:
+                # Normalize paths for comparison
+                norm_video = os.path.normpath(video_file.lower())
+                norm_subtitle = os.path.normpath(subtitle_file.lower())
+                pair = (norm_video, norm_subtitle)
+                
+                if pair in existing_pairs:
+                    duplicates += 1
+                    continue
+                existing_pairs.add(pair)
+                pairs_added += 1
+                complete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+            else:
+                files_not_paired += 1
+                incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+        else:
+            incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+    # Insert incomplete pairs first
+    for video_name, subtitle_name, video_file, subtitle_file in incomplete_pairs:
+        parent_id = treeview.insert("", "end", text=video_name, values=(rf"{video_file}" if video_file else "",), open=True)
+        treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file if subtitle_file else ""))
+        treeview.item(parent_id, tags=("incomplete",))
+        if not video_file and not subtitle_file:
+            treeview.delete(parent_id)  # Remove the node if no video and no subtitle
+    # Insert complete pairs
+    for video_name, subtitle_name, video_file, subtitle_file in complete_pairs:
+        parent_id = treeview.insert("", "end", text=video_name, values=(video_file,), open=True)
+        treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
+        treeview.item(parent_id, tags=("paired",))
+    # Handle remaining unpaired subtitles
+    unpaired_subtitles = list(filter(None, subtitle_files))
+    if unpaired_subtitles:
+        unpaired_count = len(unpaired_subtitles)
+        user_choice = messagebox.askyesno("Unpaired Subtitles",
+                                        f"There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video] tag?")
+        for sub_file in unpaired_subtitles:
+            subtitle_name = os.path.basename(sub_file)
+            if user_choice:
+                parent_id = treeview.insert("", "end", text="[no video]", values=("",), open=True)
+                treeview.insert(parent_id, "end", text=subtitle_name, values=(sub_file,))
+                treeview.item(parent_id, tags=("incomplete",))
+                files_not_paired += 1
+            else:
+                parent_id = treeview.insert("", "end", text=subtitle_name, values=(sub_file,), open=True)
+                treeview.insert(parent_id, "end", text="[no subtitle]", values=("",))
+                treeview.item(parent_id, tags=("incomplete",))
+                files_not_paired += 1
+    batch_input.grid_remove()
+    tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+    messages = []
+    if pairs_added > 0:
+        messages.append(f"Added {pairs_added} pair{'s' if pairs_added != 1 else ''}")
+    if files_not_paired > 0:
+        if pairs_added < 1 or (duplicates > 0 and pairs_added < 1):
+            messages.append(f"Added {files_not_paired} unpaired file{'s' if files_not_paired != 1 else ''}")
+        else:
+            messages.append(f"{files_not_paired} unpaired file{'s' if files_not_paired != 1 else ''}")
+    if duplicates > 0:
+        messages.append(f"{duplicates} duplicate pair{'s' if duplicates != 1 else ''} skipped")
+    if messages:
+        log_message(" and ".join(messages) + ".", "info", tab='auto')
+
+def add_pair():
+    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    if video_file:
+        subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")])
+        if subtitle_file:
+            video_name = os.path.basename(video_file)
+            subtitle_name = os.path.basename(subtitle_file)
+            pair = (video_file.lower(), subtitle_file.lower())
+            # Check for duplicates based on full file paths
+            for parent in treeview.get_children():
+                existing_video = treeview.item(parent, "values")
+                if existing_video and existing_video[0].lower() == pair[0]:
+                    subtitles = treeview.get_children(parent)
+                    for sub in subtitles:
+                        existing_sub = treeview.item(sub, "values")
+                        if existing_sub and existing_sub[0].lower() == pair[1]:
+                            log_message("This pair already exists.", "error", tab='auto')
+                            return
+            parent_id = treeview.insert("", "end", text=video_name, values=(video_file,), open=True)
+            treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
+            treeview.item(parent_id, tags=("paired",))
+            log_message("Added 1 pair.", "info", tab='auto')
+        else:
+            log_message("Please select a subtitle file.", "error", tab='auto')
+    else:
+        log_message("Please select a video file.", "error", tab='auto')
+
+def change_selected_item():
+    selected_item = treeview.selection()
+    if selected_item:
+        parent_id = treeview.parent(selected_item)
+        is_parent = not parent_id
+        if is_parent:
+            filetypes = [("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")]
+        else:
+            filetypes = [("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")]
+        new_file = filedialog.askopenfilename(filetypes=filetypes)
+        if new_file:
+            new_file = os.path.normpath(new_file)
+            new_name = os.path.basename(new_file)
+            parent_values = treeview.item(parent_id, "values") if parent_id else None
+            parent_file = os.path.normpath(parent_values[0]) if parent_values else ""
+            current_item_values = treeview.item(selected_item, "values")
+            current_file = os.path.normpath(current_item_values[0]) if current_item_values else ""
+            item_type = treeview.item(selected_item, "text")
+            # Don't proceed if the new file is the same as the current one
+            if new_file.lower() == current_file.lower():
+                return
+            # Don't allow the same file as both parent and child
+            if is_parent:
+                # Check if any child has the same file
+                children = treeview.get_children(selected_item)
+                for child in children:
+                    child_values = treeview.item(child, "values")
+                    child_file = os.path.normpath(child_values[0]) if child_values else ""
+                    if new_file.lower() == child_file.lower():
+                        log_message("Cannot use the same file for both inputs.", "error", tab='auto')
+                        return
+            else:
+                if new_file.lower() == parent_file.lower():
+                    log_message("Cannot use the same file for both inputs.", "error", tab='auto')
+                    return
+            # Gather all existing pairs, excluding the current selection if it's a parent
+            existing_pairs = set()
+            for item in treeview.get_children():
+                if is_parent and item == selected_item:
+                    continue  # Skip the selected parent
+                current_parent_values = treeview.item(item, "values")
+                current_parent = os.path.normpath(current_parent_values[0]).lower() if current_parent_values else ""
+                children = treeview.get_children(item)
+                for child in children:
+                    child_values = treeview.item(child, "values")
+                    if child_values:
+                        child_file = os.path.normpath(child_values[0]).lower()
+                        existing_pairs.add((current_parent, child_file))
+            if is_parent:
+                new_parent_file = new_file.lower()
+                children = treeview.get_children(selected_item)
+                for child in children:
+                    child_values = treeview.item(child, "values")
+                    if child_values:
+                        child_file = os.path.normpath(child_values[0]).lower()
+                        if (new_parent_file, child_file) in existing_pairs:
+                            log_message("This pair already exists. Please select a different file.", "error", tab='auto')
+                            return
+            else:
+                new_child_file = new_file.lower()
+                new_parent_file = parent_file.lower() if parent_file else ""
+                if (new_parent_file, new_child_file) in existing_pairs:
+                    log_message("This pair already exists. Please select a different file.", "error", tab='auto')
+                    return
+            # Update the item's name and value
+            treeview.item(selected_item, text=new_name, values=(new_file,))
+            # Update the tags of the parent item
+            if parent_id:
+                parent_text = treeview.item(parent_id, "text")
+                if parent_text == "[no video]":
+                    treeview.item(parent_id, tags=("incomplete",))
+                else:
+                    treeview.item(parent_id, tags=("paired",))
+            else:
+                children = treeview.get_children(selected_item)
+                valid_children = [child for child in children if treeview.item(child, "text") != "[no subtitle]"]
+                if not children or not valid_children:
+                    treeview.item(selected_item, tags=("incomplete",))
+                else:
+                    treeview.item(selected_item, tags=("paired",))
+            # Log appropriate messages
+            if item_type.lower() == "[no subtitle]":
+                log_message("Subtitle added.", "info", tab='auto')
+            elif item_type.lower() == "[no video]":
+                log_message("Video/reference subtitle added.", "info", tab='auto')
+            else:
+                log_message("File changed.", "info", tab='auto')
+        else:
+            log_message("Please select an item to change.", "error", tab='auto')
+
+def remove_selected_item():
+    selected_items = treeview.selection()
+    if selected_items:
+        for selected_item in selected_items:
+            if treeview.exists(selected_item):
+                parent_id = treeview.parent(selected_item)
+                if parent_id:
+                    # Check if the parent item has "[no video]" text
+                    parent_text = treeview.item(parent_id, "text")
+                    if parent_text == "[no video]":
+                        treeview.delete(parent_id)
+                    else:
+                        treeview.item(selected_item, text="[no subtitle]")
+                        # Update the tags of the parent item to "incomplete"
+                        treeview.item(parent_id, tags=("incomplete",))
+                else:
+                    treeview.delete(selected_item)
+    else:
+        log_message("Please select an item to remove.", "error", tab='auto')
+
+# Define batch input label
+batch_input = tk.Label(automatic_tab, text="Drag and drop multiple files/folders here or click to browse.\n\n(Videos and subtitles that has the same filenames will be\n paired automatically. You need to pair others manually.)", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
+batch_input_text = tk.Label(automatic_tab, text="Batch Processing Mode", fg="black", relief="ridge", padx=5, borderwidth=1)
+batch_input_text.place(in_=batch_input, relx=0, rely=0, anchor="nw")
+batch_input.bind("<Button-1>", browse_batch)
+batch_input.bind("<Enter>", on_enter)
+batch_input.bind("<Leave>", on_leave)
+batch_input.drop_target_register(DND_FILES)
+batch_input.dnd_bind('<<Drop>>', on_batch_drop)
+# Create a frame for the Treeview and buttons
+tree_frame = ttk.Frame(automatic_tab)
+tree_frame.columnconfigure(0, weight=1)
+tree_frame.rowconfigure(1, weight=1)
+# Create a Treeview for displaying added files
+treeview = ttk.Treeview(tree_frame, show='tree')
+# Add tags and styles for paired and incomplete entries
+treeview.tag_configure("paired", background="lightgreen")
+treeview.tag_configure("incomplete", background="lightcoral")
+# Enable drag-and-drop on Treeview
+treeview.drop_target_register(DND_FILES)
+treeview.dnd_bind('<<Drop>>', on_batch_drop)
+def on_double_click(event):
+    change_selected_item()
+    return "break"
+def select_all(event):
+    def select_all_children(item):
+        children = treeview.get_children(item)
+        for child in children:
+            treeview.selection_add(child)
+            select_all_children(child)
+    for item in treeview.get_children():
+        treeview.selection_add(item)
+        select_all_children(item)
+def delete_selected(event):
+    remove_selected_item()
+# Create a context menu
+context_menu = tk.Menu(treeview, tearoff=0)
+context_menu.add_command(label="Remove", command=remove_selected_item)
+context_menu.add_command(label="Change", command=change_selected_item)
+context_menu.add_separator()  # Add a separator
+context_menu.add_command(label="Add Pair", command=add_pair)
+context_menu.add_command(label="Clear All", command=lambda: treeview.delete(*treeview.get_children()))
+# Function to show the context menu
+def show_path():
+    selected_item = treeview.selection()
+    if selected_item:
+        item_values = treeview.item(selected_item, "values")
+        if item_values and item_values[0]:
+            path = item_values[0]
+            folder = os.path.dirname(path)
+            subprocess.run(['explorer', '/select,', os.path.normpath(path)])
+
+def show_context_menu(event):
+    # Clear previous dynamic menu items
+    context_menu.delete(0, tk.END)
+    # Select the item under the cursor
+    item = treeview.identify_row(event.y)
+    if item:
+        treeview.selection_set(item)
+        item_values = treeview.item(item, "values")
+        if item_values and item_values[0]:
+            context_menu.add_command(label="Show path", command=show_path)
+            context_menu.add_separator()
+    context_menu.add_command(label="Remove", command=remove_selected_item)
+    context_menu.add_command(label="Change", command=change_selected_item)
+    context_menu.add_separator()  # Add a separator
+    context_menu.add_command(label="Add Pair", command=add_pair)
+    context_menu.add_command(label="Clear All", command=lambda: treeview.delete(*treeview.get_children()))
+    context_menu.post(event.x_root, event.y_root)
+# Bind the right-click event to the Treeview to show the context menu
+treeview.bind("<Button-3>", show_context_menu)
+# Bind the key events to the treeview
+treeview.bind("<Control-a>", select_all)
+treeview.bind("<Delete>", delete_selected)
+treeview.bind("<Double-1>", on_double_click)
+# Create buttons for adding, changing, and removing items
+button_change_item = tk.Button(
+    tree_frame,
+    text="Change",
+    command=change_selected_item,
+    padx=10,
+    pady=5,
+    fg="black",
+    bg="light gray",
+    activebackground="gray",
+    activeforeground="black",
+    relief=tk.RAISED,
+    borderwidth=2,
+    cursor="hand2"
+)
+button_remove_item = tk.Button(
+    tree_frame,
+    text="Remove",
+    command=remove_selected_item,
+    padx=10,
+    pady=5,
+    fg="black",
+    bg="light gray",
+    activebackground="gray",
+    activeforeground="black",
+    relief=tk.RAISED,
+    borderwidth=2,
+    cursor="hand2"
+)
+# Define styles
+style = ttk.Style()
+style.configure("Treeview", rowheight=25)
+style.map("Treeview", background=[('selected', 'steel blue')])
+# Function to select a folder
+def select_folder():
+    folder_path = filedialog.askdirectory()
+    if folder_path:
+        process_files([folder_path])
+# Replace the "Add Pair" button with a Menubutton
+button_options = tk.Menubutton(
+    tree_frame,
+    text="Add files",
+    padx=10,
+    pady=7.5,
+    fg="black",
+    bg="light gray",
+    activebackground="light gray",
+    activeforeground="black",
+    relief=tk.RAISED,
+    borderwidth=2,
+    cursor="hand2"
+)
+options_menu = tk.Menu(button_options, tearoff=0)
+button_options.config(menu=options_menu)
+options_menu.add_command(label="Add Pair", command=add_pair)
+options_menu.add_command(label="Select a Folder", command=select_folder)
+options_menu.add_command(label="Select Multiple Files", command=browse_batch)
+# Update the grid layout
+button_options.grid(row=0, column=0, padx=(5,2.5), pady=5, sticky="ew")
+button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
+button_remove_item.grid(row=0, column=2, padx=(2.5,5), pady=5, sticky="ew")
+button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
+button_remove_item.grid(row=0, column=2, padx=(2.5,5), pady=5, sticky="ew")
+treeview.grid(row=1, column=0, columnspan=3, padx=5, pady=(5,0), sticky="nsew")
+tree_frame.grid_remove()
+batch_input.grid_remove()
+# Start batch mode end
+
+# Start automatic sync begin
 def browse_subtitle(event=None):
     subtitle_file_auto = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")])
     filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")]
     if subtitle_file_auto:
-        label_subtitle.config(text=subtitle_file_auto, font=("Calibri", 10, "bold"))
-        label_subtitle.tooltip_text = subtitle_file_auto
-        label_subtitle.config(bg="lightgreen")
+        subtitle_input.config(text=subtitle_file_auto, font=("Calibri", 10, "bold"))
+        subtitle_input.tooltip_text = subtitle_file_auto
+        subtitle_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
     else:
         if subtitle_file_auto != '':
             log_message("Please select a subtitle", "error", tab='auto')
-            label_subtitle.config(bg="lightgray")
+            subtitle_input.config(bg="lightgray")
 
 def browse_video(event=None):
     video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
     if video_file:
-        label_video.config(text=video_file, font=("Calibri", 10, "bold"))
-        label_video.tooltip_text = video_file
-        label_video.config(bg="lightgreen")
+        video_input.config(text=video_file, font=("Calibri", 10, "bold"))
+        video_input.tooltip_text = video_file
+        video_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
         if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
             # If the video file is a subtitle, disable parameters
@@ -667,17 +1687,20 @@ def browse_video(event=None):
     else:
         if video_file != '':
             log_message("Please select a video or subtitle.", "error", tab='auto')
-            label_video.config(bg="lightgray")
+            video_input.config(bg="lightgray")
 
 def on_video_drop(event):
-    filepath = event.data.strip("{}")
+    files = event.data.strip("{}").split()
+    if len(files) != 1:
+        log_message("Please drop single video or subtitle file.", "error", tab='auto')
+        return
+    filepath = files[0]
     if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl', '.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
-        label_video.config(text=filepath, font=("Calibri", 10, "bold"))
-        label_video.tooltip_text = filepath
-        label_video.config(bg="lightgreen")
+        video_input.config(text=filepath, font=("Calibri", 10, "bold"))
+        video_input.tooltip_text = filepath
+        video_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
         if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
-            # If the video file is a subtitle, disable parameters
             ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
             ffsubsync_option_framerate.config(state=tk.DISABLED)
@@ -689,25 +1712,29 @@ def on_video_drop(event):
         log_message("Please drop a video or subtitle.", "error", tab='auto')
 
 def on_subtitle_drop(event):
-    filepath = event.data.strip("{}")
+    files = event.data.strip("{}").split()
+    if len(files) != 1:
+        log_message("Please drop single subtitle file.", "error", tab='auto')
+        return
+    filepath = files[0]
     if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
-        label_subtitle.config(text=filepath, font=("Calibri", 10, "bold"))
-        label_subtitle.tooltip_text = filepath
-        label_subtitle.config(bg="lightgreen")
+        subtitle_input.config(text=filepath, font=("Calibri", 10, "bold"))
+        subtitle_input.tooltip_text = filepath
+        subtitle_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
     else:
         log_message("Please drop a subtitle file.", "error", tab='auto')
-        
+
 process = None
 def start_automatic_sync():
     global process, subtitle_file, video_file, output_subtitle_file
-    subtitle_file = getattr(label_subtitle, 'tooltip_text', None)
-    video_file = getattr(label_video, 'tooltip_text', None)
-    if subtitle_file == video_file:
-        log_message("Please select different subtitle files.", "error", tab='auto')
-        return
+    subtitle_file = getattr(subtitle_input, 'tooltip_text', None)
+    video_file = getattr(video_input, 'tooltip_text', None)
     if not subtitle_file and not video_file:
         log_message("Please select both video/reference subtitle and subtitle file.", "error", tab='auto')
+        return
+    if subtitle_file == video_file:
+        log_message("Please select different subtitle files.", "error", tab='auto')
         return
     if not subtitle_file:
         log_message("Please select a subtitle file.", "error", tab='auto')
@@ -753,11 +1780,12 @@ def start_automatic_sync():
     root.protocol("WM_DELETE_WINDOW", cancel_process_on_window_close)
 
     def restore_window():
-        label_subtitle.grid()
-        label_video.grid()
+        subtitle_input.grid()
+        video_input.grid()
         check_save_to_desktop_auto.grid()
         check_replace_original_auto.grid()
         button_start_automatic_sync.grid()
+        batch_mode_button.grid()
         ffsubsync_option_gss.grid()
         ffsubsync_option_vad.grid()
         ffsubsync_option_framerate.grid()
@@ -765,18 +1793,20 @@ def start_automatic_sync():
         progress_bar.grid_remove()
         button_generate_again.grid_remove()
         button_cancel_automatic_sync.grid_remove()
+        automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
 
     def generate_again():
-        label_subtitle.config(text="Drag and drop the unsynchronized subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
-        del label_subtitle.tooltip_text
-        label_video.config(text="Drag and drop video or reference subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
-        del label_video.tooltip_text
-        label_subtitle.grid()
-        label_video.grid()
+        subtitle_input.config(text="Drag and drop the unsynchronized subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
+        del subtitle_input.tooltip_text
+        video_input.config(text="Drag and drop video or reference subtitle file here or click to browse.", bg="lightgray", font=("Segoe UI", 9, "normal"))
+        del video_input.tooltip_text
+        subtitle_input.grid()
+        video_input.grid()
         check_save_to_desktop_auto.grid()
         check_replace_original_auto.grid()
         button_start_automatic_sync.grid()
+        batch_mode_button.grid()
         ffsubsync_option_gss.grid()
         ffsubsync_option_vad.grid()
         ffsubsync_option_framerate.grid()
@@ -788,291 +1818,77 @@ def start_automatic_sync():
         ffsubsync_option_gss.config(state=tk.NORMAL)
         ffsubsync_option_vad.config(state=tk.NORMAL)
         ffsubsync_option_framerate.config(state=tk.NORMAL)
+        automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
 
-    def run_subprocess():
-        global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file
-        # Convert subtitles to SRT Begin
-        def convert_to_srt(subtitle_file):
-            file_extension = os.path.splitext(subtitle_file)[-1].lower()
-            base_name = os.path.basename(os.path.splitext(subtitle_file)[0])
-            srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
-            log_window.insert(tk.END, f"Preparing " + base_name + file_extension + " for automatic sync...\n")
-            if file_extension == '.ttml':
+    def convert_to_srt(subtitle_file):
+        file_extension = os.path.splitext(subtitle_file)[-1].lower()
+        base_name = os.path.basename(os.path.splitext(subtitle_file)[0])
+        srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
+        log_window.insert(tk.END, f"Preparing " + base_name + file_extension + " for automatic sync...\n")
+        if file_extension == '.ttml':
+            log_window.insert(tk.END, "Converting TTML/DFXP/ITT to SRT...\n")
+            try:
                 convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.dfxp':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.dfxp':
+            log_window.insert(tk.END, "Converting TTML/DFXP/ITT to SRT...\n")
+            try:
                 convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.itt':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.itt':
+            log_window.insert(tk.END, "Converting TTML/DFXP/ITT to SRT...\n")
+            try:
                 convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.vtt':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.vtt':
+            log_window.insert(tk.END, f"Converting VTT to SRT...\n")
+            try:
                 convert_vtt_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.sbv':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.sbv':
+            log_window.insert(tk.END, f"Converting SBV to SRT...\n")
+            try:
                 convert_sbv_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.sub':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.sub':
+            log_window.insert(tk.END, f"Converting SUB to SRT...\n")
+            try:
                 convert_sub_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.ass':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.ass':
+            log_window.insert(tk.END, f"Converting ASS/SSA to SRT...\n")
+            try:
                 convert_ass_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.ssa':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.ssa':
+            log_window.insert(tk.END, f"Converting ASS/SSA to SRT...\n")
+            try:
                 convert_ass_to_srt(subtitle_file, srt_file)
-            elif file_extension == '.stl':
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        elif file_extension == '.stl':
+            log_window.insert(tk.END, f"Converting STL to SRT...\n")
+            try:
                 convert_stl_to_srt(subtitle_file, srt_file)
-            else:
-                log_window.insert(tk.END, f"Error: Conversion for {file_extension} is not supported.\n")
-                return None
+            except Exception as e:
+                log_window.insert(tk.END, f"Error converting subtitle: {e}\n")
+        else:
+            log_window.insert(tk.END, f"Error: Conversion for {file_extension} is not supported.\n")
+            return None
+        if srt_file:
             log_window.insert(tk.END, f"Subtitle successfully converted and saved to: {srt_file}.\n")
             return srt_file
-
-        def convert_sub_to_srt(input_file, output_file):
-            try:
-                log_window.insert(tk.END, f"Converting SUB to SRT...\n")
-                with open(input_file, 'r', encoding='utf-8') as sub, open(output_file, 'w', encoding='utf-8') as srt:
-                    srt_counter = 1
-                    while True:
-                        timestamps = sub.readline().strip()
-                        if not timestamps:
-                            break
-                        text_lines = []
-                        while True:
-                            line = sub.readline().strip()
-                            if not line:
-                                break
-                            text_lines.append(line.replace('[br]', '\n'))
-                        start, end = timestamps.split(',')
-                        formatted_start = format_sub_time(start)
-                        formatted_end = format_sub_time(end)
-                        srt.write(f"{srt_counter}\n")
-                        srt.write(f"{formatted_start} --> {formatted_end}\n")
-                        srt.write('\n'.join(text_lines) + '\n\n')
-                        srt_counter += 1
-            except Exception as e:
-                log_window.insert(tk.END, f"Error converting SUB to SRT: {str(e)}\n")
-
-        def convert_ass_to_srt(input_file, output_file):
-            try:
-                log_window.insert(tk.END, f"Converting ASS/SSA to SRT...\n")
-                with open(input_file, 'r', encoding='utf-8') as ass, open(output_file, 'w', encoding='utf-8') as srt:
-                    srt_counter = 1
-                    buffer = ""
-                    collecting = False
-                    for line in ass:
-                        if line.startswith("Dialogue:"):
-                            collecting = True
-                            if buffer:
-                                srt.write(f"{buffer}\n\n")
-                                srt_counter += 1
-                            parts = line.split(",", 9)
-                            start = parts[1].strip()
-                            end = parts[2].strip()
-                            text = parts[9].replace("\\N", "\n").strip()
-                            # Replace ASS/SSA tags with SRT tags
-                            text = text.replace("{i}", "<i>").replace("{/i}", "</i>")
-                            text = text.replace("{u}", "<u>").replace("{/u}", "</u>")
-                            text = text.replace("{b}", "<b>").replace("{/b}", "</b>")
-                            buffer = f"{srt_counter}\n{format_ass_time(start)} --> {format_ass_time(end)}\n{text}"
-                        elif collecting:
-                            line = line.strip()
-                            # Replace ASS/SSA tags with SRT tags
-                            line = line.replace("{i}", "<i>").replace("{/i}", "</i>")
-                            line = line.replace("{u}", "<u>").replace("{/u}", "</u>")
-                            line = line.replace("{b}", "<b>").replace("{/b}", "</b>")
-                            buffer += f"\n{line}"
-                    if buffer:
-                        srt.write(f"{buffer}\n\n")
-            except Exception as e:
-                log_window.insert(tk.END, f"Error converting ASS/SSA to SRT: {str(e)}\n")
-
-        def strip_namespace(tag):
-            if '}' in tag:
-                return tag.split('}', 1)[1]
-            return tag
-
-        def convert_ttml_or_dfxp_to_srt(input_file, output_file):
-            try:
-                log_window.insert(tk.END, "Converting TTML/DFXP/ITT to SRT...\n")
-                tree = ET.parse(input_file)
-                root = tree.getroot()
-                captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == 'p']
-                with open(output_file, 'w', encoding='utf-8') as srt:
-                    for idx, caption in enumerate(captions, 1):
-                        begin = format_ttml_time(caption.attrib.get('begin'))
-                        end = format_ttml_time(caption.attrib.get('end'))
-                        def process_element(elem):
-                            text = ''
-                            tag = strip_namespace(elem.tag)
-                            end_tags = []
-                            # Handle start tags
-                            if tag == 'br':
-                                text += '\n'
-                            elif tag in ['b', 'i', 'u', 'font']:
-                                text += f"<{tag}>"
-                                end_tags.insert(0, f"</{tag}>")
-                            elif tag == 'span':
-                                style = elem.attrib.get('style', '')
-                                styles = style.strip().lower().split()
-                                for style_attr in styles:
-                                    if style_attr == 'bold':
-                                        text += '<b>'
-                                        end_tags.insert(0, '</b>')
-                                    elif style_attr == 'italic':
-                                        text += '<i>'
-                                        end_tags.insert(0, '</i>')
-                                    elif style_attr == 'underline':
-                                        text += '<u>'
-                                        end_tags.insert(0, '</u>')
-                                if 'color' in elem.attrib:
-                                    color = elem.attrib['color']
-                                    text += f'<font color="{color}">'
-                                    end_tags.insert(0, '</font>')
-                            # Add text content
-                            if elem.text:
-                                text += elem.text
-                            # Recursively process child elements
-                            for child in elem:
-                                text += process_element(child)
-                            # Handle end tags
-                            for end_tag in end_tags:
-                                text += end_tag
-                            # Add tail text
-                            if elem.tail:
-                                text += elem.tail
-                            return text
-                        # Process caption content
-                        text = process_element(caption)
-                        srt.write(f"{idx}\n")
-                        srt.write(f"{begin} --> {end}\n")
-                        srt.write(f"{text.strip()}\n\n")
-            except Exception as e:
-                log_window.insert(tk.END, f"Error converting TTML/DFXP/ITT to SRT: {e}\n")
-
-        def convert_vtt_to_srt(input_file, output_file):
-            try:
-                log_window.insert(tk.END, f"Converting VTT to SRT...\n")
-                with open(input_file, 'r', encoding='utf-8') as vtt, open(output_file, 'w', encoding='utf-8') as srt:
-                    srt_counter = 1
-                    allowed_tags = ['b', 'i', 'u', 'font']
-                    tag_pattern = re.compile(r'</?(?!' + '|'.join(allowed_tags) + r')\w+[^>]*>')
-
-                    for line in vtt:
-                        match = re.match(r'(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})', line)
-                        if match:
-                            start, end = match.groups()
-                            srt.write(f"{srt_counter}\n")
-                            srt.write(f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n")
-                            srt_counter += 1
-                            text = ""
-                            while True:
-                                try:
-                                    next_line = next(vtt).strip()
-                                except StopIteration:
-                                    break
-                                if not next_line:
-                                    break
-                                cleaned_line = tag_pattern.sub('', next_line)
-                                text += cleaned_line + "\n"
-                            srt.write(f"{text.strip()}\n\n")
-            except Exception as e:
-                log_window.insert(tk.END, f"Error converting VTT to SRT: {str(e)}\n")
-
-        def convert_sbv_to_srt(input_file, output_file):
-            try:
-                log_window.insert(tk.END, f"Converting SBV to SRT...\n")
-                with open(input_file, 'r', encoding='utf-8') as sbv, open(output_file, 'w', encoding='utf-8') as srt:
-                    srt_counter = 1
-                    allowed_tags = ['b', 'i', 'u', 'font']
-                    tag_pattern = re.compile(r'</?(?!' + '|'.join(allowed_tags) + r')\w+[^>]*>')
-
-                    while True:
-                        timestamps = sbv.readline().strip()
-                        if not timestamps:
-                            break
-                        text_lines = []
-                        while True:
-                            line = sbv.readline().strip()
-                            if not line:
-                                break
-                            cleaned_line = tag_pattern.sub('', line)
-                            text_lines.append(cleaned_line)
-                        start, end = timestamps.split(',')
-                        srt.write(f"{srt_counter}\n")
-                        srt.write(f"{format_sbv_time(start)} --> {format_sbv_time(end)}\n")
-                        srt.write('\n'.join(text_lines) + '\n\n')
-                        srt_counter += 1
-            except Exception as e:
-                log_window.insert(tk.END, f"Error converting SBV to SRT: {str(e)}\n")
-
-        def convert_stl_to_srt(input_file, output_file):
-            try:
-                log_window.insert(tk.END, f"Converting STL to SRT...\n")
-                with open(input_file, 'rb') as stl, open(output_file, 'w', encoding='utf-8') as srt:
-                    stl_data = stl.read()
-                    encoding = chardet.detect(stl_data)['encoding']
-                    lines = stl_data.decode(encoding).splitlines()
-                    srt_counter = 1
-                    for line in lines:
-                        parts = line.strip().split(',', 2)  # Split only on the first two commas
-                        if len(parts) >= 3:
-                            start = convert_stl_time(parts[0].strip())
-                            end = convert_stl_time(parts[1].strip())
-                            text = parts[2].strip().replace('| ', '\n').replace('|', '\n')  # Replace '|' with newline
-                            if text:  # Ensure text is not empty
-                                srt.write(f"{srt_counter}\n")
-                                srt.write(f"{start} --> {end}\n")
-                                srt.write(f"{text}\n\n")
-                                srt_counter += 1
-            except Exception as e:
-                log_window.insert(tk.END, f"Error converting STL to SRT: {str(e)}\n")
-
-        def format_ttml_time(timestamp):
-            # Remove 's' suffix if present
-            timestamp = timestamp.replace('s', '')
-            # Check for SMPTE format HH:MM:SS:FF
-            if timestamp.count(':') == 3:
-                try:
-                    hours, minutes, seconds, frames = map(int, timestamp.split(':'))
-                    frame_rate = 25  # Adjust frame rate as needed
-                    milliseconds = int((frames / frame_rate) * 1000)
-                    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
-                except ValueError:
-                    return timestamp
-            # Check if already in HH:MM:SS format
-            elif ':' in timestamp:
-                return timestamp.replace('.', ',')
-            # Convert from seconds to HH:MM:SS,mmm
-            else:
-                try:
-                    seconds = float(timestamp)
-                    hours = int(seconds // 3600)
-                    minutes = int((seconds % 3600) // 60)
-                    seconds = seconds % 60
-                    return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}".replace('.', ',')
-                except ValueError:
-                    return timestamp
-
-        def format_sub_time(time_str):
-            parts = re.split(r'[:.]', time_str)
-            h, m, s, ms = parts
-            ms = ms.ljust(3, '0')[:3]  # Pad with zeros on the right and truncate to three digits
-            return f"{int(h):02}:{int(m):02}:{int(s):02},{ms}"
-
-        def format_sbv_time(time_str):
-            h, m, s = time_str.split(':')
-            s = s.replace('.', ',')
-            return f"{int(h):02}:{int(m):02}:{s}"
-
-        def format_ass_time(time_str):
-            t = time_str.split(':')
-            hours = int(t[0])
-            minutes = int(t[1])
-            seconds = float(t[2])
-            return f"{hours:02}:{minutes:02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
-
-        def convert_stl_time(time_str):
-            h, m, s, f = map(int, time_str.split(':'))
-            total_seconds = h * 3600 + m * 60 + s + f / 30
-            ms = int((total_seconds - int(total_seconds)) * 1000)
-            return f"{int(total_seconds)//3600:02}:{(int(total_seconds)%3600)//60:02}:{int(total_seconds)%60:02},{ms:03}"
-        # Convert subtitles to SRT End
-
+        
+    def run_subprocess():
+        global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file
         # .ass and .ssa excluded because ffsubsync can work with them.
         if subtitle_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
             subtitle_file = convert_to_srt(subtitle_file)
@@ -1143,11 +1959,12 @@ def start_automatic_sync():
         adjusted_value = min(97, max(1, value))
         progress_bar["value"] = adjusted_value
     try:
-        label_subtitle.grid_remove()
-        label_video.grid_remove()
+        subtitle_input.grid_remove()
+        video_input.grid_remove()
+        button_start_automatic_sync.grid_remove()
+        batch_mode_button.grid_remove()
         check_save_to_desktop_auto.grid_remove()
         check_replace_original_auto.grid_remove()
-        button_start_automatic_sync.grid_remove()
         ffsubsync_option_gss.grid_remove()
         ffsubsync_option_vad.grid_remove()
         ffsubsync_option_framerate.grid_remove()
@@ -1185,22 +2002,24 @@ def start_automatic_sync():
         button_generate_again.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
         log_window.config(font=("Arial", 7))
-        log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew")
+        log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         progress_bar = ttk.Progressbar(automatic_tab, orient="horizontal", length=200, mode="determinate")
-        progress_bar.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="ew")
+        progress_bar.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="ew", columnspan=2)
         root.update_idletasks()
         threading.Thread(target=run_subprocess).start()
     except Exception as e:
         log_message(f"Error occurred: {e}", "error", tab='auto')
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
+    automatic_tab.columnconfigure(0, weight=1)
+# Start automatic sync end
 label_message_auto = tk.Label(automatic_tab, text="", fg="black", anchor="center")
-label_subtitle = tk.Label(automatic_tab, text="Drag and drop the unsynchronized subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
-label_video = tk.Label(automatic_tab, text="Drag and drop video or reference subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
-label_video_text = tk.Label(automatic_tab, text="Video/Reference subtitle", fg="black", relief="ridge", padx=5, borderwidth=1)
-label_video_text.place(in_=label_video, relx=0, rely=0, anchor="nw")
-label_subtitle_text = tk.Label(automatic_tab, text="Subtitle", fg="black", relief="ridge", padx=5, borderwidth=1) 
-label_subtitle_text.place(in_=label_subtitle, relx=0, rely=0, anchor="nw")
+subtitle_input = tk.Label(automatic_tab, text="Drag and drop the unsynchronized subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
+video_input = tk.Label(automatic_tab, text="Drag and drop video or reference subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
+video_input_text = tk.Label(automatic_tab, text="Video/Reference subtitle", fg="black", relief="ridge", padx=5, borderwidth=1)
+video_input_text.place(in_=video_input, relx=0, rely=0, anchor="nw")
+subtitle_input_text = tk.Label(automatic_tab, text="Subtitle", fg="black", relief="ridge", padx=5, borderwidth=1) 
+subtitle_input_text.place(in_=subtitle_input, relx=0, rely=0, anchor="nw")
 button_start_automatic_sync = tk.Button(
     automatic_tab,
     text="Start Automatic Sync",
@@ -1230,29 +2049,49 @@ tooltip_ffsubsync_option_gss = ToolTip(ffsubsync_option_gss, TOOLTIP_GSS)
 tooltip_ffsubsync_option_vad = ToolTip(ffsubsync_option_vad, TOOLTIP_VAD)
 tooltip_save_to_desktop = ToolTip(check_save_to_desktop_auto, TOOLTIP_SAVE_TO_DESKTOP)
 tooltip_replace_original = ToolTip(check_replace_original_auto, TOOLTIP_REPLACE_ORIGINAL)
-label_video.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
-label_subtitle.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
+video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
+subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
 ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
 ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
 ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-button_start_automatic_sync.grid(row=5, column=0, padx=10, pady=10, sticky="ew", columnspan=2)
 check_save_to_desktop_auto.grid(row=6, column=0, columnspan=5, padx=10, pady=5, sticky="w")
-check_replace_original_auto.grid(row=6, column=1, columnspan=5, padx=10, pady=5, sticky="w")
-label_subtitle.drop_target_register(DND_FILES)
-label_subtitle.dnd_bind('<<Drop>>', on_subtitle_drop)
-label_subtitle.bind("<Button-1>", browse_subtitle)
-label_subtitle.bind("<Enter>", on_enter)
-label_subtitle.bind("<Leave>", on_leave)
-label_video.drop_target_register(DND_FILES)
-label_video.dnd_bind('<<Drop>>', on_video_drop)
-label_video.bind("<Button-1>", browse_video)
-label_video.bind("<Enter>", on_enter)
-label_video.bind("<Leave>", on_leave)
+check_replace_original_auto.grid(row=6, column=1, columnspan=5, padx=10, pady=5, sticky="e")
+subtitle_input.drop_target_register(DND_FILES)
+automatic_tab.columnconfigure(1, weight=1)
+batch_mode_var = tk.BooleanVar()
+batch_mode_button = tk.Button(
+    automatic_tab,
+    text="Batch Mode",
+    command=toggle_batch_mode,
+    padx=10,
+    pady=10,
+    fg="white",
+    bg="slate blue",  # Different color for Batch Mode
+    activebackground="SlateBlue4",
+    activeforeground="white",
+    relief=tk.RAISED,
+    borderwidth=2,
+    cursor="hand2"
+)
+batch_mode_button.grid(row=5, column=0, padx=(10,2.5), pady=10, sticky="w")
+# Ensure button_start_automatic_sync is set to expand horizontally
+button_start_automatic_sync.grid(row=5, column=1, padx=(2.5,10), pady=10, sticky="ew")
+subtitle_input.dnd_bind('<<Drop>>', on_subtitle_drop)
+subtitle_input.bind("<Button-1>", browse_subtitle)
+subtitle_input.bind("<Enter>", on_enter)
+subtitle_input.bind("<Leave>", on_leave)
+video_input.drop_target_register(DND_FILES)
+video_input.dnd_bind('<<Drop>>', on_video_drop)
+video_input.bind("<Button-1>", browse_video)
+video_input.bind("<Enter>", on_enter)
+video_input.bind("<Leave>", on_leave)
 label_message_auto.bind("<Configure>", update_wraplengt)
-label_video.bind("<Configure>", update_wraplengt)
-label_subtitle.bind("<Configure>", update_wraplengt)
-automatic_tab.rowconfigure(0, weight=1)
+video_input.bind("<Configure>", update_wraplengt)
+subtitle_input.bind("<Configure>", update_wraplengt)
+# Configure columns in automatic_tab
 automatic_tab.rowconfigure(1, weight=1)
+automatic_tab.columnconfigure(0, weight=0)
+automatic_tab.columnconfigure(1, weight=1)
 # ---------------- Automatic Tab ---------------- #
 
 # ---------------- Manual Tab ---------------- #
@@ -1329,7 +2168,6 @@ tooltip_save_to_desktop = ToolTip(check_save_to_desktop, TOOLTIP_SAVE_TO_DESKTOP
 tooltip_replace_original = ToolTip(check_replace_original, TOOLTIP_REPLACE_ORIGINAL)
 tooltip_milliseconds = ToolTip(entry_milliseconds, "1 second = 1000ms")
 # ---------------- Manual Tab ---------------- #
-
 root.update_idletasks()
 # Place the window at the top right corner of the screen
 place_window_top_right()
