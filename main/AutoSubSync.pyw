@@ -1690,7 +1690,7 @@ def browse_video(event=None):
             video_input.config(bg="lightgray")
 
 def on_video_drop(event):
-    files = event.data.strip("{}").split()
+    files = event.widget.tk.splitlist(event.data)
     if len(files) != 1:
         log_message("Please drop single video or subtitle file.", "error", tab='auto')
         return
@@ -1712,7 +1712,7 @@ def on_video_drop(event):
         log_message("Please drop a video or subtitle.", "error", tab='auto')
 
 def on_subtitle_drop(event):
-    files = event.data.strip("{}").split()
+    files = event.widget.tk.splitlist(event.data)
     if len(files) != 1:
         log_message("Please drop single subtitle file.", "error", tab='auto')
         return
