@@ -1498,13 +1498,9 @@ def remove_selected_item():
             if treeview.exists(selected_item):
                 parent_id = treeview.parent(selected_item)
                 if parent_id:
-                    # Check if the parent item has "[no video]" text
-                    parent_text = treeview.item(parent_id, "text")
-                    if parent_text == "[no video]":
-                        treeview.delete(parent_id)
-                    else:
-                        treeview.item(selected_item, text="[no subtitle]")
-                        # Update the tags of the parent item to "incomplete"
+                    treeview.delete(selected_item)
+                    if not treeview.get_children(parent_id):
+                        treeview.insert(parent_id, "end", text="[no subtitle]", values=("",))
                         treeview.item(parent_id, tags=("incomplete",))
                 else:
                     treeview.delete(selected_item)
