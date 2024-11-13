@@ -1196,8 +1196,8 @@ def toggle_batch_mode():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
-            batch_mode_button.config(text="Batch Mode", bg="slate blue", activebackground="SlateBlue4")
-            button_start_automatic_sync.config(text="Start Automatic Sync", bg="#007FFF", activebackground="#0061c2", command=start_automatic_sync)
+            batch_mode_button.config(text="Batch Mode", bg="gray50", activebackground="gray40")
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg="dodger blue", activebackground="DodgerBlue3", command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             batch_input.grid_remove()
@@ -1206,8 +1206,8 @@ def toggle_batch_mode():
             root.update_idletasks()
         else:
             batch_mode_var.set(True)
-            batch_mode_button.config(text="Normal Mode", bg="#007FFF", activebackground="#0061c2")
-            button_start_automatic_sync.config(text="Start Batch Sync", bg="slate blue", activebackground="SlateBlue4", command=start_batch_sync)
+            batch_mode_button.config(text="Normal Mode", bg="gray50", activebackground="gray40")
+            button_start_automatic_sync.config(text="Start Batch Sync", bg="light slate blue", activebackground="SlateBlue3", command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
@@ -1216,8 +1216,8 @@ def toggle_batch_mode():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
-            batch_mode_button.config(text="Batch Mode", bg="slate blue", activebackground="SlateBlue4")
-            button_start_automatic_sync.config(text="Start Automatic Sync", bg="#007FFF", activebackground="#0061c2", command=start_automatic_sync)
+            batch_mode_button.config(text="Batch Mode", bg="gray50", activebackground="gray40")
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg="dodger blue", activebackground="DodgerBlue3", command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             batch_input.grid_remove()
@@ -1226,8 +1226,8 @@ def toggle_batch_mode():
             root.update_idletasks()
         else:
             batch_mode_var.set(True)
-            batch_mode_button.config(text="Normal Mode", bg="#007FFF", activebackground="#0061c2")
-            button_start_automatic_sync.config(text="Start Batch Sync", bg="slate blue", activebackground="SlateBlue4", command=start_batch_sync)
+            batch_mode_button.config(text="Normal Mode", bg="gray50", activebackground="gray40")
+            button_start_automatic_sync.config(text="Start Batch Sync", bg="light slate blue", activebackground="SlateBlue3", command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
@@ -2023,8 +2023,8 @@ button_start_automatic_sync = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="#007FFF",
-    activebackground="#0061c2",
+    bg="dodger blue",
+    activebackground="DodgerBlue3",
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2062,8 +2062,8 @@ batch_mode_button = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="slate blue",  # Different color for Batch Mode
-    activebackground="SlateBlue4",
+    bg="gray50",  # Different color for Batch Mode
+    activebackground="gray40",
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2130,8 +2130,8 @@ button_sync = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="#00a31e",
-    activebackground="#007d17",
+    bg="#00b503",
+    activebackground="#009602",
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
