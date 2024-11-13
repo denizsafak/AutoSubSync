@@ -1,5 +1,5 @@
 # AutoSubSync: Automatic / Manual Subtitle Synchronization Tool
-AutoSubSync is a Python-based application designed to effortlessly synchronize subtitle files by shifting them by a specified number of milliseconds or automatically syncing them. Whether you need to adjust subtitles for a movie or a video, this tool offers a simple and intuitive interface to perform the task efficiently.
+AutoSubSync is a Python-based application designed to effortlessly synchronize subtitle files by shifting them by a specified number of milliseconds or automatically syncing them. Whether you need to adjust subtitles for a movie or a video, this subtitle sync fixing tool offers a simple and intuitive interface to perform the task efficiently.
 
 <img title="AutoSubSync" src='images/AutoSubSync1.png'><img title="AutoSubSync" src='images/AutoSubSync2.png'><img title="AutoSubSync" src='images/AutoSubSync3.png'><img title="AutoSubSync" src='images/AutoSubSync4.png'>
 
@@ -38,4 +38,4 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 > [!NOTE]
 > - This script is primarily intended for Windows. Adaptations might be needed for other operating systems.
 
-> Tags: automatic subtitle synchronization, autosubsync, automatic sub sync, subtitle synchronization, subtitle shifter, subtitle adjuster, subtitle tools, subtitle utilities, synchronize subtitles, adjust subtitle timing, subtitle management, Python subtitle tool, subtitle manipulation, subtitle synchronization script.
+> Tags: automatic subtitle synchronization, autosubsync, automatic sub sync, subtitle synchronization, subtitle shifter, subtitle adjuster, subtitle tools, subtitle utilities, synchronize subtitles, adjust subtitle timing, subtitle management, Python subtitle tool, subtitle manipulation, subtitle synchronization script, subtitle sync fixing, subtitle sync fix, fix subtitle sync.
