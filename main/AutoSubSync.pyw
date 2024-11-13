@@ -898,8 +898,6 @@ def start_batch_sync():
     if not tree_items:
         log_message("No files to sync. Please add files to the batch list.", "error", tab='auto')
         return
-
-    # Step 1: Count valid pairs
     valid_pairs = 0
     for parent in tree_items:
         parent_values = treeview.item(parent, "values")
@@ -954,7 +952,6 @@ def start_batch_sync():
         root.update_idletasks()
 
     def generate_again():
-        # Clear all tree items
         treeview.delete(*treeview.get_children())
         batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
         tree_frame.grid_remove()
@@ -1096,7 +1093,6 @@ def start_batch_sync():
                     log_window.insert(tk.END, f"Failed to start process: {e}\n")
                     log_message(f"Failed to start process: {e}", "error", tab='auto')
                     continue
-
                 for output in process.stdout:
                     if cancel_flag:
                         process.kill()
@@ -1135,7 +1131,6 @@ def start_batch_sync():
         log_window.grid(pady=(10, 10), rowspan=2)
         button_generate_again.grid()  # Show the Generate Again button
         progress_bar.grid_remove()
-
     try:
         batch_input.grid_remove()
         tree_frame.grid_remove()
@@ -1191,56 +1186,72 @@ def start_batch_sync():
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
 
+# Global variable to store options state
+options_states = {}
 def toggle_batch_mode():
+    global options_states
     if treeview.get_children():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
             batch_mode_button.config(text="Batch Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Automatic Sync", bg="dodger blue", activebackground="DodgerBlue3", command=start_automatic_sync)
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg="royal blue", activebackground="RoyalBlue3", command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             batch_input.grid_remove()
             tree_frame.grid_remove()
             automatic_tab.rowconfigure(1, weight=1)
             root.update_idletasks()
+            # Restore options state
+            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+                if options_states.get(option) == 'disabled':
+                    option.config(state='disabled')
+            options_states = {}
         else:
             batch_mode_var.set(True)
             batch_mode_button.config(text="Normal Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Batch Sync", bg="light slate blue", activebackground="SlateBlue3", command=start_batch_sync)
+            button_start_automatic_sync.config(text="Start Batch Sync", bg="#b05958", activebackground="#a15150", command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
             tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+            # Enable options if disabled
+            options_states = {}
+            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+                if option.cget('state') == 'disabled':
+                    options_states[option] = 'disabled'
+                    option.config(state='normal')
     else:
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
             batch_mode_button.config(text="Batch Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Automatic Sync", bg="dodger blue", activebackground="DodgerBlue3", command=start_automatic_sync)
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg="royal blue", activebackground="RoyalBlue3", command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             batch_input.grid_remove()
             tree_frame.grid_remove()
             automatic_tab.rowconfigure(1, weight=1)
             root.update_idletasks()
+            # Restore options state
+            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+                if options_states.get(option) == 'disabled':
+                    option.config(state='disabled')
+            options_states = {}
         else:
             batch_mode_var.set(True)
             batch_mode_button.config(text="Normal Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Batch Sync", bg="light slate blue", activebackground="SlateBlue3", command=start_batch_sync)
+            button_start_automatic_sync.config(text="Start Batch Sync", bg="#b05958", activebackground="#a15150", command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
             tree_frame.grid_remove()
-
-def browse_batch(event=None):
-    paths = filedialog.askopenfilenames(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
-    if paths:
-        process_files(paths)
-
-def on_batch_drop(event):
-    filepaths = automatic_tab.tk.splitlist(event.data)
-    process_files(filepaths)
+            # Enable options if disabled
+            options_states = {}
+            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+                if option.cget('state') == 'disabled':
+                    options_states[option] = 'disabled'
+                    option.config(state='normal')
 
 def process_files(filepaths):
     subtitle_files = []
@@ -1374,6 +1385,21 @@ def process_files(filepaths):
     if messages:
         log_message(" and ".join(messages) + ".", "info", tab='auto')
 
+# Function to select a folder
+def select_folder():
+    folder_path = filedialog.askdirectory()
+    if folder_path:
+        process_files([folder_path])
+        
+def browse_batch(event=None):
+    paths = filedialog.askopenfilenames(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    if paths:
+        process_files(paths)
+
+def on_batch_drop(event):
+    filepaths = automatic_tab.tk.splitlist(event.data)
+    process_files(filepaths)
+
 def add_pair():
     video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
     if video_file:
@@ -1381,15 +1407,15 @@ def add_pair():
         if subtitle_file:
             video_name = os.path.basename(video_file)
             subtitle_name = os.path.basename(subtitle_file)
-            pair = (video_file.lower(), subtitle_file.lower())
-            # Check for duplicates based on full file paths
+            pair = (os.path.normpath(video_file.lower()), os.path.normpath(subtitle_file.lower()))
+            # Check for duplicates based on normalized full file paths
             for parent in treeview.get_children():
                 existing_video = treeview.item(parent, "values")
-                if existing_video and existing_video[0].lower() == pair[0]:
+                if existing_video and os.path.normpath(existing_video[0].lower()) == pair[0]:
                     subtitles = treeview.get_children(parent)
                     for sub in subtitles:
                         existing_sub = treeview.item(sub, "values")
-                        if existing_sub and existing_sub[0].lower() == pair[1]:
+                        if existing_sub and os.path.normpath(existing_sub[0].lower()) == pair[1]:
                             log_message("This pair already exists.", "error", tab='auto')
                             return
             parent_id = treeview.insert("", "end", text=video_name, values=(video_file,), open=True)
@@ -1615,11 +1641,6 @@ button_remove_item = tk.Button(
 style = ttk.Style()
 style.configure("Treeview", rowheight=25)
 style.map("Treeview", background=[('selected', 'steel blue')])
-# Function to select a folder
-def select_folder():
-    folder_path = filedialog.askdirectory()
-    if folder_path:
-        process_files([folder_path])
 # Replace the "Add Pair" button with a Menubutton
 button_options = tk.Menubutton(
     tree_frame,
@@ -1768,6 +1789,7 @@ def start_automatic_sync():
         else:
             log_message("No synchronization process to cancel.", "error", tab='auto')
         restore_window()
+        
     def cancel_process_on_window_close ():
         if process:
             cancel_automatic_sync()
@@ -1890,7 +1912,6 @@ def start_automatic_sync():
             subtitle_file = convert_to_srt(subtitle_file)
         if video_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
             video_file = convert_to_srt(video_file)
-
         try:
             # FFSUBSYNC CAN ONLY OUTPUT .ASS AND .SRT, SO THIS IS NECESSARY.
             if not output_subtitle_file.lower().endswith(('.srt', '.ass', '.ssa')):
@@ -2023,8 +2044,8 @@ button_start_automatic_sync = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="dodger blue",
-    activebackground="DodgerBlue3",
+    bg="royal blue",
+    activebackground="RoyalBlue3",
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2130,8 +2151,8 @@ button_sync = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="#00b503",
-    activebackground="#009602",
+    bg="#34853a",
+    activebackground="#2f7834",
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
