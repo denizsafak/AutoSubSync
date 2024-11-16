@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
+import ctypes
 # Program information
 PROGRAM_NAME = "AutoSubSync"
 VERSION = "v2.6"
@@ -38,7 +39,7 @@ TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attemp
 FFSUBSYNC_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa']
 SUBTITLE_EXTENSIONS = ['.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl']
 VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc']
-
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
 os.chdir(os.path.dirname(__file__))
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
