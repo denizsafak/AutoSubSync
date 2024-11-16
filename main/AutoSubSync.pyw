@@ -8,8 +8,37 @@ import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
-program_name = "AutoSubSync"
-version = "v2.5"
+# Program information
+PROGRAM_NAME = "AutoSubSync"
+VERSION = "v2.6"
+GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
+# Colors
+DEFULT_BUTTON_COLOR = "gray50"
+DEFAULT_BUTTON_COLOR_ACTIVE = "gray40"
+BUTTON_COLOR_MANUAL = "#32993a"
+BUTTON_COLOR_MANUAL_ACTIVE = "#2d8a35"
+BUTTON_COLOR_AUTO = "royal blue"
+BUTTON_COLOR_AUTO_ACTIVE = "RoyalBlue3"
+BUTTON_COLOR_BATCH = "#b05958"
+BUTTON_COLOR_BATCH_ACTIVE = "#a15150"
+BUTTON_COLOR_BATCH_OPTIONS = "gray80"
+BUTTON_COLOR_BATCH_OPTIONS_ACTIVE = "gray70"
+COLOR_PRIMARY = "#C0C0C0"       # Inactive tab color
+COLOR_SECONDARY = "#707070"     # Active tab color
+COLOR_BACKGROUND = "SystemButtonFace"    # Background color
+COLOR_TEXT = "black"            # Text color
+COLOR_PROGRESSBAR = "#00a31e"  # Bright green color for progress bar
+# Tooltip texts for checkboxes
+TOOLTIP_SAVE_TO_DESKTOP = "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the original subtitle's folder."
+TOOLTIP_REPLACE_ORIGINAL = "Check this box if you want to replace the original subtitle file with the new one. Please be careful. It will overwrite the current subtitle."
+TOOLTIP_GSS = "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)"
+TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases."
+TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync."
+# File extensions
+FFSUBSYNC_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa']
+SUBTITLE_EXTENSIONS = ['.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl']
+VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc']
+
 os.chdir(os.path.dirname(__file__))
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
@@ -324,7 +353,7 @@ def sync_subtitle():
 def on_drop(event):
     filepath = event.data.strip("{}")  # Remove curly braces from the path
     # Check if the dropped file has the .srt extension
-    if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+    if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
         label_drop_box.config(text=filepath, font=("Calibri", 10, "bold"))
         label_drop_box.tooltip_text = filepath
         label_drop_box.config(bg="lightgreen")  # Change background color to light green
@@ -334,7 +363,7 @@ def on_drop(event):
         label_drop_box.config(bg="lightgray")  # Restore background color to light gray
 
 def browse_file(event=None):
-    subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")])
+    subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
     if subtitle_file:
         label_drop_box.config(text=subtitle_file, font=("Calibri", 10, "bold"))
         label_drop_box.tooltip_text = subtitle_file
@@ -367,7 +396,6 @@ def select_subtitle_at_startup():
             log_message("Multiple arguments provided. Please provide only one subtitle file path.", "error", tab='manual')
             label_drop_box.config(bg="lightgray")
         else:
-            print(sys.argv[1])
             log_message("Invalid file format. Please provide a subtitle file.", "error", tab='manual')
             label_drop_box.config(bg="lightgray")
 
@@ -551,14 +579,8 @@ def on_manual_tab_selected(event=None):
     if not entry_milliseconds.get():
         entry_milliseconds.insert(0, "0")
 
-# Define tooltip text for checkboxes
-TOOLTIP_SAVE_TO_DESKTOP = "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the original subtitle's folder."
-TOOLTIP_REPLACE_ORIGINAL = "Check this box if you want to replace the original subtitle file with the new one. Please be careful. It will overwrite the current subtitle."
-TOOLTIP_GSS = "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)"
-TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases."
-TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync."
 root = TkinterDnD.Tk()
-root.title(program_name +" "+version)
+root.title(PROGRAM_NAME +" "+VERSION)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)  # Allow label_drop_box to fill empty space
 root.withdraw() # Hide the window while it's being built
@@ -580,16 +602,10 @@ tab_control.add(manual_tab, text='Manual Sync')
 tab_control.grid(row=0, column=0, sticky="nsew")
 # Add "GitHub" label on the right side of the tabs
 github_label = ttk.Label(root, text="GitHub", cursor="hand2", foreground="#007FFF", background="SystemButtonFace", underline=True)
-github_label.bind("<Button-1>", lambda event: os.system("start https://github.com/denizsafak/AutoSubSync"))
+github_label.bind("<Button-1>", lambda event: os.system("start "+GITHUB_URL))
 github_label.grid(row=0, column=0, sticky="ne", padx=10, pady=(10,0))
 # Customizing the style of the tabs
 style = ttk.Style()
-# Define colors
-COLOR_PRIMARY = "#C0C0C0"       # Inactive tab color
-COLOR_SECONDARY = "#707070"     # Active tab color
-COLOR_BACKGROUND = "SystemButtonFace"    # Background color
-COLOR_TEXT = "black"            # Text color
-COLOR_PROGRESSBAR = "#00a31e"  # Bright green color for progress bar
 # Set custom theme
 style.theme_create("custom", parent="alt", settings={
     "TNotebook": {
@@ -971,6 +987,8 @@ def start_batch_sync():
 
     def run_batch_process():
         nonlocal completed_items
+        subtitles_to_skip = set() 
+        subtitles_to_process = []
         for parent in tree_items:
             if cancel_flag:
                 restore_window()
@@ -999,12 +1017,71 @@ def start_batch_sync():
                 elif not values:
                     log_window.insert(tk.END, "\nUnpaired item skipped.\n")
                     continue
+                # Prepare output file path
+                if save_to_desktop_var_auto.get():
+                    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+                    base_output_dir = desktop_path
+                elif replace_original_var_auto.get():
+                    base_output_dir = os.path.dirname(subtitle_file)
+                else:
+                    base_output_dir = os.path.dirname(subtitle_file)
+
+                base_name, original_ext = os.path.splitext(os.path.basename(subtitle_file))
+                # Determine output extension
+                if original_ext.lower() in FFSUBSYNC_SUPPORTED_EXTENSIONS:
+                    output_ext = original_ext
+                else:
+                    output_ext = '.srt'
+                output_subtitle_file = os.path.join(base_output_dir, f"autosync_{base_name}{output_ext}")
+                # Check for existing autosync files
+                # and optionally ending with '_2', '_3', etc.
+                autosync_pattern = rf'^autosync_{re.escape(base_name)}(?:_\d+)?{re.escape(output_ext)}$'
+                synced_files = [f for f in os.listdir(base_output_dir) if re.match(autosync_pattern, f)]
+                if synced_files:
+                    subtitles_to_skip.add(subtitle_file)
+                else:
+                    subtitles_to_process.append((subtitle_file, video_file))
+        # Prompt the user
+        count = len(subtitles_to_skip)
+        if count > 0:
+            skip = messagebox.askyesno(
+                "Already Synced Files Detected",
+                f"Detected {count} subtitle(s) already synced, because there are subtitles that have 'autosync_' prefix in the same folder with same filenames. Do you want to skip processing them?\n\n(Even if you say no, your existing subtitles will not be overwritten. The subtitle will be saved with different name.)"
+            )
+        else:
+            skip = False
+        for parent in tree_items:
+            if cancel_flag:
+                restore_window()
+                return
+            parent_values = treeview.item(parent, "values")
+            if not parent_values:
+                continue
+            video_file = parent_values[0] if len(parent_values) > 0 else ""
+            subtitles = treeview.get_children(parent)
+            for sub in subtitles:
+                if cancel_flag:
+                    restore_window()
+                    return
+                values = treeview.item(sub, "values")
+                subtitle_file = values[0] if len(values) > 0 else ""
+                if not subtitle_file and not video_file:
+                    continue
+                elif not subtitle_file:
+                    continue
+                elif not video_file:
+                    continue
+                elif not values:
+                    continue
+                if subtitle_file in subtitles_to_skip and skip:
+                    log_window.insert(tk.END, f"Skipping {os.path.basename(subtitle_file)}: Already synced.\n")
+                    continue
                 # Convert files if necessary
                 def convert_to_srt(subtitle_file):
                     file_extension = os.path.splitext(subtitle_file)[-1].lower()
-                    base_name = os.path.basename(os.path.splitext(subtitle_file)[0])
-                    srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
-                    log_window.insert(tk.END, f"Preparing {base_name}{file_extension} for automatic sync...\n")
+                    original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
+                    srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + original_base_name + '.srt')
+                    log_window.insert(tk.END, f"Preparing {original_base_name}{file_extension} for automatic sync...\n")
                     converters = {
                         '.ttml': convert_ttml_or_dfxp_to_srt,
                         '.dfxp': convert_ttml_or_dfxp_to_srt,
@@ -1031,8 +1108,10 @@ def start_batch_sync():
                         return None
                 def convert_files():
                     nonlocal subtitle_file, video_file
+                    original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]  # Store original base name
                     # Convert subtitle file if necessary
-                    if subtitle_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
+                    unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in FFSUBSYNC_SUPPORTED_EXTENSIONS]
+                    if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
                         subtitle_file_converted = convert_to_srt(subtitle_file)
                         if subtitle_file_converted:
                             subtitle_file = subtitle_file_converted
@@ -1040,34 +1119,56 @@ def start_batch_sync():
                             log_window.insert(tk.END, f"Failed to convert subtitle file: {subtitle_file}\n")
                             return False
                     # Convert video file if necessary
-                    if video_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
+                    if video_file.lower().endswith(tuple(unsupported_extensions)):
                         video_file_converted = convert_to_srt(video_file)
                         if video_file_converted:
                             video_file = video_file_converted
                         else:
                             log_window.insert(tk.END, f"Failed to convert video/reference file: {video_file}\n")
                             return False
-                    return True
-                if not convert_files():
+                    return original_base_name  # Return original base name
+                original_base_name = convert_files()
+                if not original_base_name:
                     continue
-                # Prepare output file path
+                # Prepare output file path using original base name
                 if save_to_desktop_var_auto.get():
                     desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-                    output_subtitle_file = os.path.join(desktop_path, f"autosync_{os.path.basename(subtitle_file)}")
+                    base_output_dir = desktop_path
                 elif replace_original_var_auto.get():
-                    output_subtitle_file = subtitle_file
+                    base_output_dir = os.path.dirname(subtitle_file)
                 else:
-                    output_subtitle_file = os.path.join(os.path.dirname(subtitle_file), f"autosync_{os.path.basename(subtitle_file)}")
-                if os.path.exists(output_subtitle_file) and not replace_original_var_auto.get():
-                    replace_confirmation = tk.messagebox.askyesno("File Exists",
-                                                                 f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?")
+                    base_output_dir = os.path.dirname(subtitle_file)
+                # Determine output extension
+                original_ext = os.path.splitext(subtitle_file)[1].lower()
+                if original_ext in FFSUBSYNC_SUPPORTED_EXTENSIONS:
+                    output_ext = original_ext
+                else:
+                    output_ext = '.srt'
+                output_subtitle_file = os.path.join(base_output_dir, f"autosync_{original_base_name}{output_ext}")
+                # Handle autosync suffix
+                if not skip:
+                    # Updated regex pattern to match filenames starting with 'autosync_' followed by the base name
+                    # and ending with '_2', '_3', etc.
+                    autosync_pattern = rf'^autosync_{re.escape(original_base_name)}(?:_\d+)?{re.escape(output_ext)}$'
+                    suffix = 2
+                    while os.path.exists(output_subtitle_file):
+                        output_subtitle_file = os.path.join(
+                            base_output_dir,
+                            f"autosync_{original_base_name}_{suffix}{output_ext}"
+                        )
+                        suffix += 1
+                if os.path.exists(output_subtitle_file) and replace_original_var_auto.get():
+                    replace_confirmation = messagebox.askyesno(
+                        "File Exists",
+                        f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?"
+                    )
                     if not replace_confirmation:
                         log_window.insert(tk.END, f"Skipping {os.path.basename(subtitle_file)}: Output file exists.\n")
                         continue
-                if not output_subtitle_file.lower().endswith(('.srt', '.ass', '.ssa')):
+                if not output_subtitle_file.lower().endswith(tuple(FFSUBSYNC_SUPPORTED_EXTENSIONS)):
                     output_subtitle_file = os.path.splitext(output_subtitle_file)[0] + '.srt'
                 cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
-                if not video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                     if ffsubsync_option_framerate_var.get():
                         cmd += " --no-fix-framerate"
                     if ffsubsync_option_gss_var.get():
@@ -1076,7 +1177,8 @@ def start_batch_sync():
                         cmd += " --vad=auditok"
                 log_window.insert(tk.END, f"\n[{completed_items + 1}/{total_items}] Syncing {os.path.basename(subtitle_file)} with {os.path.basename(video_file)}...\n")
                 try:
-                    if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                    progress_bar["value"] += 1
+                    if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         log_window.insert(tk.END, "Using reference subtitle for syncing...\n")
                     else:
                         log_window.insert(tk.END, "Using video for syncing...\n")
@@ -1087,7 +1189,10 @@ def start_batch_sync():
                         if ffsubsync_option_vad_var.get():
                             log_window.insert(tk.END, "Enabled: Using auditok instead of WebRTC's VAD.\n") 
                     log_window.insert(tk.END, "Syncing started:\n")
-                    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+                    process = subprocess.Popen(
+                        cmd, shell=True, stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT, universal_newlines=True
+                    )
                     process_list.append(process)
                 except Exception as e:
                     log_window.insert(tk.END, f"Failed to start process: {e}\n")
@@ -1149,8 +1254,8 @@ def start_batch_sync():
             padx=10,
             pady=10,
             fg="white",
-            bg="#707070",
-            activebackground="#616161",
+            bg=DEFULT_BUTTON_COLOR,
+            activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
             activeforeground="white",
             relief=tk.RAISED,
             borderwidth=2,
@@ -1164,8 +1269,8 @@ def start_batch_sync():
             padx=10,
             pady=10,
             fg="white",
-            bg="#007FFF",
-            activebackground="#0061c2",
+            bg=BUTTON_COLOR_AUTO,
+            activebackground=BUTTON_COLOR_AUTO_ACTIVE,
             activeforeground="white",
             relief=tk.RAISED,
             borderwidth=2,
@@ -1185,7 +1290,6 @@ def start_batch_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
-
 # Global variable to store options state
 options_states = {}
 def toggle_batch_mode():
@@ -1194,8 +1298,8 @@ def toggle_batch_mode():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
-            batch_mode_button.config(text="Batch Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Automatic Sync", bg="royal blue", activebackground="RoyalBlue3", command=start_automatic_sync)
+            batch_mode_button.config(text="Batch Mode", bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg=BUTTON_COLOR_AUTO, activebackground=BUTTON_COLOR_AUTO_ACTIVE, command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             batch_input.grid_remove()
@@ -1209,8 +1313,8 @@ def toggle_batch_mode():
             options_states = {}
         else:
             batch_mode_var.set(True)
-            batch_mode_button.config(text="Normal Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Batch Sync", bg="#b05958", activebackground="#a15150", command=start_batch_sync)
+            batch_mode_button.config(text="Normal Mode", bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text="Start Batch Sync", bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
@@ -1225,8 +1329,8 @@ def toggle_batch_mode():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
-            batch_mode_button.config(text="Batch Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Automatic Sync", bg="royal blue", activebackground="RoyalBlue3", command=start_automatic_sync)
+            batch_mode_button.config(text="Batch Mode", bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text="Start Automatic Sync", bg=BUTTON_COLOR_AUTO, activebackground=BUTTON_COLOR_AUTO_ACTIVE, command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             batch_input.grid_remove()
@@ -1240,8 +1344,8 @@ def toggle_batch_mode():
             options_states = {}
         else:
             batch_mode_var.set(True)
-            batch_mode_button.config(text="Normal Mode", bg="gray50", activebackground="gray40")
-            button_start_automatic_sync.config(text="Start Batch Sync", bg="#b05958", activebackground="#a15150", command=start_batch_sync)
+            batch_mode_button.config(text="Normal Mode", bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text="Start Batch Sync", bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
@@ -1262,14 +1366,14 @@ def process_files(filepaths):
             for root, _, files in os.walk(filepath):
                 for file in files:
                     full_path = os.path.join(root, file)
-                    if full_path.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+                    if full_path.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         subtitle_files.append(full_path)
-                    elif full_path.lower().endswith(('.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+                    elif full_path.lower().endswith(tuple(VIDEO_EXTENSIONS)):
                         video_files.append(full_path)
         else:
-            if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+            if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 subtitle_files.append(filepath)
-            elif filepath.lower().endswith(('.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+            elif filepath.lower().endswith(tuple(VIDEO_EXTENSIONS)):
                 video_files.append(filepath)
     # Check if there are any video or subtitle files
     if not subtitle_files and not video_files:
@@ -1302,13 +1406,13 @@ def process_files(filepaths):
         subtitle_file = None
         if video_file:
             video_dir = os.path.dirname(video_file)
-            # First, check if there is a subtitle in the same directory with the same name as the video
+            # Check if there is a subtitle in the same directory with the same name as the video
             base_name = os.path.splitext(os.path.basename(video_file))[0]
             for sub_file in subtitle_files[:]:
                 if sub_file and os.path.dirname(sub_file) == video_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
                     subtitle_file = sub_file
                     subtitle_name = os.path.basename(subtitle_file)
-                    subtitle_files.remove(sub_file)  # Remove paired subtitle from the list
+                    subtitle_files.remove(sub_file)
                     break
             # If no subtitle is found in the same directory, check parent directories
             if not subtitle_file:
@@ -1319,16 +1423,14 @@ def process_files(filepaths):
                         if sub_file and os.path.dirname(sub_file) == parent_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
                             subtitle_file = sub_file
                             subtitle_name = os.path.basename(subtitle_file)
-                            subtitle_files.remove(sub_file)  # Remove paired subtitle from the list
+                            subtitle_files.remove(sub_file)
                             break
                     if subtitle_file:
                         break
             if subtitle_file:
-                # Normalize paths for comparison
                 norm_video = os.path.normpath(video_file.lower())
                 norm_subtitle = os.path.normpath(subtitle_file.lower())
                 pair = (norm_video, norm_subtitle)
-                
                 if pair in existing_pairs:
                     duplicates += 1
                     continue
@@ -1340,36 +1442,32 @@ def process_files(filepaths):
                 incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
         else:
             incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+    # Handle remaining unpaired subtitles
+    unpaired_subtitles = list(filter(None, subtitle_files))
+    if unpaired_subtitles:
+        unpaired_count = len(unpaired_subtitles)
+        user_choice = messagebox.askyesno("Unpaired Subtitles",
+                                          f"There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video] tag?")
+        for sub_file in unpaired_subtitles:
+            subtitle_name = os.path.basename(sub_file)
+            if user_choice:
+                incomplete_pairs.append(("[no video]", subtitle_name, None, sub_file))
+            else:
+                incomplete_pairs.append((subtitle_name, "[no subtitle]", sub_file, None))
+            files_not_paired += 1
     # Insert incomplete pairs first
     for video_name, subtitle_name, video_file, subtitle_file in incomplete_pairs:
         parent_id = treeview.insert("", "end", text=video_name, values=(rf"{video_file}" if video_file else "",), open=True)
         treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file if subtitle_file else ""))
         treeview.item(parent_id, tags=("incomplete",))
         if not video_file and not subtitle_file:
-            treeview.delete(parent_id)  # Remove the node if no video and no subtitle
+            treeview.delete(parent_id)
     # Insert complete pairs
     for video_name, subtitle_name, video_file, subtitle_file in complete_pairs:
         parent_id = treeview.insert("", "end", text=video_name, values=(video_file,), open=True)
         treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
         treeview.item(parent_id, tags=("paired",))
-    # Handle remaining unpaired subtitles
-    unpaired_subtitles = list(filter(None, subtitle_files))
-    if unpaired_subtitles:
-        unpaired_count = len(unpaired_subtitles)
-        user_choice = messagebox.askyesno("Unpaired Subtitles",
-                                        f"There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video] tag?")
-        for sub_file in unpaired_subtitles:
-            subtitle_name = os.path.basename(sub_file)
-            if user_choice:
-                parent_id = treeview.insert("", "end", text="[no video]", values=("",), open=True)
-                treeview.insert(parent_id, "end", text=subtitle_name, values=(sub_file,))
-                treeview.item(parent_id, tags=("incomplete",))
-                files_not_paired += 1
-            else:
-                parent_id = treeview.insert("", "end", text=subtitle_name, values=(sub_file,), open=True)
-                treeview.insert(parent_id, "end", text="[no subtitle]", values=("",))
-                treeview.item(parent_id, tags=("incomplete",))
-                files_not_paired += 1
+    # Handle UI updates and logging
     batch_input.grid_remove()
     tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
     messages = []
@@ -1392,7 +1490,7 @@ def select_folder():
         process_files([folder_path])
         
 def browse_batch(event=None):
-    paths = filedialog.askopenfilenames(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    paths = filedialog.askopenfilenames(filetypes = [("Video or subtitle", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))])
     if paths:
         process_files(paths)
 
@@ -1401,9 +1499,9 @@ def on_batch_drop(event):
     process_files(filepaths)
 
 def add_pair():
-    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    video_file = filedialog.askopenfilename(filetypes = [("Video or subtitle", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))])
     if video_file:
-        subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")])
+        subtitle_file = filedialog.askopenfilename(filetypes=[("Subtitle files", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
         if subtitle_file:
             video_name = os.path.basename(video_file)
             subtitle_name = os.path.basename(subtitle_file)
@@ -1433,9 +1531,9 @@ def change_selected_item():
         parent_id = treeview.parent(selected_item)
         is_parent = not parent_id
         if is_parent:
-            filetypes = [("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")]
+            filetypes = [("Video or subtitle", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))]
         else:
-            filetypes = [("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")]
+            filetypes = [("Subtitle files", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))]
         new_file = filedialog.askopenfilename(filetypes=filetypes)
         if new_file:
             new_file = os.path.normpath(new_file)
@@ -1466,7 +1564,7 @@ def change_selected_item():
             existing_pairs = set()
             for item in treeview.get_children():
                 if is_parent and item == selected_item:
-                    continue  # Skip the selected parent
+                    continue
                 current_parent_values = treeview.item(item, "values")
                 current_parent = os.path.normpath(current_parent_values[0]).lower() if current_parent_values else ""
                 children = treeview.get_children(item)
@@ -1491,7 +1589,6 @@ def change_selected_item():
                 if (new_parent_file, new_child_file) in existing_pairs:
                     log_message("This pair already exists. Please select a different file.", "error", tab='auto')
                     return
-            # Update the item's name and value
             treeview.item(selected_item, text=new_name, values=(new_file,))
             # Update the tags of the parent item
             if parent_id:
@@ -1532,8 +1629,6 @@ def remove_selected_item():
                     treeview.delete(selected_item)
     else:
         log_message("Please select an item to remove.", "error", tab='auto')
-
-# Define batch input label
 batch_input = tk.Label(automatic_tab, text="Drag and drop multiple files/folders here or click to browse.\n\n(Videos and subtitles that has the same filenames will be\n paired automatically. You need to pair others manually.)", bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
 batch_input_text = tk.Label(automatic_tab, text="Batch Processing Mode", fg="black", relief="ridge", padx=5, borderwidth=1)
 batch_input_text.place(in_=batch_input, relx=0, rely=0, anchor="nw")
@@ -1584,7 +1679,6 @@ def show_path():
             path = item_values[0]
             folder = os.path.dirname(path)
             subprocess.run(['explorer', '/select,', os.path.normpath(path)])
-
 def show_context_menu(event):
     # Clear previous dynamic menu items
     context_menu.delete(0, tk.END)
@@ -1608,6 +1702,9 @@ treeview.bind("<Button-3>", show_context_menu)
 treeview.bind("<Control-a>", select_all)
 treeview.bind("<Delete>", delete_selected)
 treeview.bind("<Double-1>", on_double_click)
+# Create a vertical scrollbar for the Treeview
+treeview_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=treeview.yview)
+treeview.configure(yscrollcommand=treeview_scrollbar.set)
 # Create buttons for adding, changing, and removing items
 button_change_item = tk.Button(
     tree_frame,
@@ -1616,8 +1713,8 @@ button_change_item = tk.Button(
     padx=10,
     pady=5,
     fg="black",
-    bg="light gray",
-    activebackground="gray",
+    bg=BUTTON_COLOR_BATCH_OPTIONS,
+    activebackground=BUTTON_COLOR_BATCH_OPTIONS_ACTIVE,
     activeforeground="black",
     relief=tk.RAISED,
     borderwidth=2,
@@ -1630,51 +1727,49 @@ button_remove_item = tk.Button(
     padx=10,
     pady=5,
     fg="black",
-    bg="light gray",
-    activebackground="gray",
+    bg=BUTTON_COLOR_BATCH_OPTIONS,
+    activebackground=BUTTON_COLOR_BATCH_OPTIONS_ACTIVE,
     activeforeground="black",
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
 )
-# Define styles
 style = ttk.Style()
 style.configure("Treeview", rowheight=25)
 style.map("Treeview", background=[('selected', 'steel blue')])
 # Replace the "Add Pair" button with a Menubutton
-button_options = tk.Menubutton(
+button_addfile = tk.Menubutton(
     tree_frame,
     text="Add files",
     padx=10,
     pady=7.5,
     fg="black",
-    bg="light gray",
-    activebackground="light gray",
+    bg=BUTTON_COLOR_BATCH_OPTIONS,
+    activebackground=BUTTON_COLOR_BATCH_OPTIONS,
     activeforeground="black",
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
 )
-options_menu = tk.Menu(button_options, tearoff=0)
-button_options.config(menu=options_menu)
+options_menu = tk.Menu(button_addfile, tearoff=0)
+button_addfile.config(menu=options_menu)
 options_menu.add_command(label="Add Pair", command=add_pair)
-options_menu.add_command(label="Select a Folder", command=select_folder)
-options_menu.add_command(label="Select Multiple Files", command=browse_batch)
+options_menu.add_command(label="Add Folder", command=select_folder)
+options_menu.add_command(label="Add Multiple Files", command=browse_batch)
 # Update the grid layout
-button_options.grid(row=0, column=0, padx=(5,2.5), pady=5, sticky="ew")
+button_addfile.grid(row=0, column=0, padx=(5,2.5), pady=5, sticky="ew")
 button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
-button_remove_item.grid(row=0, column=2, padx=(2.5,5), pady=5, sticky="ew")
-button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
-button_remove_item.grid(row=0, column=2, padx=(2.5,5), pady=5, sticky="ew")
+button_remove_item.grid(row=0, column=2,columnspan=3, padx=(2.5,5), pady=5, sticky="ew")
 treeview.grid(row=1, column=0, columnspan=3, padx=5, pady=(5,0), sticky="nsew")
+treeview_scrollbar.grid(row=1, column=3, sticky="ns", pady=(5,0))
 tree_frame.grid_remove()
 batch_input.grid_remove()
 # Start batch mode end
-
 # Start automatic sync begin
 def browse_subtitle(event=None):
-    subtitle_file_auto = filedialog.askopenfilename(filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")])
-    filetypes=[("Subtitle files", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl")]
+    subtitle_file_auto = filedialog.askopenfilename(
+    filetypes=[("Subtitle files", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))]
+    )
     if subtitle_file_auto:
         subtitle_input.config(text=subtitle_file_auto, font=("Calibri", 10, "bold"))
         subtitle_input.tooltip_text = subtitle_file_auto
@@ -1686,13 +1781,13 @@ def browse_subtitle(event=None):
             subtitle_input.config(bg="lightgray")
 
 def browse_video(event=None):
-    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", "*.srt;*.vtt;*.sbv;*.sub;*.ass;*.ssa;*.dfxp;*.ttml;*.itt;*.stl;*.mp4;*.mkv;*.avi;*.webm;*.flv;*.mov;*.wmv;*.mpg;*.mpeg;*.m4v;*.3gp;*.h264;*.h265;*.hevc")])
+    video_file = filedialog.askopenfilename(filetypes=[("Video or subtitle", ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))])
     if video_file:
         video_input.config(text=video_file, font=("Calibri", 10, "bold"))
         video_input.tooltip_text = video_file
         video_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
-        if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+        if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
             # If the video file is a subtitle, disable parameters
             ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
@@ -1712,12 +1807,12 @@ def on_video_drop(event):
         log_message("Please drop single video or subtitle file.", "error", tab='auto')
         return
     filepath = files[0]
-    if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl', '.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc')):
+    if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS)):
         video_input.config(text=filepath, font=("Calibri", 10, "bold"))
         video_input.tooltip_text = filepath
         video_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
-        if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+        if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
             ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
             ffsubsync_option_framerate.config(state=tk.DISABLED)
@@ -1734,14 +1829,13 @@ def on_subtitle_drop(event):
         log_message("Please drop single subtitle file.", "error", tab='auto')
         return
     filepath = files[0]
-    if filepath.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+    if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
         subtitle_input.config(text=filepath, font=("Calibri", 10, "bold"))
         subtitle_input.tooltip_text = filepath
         subtitle_input.config(bg="lightgreen")
         log_message("", "info", tab='auto')
     else:
         log_message("Please drop a subtitle file.", "error", tab='auto')
-
 process = None
 def start_automatic_sync():
     global process, subtitle_file, video_file, output_subtitle_file
@@ -1767,16 +1861,23 @@ def start_automatic_sync():
         return
     if save_to_desktop_var_auto.get():
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        output_subtitle_file = os.path.join(desktop_path, f"autosync_{os.path.basename(subtitle_file)}")
+        output_dir = desktop_path
     elif replace_original_var_auto.get():
         output_subtitle_file = subtitle_file
+        output_dir = None
     else:
-        output_subtitle_file = os.path.join(os.path.dirname(subtitle_file), f"autosync_{os.path.basename(subtitle_file)}")
-    if os.path.exists(output_subtitle_file) and not replace_original_var_auto.get():
-        replace_confirmation = tk.messagebox.askyesno("File Exists", f"A file with the name '{os.path.basename(output_subtitle_file)}' already exists. Do you want to replace it?")
-        if not replace_confirmation:
-            return
-    
+        output_dir = os.path.dirname(subtitle_file)
+    if not replace_original_var_auto.get():
+        base_name, ext = os.path.splitext(os.path.basename(subtitle_file))
+        if not ext.lower() in FFSUBSYNC_SUPPORTED_EXTENSIONS:
+            ext = '.srt'
+        counter = 2
+        filename = f"autosync_{base_name}{ext}"
+        output_subtitle_file = os.path.join(output_dir, filename)
+        while os.path.exists(output_subtitle_file):
+            filename = f"autosync_{base_name}_{counter}{ext}"
+            output_subtitle_file = os.path.join(output_dir, filename)
+            counter += 1
     def cancel_automatic_sync():
         global process, ffsubsync_option_vad, ffsubsync_option_gss, ffsubsync_option_framerate
         if process:
@@ -1908,18 +2009,19 @@ def start_automatic_sync():
     def run_subprocess():
         global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file
         # .ass and .ssa excluded because ffsubsync can work with them.
-        if subtitle_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
+        unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in FFSUBSYNC_SUPPORTED_EXTENSIONS]
+        if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
             subtitle_file = convert_to_srt(subtitle_file)
-        if video_file.lower().endswith(('.vtt', '.sbv', '.sub', '.dfxp', '.ttml', '.itt', '.stl')):
+        if video_file.lower().endswith(tuple(unsupported_extensions)):
             video_file = convert_to_srt(video_file)
         try:
             # FFSUBSYNC CAN ONLY OUTPUT .ASS AND .SRT, SO THIS IS NECESSARY.
-            if not output_subtitle_file.lower().endswith(('.srt', '.ass', '.ssa')):
+            if not output_subtitle_file.lower().endswith(tuple(FFSUBSYNC_SUPPORTED_EXTENSIONS)):
                 output_subtitle_file = output_subtitle_file.rsplit('.', 1)[0] + '.srt'
             cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             #log_window.insert(tk.END, 'Running command: \n"' + cmd +'"\n')
             # if the video_file is a subtitle, don't add parameters
-            if not video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+            if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if ffsubsync_option_framerate_var.get():
                     cmd += " --no-fix-framerate"
                 if ffsubsync_option_gss_var.get():
@@ -1929,7 +2031,7 @@ def start_automatic_sync():
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             progress_bar["value"] = 1
             # if video file is not a subtitle
-            if video_file.lower().endswith(('.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl')):
+            if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 log_window.insert(tk.END, "Using reference subtitle for syncing...\n")
             else:
                 log_window.insert(tk.END, "Using video for syncing...\n")
@@ -1993,8 +2095,8 @@ def start_automatic_sync():
             padx=10,
             pady=10,
             fg="white",
-            bg="#707070",  # Grey background color
-            activebackground="#616161",  # Darker grey when active
+            bg=DEFULT_BUTTON_COLOR,
+            activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
             activeforeground="white",
             relief=tk.RAISED,
             borderwidth=2,
@@ -2008,8 +2110,8 @@ def start_automatic_sync():
             padx=10,
             pady=10,
             fg="white",
-            bg="#007FFF",
-            activebackground="#0061c2",
+            bg=BUTTON_COLOR_AUTO,
+            activebackground=BUTTON_COLOR_AUTO_ACTIVE,
             activeforeground="white",
             relief=tk.RAISED,
             borderwidth=2,
@@ -2044,8 +2146,8 @@ button_start_automatic_sync = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="royal blue",
-    activebackground="RoyalBlue3",
+    bg=BUTTON_COLOR_AUTO,
+    activebackground=BUTTON_COLOR_AUTO_ACTIVE,
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2083,8 +2185,8 @@ batch_mode_button = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="gray50",  # Different color for Batch Mode
-    activebackground="gray40",
+    bg=DEFULT_BUTTON_COLOR,
+    activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2110,7 +2212,6 @@ automatic_tab.rowconfigure(1, weight=1)
 automatic_tab.columnconfigure(0, weight=0)
 automatic_tab.columnconfigure(1, weight=1)
 # ---------------- Automatic Tab ---------------- #
-
 # ---------------- Manual Tab ---------------- #
 label_drop_box = tk.Label(manual_tab, text="Drag and drop subtitle file here or click to browse.", bg="lightgray", relief="ridge", width=40, height=17, cursor="hand2")
 label_separator = ttk.Separator(manual_tab, orient='horizontal')
@@ -2124,8 +2225,8 @@ button_minus = tk.Button(
     padx=10,
     pady=5,
     fg="white",
-    bg="gray50",
-    activebackground="gray40",
+    bg=DEFULT_BUTTON_COLOR,
+    activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2137,8 +2238,8 @@ button_plus = tk.Button(
     padx=10,
     pady=5,
     fg="white",
-    bg="gray50",
-    activebackground="gray40",
+    bg=DEFULT_BUTTON_COLOR,
+    activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
@@ -2151,8 +2252,8 @@ button_sync = tk.Button(
     padx=10,
     pady=10,
     fg="white",
-    bg="#34853a",
-    activebackground="#2f7834",
+    bg=BUTTON_COLOR_MANUAL,
+    activebackground=BUTTON_COLOR_MANUAL_ACTIVE,
     activeforeground="white",
     relief=tk.RAISED,
     borderwidth=2,
