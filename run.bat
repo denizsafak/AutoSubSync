@@ -11,6 +11,7 @@ set CURRENT_DIR=%CD%
 set LAST_DIR_FILE=%PROJECTFOLDER%\last_known_directory.txt
 set refrenv=%PROJECTFOLDER%\refrenv.bat
 set PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/3.13.0/python-3.13.0-amd64.exe
+set FFSUBSYNC_RECOMMENDED_PYTHON_VERSION=31207
 
 :: Display provided argument if any
 if not "%~1"=="" (
@@ -88,6 +89,8 @@ if not "%python_installed%"=="true" (
     call %refrenv%
     set python_installed=true
 )
+
+
 
 :: Check if ffmpeg is installed
 if not "%ffmpeg_installed%"=="true" (
@@ -215,6 +218,28 @@ if errorlevel 1 (
         pause
         exit /b
     )
+)
+
+:: Check Python version for ffsubsync
+for /f "tokens=2 delims= " %%i in ('python --version') do set PYTHON_VERSION=%%i
+for /f "tokens=1,2,3 delims=." %%a in ("%PYTHON_VERSION%") do (
+    set PYTHON_MAJOR=%%a
+    set PYTHON_MINOR=%%b
+    set PYTHON_PATCH=%%c
+)
+if not defined PYTHON_PATCH (
+    set PYTHON_PATCH=0
+)
+for /f "tokens=* delims=0" %%i in ("%PYTHON_MAJOR%") do set PYTHON_MAJOR=%%i
+for /f "tokens=* delims=0" %%i in ("%PYTHON_MINOR%") do set PYTHON_MINOR=%%i
+for /f "tokens=* delims=0" %%i in ("%PYTHON_PATCH%") do set PYTHON_PATCH=%%i
+set /a PYTHON_VERSION_NUMBER=%PYTHON_MAJOR%*10000 + %PYTHON_MINOR%*100 + %PYTHON_PATCH%
+if %PYTHON_VERSION_NUMBER% gtr %FFSUBSYNC_RECOMMENDED_PYTHON_VERSION% (
+    echo.
+    echo Warning: Your Python version is %PYTHON_VERSION%.
+    echo ffsubsync might give an error when installing.
+    echo If that happens, please install Python 3.12.7 or lower.
+    echo.
 )
 
 :: Get the list of installed packages using pip freeze
