@@ -12,12 +12,35 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - After installing the requirements, AutoSubSync will start automatically.
 
 ## `Useage`
-1) Drag and Drop: Drag and drop subtitle and video/reference subtitle files onto the interface.
-2) Browse: Alternatively, click on the interface to browse your system and select subtitle or video files.
-3) Easy Open: Before opening the program, you can also drag and drop the subtitle file on run.bat. The program starts with that file selected. 
-4) Set Milliseconds: In manual tab, enter the number of milliseconds by which you want to shift the subtitles.
-5) Choose Options: Select whether you want to save the shifted subtitle to the desktop or replace the original file.
-6) Click Sync: Click on the "Shift Subtitle" button to synchronize the subtitle file.
+### Automatic Synchronization
+1. **Select Video/Reference subtitle and Subtitle Files:**
+   - Drag and drop the video and subtitle files into the respective input boxes.
+   - Alternatively, click on the input boxes to browse and select the files.
+2. **Choose Synchronization Tool:**
+   - Select the synchronization tool (`ffsubsync` or `alass`) from the dropdown menu.-
+3. **Set Options:**
+   - Configure additional options such as `Don't fix framerate`, `Use golden-section search`, and `Use auditok instead of WebRTC's VAD` for `ffsubsync`.
+   - For `alass`, configure options like `Disable FPS guessing`, `Disable speed optimization`, and set the `Split Penalty`.
+4. **Select Output Location:**
+   - Choose where to save the synchronized subtitle file using the dropdown menu.
+5. **Start Synchronization:**
+   - Click the `Start Automatic Sync` button to begin the synchronization process.
+6. **Batch Mode:**
+   - Enable batch mode to process multiple files at once. Drag and drop multiple files or folders into the batch input area.
+   - You can also add `reference subtitle - subtitle` pairs in batch mode. Just try to add subtitles and it will ask you how you want to add them. You can add them as subtitles with [no video] or reference subtitles with [no subtitle] input.
+   - `Double click` any item to change them.
+   - Use `del` key to delete any item.
+     
+### Manual Synchronization
+1. **Select Subtitle File:**
+   - Drag and drop the subtitle file into the input box.
+   - Alternatively, click on the input box to browse and select the file.
+2. **Set Time Shift:**
+   - Enter the number of milliseconds to shift the subtitle. Use the `+` and `-` buttons to adjust the value.
+3. **Choose Output Option:**
+   - Select whether to save the shifted subtitle to the desktop or replace the original subtitle file.
+4. **Start Shifting:**
+   - Click the `Shift Subtitle` button to apply the time shift.
 
 ## `Features`
 - Choose between alass and ffsubsync for automatic subtitle syncing.
