@@ -10,7 +10,7 @@ set ACTIVATE_PATH=%VENV_PATH%\Scripts\activate
 set CURRENT_DIR=%CD%
 set LAST_DIR_FILE=%PROJECTFOLDER%\last_known_directory.txt
 set refrenv=%PROJECTFOLDER%\refrenv.bat
-set PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/3.12.7/python-3.12.7-amd64.exe
+set PYTHON_DOWNLOAD_URL=https://www.python.org/ftp/python/3.13.0/python-3.13.0-amd64.exe
 
 :: Display provided argument if any
 if not "%~1"=="" (
@@ -200,6 +200,18 @@ if errorlevel 1 (
         goto activate
     ) else (
         echo Failed to activate virtual environment. Please try again.
+        pause
+        exit /b
+    )
+)
+
+:: Check if tkinter is installed
+%VENV_PATH%\Scripts\python.exe -c "import tkinter" 2>nul
+if errorlevel 1 (
+    echo tkinter is not installed. Installing tkinter...
+    pip install tk
+    if errorlevel 1 (
+        echo Failed to install tkinter. Please check your internet connection and try again.
         pause
         exit /b
     )
