@@ -1019,7 +1019,6 @@ def start_batch_sync():
                     log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
         log_message(BATCH_SYNC_CANCELLED, "error", tab='auto')
         restore_window()
-
     def restore_window():
         batch_input.grid()
         button_start_automatic_sync.grid()
@@ -1047,7 +1046,6 @@ def start_batch_sync():
         tree_frame.grid()  # Show tree_frame
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
-
     def generate_again():
         treeview.delete(*treeview.get_children())
         batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
@@ -1076,7 +1074,7 @@ def start_batch_sync():
         label_message_auto.grid_remove()
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
-        
+
     def run_batch_process():
         nonlocal completed_items
         subtitles_to_skip = set() 
@@ -1162,6 +1160,7 @@ def start_batch_sync():
                     return
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
+                original_subtitle_file = subtitle_file  # Store the original subtitle file name
                 if subtitle_file in subtitles_to_skip and skip:
                     log_window.insert(tk.END, f"{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n")
                     continue
@@ -1219,32 +1218,33 @@ def start_batch_sync():
                 original_base_name = convert_files()
                 if not original_base_name:
                     continue
-                
                 # Update base_name for each subtitle file
-                base_name, original_ext = os.path.splitext(os.path.basename(subtitle_file))
-                
+                base_name, original_ext = os.path.splitext(os.path.basename(original_subtitle_file))
                 if action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO:
-                    output_subtitle_file = os.path.join(base_output_dir, f"autosync_{base_name}{output_ext}")
+                    output_subtitle_file = os.path.join(base_output_dir, f"autosync_{base_name}{original_ext}")
                 elif action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
-                    output_subtitle_file = os.path.join(base_output_dir, f"{os.path.splitext(os.path.basename(video_file))[0]}{output_ext}")
+                    output_subtitle_file = os.path.join(base_output_dir, f"{os.path.splitext(os.path.basename(video_file))[0]}{original_ext}")
                 elif action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE:
                     output_subtitle_file = subtitle_file
                 else:
-                    output_subtitle_file = os.path.join(base_output_dir, f"autosync_{base_name}{output_ext}")
-                # Handle autosync suffix
-                if not skip:
-                    # Updated regex pattern to match filenames starting with 'autosync_' followed by the base name
-                    # and ending with '_2', '_3', etc.
-                    autosync_pattern = rf'^autosync_{re.escape(original_base_name)}(?:_\d+)?{re.escape(output_ext)}$'
-                    suffix = 2
-                    while os.path.exists(output_subtitle_file) and add_suffix == True:
-                        output_subtitle_file = os.path.join(
-                            base_output_dir,
-                            f"autosync_{original_base_name}_{suffix}{output_ext}"
-                        )
-                        suffix += 1
+                    output_subtitle_file = os.path.join(base_output_dir, f"autosync_{base_name}{original_ext}")
                 if not output_subtitle_file.lower().endswith(tuple(SUPPORTED_SUBTITLE_EXTENSIONS)):
                     output_subtitle_file = os.path.splitext(output_subtitle_file)[0] + '.srt'
+                # Handle autosync suffix
+                # Updated regex pattern to match filenames starting with 'autosync_' followed by the base name
+                # and ending with '_2', '_3', etc.
+                if original_ext in SUPPORTED_SUBTITLE_EXTENSIONS:
+                    output_ext = original_ext
+                else:
+                    output_ext = '.srt'
+                autosync_pattern = rf'^autosync_{re.escape(original_base_name)}(?:_\d+)?{re.escape(original_ext)}$'
+                suffix = 2
+                while os.path.exists(output_subtitle_file) and add_suffix == True:
+                    output_subtitle_file = os.path.join(
+                        base_output_dir,
+                        f"autosync_{original_base_name}_{suffix}{output_ext}"
+                    )
+                    suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
@@ -1267,7 +1267,7 @@ def start_batch_sync():
                 else:
                     log_message(INVALID_SYNC_TOOL, "error", tab='auto')
                     return
-                log_window.insert(tk.END, f"\n[{completed_items + 1}/{total_items}] Syncing {os.path.basename(subtitle_file)} with {os.path.basename(video_file)}...\n")
+                log_window.insert(tk.END, f"\n[{completed_items + 1}/{total_items}] Syncing {os.path.basename(original_subtitle_file)} with {os.path.basename(video_file)}...\n")
                 try:
                     progress_bar["value"] += 1
                     if sync_tool == SYNC_TOOL_FFSUBSYNC:
@@ -1300,7 +1300,6 @@ def start_batch_sync():
                     log_window.insert(tk.END, f"{FAILED_START_PROCESS.format(error_message=str(e))}\n")
                     log_message(FAILED_START_PROCESS.format(error_message=str(e)), "error", tab='auto')
                     continue
-
                 def execute_cmd(cmd):
                     error_occurred = False
                     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
@@ -1418,6 +1417,7 @@ def start_batch_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
+
 # Global variable to store options state
 options_states = {}
 def toggle_batch_mode():
@@ -1619,8 +1619,14 @@ def process_files(filepaths):
                 files_not_paired += 1
     # Insert incomplete pairs first
     for video_name, subtitle_name, video_file, subtitle_file in incomplete_pairs:
-        parent_id = treeview.insert("", "end", text=video_name, values=(rf"{video_file}" if video_file else "",), open=True)
-        treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file if subtitle_file else ""))
+        if video_file:
+            parent_id = treeview.insert("", "end", text=video_name, values=(rf"{video_file}",), open=True)
+            treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file if subtitle_file else ""))
+        elif subtitle_file:
+            parent_id = treeview.insert("", "end", text=NO_VIDEO, values=("",), open=True)
+            treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
+        else:
+            continue
         treeview.item(parent_id, tags=("incomplete",))
         if not video_file and not subtitle_file:
             treeview.delete(parent_id)
@@ -1665,6 +1671,10 @@ def add_pair():
     if video_file:
         subtitle_file = filedialog.askopenfilename(filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
         if subtitle_file:
+            # Check if the same file is selected for both video and subtitle
+            if os.path.normpath(video_file.lower()) == os.path.normpath(subtitle_file.lower()):
+                log_message(SAME_FILE_ERROR, "error", tab='auto')
+                return
             video_name = os.path.basename(video_file)
             subtitle_name = os.path.basename(subtitle_file)
             pair = (os.path.normpath(video_file.lower()), os.path.normpath(subtitle_file.lower()))
@@ -2090,18 +2100,16 @@ def start_automatic_sync():
         return
     action = action_var_auto.get()
     if action == OPTION_SAVE_NEXT_TO_VIDEO:
-        output_dir = os.path.dirname(subtitle_file)
+        output_dir = os.path.dirname(video_file)
     elif action == OPTION_SAVE_TO_DESKTOP:
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         output_dir = desktop_path
     elif action == OPTION_REPLACE_ORIGINAL_SUBTITLE:
         output_subtitle_file = subtitle_file
         output_dir = None
-    elif action == OPTION_SAVE_NEXT_TO_VIDEO:
-        output_dir = os.path.dirname(video_file)
     elif action == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
         output_dir = os.path.dirname(video_file)
-        base_name, ext = os.path.splitext(os.path.basename(video_file))
+        base_name, ext = os.path.splitext(os.path.basename(subtitle_file))
         if not ext.lower() in SUPPORTED_SUBTITLE_EXTENSIONS:
             ext = '.srt'
         output_subtitle_file = os.path.join(output_dir, f"{base_name}{ext}")
@@ -2109,9 +2117,10 @@ def start_automatic_sync():
         output_dir = os.path.dirname(subtitle_file)
     if action != OPTION_REPLACE_ORIGINAL_SUBTITLE:
         if action == OPTION_SAVE_NEXT_TO_VIDEO:
-            base_name, ext = os.path.splitext(os.path.basename(video_file))
+            base_name, ext = os.path.splitext(os.path.basename(subtitle_file))
         elif action == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
-            base_name, ext = os.path.splitext(os.path.basename(video_file))
+            base_name = os.path.splitext(os.path.basename(video_file))[0]
+            ext = os.path.splitext(os.path.basename(subtitle_file))[1]
         else:
             base_name, ext = os.path.splitext(os.path.basename(subtitle_file))
         if not ext.lower() in SUPPORTED_SUBTITLE_EXTENSIONS:
