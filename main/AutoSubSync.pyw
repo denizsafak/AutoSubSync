@@ -2549,6 +2549,7 @@ def on_sync_tool_change(*args):
     else:
         alass_split_penalty_slider.grid_remove()
         alass_speed_optimization.grid_remove()
+        alass_disable_fps_guessing.grid_remove()
         ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
         ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
         ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
