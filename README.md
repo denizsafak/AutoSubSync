@@ -17,19 +17,20 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 3) Easy Open: Before opening the program, you can also drag and drop the subtitle file on run.bat. The program starts with that file selected. 
 4) Set Milliseconds: In manual tab, enter the number of milliseconds by which you want to shift the subtitles.
 5) Choose Options: Select whether you want to save the shifted subtitle to the desktop or replace the original file.
-4) Click Sync: Click on the "Shift Subtitle" button to synchronize the subtitle file.
+6) Click Sync: Click on the "Shift Subtitle" button to synchronize the subtitle file.
 
 ## `Features`
+- Choose between alass and ffsubsync for automatic subtitle syncing.
 - Batch processing for multiple video/reference subtitle and subtitle pairs.
 - Support for different subtitle types: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .itt, .stl.
-- Automatic Subtitle Synchronization: Automatically sync the subtitles with the video/reference subtitle, using [ffsubsync](https://github.com/smacke/ffsubsync).
+- Automatic Subtitle Synchronization: Automatically sync the subtitles with the video/reference subtitle, using [ffsubsync](https://github.com/smacke/ffsubsync) or [alass](https://github.com/kaegi/alass).
 - Subtitle Shifting: Easily adjust subtitle timing by specifying the number of milliseconds to shift.
 - Drag and Drop: Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
 - Customization Options: Choose whether to save the shifted subtitle file to the desktop or replace the original file.
 - Informative Messages: Receive clear feedback messages indicating the success or failure of the synchronization process.
 
 ## `Credits`
-- Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync. This is just a GUI application for Windows that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
+- Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync and alass. This is just a GUI application for Windows that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
 - Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
 
 > [!IMPORTANT]
