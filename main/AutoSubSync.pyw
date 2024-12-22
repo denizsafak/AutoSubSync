@@ -1394,7 +1394,7 @@ def start_batch_sync():
                                 encoding_ref = detect_encoding(video_file)
                                 cmd += f" --encoding-ref={encoding_ref}"
                             cmd += f" --encoding-inc={encoding_inc}"
-                            execute_cmd(cmd)
+                            returncode, decoding_error_occurred = execute_cmd(cmd)
                         synced_subtitle_encoding = detect_encoding(output_subtitle_file)
                         # If the encoding of synced subtitle is not the same as encoding_inc, change it
                         if synced_subtitle_encoding != encoding_inc:
@@ -1405,7 +1405,7 @@ def start_batch_sync():
                                     content = f.read()
                                 with open(output_subtitle_file, 'w', encoding=encoding_inc) as f:
                                     f.write(content)
-                                log_window.insert(tk.END, ENCODING_CHANGED_MSG)
+                                log_window.insert(tk.END, ENCODING_CHANGED_MSG+"\n")
                             except Exception as e:
                                 error_msg = ERROR_CHANGING_ENCODING_MSG.format(error_message=str(e))
                                 log_window.insert(tk.END, error_msg)
