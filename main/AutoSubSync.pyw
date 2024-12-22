@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import shutil
 import chardet
 import subprocess
 import threading
@@ -11,7 +12,7 @@ import xml.etree.ElementTree as ET
 import ctypes
 # Program information
 PROGRAM_NAME = "AutoSubSync"
-VERSION = "v2.7"
+VERSION = "v2.8"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 # File extensions
 FFSUBSYNC_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa']
@@ -42,13 +43,14 @@ TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of l
 TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync."
 TOOLTIP_ALASS_SPEED_OPTIMIZATION = "--speed optimization 0: Disable speed optimization for better accuracy. This will increase the processing time."
 TOOLTIP_ALASS_DISABLE_FPS_GUESSING = "--disable-fps-guessing: Disables guessing and correcting of framerate differences between reference file and input file."
-TOOLTIP_TEXT_ACTION_MENU_AUTO = "Select the action to perform on the synchronized subtitle file."
+TOOLTIP_TEXT_ACTION_MENU_AUTO = "Choose what to do with the synchronized subtitle file(s).\n\nNote: Existing subtitle files will be backed up in the same folder, if they need to be replaced."
 TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = "Select the tool to use for synchronization."
 # Dialogs - Buttons
 TAB_AUTOMATIC_SYNC = 'Automatic Sync'
 TAB_MANUAL_SYNC = 'Manual Sync'
 CANCEL_TEXT = 'Cancel'
 GENERATE_AGAIN_TEXT = 'Generate Again'
+GO_BACK = 'Go Back'
 BATCH_MODE_TEXT = 'Batch Mode'
 NORMAL_MODE_TEXT = 'Normal Mode'
 START_AUTOMATIC_SYNC_TEXT = 'Start Automatic Sync'
@@ -74,6 +76,7 @@ OPTION_SAVE_NEXT_TO_VIDEO = "Save next to video"
 OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = "Save next to video with same filename"
 OPTION_SAVE_TO_DESKTOP = "Save to Desktop"
 OPTION_REPLACE_ORIGINAL_SUBTITLE = "Replace original subtitle"
+OPTION_SELECT_DESTINATION_FOLDER = "Select destination folder"
 CHECKBOX_NO_FIX_FRAMERATE = "Don't fix framerate"
 CHECKBOX_GSS = "Use golden-section search"
 CHECKBOX_VAD = "Use auditok instead of WebRTC's VAD"
@@ -147,6 +150,10 @@ SELECT_ITEM_TO_REMOVE = "Please select an item to remove."
 FILE_NOT_EXIST = "File specified in the argument does not exist."
 MULTIPLE_ARGUMENTS = "Multiple arguments provided. Please provide only one subtitle file path."
 INVALID_FILE_FORMAT = "Invalid file format. Please provide a subtitle file."
+INVALID_SYNC_TOOL_SELECTED = "Invalid sync tool selected."
+TEXT_SELECTED_FOLDER = "Selected folder: {}"
+TEXT_NO_FOLDER_SELECTED = "No folder selected."
+TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = "The selected destination folder does not exist."
 # Log window messages
 INVALID_PARENT_ITEM = "Invalid parent item with no values."
 SKIP_NO_VIDEO_NO_SUBTITLE = "Skipping entry with no video and no subtitle."
@@ -184,11 +191,13 @@ CONVERTING_STL = "Converting STL to SRT..."
 ERROR_CONVERTING_SUBTITLE = "Error converting subtitle: {error_message}"
 CONVERSION_NOT_SUPPORTED = "Error: Conversion for {file_extension} is not supported."
 SUBTITLE_CONVERTED = "Subtitle successfully converted and saved to: {srt_file}."
-RETRY_ENCODING_REF_MSG = "Previous sync failed. Retrying with --encoding-ref=iso-8859-1...\n\n"
-RETRY_ENCODING_INC_MSG = "Previous sync failed. Retrying with --encoding-inc=iso-8859-1...\n\n"
-RETRY_BOTH_ENCODINGS_MSG = "Previous sync failed. Retrying with both --encoding-ref=iso-8859-1 and --encoding-inc=iso-8859-1...\n\n"
+RETRY_ENCODING_MSG = "Previous sync failed. Retrying with pre-detected encodings...\n\n"
 ALASS_SPEED_OPTIMIZATION_LOG = "Disabled: Speed optinization..."
 ALASS_DISABLE_FPS_GUESSING_LOG = "Disabled: FPS guessing..."
+CHANGING_ENCODING_MSG = "\nEncoding of the synced subtitle does not match the original subtitle's encoding. Changing the encoding from {synced_subtitle_encoding} to {encoding_inc}...\n"
+ENCODING_CHANGED_MSG = "\nEncoding changed successfully.\n"
+ERROR_CHANGING_ENCODING_MSG = "\nError changing encoding: {error_message}\n"
+BACKUP_CREATED = "A backup of the existing subtitle file has been saved to: {output_subtitle_file}.\n"
 # Alass integration
 def find_ffmpeg_paths():
     ffmpeg_path = subprocess.check_output("where ffmpeg", shell=True).decode().strip()
@@ -970,8 +979,28 @@ def strip_namespace(tag):
     if '}' in tag:
         return tag.split('}', 1)[1]
     return tag
+
+def detect_encoding(file_path):
+    with open(file_path, 'rb') as f:
+        raw_data = f.read()
+    result = chardet.detect(raw_data)
+    encoding = result['encoding']
+    return encoding
+
+def create_backup(file_path):
+    base_name, ext = os.path.splitext(os.path.basename(file_path))
+    backup_dir = os.path.dirname(file_path)
+    backup_file = os.path.join(backup_dir, f"backup_{base_name}{ext}")
+    suffix = 2
+    while os.path.exists(backup_file):
+        backup_file = os.path.join(backup_dir, f"backup_{base_name}_{suffix}{ext}")
+        suffix += 1
+    shutil.copy2(file_path, backup_file)
+    return backup_file
+
 # Convert subtitles to SRT End
 def start_batch_sync():
+    global selected_destination_folder
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
@@ -981,6 +1010,10 @@ def start_batch_sync():
     process_list = []
     output_subtitle_files = []
     tree_items = treeview.get_children()
+    if action_var_auto.get()  == OPTION_SELECT_DESTINATION_FOLDER:
+        if not os.path.exists(selected_destination_folder):
+            log_message(TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST, "error", tab='auto')
+            return
     if not tree_items:
         log_message(NO_FILES_TO_SYNC, "error", tab='auto')
         return
@@ -1041,6 +1074,7 @@ def start_batch_sync():
             alass_speed_optimization.grid_remove()
         log_window.grid_remove()
         progress_bar.grid_remove()
+        button_go_back.grid_remove()
         button_generate_again.grid_remove()
         button_cancel_batch_sync.grid_remove()
         tree_frame.grid()  # Show tree_frame
@@ -1054,6 +1088,7 @@ def start_batch_sync():
         batch_mode_button.grid()
         log_window.grid_remove()
         progress_bar.grid_remove()
+        button_go_back.grid_remove()
         button_generate_again.grid_remove()
         action_menu_auto.grid()
         sync_frame.grid()
@@ -1075,9 +1110,95 @@ def start_batch_sync():
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
 
+    # Convert files if necessary
+    def convert_to_srt(subtitle_file):
+        file_extension = os.path.splitext(subtitle_file)[-1].lower()
+        original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
+        srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + original_base_name + '.srt')
+        log_window.insert(tk.END, f"{PREPARING_SYNC.format(base_name=original_base_name, file_extension=file_extension)}\n")
+        converters = {
+            '.ttml': convert_ttml_or_dfxp_to_srt,
+            '.dfxp': convert_ttml_or_dfxp_to_srt,
+            '.itt': convert_ttml_or_dfxp_to_srt,
+            '.vtt': convert_vtt_to_srt,
+            '.sbv': convert_sbv_to_srt,
+            '.sub': convert_sub_to_srt,
+            '.ass': convert_ass_to_srt,
+            '.ssa': convert_ass_to_srt,
+            '.stl': convert_stl_to_srt
+        }
+        converter = converters.get(file_extension)
+        if converter:
+            try:
+                log_window.insert(tk.END, f"{CONVERTING_SUBTITLE.format(file_extension=file_extension.upper())}\n")
+                converter(subtitle_file, srt_file)
+            except Exception as e:
+                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
+                return None
+            log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
+            return srt_file
+        else:
+            log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
+            return None
+    def convert_files():
+        nonlocal subtitle_file, video_file
+        original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
+        # Convert subtitle file if necessary
+        unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
+        if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
+            subtitle_file_converted = convert_to_srt(subtitle_file)
+            if subtitle_file_converted:
+                subtitle_file = subtitle_file_converted
+            else:
+                log_window.insert(tk.END, f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n")
+                return False
+        # Convert video file if necessary
+        if video_file.lower().endswith(tuple(unsupported_extensions)):
+            video_file_converted = convert_to_srt(video_file)
+            if video_file_converted:
+                video_file = video_file_converted
+            else:
+                log_window.insert(tk.END, f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n")
+                return False
+        return original_base_name
+
+    def execute_cmd(cmd):
+        decoding_error_occurred = False
+        try:
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+            for output in process.stdout:
+                if cancel_flag:
+                    process.kill()
+                    restore_window()
+                    return 1, decoding_error_occurred  # Ensure a tuple is returned
+                if sync_tool == SYNC_TOOL_FFSUBSYNC:
+                    match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
+                elif sync_tool == SYNC_TOOL_ALASS:
+                    match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
+                    if not match_percentage:
+                        match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
+                if match_percentage:
+                    percentage = float(match_percentage.group(1))
+                    adjusted_value = min(97, max(1, percentage))
+                    progress_increment = (adjusted_value / 100) * (100 / total_items)
+                    progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
+                if "%" in output:
+                    log_window.replace("end-2l", "end-1l", output)
+                else:
+                    log_window.insert(tk.END, output)
+                log_window.see(tk.END)
+                if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
+                    decoding_error_occurred = True
+            process.wait()
+            return process.returncode, decoding_error_occurred
+        except Exception as e:
+            error_msg = f"Error executing command: {str(e)}\n"
+            log_window.insert(tk.END, error_msg)
+            return 1, decoding_error_occurred  # Ensure a tuple is returned
+        
     def run_batch_process():
         nonlocal completed_items
-        subtitles_to_skip = set() 
+        subtitles_to_skip = set()
         subtitles_to_process = []
         add_suffix = True
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
@@ -1120,6 +1241,8 @@ def start_batch_sync():
                     base_output_dir = os.path.dirname(video_file)
                 elif action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
                     base_output_dir = os.path.dirname(video_file)
+                elif action_var_auto.get() == OPTION_SELECT_DESTINATION_FOLDER:
+                    base_output_dir = selected_destination_folder
                 else:
                     base_output_dir = os.path.dirname(subtitle_file)
                 # Determine output extension
@@ -1161,60 +1284,13 @@ def start_batch_sync():
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
                 original_subtitle_file = subtitle_file  # Store the original subtitle file name
-                if subtitle_file in subtitles_to_skip and skip:
-                    log_window.insert(tk.END, f"{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n")
+                if not video_file:
                     continue
-                # Convert files if necessary
-                def convert_to_srt(subtitle_file):
-                    file_extension = os.path.splitext(subtitle_file)[-1].lower()
-                    original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
-                    srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + original_base_name + '.srt')
-                    log_window.insert(tk.END, f"{PREPARING_SYNC.format(base_name=original_base_name, file_extension=file_extension)}\n")
-                    converters = {
-                        '.ttml': convert_ttml_or_dfxp_to_srt,
-                        '.dfxp': convert_ttml_or_dfxp_to_srt,
-                        '.itt': convert_ttml_or_dfxp_to_srt,
-                        '.vtt': convert_vtt_to_srt,
-                        '.sbv': convert_sbv_to_srt,
-                        '.sub': convert_sub_to_srt,
-                        '.ass': convert_ass_to_srt,
-                        '.ssa': convert_ass_to_srt,
-                        '.stl': convert_stl_to_srt
-                    }
-                    converter = converters.get(file_extension)
-                    if converter:
-                        try:
-                            log_window.insert(tk.END, f"{CONVERTING_SUBTITLE.format(file_extension=file_extension.upper())}\n")
-                            converter(subtitle_file, srt_file)
-                        except Exception as e:
-                            log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-                            return None
-                        log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
-                        return srt_file
-                    else:
-                        log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
-                        return None
-                def convert_files():
-                    nonlocal subtitle_file, video_file
-                    original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
-                    # Convert subtitle file if necessary
-                    unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
-                    if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
-                        subtitle_file_converted = convert_to_srt(subtitle_file)
-                        if subtitle_file_converted:
-                            subtitle_file = subtitle_file_converted
-                        else:
-                            log_window.insert(tk.END, f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n")
-                            return False
-                    # Convert video file if necessary
-                    if video_file.lower().endswith(tuple(unsupported_extensions)):
-                        video_file_converted = convert_to_srt(video_file)
-                        if video_file_converted:
-                            video_file = video_file_converted
-                        else:
-                            log_window.insert(tk.END, f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n")
-                            return False
-                    return original_base_name
+                if not subtitle_file:
+                    continue
+                if subtitle_file in subtitles_to_skip and skip:
+                    log_window.insert(tk.END, f"\n{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n")
+                    continue  
                 original_base_name = convert_files()
                 if not original_base_name:
                     continue
@@ -1230,6 +1306,11 @@ def start_batch_sync():
                     output_subtitle_file = os.path.join(base_output_dir, f"autosync_{base_name}{original_ext}")
                 if not output_subtitle_file.lower().endswith(tuple(SUPPORTED_SUBTITLE_EXTENSIONS)):
                     output_subtitle_file = os.path.splitext(output_subtitle_file)[0] + '.srt'
+                if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
+                    # if there is a file with the same name as the output_subtitle_file, create a backup
+                    if os.path.exists(output_subtitle_file):
+                        new_output_subtitle_file = create_backup(output_subtitle_file)
+                        log_window.insert(tk.END, f"{BACKUP_CREATED.format(output_subtitle_file=new_output_subtitle_file)}")
                 # Handle autosync suffix
                 # Updated regex pattern to match filenames starting with 'autosync_' followed by the base name
                 # and ending with '_2', '_3', etc.
@@ -1300,57 +1381,47 @@ def start_batch_sync():
                     log_window.insert(tk.END, f"{FAILED_START_PROCESS.format(error_message=str(e))}\n")
                     log_message(FAILED_START_PROCESS.format(error_message=str(e)), "error", tab='auto')
                     continue
-                def execute_cmd(cmd):
-                    error_occurred = False
-                    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-                    for output in process.stdout:
-                        if cancel_flag:
-                            process.kill()
-                            restore_window()
-                            return 1, error_occurred  # Ensure a tuple is returned
-                        if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                            match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
-                        elif sync_tool == SYNC_TOOL_ALASS:
-                            match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
-                            if not match_percentage:
-                                match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
-                        if match_percentage:
-                            percentage = float(match_percentage.group(1))
-                            adjusted_value = min(97, max(1, percentage))
-                            progress_increment = (adjusted_value / 100) * (100 / total_items)
-                            progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
-                        if "%" in output:
-                            log_window.replace("end-2l", "end-1l", output)
-                        else:
-                            log_window.insert(tk.END, output)
-                        log_window.see(tk.END)
-                        if "error while decoding subtitle from bytes to string" in output:
-                            error_occurred = True
-                    process.wait()
-                    return process.returncode, error_occurred
-                returncode, error_occurred = execute_cmd(cmd)
-                if returncode != 0 and error_occurred:
-                    log_window.insert(tk.END, "\n"+RETRY_ENCODING_REF_MSG)
-                    cmd += " --encoding-ref=iso-8859-1"
-                    returncode, error_occurred = execute_cmd(cmd)
-                    if returncode != 0 and error_occurred:
-                        log_window.insert(tk.END, "\n"+RETRY_ENCODING_INC_MSG)
-                        cmd = cmd.replace(" --encoding-ref=iso-8859-1", "") + " --encoding-inc=iso-8859-1"
-                        returncode, error_occurred = execute_cmd(cmd)
-                        if returncode != 0 and error_occurred:
-                            log_window.insert(tk.END, "\n"+RETRY_BOTH_ENCODINGS_MSG)
-                            cmd += " --encoding-ref=iso-8859-1 --encoding-inc=iso-8859-1"
-                            returncode, error_occurred = execute_cmd(cmd)
-                if cancel_flag:
-                    process_list.remove(process)
-                    restore_window()
-                    return
-                if returncode == 0:
-                    log_window.insert(tk.END, f"{SYNC_SUCCESS.format(output_subtitle_file=output_subtitle_file)}")
-                else:
-                    log_window.insert(tk.END, f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n")
+                try:
+                    returncode, decoding_error_occurred = execute_cmd(cmd)
+                    # alass specific code
+                    if sync_tool == SYNC_TOOL_ALASS:
+                        encoding_ref = None
+                        encoding_inc = detect_encoding(subtitle_file)
+                        # if decoding_error_occurred, retry with detected encodings
+                        if returncode != 0 and decoding_error_occurred:
+                            log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG)
+                            if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
+                                encoding_ref = detect_encoding(video_file)
+                                cmd += f" --encoding-ref={encoding_ref}"
+                            cmd += f" --encoding-inc={encoding_inc}"
+                            execute_cmd(cmd)
+                        synced_subtitle_encoding = detect_encoding(output_subtitle_file)
+                        # If the encoding of synced subtitle is not the same as encoding_inc, change it
+                        if synced_subtitle_encoding != encoding_inc:
+                            change_encoding_msg = CHANGING_ENCODING_MSG.format(synced_subtitle_encoding=synced_subtitle_encoding, encoding_inc=encoding_inc)
+                            log_window.insert(tk.END, change_encoding_msg)
+                            try:
+                                with open(output_subtitle_file, 'r', encoding=synced_subtitle_encoding) as f:
+                                    content = f.read()
+                                with open(output_subtitle_file, 'w', encoding=encoding_inc) as f:
+                                    f.write(content)
+                                log_window.insert(tk.END, ENCODING_CHANGED_MSG)
+                            except Exception as e:
+                                error_msg = ERROR_CHANGING_ENCODING_MSG.format(error_message=str(e))
+                                log_window.insert(tk.END, error_msg)
+                    if cancel_flag:
+                        process_list.remove(process)
+                        restore_window()
+                        return
+                    if returncode == 0:
+                        log_window.insert(tk.END, f"{SYNC_SUCCESS.format(output_subtitle_file=output_subtitle_file)}")
+                    else:
+                        log_window.insert(tk.END, f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n")
+                except Exception as e:
+                    error_msg = ERROR_OCCURRED.format(error_message=str(e))
+                    log_window.insert(tk.END, error_msg)
                 process_list.remove(process)
-                completed_items += 1 
+                completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
         log_window.insert(tk.END, f"\n{BATCH_SYNC_COMPLETED}\n")
@@ -1358,6 +1429,7 @@ def start_batch_sync():
         log_window.see(tk.END)
         button_cancel_batch_sync.grid_remove()
         log_window.grid(pady=(10, 10), rowspan=2)
+        button_go_back.grid()
         button_generate_again.grid()
         progress_bar.grid_remove()
     try:
@@ -1405,6 +1477,23 @@ def start_batch_sync():
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
+
+        button_go_back = tk.Button(
+            automatic_tab,
+            text=GO_BACK,
+            command=lambda: [log_message("", "info", tab='auto'), restore_window()],
+            padx=10,
+            pady=10,
+            fg="white",
+            bg=DEFULT_BUTTON_COLOR,
+            activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+            activeforeground="white",
+            relief=tk.RAISED,
+            borderwidth=2,
+            cursor="hand2"
+        )
+        button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
+        button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
         log_window.config(font=("Arial", 7))
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
@@ -1417,7 +1506,6 @@ def start_batch_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
-
 # Global variable to store options state
 options_states = {}
 def toggle_batch_mode():
@@ -1562,7 +1650,7 @@ def process_files(filepaths):
                     for sub_file in subtitle_files[:]:
                         if sub_file and os.path.dirname(sub_file) == parent_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
                             subtitle_file = sub_file
-                            subtitle_name = os.path.basename(sub_file)
+                            subtitle_name = os.path.basename(subtitle_file)
                             subtitle_files.remove(sub_file)
                             break
                     if subtitle_file:
@@ -1692,6 +1780,9 @@ def add_pair():
             treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
             treeview.item(parent_id, tags=("paired",))
             log_message(PAIR_ADDED, "info", tab='auto')
+            # Handle UI updates
+            batch_input.grid_remove()
+            tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
         else:
             log_message(SELECT_SUBTITLE, "error", tab='auto')
     else:
@@ -1804,7 +1895,8 @@ def remove_selected_item():
 batch_input = tk.Label(automatic_tab, text=BATCH_INPUT_LABEL, bg="lightgray", relief="ridge", width=40, height=5, cursor="hand2")
 batch_input_text = tk.Label(automatic_tab, text=BATCH_INPUT_TEXT, fg="black", relief="ridge", padx=5, borderwidth=1)
 batch_input_text.place(in_=batch_input, relx=0, rely=0, anchor="nw")
-batch_input.bind("<Button-1>", browse_batch)
+batch_input.bind("<Button-1>", lambda event: options_menu.post(event.x_root, event.y_root))
+batch_input.bind("<Button-3>", lambda event: options_menu.post(event.x_root, event.y_root))
 batch_input.bind("<Enter>", on_enter)
 batch_input.bind("<Leave>", on_leave)
 batch_input.drop_target_register(DND_FILES)
@@ -1839,7 +1931,7 @@ def delete_selected(event):
 context_menu = tk.Menu(treeview, tearoff=0)
 context_menu.add_command(label=CONTEXT_MENU_REMOVE, command=remove_selected_item)
 context_menu.add_command(label=CONTEXT_MENU_CHANGE, command=change_selected_item)
-context_menu.add_separator()  # Add a separator
+context_menu.add_separator()
 context_menu.add_command(label=CONTEXT_MENU_ADD_PAIR, command=add_pair)
 context_menu.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: treeview.delete(*treeview.get_children()))
 # Function to show the context menu
@@ -2071,6 +2163,7 @@ def on_subtitle_drop(event):
         log_message(DROP_SUBTITLE_FILE, "error", tab='auto')
 
 process = None
+
 def start_automatic_sync():
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
@@ -2113,6 +2206,12 @@ def start_automatic_sync():
         if not ext.lower() in SUPPORTED_SUBTITLE_EXTENSIONS:
             ext = '.srt'
         output_subtitle_file = os.path.join(output_dir, f"{base_name}{ext}")
+    elif action == OPTION_SELECT_DESTINATION_FOLDER:
+        if 'selected_destination_folder' in globals() and os.path.exists(selected_destination_folder):
+            output_dir = selected_destination_folder
+        else:
+            log_message(TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST, "error", tab='auto')
+            return
     else:
         output_dir = os.path.dirname(subtitle_file)
     if action != OPTION_REPLACE_ORIGINAL_SUBTITLE:
@@ -2125,7 +2224,6 @@ def start_automatic_sync():
             base_name, ext = os.path.splitext(os.path.basename(subtitle_file))
         if not ext.lower() in SUPPORTED_SUBTITLE_EXTENSIONS:
             ext = '.srt'
-        counter = 2
         if action == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             filename = f"{base_name}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
@@ -2133,13 +2231,14 @@ def start_automatic_sync():
             filename = f"autosync_{base_name}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
         add_suffix = True
+
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             add_suffix = False
+        suffix = 2
         while os.path.exists(output_subtitle_file) and add_suffix == True:
-            filename = f"autosync_{base_name}_{counter}{ext}"
+            filename = f"autosync_{base_name}_{suffix}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
-            counter += 1
-            
+            suffix += 1
     def cancel_automatic_sync():
         global process
         if process:
@@ -2187,6 +2286,7 @@ def start_automatic_sync():
             alass_speed_optimization.grid_remove()
         log_window.grid_remove()
         progress_bar.grid_remove()
+        button_go_back.grid_remove()
         button_generate_again.grid_remove()
         button_cancel_automatic_sync.grid_remove()
         automatic_tab.columnconfigure(0, weight=0)
@@ -2221,6 +2321,7 @@ def start_automatic_sync():
             alass_speed_optimization.grid_remove()
         log_window.grid_remove()
         progress_bar.grid_remove()
+        button_go_back.grid_remove()
         button_generate_again.grid_remove()
         button_cancel_automatic_sync.grid_remove()
         label_message_auto.grid_remove()
@@ -2277,10 +2378,100 @@ def start_automatic_sync():
         if srt_file:
             log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
             return srt_file
-        
-    def run_subprocess():
-        global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty
+
+    def update_progress_auto(progress_bar, value):
+        adjusted_value = min(97, max(1, value))
+        progress_bar["value"] = adjusted_value
+
+    def build_cmd():
+        if sync_tool == SYNC_TOOL_FFSUBSYNC:
+            cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
+                if ffsubsync_option_framerate_var.get():
+                    cmd += " --no-fix-framerate"
+                if ffsubsync_option_gss_var.get():
+                    cmd += (" --gss")
+                if ffsubsync_option_vad_var.get():
+                    cmd += (" --vad=auditok")
+        elif sync_tool == SYNC_TOOL_ALASS:
+            if split_penalty == 0:
+                cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
+            else:
+                cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
+            if alass_speed_optimization_var.get():
+                cmd += " --speed-optimization 0"
+            if alass_disable_fps_guessing_var.get():
+                cmd += " --disable-fps-guessing"
+        else:
+            log_message(INVALID_SYNC_TOOL_SELECTED, "error", tab='auto')
+            return None
+        return cmd
+    
+    def execute_cmd(cmd):
+        global process, progress_line_number, subtitle_file, video_file, output_subtitle_file, split_penalty
         split_penalty = alass_split_penalty_var.get()
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        progress_bar["value"] = 1
+        if sync_tool == SYNC_TOOL_FFSUBSYNC:
+            if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
+                log_window.insert(tk.END, f"{USING_REFERENCE_SUBTITLE}\n")
+            else:
+                log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
+                if ffsubsync_option_framerate_var.get():
+                    log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
+                if ffsubsync_option_gss_var.get():
+                    log_window.insert(tk.END, f"{ENABLED_GSS}\n")
+                if ffsubsync_option_vad_var.get():
+                    log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
+        elif sync_tool == SYNC_TOOL_ALASS:
+            if split_penalty == 0:
+                log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
+            else:
+                log_window.insert(tk.END, f"{SPLIT_PENALTY_SET.format(split_penalty=split_penalty)}\n")
+            if alass_speed_optimization_var.get():
+                log_window.insert(tk.END, f"{ALASS_SPEED_OPTIMIZATION_LOG}\n")
+            if alass_disable_fps_guessing_var.get():
+                log_window.insert(tk.END, f"{ALASS_DISABLE_FPS_GUESSING_LOG}\n")
+        log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
+        progress_line_number = log_window.index(tk.END).split(".")[0]
+        decoding_error_occurred = False
+        for output in process.stdout:
+            if sync_tool == SYNC_TOOL_FFSUBSYNC:
+                match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
+            elif sync_tool == SYNC_TOOL_ALASS:
+                match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
+                if not match_percentage:
+                    match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
+            if match_percentage:
+                percentage = float(match_percentage.group(1))
+                root.after(10, update_progress_auto, progress_bar, percentage)
+            if "%" in output:
+                log_window.replace("end-2l", "end-1l", output)
+            else:
+                log_window.insert(tk.END, output)
+            log_window.see(tk.END)
+            if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
+                decoding_error_occurred = True
+        if process is not None:
+            process.wait()
+            if process.returncode == 0:
+                log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
+                log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
+                button_cancel_automatic_sync.grid_remove()
+                log_window.grid(pady=(10, 10), rowspan=2)
+                button_go_back.grid()
+                button_generate_again.grid()
+            return process.returncode, decoding_error_occurred
+        return 1, decoding_error_occurred  # Ensure a tuple is returned in case process is None
+            
+    def run_subprocess():
+        global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
+        split_penalty = alass_split_penalty_var.get()
+        if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
+            # if there is a file with the same name as the output_subtitle_file, create a backup
+            if os.path.exists(output_subtitle_file):
+                new_output_subtitle_file = create_backup(output_subtitle_file)
+                log_window.insert(tk.END, f"{BACKUP_CREATED.format(output_subtitle_file=new_output_subtitle_file)}\n")
         unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
         if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
             subtitle_file = convert_to_srt(subtitle_file)
@@ -2289,112 +2480,45 @@ def start_automatic_sync():
         try:
             if not output_subtitle_file.lower().endswith(tuple(SUPPORTED_SUBTITLE_EXTENSIONS)):
                 output_subtitle_file = output_subtitle_file.rsplit('.', 1)[0] + '.srt'
-            def build_cmd():
-                if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
-                    if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                        if ffsubsync_option_framerate_var.get():
-                            cmd += " --no-fix-framerate"
-                        if ffsubsync_option_gss_var.get():
-                            cmd += (" --gss")
-                        if ffsubsync_option_vad_var.get():
-                            cmd += (" --vad=auditok")
-                elif sync_tool == SYNC_TOOL_ALASS:
-                    if split_penalty == 0:
-                        cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
-                    else:
-                        cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
-                    if alass_speed_optimization_var.get():
-                        cmd += " --speed-optimization 0"
-                    if alass_disable_fps_guessing_var.get():
-                        cmd += " --disable-fps-guessing"
-                else:
-                    log_message("Invalid sync tool selected.", "error", tab='auto')
-                    return None
-                return cmd
             cmd = build_cmd()
             if cmd is None:
                 return
-            def execute_cmd(cmd):
-                global process, progress_line_number, subtitle_file, video_file, output_subtitle_file, split_penalty
-                split_penalty = alass_split_penalty_var.get()
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-                progress_bar["value"] = 1
-                if sync_tool == SYNC_TOOL_FFSUBSYNC:
+            returncode, decoding_error_occurred = execute_cmd(cmd)
+            # alass specific code
+            if sync_tool == SYNC_TOOL_ALASS:
+                encoding_ref = None
+                encoding_inc = detect_encoding(subtitle_file)
+                # if decoding_error_occurred, retry with detected encodings
+                if returncode != 0 and decoding_error_occurred:
+                    log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG)
                     if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                        log_window.insert(tk.END, f"{USING_REFERENCE_SUBTITLE}\n")
-                    else:
-                        log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
-                        if ffsubsync_option_framerate_var.get():
-                            log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
-                        if ffsubsync_option_gss_var.get():
-                            log_window.insert(tk.END, f"{ENABLED_GSS}\n")
-                        if ffsubsync_option_vad_var.get():
-                            log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
-                elif sync_tool == SYNC_TOOL_ALASS:
-                    if split_penalty == 0:
-                        log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
-                    else:
-                        log_window.insert(tk.END, f"{SPLIT_PENALTY_SET.format(split_penalty=split_penalty)}\n")
-                    if alass_speed_optimization_var.get():
-                        log_window.insert(tk.END, f"{ALASS_SPEED_OPTIMIZATION_LOG}\n")
-                    if alass_disable_fps_guessing_var.get():
-                        log_window.insert(tk.END, f"{ALASS_DISABLE_FPS_GUESSING_LOG}\n")
-                log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
-                progress_line_number = log_window.index(tk.END).split(".")[0]
-                error_occurred = False
-                for output in process.stdout:
-                    if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                        match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
-                    elif sync_tool == SYNC_TOOL_ALASS:
-                        match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
-                        if not match_percentage:
-                            match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
-                    if match_percentage:
-                        percentage = float(match_percentage.group(1))
-                        root.after(10, update_progress_auto, progress_bar, percentage)
-                    if "%" in output:
-                        log_window.replace("end-2l", "end-1l", output)
-                    else:
-                        log_window.insert(tk.END, output)
-                    log_window.see(tk.END)
-                    if "error while decoding subtitle from bytes to string" in output:
-                        error_occurred = True
-                if process is not None:
-                    process.wait()
-                    if process.returncode == 0:
-                        log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
-                        log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
-                        button_cancel_automatic_sync.grid_remove()
-                        log_window.grid(pady=(10, 10), rowspan=2)
-                        button_generate_again.grid()
-                    return process.returncode, error_occurred
-                return 1, error_occurred  # Ensure a tuple is returned in case process is None
-            returncode, error_occurred = execute_cmd(cmd)
-            if returncode != 0 and error_occurred:
-                log_window.insert(tk.END, "\n"+ RETRY_ENCODING_REF_MSG)
-                cmd += " --encoding-ref=iso-8859-1"
-                returncode, error_occurred = execute_cmd(cmd)
-                if returncode != 0 and error_occurred:
-                    log_window.insert(tk.END, "\n"+ RETRY_ENCODING_INC_MSG)
-                    cmd = cmd.replace(" --encoding-ref=iso-8859-1", "") + " --encoding-inc=iso-8859-1"
-                    returncode, error_occurred = execute_cmd(cmd)
-                    if returncode != 0 and error_occurred:
-                        log_window.insert(tk.END, "\n"+ RETRY_BOTH_ENCODINGS_MSG)
-                        cmd += " --encoding-ref=iso-8859-1 --encoding-inc=iso-8859-1"
-                        execute_cmd(cmd)
+                        encoding_ref = detect_encoding(video_file)
+                        cmd += f" --encoding-ref={encoding_ref}"
+                    cmd += f" --encoding-inc={encoding_inc}"
+                    execute_cmd(cmd)
+                synced_subtitle_encoding = detect_encoding(output_subtitle_file)
+                # If the encoding of synced subtitle is not the same as encoding_inc, change it
+                if synced_subtitle_encoding != encoding_inc:
+                    change_encoding_msg = CHANGING_ENCODING_MSG.format(synced_subtitle_encoding=synced_subtitle_encoding, encoding_inc=encoding_inc)
+                    log_window.insert(tk.END, change_encoding_msg)
+                    try:
+                        with open(output_subtitle_file, 'r', encoding=synced_subtitle_encoding) as f:
+                            content = f.read()
+                        with open(output_subtitle_file, 'w', encoding=encoding_inc) as f:
+                            f.write(content)
+                        log_window.insert(tk.END, ENCODING_CHANGED_MSG)
+                    except Exception as e:
+                        error_msg = ERROR_CHANGING_ENCODING_MSG.format(error_message=str(e))
+                        log_window.insert(tk.END, error_msg)
             log_window.insert(tk.END, f"\n{SYNCING_ENDED}\n")
         except Exception as e:
-            log_message(ERROR_OCCURRED.format(error_message=str(e)), "error", tab='auto')
-        progress_bar.grid_remove()
-        log_window.see(tk.END)
-        automatic_tab.rowconfigure(1, weight=1)
+            log_message(ERROR_OCCURRED.format(error_message=str(e)), "error", tab='auto')   
+        finally:
+            log_window.see(tk.END)
+            progress_bar.grid_remove()
+            automatic_tab.rowconfigure(1, weight=1)
+            root.update_idletasks()
         root.update_idletasks()
-
-    def update_progress_auto(progress_bar, value):
-        adjusted_value = min(97, max(1, value))
-        progress_bar["value"] = adjusted_value
-        
     try:
         subtitle_input.grid_remove()
         video_input.grid_remove()
@@ -2442,6 +2566,22 @@ def start_automatic_sync():
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(00,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
+        button_go_back = tk.Button(
+            automatic_tab,
+            text= GO_BACK,
+            command=lambda: [log_message("", "info", tab='auto'), restore_window()],
+            padx=10,
+            pady=10,
+            fg="white",
+            bg=DEFULT_BUTTON_COLOR,
+            activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+            activeforeground="white",
+            relief=tk.RAISED,
+            borderwidth=2,
+            cursor="hand2"
+        )
+        button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
+        button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
         log_window.config(font=("Arial", 7))
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
@@ -2518,6 +2658,22 @@ sync_tool_var_auto = tk.StringVar(value=SYNC_TOOL_FFSUBSYNC)
 ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text=CHECKBOX_NO_FIX_FRAMERATE, variable=ffsubsync_option_framerate_var)
 ffsubsync_option_gss = tk.Checkbutton(automatic_tab, text=CHECKBOX_GSS, variable=ffsubsync_option_gss_var)
 ffsubsync_option_vad = tk.Checkbutton(automatic_tab, text=CHECKBOX_VAD, variable=ffsubsync_option_vad_var)
+def select_destination_folder():
+    global tooltip_action_menu_auto
+    folder_path = filedialog.askdirectory()
+    if folder_path:
+        global selected_destination_folder
+        selected_destination_folder = folder_path
+        tooltip_action_menu_auto = ToolTip(action_menu_auto, TEXT_SELECTED_FOLDER.format(folder_path))
+        log_message(TEXT_SELECTED_FOLDER.format(folder_path), "info", tab='auto')
+    else:
+        log_message(TEXT_NO_FOLDER_SELECTED, "error", tab='auto')
+        action_var_auto.set(OPTION_SAVE_NEXT_TO_SUBTITLE)
+def on_action_menu_change(*args):
+    log_message("", "info", tab='auto')
+    tooltip_action_menu_auto = ToolTip(action_menu_auto, TOOLTIP_TEXT_ACTION_MENU_AUTO)
+    if action_var_auto.get() == OPTION_SELECT_DESTINATION_FOLDER:
+        select_destination_folder()
 action_menu_auto = ttk.OptionMenu(
     automatic_tab, 
     action_var_auto, 
@@ -2526,8 +2682,10 @@ action_menu_auto = ttk.OptionMenu(
     OPTION_SAVE_NEXT_TO_VIDEO,
     OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME,
     OPTION_SAVE_TO_DESKTOP, 
-    OPTION_REPLACE_ORIGINAL_SUBTITLE
+    OPTION_REPLACE_ORIGINAL_SUBTITLE,
+    OPTION_SELECT_DESTINATION_FOLDER
 )
+action_var_auto.trace_add("write", on_action_menu_change)
 sync_tool_menu_auto = ttk.OptionMenu(sync_frame, sync_tool_var_auto, SYNC_TOOL_FFSUBSYNC, SYNC_TOOL_FFSUBSYNC, SYNC_TOOL_ALASS)
 alass_disable_fps_guessing_var = tk.BooleanVar()
 alass_disable_fps_guessing = tk.Checkbutton(automatic_tab, text=ALASS_DISABLE_FPS_GUESSING_TEXT, variable=alass_disable_fps_guessing_var)
