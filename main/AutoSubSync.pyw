@@ -5,6 +5,7 @@ import shutil
 import chardet
 import subprocess
 import threading
+import pysubs2
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -12,11 +13,12 @@ import xml.etree.ElementTree as ET
 import ctypes
 # Program information
 PROGRAM_NAME = "AutoSubSync"
-VERSION = "v2.8"
+VERSION = "v2.9"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 # File extensions
 FFSUBSYNC_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa']
 ALASS_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa', '.sub', '.idx']
+ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt"}
 SUBTITLE_EXTENSIONS = ['.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl', '.idx']
 VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc']
 # Colors
@@ -123,7 +125,7 @@ VIDEO_FILE_NOT_EXIST = "Video file do not exist."
 ERROR_LOADING_SUBTITLE = "Error loading subtitle file: {error_message}"
 ERROR_CONVERT_TIMESTAMP = "Failed to convert timestamp '{timestamp}' for format '{format_type}'"
 ERROR_PARSING_TIME_STRING = "Error parsing time string '{time_str}'"
-ERROR_PARSING_TIME_STRING2 = "Error parsing time string '{time_str}' for format '{format_type}': {error_message}"
+ERROR_PARSING_TIME_STRING_DETAILED = "Error parsing time string '{time_str}' for format '{format_type}': {error_message}"
 NO_FILES_TO_SYNC = "No files to sync. Please add files to the batch list."
 NO_VALID_FILE_PAIRS = "No valid file pairs to sync."
 ERROR_PROCESS_TERMINATION = "Error occurred during process termination: {error_message}"
@@ -133,6 +135,7 @@ NO_SYNC_PROCESS = "No synchronization process to cancel."
 INVALID_SYNC_TOOL = "Invalid sync tool selected."
 FAILED_START_PROCESS = "Failed to start process: {error_message}"
 ERROR_OCCURRED = "Error occurred: {error_message}"
+ERROR_EXECUTING_COMMAND = "Error executing command: "
 DROP_VALID_FILES = "Please drop valid subtitle and video files."
 PAIRS_ADDED = "Added {count} pair{s}"
 UNPAIRED_FILES_ADDED = "Added {count} unpaired file{s}"
@@ -196,8 +199,19 @@ ALASS_SPEED_OPTIMIZATION_LOG = "Disabled: Speed optinization..."
 ALASS_DISABLE_FPS_GUESSING_LOG = "Disabled: FPS guessing..."
 CHANGING_ENCODING_MSG = "\nEncoding of the synced subtitle does not match the original subtitle's encoding. Changing the encoding from {synced_subtitle_encoding} to {encoding_inc}...\n"
 ENCODING_CHANGED_MSG = "\nEncoding changed successfully.\n"
+SYNC_SUCCESS_COUNT = "Successfully synced {success_count} subtitle file(s)."
+SYNC_FAILURE_COUNT = "Failed to sync {failure_count} subtitle file(s)."
+SYNC_FAILURE_COUNT_BATCH = "Failed to sync {failure_count} pair(s):"
 ERROR_CHANGING_ENCODING_MSG = "\nError changing encoding: {error_message}\n"
 BACKUP_CREATED = "A backup of the existing subtitle file has been saved to: {output_subtitle_file}.\n"
+CHECKING_SUBTITLE_STREAMS = "Checking the video for subtitle streams...\n"
+FOUND_COMPATIBLE_SUBTITLES = "Found {count} compatible subtitles to extract.\nExtracting subtitles to folder: {output_folder}...\n"
+NO_COMPATIBLE_SUBTITLES = "No compatible subtitles found to extract.\n"
+SUCCESSFULLY_EXTRACTED = "Successfully extracted: {filename}.\n"
+CHOOSING_BEST_SUBTITLE = "Selecting the best subtitle for syncing...\n"
+CHOSEN_SUBTITLE = "Selected: {filename} with timestamp difference: {score}\n"
+FAILED_TO_EXTRACT_SUBTITLES = "Failed to extract subtitles. Error: {error}\n"
+USED_THE_LONGEST_SUBTITLE = "Used the longest subtitle file because parse_timestamps failed."
 # Alass integration
 def find_ffmpeg_paths():
     ffmpeg_path = subprocess.check_output("where ffmpeg", shell=True).decode().strip()
@@ -385,7 +399,7 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
                 h, m, s, cs = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + (cs * 10)
         except (ValueError, IndexError) as e:
-            log_message(ERROR_PARSING_TIME_STRING2.format(time_str=time_str, format_type=format_type, error_message=str(e)), "error", tab='manual')
+            log_message(ERROR_PARSING_TIME_STRING_DETAILED.format(time_str=time_str, format_type=format_type, error_message=str(e)), "error", tab='manual')
             return None
 
     def milliseconds_to_time(ms, format_type, original_time_str=None):
@@ -725,6 +739,108 @@ add_separator.grid(row=0, column=0, sticky="new", padx=11, pady=0, columnspan=6)
 style.map("TSeparator", background=[("","SystemButtonFace")])
 
 # ---------------- Automatic Tab ---------------- #
+# Extract subtitles from video (ALASS)
+def extract_subtitles(video_file, subtitle_file):
+    messages = []
+    # Get the subtitle streams and their codecs using ffprobe
+    cmd = [
+        "ffprobe",
+        "-v", "error",
+        "-select_streams", "s",
+        "-show_entries", "stream=index,codec_name:stream_tags=language,title",
+        "-of", "csv=p=0",
+        video_file
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    # Parse the ffprobe output to extract stream index, codec_name, and language
+    subtitle_streams = []
+    for line in result.stdout.splitlines():
+        parts = line.split(",")
+        if len(parts) >= 2:  # Ensure there is at least index and codec_name
+            stream_index = parts[0]
+            codec_name = parts[1]
+            language = parts[2] if len(parts) > 2 else ""
+            subtitle_streams.append((stream_index, codec_name, language))
+    # Filter for compatible codecs
+    compatible_subtitles = [stream for stream in subtitle_streams if stream[1] in ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS]
+    if len(compatible_subtitles) > 0:
+        output_folder = os.path.join(os.path.dirname(video_file), "extracted_subtitles_" + os.path.basename(video_file))
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        messages.append(FOUND_COMPATIBLE_SUBTITLES.format(count=len(compatible_subtitles), output_folder=output_folder))
+    else:
+        messages.append(NO_COMPATIBLE_SUBTITLES)
+        return False, messages
+    # Prepare ffmpeg command to extract all subtitle streams in one go
+    ffmpeg_base_cmd = ["ffmpeg", "-y", "-i", video_file]
+    output_files = []
+    # Map arguments for all subtitle streams
+    for i, (stream, codec, language) in enumerate(compatible_subtitles):
+        ext = ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS.get(codec)
+        if not ext:
+            continue  # Skip unsupported codecs
+        lang_suffix = f"_{language}" if language else ""
+        output_file = f"{output_folder}/subtitle_{i+1}{lang_suffix}.{ext}"
+        output_files.append(output_file)
+        # Add -map argument before the corresponding codec and output file
+        ffmpeg_base_cmd.extend(["-map", f"0:{stream}", "-c:s", codec, output_file])
+    if not output_files:
+        messages.append(NO_COMPATIBLE_SUBTITLES)
+        return False, messages
+    # Run the ffmpeg command with properly placed -map arguments
+    result = subprocess.run(ffmpeg_base_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    if result.returncode == 0:
+        for output_file in output_files:
+            messages.append(SUCCESSFULLY_EXTRACTED.format(filename=os.path.basename(output_file)))
+        # Find the closest subtitle to the original subtitle
+        messages.append(CHOOSING_BEST_SUBTITLE)
+        closest_subtitle, score = choose_best_subtitle(subtitle_file, extracted_subtitles_folder=output_folder)
+        if closest_subtitle:
+            messages.append(CHOSEN_SUBTITLE.format(filename=os.path.basename(closest_subtitle), score=score))
+            return closest_subtitle, messages
+        return True, messages
+    else:
+        messages.append(FAILED_TO_EXTRACT_SUBTITLES.format(error=result.stderr))
+        return False, messages
+
+def parse_timestamps(subtitle_file):
+    try:
+        subs = pysubs2.load(subtitle_file, encoding='utf-8')
+        results = []
+        for event in subs:
+            seconds = event.start / 1000
+            results.append(seconds)
+        return results
+    except Exception as e:
+        return None
+
+def choose_best_subtitle(subtitle_file, extracted_subtitles_folder):
+    reference_times = parse_timestamps(subtitle_file)
+    if not reference_times:
+        # If reference_times is None, find the longest subtitle file
+        longest_subtitle = None
+        longest_length = 0
+        for file in os.listdir(extracted_subtitles_folder):
+            candidate = os.path.join(extracted_subtitles_folder, file)
+            candidate_times = parse_timestamps(candidate)
+            if candidate_times and len(candidate_times) > longest_length:
+                longest_length = len(candidate_times)
+                longest_subtitle = candidate
+        return longest_subtitle, USED_THE_LONGEST_SUBTITLE
+    best_subtitle = None
+    best_score = float('inf')
+    for file in os.listdir(extracted_subtitles_folder):
+        candidate = os.path.join(extracted_subtitles_folder, file)
+        candidate_times = parse_timestamps(candidate)
+        if not candidate_times:
+            continue
+        # Compare the count of timestamps
+        diff_count = abs(len(reference_times) - len(candidate_times))
+        if diff_count < best_score:
+            best_score = diff_count
+            best_subtitle = candidate
+    return best_subtitle, best_score
+
 # Convert subtitles to SRT Begin
 def convert_sub_to_srt(input_file, output_file):
     with open(input_file, 'rb') as sub_file:
@@ -1140,66 +1256,51 @@ def start_batch_sync():
         else:
             log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
             return None
-    def convert_files():
-        nonlocal subtitle_file, video_file
-        original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
-        # Convert subtitle file if necessary
-        unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
-        if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
-            subtitle_file_converted = convert_to_srt(subtitle_file)
-            if subtitle_file_converted:
-                subtitle_file = subtitle_file_converted
-            else:
-                log_window.insert(tk.END, f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n")
-                return False
-        # Convert video file if necessary
-        if video_file.lower().endswith(tuple(unsupported_extensions)):
-            video_file_converted = convert_to_srt(video_file)
-            if video_file_converted:
-                video_file = video_file_converted
-            else:
-                log_window.insert(tk.END, f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n")
-                return False
-        return original_base_name
 
     def execute_cmd(cmd):
-        decoding_error_occurred = False
-        try:
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-            for output in process.stdout:
-                if cancel_flag:
-                    process.kill()
-                    restore_window()
-                    return 1, decoding_error_occurred  # Ensure a tuple is returned
-                if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
-                elif sync_tool == SYNC_TOOL_ALASS:
-                    match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
-                    if not match_percentage:
-                        match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
-                if match_percentage:
-                    percentage = float(match_percentage.group(1))
-                    adjusted_value = min(97, max(1, percentage))
-                    progress_increment = (adjusted_value / 100) * (100 / total_items)
-                    progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
-                if "%" in output:
-                    log_window.replace("end-2l", "end-1l", output)
-                else:
-                    log_window.insert(tk.END, output)
-                log_window.see(tk.END)
-                if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
-                    decoding_error_occurred = True
-            process.wait()
-            return process.returncode, decoding_error_occurred
-        except Exception as e:
-            error_msg = f"Error executing command: {str(e)}\n"
-            log_window.insert(tk.END, error_msg)
-            return 1, decoding_error_occurred  # Ensure a tuple is returned
+            decoding_error_occurred = False
+            try:
+                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding='utf-8')
+                for output in process.stdout:
+                    if cancel_flag:
+                        process.kill()
+                        restore_window()
+                        return 1, decoding_error_occurred  # Ensure a tuple is returned
+                    if sync_tool == SYNC_TOOL_FFSUBSYNC:
+                        match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
+                    elif sync_tool == SYNC_TOOL_ALASS:
+                        match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
+                        if not match_percentage:
+                            match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
+                    if match_percentage:
+                        percentage = float(match_percentage.group(1))
+                        adjusted_value = min(97, max(1, percentage))
+                        progress_increment = (adjusted_value / 100) * (100 / total_items)
+                        progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
+                    if "%" in output:
+                        log_window.replace("end-2l", "end-1l", output)
+                    else:
+                        log_window.insert(tk.END, output)
+                    log_window.see(tk.END)
+                    if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
+                        decoding_error_occurred = True
+                    
+                process.wait()
+                if "error" in output.lower():
+                        return 1, decoding_error_occurred
+                return process.returncode, decoding_error_occurred
+            except Exception as e:
+                error_msg = f"{ERROR_EXECUTING_COMMAND}{str(e)}\n"
+                log_window.insert(tk.END, error_msg)
+                return 1, decoding_error_occurred  # Ensure a tuple is returned
         
     def run_batch_process():
         nonlocal completed_items
+        success_count = 0
+        failure_count = 0
         subtitles_to_skip = set()
         subtitles_to_process = []
+        failed_syncs = []
         add_suffix = True
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             add_suffix = False
@@ -1290,8 +1391,36 @@ def start_batch_sync():
                     continue
                 if subtitle_file in subtitles_to_skip and skip:
                     log_window.insert(tk.END, f"\n{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n")
-                    continue  
-                original_base_name = convert_files()
+                    continue 
+                original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
+                # Convert subtitle file if necessary
+                unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
+                if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
+                    subtitle_file_converted = convert_to_srt(subtitle_file)
+                    if subtitle_file_converted:
+                        subtitle_file = subtitle_file_converted
+                    else:
+                        log_window.insert(tk.END, f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n")
+                        return False
+                log_window.insert(tk.END, f"[{completed_items + 1}/{total_items}] Syncing {os.path.basename(original_subtitle_file)} with {os.path.basename(video_file)}...\n")
+                if sync_tool == SYNC_TOOL_ALASS:
+                    # if it is a video file, extract subtitle streams
+                    if video_file.lower().endswith(tuple(VIDEO_EXTENSIONS)):
+                        log_window.insert(tk.END, CHECKING_SUBTITLE_STREAMS)
+                        closest_subtitle, message = extract_subtitles(video_file, subtitle_file)
+                        for msg in message:
+                            log_window.insert(tk.END, msg)
+                            log_window.see(tk.END)
+                        if closest_subtitle:
+                            video_file = closest_subtitle
+                # Convert video file if necessary
+                if video_file.lower().endswith(tuple(unsupported_extensions)):
+                    video_file_converted = convert_to_srt(video_file)
+                    if video_file_converted:
+                        video_file = video_file_converted
+                    else:
+                        log_window.insert(tk.END, f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n")
+                        return False
                 if not original_base_name:
                     continue
                 # Update base_name for each subtitle file
@@ -1348,7 +1477,6 @@ def start_batch_sync():
                 else:
                     log_message(INVALID_SYNC_TOOL, "error", tab='auto')
                     return
-                log_window.insert(tk.END, f"\n[{completed_items + 1}/{total_items}] Syncing {os.path.basename(original_subtitle_file)} with {os.path.basename(video_file)}...\n")
                 try:
                     progress_bar["value"] += 1
                     if sync_tool == SYNC_TOOL_FFSUBSYNC:
@@ -1415,23 +1543,39 @@ def start_batch_sync():
                         return
                     if returncode == 0:
                         log_window.insert(tk.END, f"{SYNC_SUCCESS.format(output_subtitle_file=output_subtitle_file)}")
+                        success_count += 1
                     else:
                         log_window.insert(tk.END, f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n")
+                        failure_count += 1
+                        failed_syncs.append((video_file, subtitle_file))  # store the failed pairs
+
+                        
                 except Exception as e:
-                    error_msg = ERROR_OCCURRED.format(error_message=str(e))
+                    error_msg = "\n"+ERROR_OCCURRED.format(error_message=str(e))+"\n\n"
+                    failure_count += 1
+                    failed_syncs.append((video_file, subtitle_file))  # store the failed pairs
                     log_window.insert(tk.END, error_msg)
                 process_list.remove(process)
                 completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
-        log_window.insert(tk.END, f"\n{BATCH_SYNC_COMPLETED}\n")
+            log_window.insert(tk.END, "\n")
+            log_window.see(tk.END)
+        log_window.insert(tk.END, f"{BATCH_SYNC_COMPLETED}\n")
+        log_window.insert(tk.END, f"{SYNC_SUCCESS_COUNT.format(success_count=success_count)}\n")
+        if failure_count > 0:
+            log_window.insert(tk.END, f"{SYNC_FAILURE_COUNT_BATCH.format(failure_count=failure_count)}\n")
+            failcount = 0
+            for pair in failed_syncs:
+                failcount += 1
+                log_window.insert(tk.END, f'{failcount}) "{pair[0]}" - "{pair[1]}"\n')
         log_message(BATCH_SYNC_COMPLETED, "success", tab='auto')
-        log_window.see(tk.END)
         button_cancel_batch_sync.grid_remove()
         log_window.grid(pady=(10, 10), rowspan=2)
         button_go_back.grid()
         button_generate_again.grid()
         progress_bar.grid_remove()
+        log_window.see(tk.END)
     try:
         batch_input.grid_remove()
         tree_frame.grid_remove()
@@ -2403,14 +2547,14 @@ def start_automatic_sync():
             if alass_disable_fps_guessing_var.get():
                 cmd += " --disable-fps-guessing"
         else:
-            log_message(INVALID_SYNC_TOOL_SELECTED, "error", tab='auto')
+            log_window.insert(tk.END, f"{INVALID_SYNC_TOOL_SELECTED}\n")
             return None
         return cmd
-    
+
     def execute_cmd(cmd):
         global process, progress_line_number, subtitle_file, video_file, output_subtitle_file, split_penalty
         split_penalty = alass_split_penalty_var.get()
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding='utf-8')
         progress_bar["value"] = 1
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
             if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
@@ -2452,18 +2596,22 @@ def start_automatic_sync():
             log_window.see(tk.END)
             if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                 decoding_error_occurred = True
+            
         if process is not None:
             process.wait()
-            if process.returncode == 0:
+            if "error" in output.lower() or not os.path.exists(output_subtitle_file):
+                log_message(SYNC_ERROR_OCCURRED, "error", output_subtitle_file, tab='auto')
+            else:
                 log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
                 log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
-                button_cancel_automatic_sync.grid_remove()
-                log_window.grid(pady=(10, 10), rowspan=2)
-                button_go_back.grid()
-                button_generate_again.grid()
+            button_cancel_automatic_sync.grid_remove()
+            log_window.grid(pady=(10, 10), rowspan=2)
+            button_go_back.grid()
+            button_generate_again.grid()
+            
             return process.returncode, decoding_error_occurred
         return 1, decoding_error_occurred  # Ensure a tuple is returned in case process is None
-            
+
     def run_subprocess():
         global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
         split_penalty = alass_split_penalty_var.get()
@@ -2473,13 +2621,23 @@ def start_automatic_sync():
                 new_output_subtitle_file = create_backup(output_subtitle_file)
                 log_window.insert(tk.END, f"{BACKUP_CREATED.format(output_subtitle_file=new_output_subtitle_file)}\n")
         unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
-        if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
-            subtitle_file = convert_to_srt(subtitle_file)
-        if video_file.lower().endswith(tuple(unsupported_extensions)):
-            video_file = convert_to_srt(video_file)
         try:
             if not output_subtitle_file.lower().endswith(tuple(SUPPORTED_SUBTITLE_EXTENSIONS)):
                 output_subtitle_file = output_subtitle_file.rsplit('.', 1)[0] + '.srt'
+            if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
+                subtitle_file = convert_to_srt(subtitle_file)
+            if sync_tool == SYNC_TOOL_ALASS:
+                # if it is a video file, extract subtitle streams
+                if video_file.lower().endswith(tuple(VIDEO_EXTENSIONS)):
+                    log_window.insert(tk.END, CHECKING_SUBTITLE_STREAMS)
+                    closest_subtitle, message = extract_subtitles(video_file, subtitle_file)
+                    for msg in message:
+                        log_window.insert(tk.END, msg)
+                        log_window.see(tk.END)
+                    if closest_subtitle:
+                        video_file = closest_subtitle
+            if video_file.lower().endswith(tuple(unsupported_extensions)):
+                video_file = convert_to_srt(video_file)
             cmd = build_cmd()
             if cmd is None:
                 return
@@ -2511,8 +2669,9 @@ def start_automatic_sync():
                         error_msg = ERROR_CHANGING_ENCODING_MSG.format(error_message=str(e))
                         log_window.insert(tk.END, error_msg)
             log_window.insert(tk.END, f"\n{SYNCING_ENDED}\n")
+            log_window.see(tk.END)
         except Exception as e:
-            log_message(ERROR_OCCURRED.format(error_message=str(e)), "error", tab='auto')   
+            log_window.insert(tk.END, f"{ERROR_OCCURRED.format(error_message=str(e))}\n")
         finally:
             log_window.see(tk.END)
             progress_bar.grid_remove()
