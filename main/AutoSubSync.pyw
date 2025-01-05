@@ -2599,17 +2599,20 @@ def start_automatic_sync():
             
         if process is not None:
             process.wait()
-            if "error" in output.lower() or not os.path.exists(output_subtitle_file):
-                log_message(SYNC_ERROR_OCCURRED, "error", output_subtitle_file, tab='auto')
+            if process.returncode == 0:  # Check if the process finished successfully
+                if "error" in output.lower() or not os.path.exists(output_subtitle_file):
+                    log_message(SYNC_ERROR_OCCURRED, "error", output_subtitle_file, tab='auto')
+                else:
+                    log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
+                    log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
+                button_cancel_automatic_sync.grid_remove()
+                log_window.grid(pady=(10, 10), rowspan=2)
+                button_go_back.grid()
+                button_generate_again.grid()
+                
+                return process.returncode, decoding_error_occurred
             else:
-                log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
-                log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
-            button_cancel_automatic_sync.grid_remove()
-            log_window.grid(pady=(10, 10), rowspan=2)
-            button_go_back.grid()
-            button_generate_again.grid()
-            
-            return process.returncode, decoding_error_occurred
+                return 1, decoding_error_occurred  # Ensure a tuple is returned in case process is None
         return 1, decoding_error_occurred  # Ensure a tuple is returned in case process is None
 
     def run_subprocess():
