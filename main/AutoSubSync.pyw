@@ -1016,22 +1016,47 @@ def convert_sub_to_srt(input_file, output_file):
     with open(input_file, 'r', encoding=encoding, errors='replace') as sub, open(output_file, 'w', encoding='utf-8') as srt:
         srt_counter = 1
         while True:
-            timestamps = sub.readline().strip()
-            if not timestamps:
+            line = sub.readline().strip()
+            if not line:
                 break
-            text_lines = []
-            while True:
-                line = sub.readline().strip()
-                if not line:
-                    break
-                text_lines.append(line.replace('[br]', '\n'))
-            start, end = timestamps.split(',')
-            formatted_start = format_sub_time(start)
-            formatted_end = format_sub_time(end)
-            srt.write(f"{srt_counter}\n")
-            srt.write(f"{formatted_start} --> {formatted_end}\n")
-            srt.write('\n'.join(text_lines) + '\n\n')
-            srt_counter += 1
+            match = re.match(r'\{(\d+)\}\{(\d+)\}(.*)', line)
+            if match:
+                start, end, text = match.groups()
+                text_lines = text.split('|')
+                formatted_start = format_sub_time(start)
+                formatted_end = format_sub_time(end)
+                srt.write(f"{srt_counter}\n")
+                srt.write(f"{formatted_start} --> {formatted_end}\n")
+                srt.write('\n'.join(text_lines) + '\n\n')
+                srt_counter += 1
+            else:
+                timestamps = line
+                text_lines = []
+                while True:
+                    line = sub.readline().strip()
+                    if not line:
+                        break
+                    text_lines.append(line.replace('[br]', '\n'))
+                start, end = timestamps.split(',')
+                formatted_start = format_sub_time(start)
+                formatted_end = format_sub_time(end)
+                srt.write(f"{srt_counter}\n")
+                srt.write(f"{formatted_start} --> {formatted_end}\n")
+                srt.write('\n'.join(text_lines) + '\n\n')
+                srt_counter += 1
+
+def format_sub_time(time_str):
+    if time_str.isdigit():
+        ms = int(time_str) * 10
+        s, ms = divmod(ms, 1000)
+        m, s = divmod(s, 60)
+        h, m = divmod(m, 60)
+        return f"{h:02}:{m:02}:{s:02},{ms:03}"
+    else:
+        parts = re.split(r'[:.]', time_str)
+        h, m, s, ms = map(int, parts)
+        ms = ms * 10  # Convert to milliseconds
+        return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 def convert_ass_to_srt(input_file, output_file):
     with open(input_file, 'rb') as ass_file:
@@ -1065,6 +1090,13 @@ def convert_ass_to_srt(input_file, output_file):
                 buffer += f"\n{line}"
         if buffer:
             srt.write(f"{buffer}\n\n")
+
+def format_ass_time(time_str):
+    t = time_str.split(':')
+    hours = int(t[0])
+    minutes = int(t[1])
+    seconds = float(t[2])
+    return f"{hours:02}:{minutes:02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
 
 def convert_ttml_or_dfxp_to_srt(input_file, output_file):
     try:
@@ -1126,6 +1158,32 @@ def convert_ttml_or_dfxp_to_srt(input_file, output_file):
             srt.write(f"{idx}\n")
             srt.write(f"{begin} --> {end}\n")
             srt.write(f"{text.strip()}\n\n")
+
+def format_ttml_time(timestamp):
+    # Remove 's' suffix if present
+    timestamp = timestamp.replace('s', '')
+    # Check for SMPTE format HH:MM:SS:FF
+    if timestamp.count(':') == 3:
+        try:
+            hours, minutes, seconds, frames = map(int, timestamp.split(':'))
+            frame_rate = 25  # Adjust frame rate as needed
+            milliseconds = int((frames / frame_rate) * 1000)
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
+        except ValueError:
+            return timestamp
+    # Check if already in HH:MM:SS format
+    elif ':' in timestamp:
+        return timestamp.replace('.', ',')
+    # Convert from seconds to HH:MM:SS,mmm
+    else:
+        try:
+            seconds = float(timestamp)
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            seconds = seconds % 60
+            return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}".replace('.', ',')
+        except ValueError:
+            return timestamp
 
 def convert_vtt_to_srt(input_file, output_file):
     with open(input_file, 'rb') as vtt_file:
@@ -1189,6 +1247,11 @@ def convert_sbv_to_srt(input_file, output_file):
                 srt.write('\n'.join(text_lines) + '\n')
                 srt_counter += 1
 
+def format_sbv_time(time_str):
+    h, m, s = time_str.split(':')
+    s = s.replace('.', ',')
+    return f"{int(h):02}:{int(m):02}:{s}"                
+
 def convert_stl_to_srt(input_file, output_file):
     with open(input_file, 'rb') as stl:
         stl_data = stl.read()
@@ -1207,50 +1270,6 @@ def convert_stl_to_srt(input_file, output_file):
                     srt.write(f"{start} --> {end}\n")
                     srt.write(f"{text}\n\n")
                     srt_counter += 1
-
-def format_ttml_time(timestamp):
-    # Remove 's' suffix if present
-    timestamp = timestamp.replace('s', '')
-    # Check for SMPTE format HH:MM:SS:FF
-    if timestamp.count(':') == 3:
-        try:
-            hours, minutes, seconds, frames = map(int, timestamp.split(':'))
-            frame_rate = 25  # Adjust frame rate as needed
-            milliseconds = int((frames / frame_rate) * 1000)
-            return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
-        except ValueError:
-            return timestamp
-    # Check if already in HH:MM:SS format
-    elif ':' in timestamp:
-        return timestamp.replace('.', ',')
-    # Convert from seconds to HH:MM:SS,mmm
-    else:
-        try:
-            seconds = float(timestamp)
-            hours = int(seconds // 3600)
-            minutes = int((seconds % 3600) // 60)
-            seconds = seconds % 60
-            return f"{hours:02d}:{minutes:02d}:{seconds:06.3f}".replace('.', ',')
-        except ValueError:
-            return timestamp
-
-def format_sub_time(time_str):
-    parts = re.split(r'[:.]', time_str)
-    h, m, s, ms = parts
-    ms = ms.ljust(3, '0')[:3] # Ensure milliseconds are 3 digits
-    return f"{int(h):02}:{int(m):02}:{int(s):02},{ms}"
-
-def format_sbv_time(time_str):
-    h, m, s = time_str.split(':')
-    s = s.replace('.', ',')
-    return f"{int(h):02}:{int(m):02}:{s}"
-
-def format_ass_time(time_str):
-    t = time_str.split(':')
-    hours = int(t[0])
-    minutes = int(t[1])
-    seconds = float(t[2])
-    return f"{hours:02}:{minutes:02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
 
 def convert_stl_time(time_str):
     h, m, s, f = map(int, time_str.split(':'))
