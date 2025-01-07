@@ -1,0 +1,17 @@
+{
+    "remember_the_changes": true,
+    "ffsubsync_option_framerate": false,
+    "ffsubsync_option_gss": false,
+    "ffsubsync_option_vad": false,
+    "alass_disable_fps_guessing": false,
+    "alass_speed_optimization": false,
+    "alass_split_penalty": 7,
+    "action_var_auto": "OPTION_SAVE_NEXT_TO_SUBTITLE",
+    "sync_tool_var_auto": "SYNC_TOOL_FFSUBSYNC",
+    "keep_converted_subtitles": true,
+    "keep_extracted_subtitles": true,
+    "backup_subtitles_before_overwriting": true,
+    "check_video_for_subtitle_stream_in_alass": true,
+    "additional_ffsubsync_args": "",
+    "additional_alass_args": ""
+}

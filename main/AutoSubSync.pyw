@@ -7,13 +7,14 @@ import subprocess
 import threading
 import pysubs2
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox
+from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
 import ctypes
+import json
 # Program information
 PROGRAM_NAME = "AutoSubSync"
-VERSION = "v2.9"
+VERSION = "v3.0"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 # File extensions
 FFSUBSYNC_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa']
@@ -45,7 +46,7 @@ TOOLTIP_VAD = "--vad=auditok: Auditok can sometimes work better in the case of l
 TOOLTIP_FRAMERATE = "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync."
 TOOLTIP_ALASS_SPEED_OPTIMIZATION = "--speed optimization 0: Disable speed optimization for better accuracy. This will increase the processing time."
 TOOLTIP_ALASS_DISABLE_FPS_GUESSING = "--disable-fps-guessing: Disables guessing and correcting of framerate differences between reference file and input file."
-TOOLTIP_TEXT_ACTION_MENU_AUTO = "Choose what to do with the synchronized subtitle file(s).\n\nNote: Existing subtitle files will be backed up in the same folder, if they need to be replaced."
+TOOLTIP_TEXT_ACTION_MENU_AUTO = "Choose what to do with the synchronized subtitle file(s). (Existing subtitle files will be backed up in the same folder, if they need to be replaced.)"
 TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = "Select the tool to use for synchronization."
 # Dialogs - Buttons
 TAB_AUTOMATIC_SYNC = 'Automatic Sync'
@@ -70,6 +71,21 @@ ALREADY_SYNCED_FILES_MESSAGE = "Detected {count} subtitle(s) already synced, bec
 SUBTITLE_INPUT_TEXT = "Drag and drop the unsynchronized subtitle file here or click to browse."
 VIDEO_INPUT_TEXT = "Drag and drop video or reference subtitle file here or click to browse."
 LABEL_DROP_BOX = "Drag and drop subtitle file here or click to browse."
+WARNING = "Warning"
+CONFIRM_RESET_MESSAGE = "Are you sure you want to reset settings to default values?"
+TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = 'Subtitles with "converted_subtitlefilename" in the output folder will be deleted automatically. Do you want to continue?'
+TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = 'Folders with "extracted_subtitles_videofilename" in the output folder will be deleted automatically. Do you want to continue?'
+BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = "Existing subtitle files will not be backed up before overwriting. Do you want to continue?"
+PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = "Enter additional arguments for ffsubsync:"
+PROMPT_ADDITIONAL_ALASS_ARGS = "Enter additional arguments for alass:"
+LABEL_ADDITIONAL_FFSUBSYNC_ARGS = "Additional arguments for ffsubsync"
+LABEL_ADDITIONAL_ALASS_ARGS = "Additional arguments for alass"
+LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = "Check video for subtitle streams in alass"
+LABEL_BACKUP_SUBTITLES = "Backup subtitles before overwriting"
+LABEL_KEEP_CONVERTED_SUBTITLES = "Keep converted subtitles"
+LABEL_KEEP_EXTRACTED_SUBTITLES = "Keep extracted subtitles"
+LABEL_REMEMBER_THE_CHANGES = "Remember the changes"
+LABEL_RESET_TO_DEFAULT_SETTINGS = "Reset to default settings"
 # Options
 SYNC_TOOL_FFSUBSYNC = "ffsubsync"
 SYNC_TOOL_ALASS = "alass"
@@ -101,8 +117,18 @@ CONTEXT_MENU_SHOW_PATH = "Show path"
 BUTTON_ADD_FILES = "Add files"
 MENU_ADD_FOLDER = "Add Folder"
 MENU_ADD_MULTIPLE_FILES = "Add Multiple Files"
+MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = "Add Reference Subtitle/Subtitle Pairs"
 ALASS_SPEED_OPTIMIZATION_TEXT = "Disable speed optimization"
 ALASS_DISABLE_FPS_GUESSING_TEXT = "Disable FPS guessing"
+REF_DROP_TEXT = "Drag and drop reference subtitles here\nor click to browse."
+SUB_DROP_TEXT = "Drag and drop subtitles here\nor click to browse."
+REF_LABEL_TEXT = "Reference Subtitles"
+SUB_LABEL_TEXT = "Subtitles"
+PROCESS_PAIRS = "Add Pairs"
+EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = """How the Pairing Works?
+    """+PROGRAM_NAME+""" will automatically match reference subtitles and subtitle files with similar names. 
+    For example: "S01E01.srt" will be paired with "1x01.srt"
+    Supported combinations: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1"""
 # Log messages
 SUCCESS_LOG_TEXT = "Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}"
 SYNC_SUCCESS_MESSAGE = "Success! Synchronized subtitle saved to: {output_subtitle_file}"
@@ -178,8 +204,9 @@ USING_VIDEO_FOR_SYNC = "Using video for syncing..."
 ENABLED_NO_FIX_FRAMERATE = "Enabled: Don't fix framerate."
 ENABLED_GSS = "Enabled: Golden-section search."
 ENABLED_AUDITOK_VAD = "Enabled: Using auditok instead of WebRTC's VAD."
+ADDITIONAL_ARGS_ADDED = "Additional arguments: {additional_args}"
 SYNCING_STARTED = "Syncing started:"
-SYNCING_ENDED = "Syncing ended.\n"
+SYNCING_ENDED = "Syncing ended."
 SYNC_SUCCESS = "Success! Synchronized subtitle saved to: {output_subtitle_file}\n\n"
 SYNC_ERROR = "Error occurred during synchronization of {filename}"
 SYNC_ERROR_OCCURRED = "Error occurred during synchronization. Please check the log messages."
@@ -194,24 +221,59 @@ CONVERTING_STL = "Converting STL to SRT..."
 ERROR_CONVERTING_SUBTITLE = "Error converting subtitle: {error_message}"
 CONVERSION_NOT_SUPPORTED = "Error: Conversion for {file_extension} is not supported."
 SUBTITLE_CONVERTED = "Subtitle successfully converted and saved to: {srt_file}."
-RETRY_ENCODING_MSG = "Previous sync failed. Retrying with pre-detected encodings...\n\n"
+RETRY_ENCODING_MSG = "Previous sync failed. Retrying with pre-detected encodings..."
 ALASS_SPEED_OPTIMIZATION_LOG = "Disabled: Speed optinization..."
 ALASS_DISABLE_FPS_GUESSING_LOG = "Disabled: FPS guessing..."
-CHANGING_ENCODING_MSG = "\nEncoding of the synced subtitle does not match the original subtitle's encoding. Changing the encoding from {synced_subtitle_encoding} to {encoding_inc}...\n"
-ENCODING_CHANGED_MSG = "\nEncoding changed successfully.\n"
+CHANGING_ENCODING_MSG = "Encoding of the synced subtitle does not match the original subtitle's encoding. Changing the encoding from {synced_subtitle_encoding} to {encoding_inc}..."
+ENCODING_CHANGED_MSG = "Encoding changed successfully."
 SYNC_SUCCESS_COUNT = "Successfully synced {success_count} subtitle file(s)."
 SYNC_FAILURE_COUNT = "Failed to sync {failure_count} subtitle file(s)."
 SYNC_FAILURE_COUNT_BATCH = "Failed to sync {failure_count} pair(s):"
-ERROR_CHANGING_ENCODING_MSG = "\nError changing encoding: {error_message}\n"
-BACKUP_CREATED = "A backup of the existing subtitle file has been saved to: {output_subtitle_file}.\n"
-CHECKING_SUBTITLE_STREAMS = "Checking the video for subtitle streams...\n"
-FOUND_COMPATIBLE_SUBTITLES = "Found {count} compatible subtitles to extract.\nExtracting subtitles to folder: {output_folder}...\n"
-NO_COMPATIBLE_SUBTITLES = "No compatible subtitles found to extract.\n"
-SUCCESSFULLY_EXTRACTED = "Successfully extracted: {filename}.\n"
-CHOOSING_BEST_SUBTITLE = "Selecting the best subtitle for syncing...\n"
-CHOSEN_SUBTITLE = "Selected: {filename} with timestamp difference: {score}\n"
-FAILED_TO_EXTRACT_SUBTITLES = "Failed to extract subtitles. Error: {error}\n"
+ERROR_CHANGING_ENCODING_MSG = "Error changing encoding: {error_message}\n"
+BACKUP_CREATED = "A backup of the existing subtitle file has been saved to: {output_subtitle_file}."
+CHECKING_SUBTITLE_STREAMS = "Checking the video for subtitle streams..."
+FOUND_COMPATIBLE_SUBTITLES = "Found {count} compatible subtitles to extract.\nExtracting subtitles to folder: {output_folder}..."
+NO_COMPATIBLE_SUBTITLES = "No compatible subtitles found to extract."
+SUCCESSFULLY_EXTRACTED = "Successfully extracted: {filename}."
+CHOOSING_BEST_SUBTITLE = "Selecting the best subtitle for syncing..."
+CHOSEN_SUBTITLE = "Selected: {filename} with timestamp difference: {score}"
+FAILED_TO_EXTRACT_SUBTITLES = "Failed to extract subtitles. Error: {error}"
 USED_THE_LONGEST_SUBTITLE = "Used the longest subtitle file because parse_timestamps failed."
+DELETING_EXTRACTED_SUBTITLE_FOLDER = "Deleting the extracted subtitles folder..."
+DELETING_CONVERTED_SUBTITLE = "Deleting the converted subtitle file..."
+ADDED_FILES_TEXT = "Added {added_files} files"
+SKIPPED_DUPLICATE_FILES_TEXT = "Skipped {skipped_files} duplicate files"
+SKIPPED_OTHER_LIST_FILES_TEXT = "Skipped {duplicate_in_other} files already in other list"
+SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = "Skipped {len} files with duplicate season/episode numbers"
+SKIPPED_INVALID_FORMAT_FILES_TEXT = "Skipped {len} files without valid episode format"
+NO_FILES_SELECTED = "No files selected."
+NO_ITEM_SELECTED_TO_REMOVE = "No item selected to remove."
+NO_FILES_SELECTED_TO_SHOW_PATH = "No file selected to show path."
+REMOVED_ITEM = "Removed item."
+FILES_MUST_CONTAIN_PATTERNS = "Files must contain patterns like S01E01, 1x01 etc."
+NO_VALID_SUBTITLE_FILES = "No valid subtitle files found."
+# Set the working directory to the script's directory
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# Icon fix
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
+# Config file
+try:
+    with open('config.json', 'r') as config_file:
+        config = json.load(config_file)
+except FileNotFoundError:
+    config = {}
+    messagebox.showerror("Error", "Config file not found.")
+def update_config(key, value):
+    if remember_the_changes or key == 'remember_the_changes':
+        try:
+            with open('config.json', 'r') as config_file:
+                config = json.load(config_file)
+        except FileNotFoundError:
+            config = {}
+            messagebox.showerror("Error", "Config file not found.")
+        config[key] = value
+        with open('config.json', 'w') as config_file:
+            json.dump(config, config_file, indent=4)
 # Alass integration
 def find_ffmpeg_paths():
     ffmpeg_path = subprocess.check_output("where ffmpeg", shell=True).decode().strip()
@@ -222,9 +284,6 @@ env = os.environ.copy()
 env["ALASS_FFMPEG_PATH"] = ffmpeg_path
 env["ALASS_FFPROBE_PATH"] = ffprobe_path
 alass_cli_path = os.path.join(os.path.dirname(__file__), "alass", "alass-cli.exe")
-# Icon fix
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
-os.chdir(os.path.dirname(__file__))
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
 def log_message(message, level, tab='manual'):
@@ -544,7 +603,6 @@ def on_leave(event):
         event.widget.config(bg="lightgreen")
     else:
         event.widget.config(bg="lightgray")
-
 current_log_type = None
 def log_message(message, msg_type=None, filepath=None, tab='both'):
     global current_log_type
@@ -689,10 +747,120 @@ tab_control.add(automatic_tab, text=TAB_AUTOMATIC_SYNC)
 tab_control.add(manual_tab, text=TAB_MANUAL_SYNC)
 # Place tab_control
 tab_control.grid(row=0, column=0, sticky="nsew")
+# Create a frame for the labels
+top_right_frame = ttk.Frame(root)
+top_right_frame.grid(row=0, column=0, sticky="ne", padx=0, pady=0)
 # Add "GitHub" label on the right side of the tabs
-github_label = ttk.Label(root, text="GitHub", cursor="hand2", foreground="#007FFF", background="SystemButtonFace", underline=True)
+github_label = ttk.Label(top_right_frame, text="GitHub", cursor="hand2", foreground="#007FFF", background="SystemButtonFace", underline=True)
 github_label.bind("<Button-1>", lambda event: os.system("start "+GITHUB_URL))
-github_label.grid(row=0, column=0, sticky="ne", padx=10, pady=(10,0))
+github_label.grid(row=0, column=0, sticky="ne", padx=0, pady=(10,0))
+# Settings
+default_settings = {
+    "remember_the_changes": True,
+    "ffsubsync_option_framerate": False,
+    "ffsubsync_option_gss": False,
+    "ffsubsync_option_vad": False,
+    "alass_disable_fps_guessing": False,
+    "alass_speed_optimization": False,
+    "alass_split_penalty": 7,
+    "action_var_auto": "OPTION_SAVE_NEXT_TO_SUBTITLE",
+    "sync_tool_var_auto": "SYNC_TOOL_FFSUBSYNC",
+    "keep_converted_subtitles": True,
+    "keep_extracted_subtitles": True,
+    "backup_subtitles_before_overwriting": True,
+    "check_video_for_subtitle_stream_in_alass": True,
+    "additional_ffsubsync_args": "",
+    "additional_alass_args": ""
+}
+def restart_program():
+    python = sys.executable
+    script_path = os.path.abspath(__file__)
+    os.execl(python, python, script_path, *sys.argv[1:])
+def reset_to_default_settings():
+    global keep_converted_subtitles, keep_extracted_subtitles, additional_ffsubsync_args, additional_alass_args, backup_subtitles_before_overwriting, check_video_for_subtitle_stream_in_alass
+    if messagebox.askyesno(WARNING, CONFIRM_RESET_MESSAGE):
+        for key, value in default_settings.items():
+            update_config(key, value)
+        restart_program()
+def toggle_keep_converted_subtitles():
+    global keep_converted_subtitles
+    if keep_converted_subtitles:
+        response = messagebox.askyesno(WARNING, TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING)
+        if not response:
+            keep_converted_var.set(keep_converted_subtitles)
+            return
+    keep_converted_subtitles = not keep_converted_subtitles
+    update_config("keep_converted_subtitles", keep_converted_subtitles)
+def toggle_remember_the_changes():
+    global remember_the_changes
+    remember_the_changes = not remember_the_changes
+    update_config("remember_the_changes", remember_the_changes)
+def toggle_keep_extracted_subtitles():
+    global keep_extracted_subtitles
+    if keep_extracted_subtitles:
+        response = messagebox.askyesno(WARNING, TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING)
+        if not response:
+            keep_extracted_var.set(keep_extracted_subtitles)
+            return
+    keep_extracted_subtitles = not keep_extracted_subtitles
+    update_config("keep_extracted_subtitles", keep_extracted_subtitles)
+def toggle_backup_subtitles_before_overwriting():
+    global backup_subtitles_before_overwriting
+    if backup_subtitles_before_overwriting:
+        response = messagebox.askyesno(WARNING, BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING)
+        if not response:
+            backup_subtitles_var.set(backup_subtitles_before_overwriting)
+            return
+    backup_subtitles_before_overwriting = not backup_subtitles_before_overwriting
+    update_config("backup_subtitles_before_overwriting", backup_subtitles_before_overwriting)
+def toggle_check_video_for_subtitle_stream_in_alass():
+    global check_video_for_subtitle_stream_in_alass
+    check_video_for_subtitle_stream_in_alass = not check_video_for_subtitle_stream_in_alass
+    update_config("check_video_for_subtitle_stream_in_alass", check_video_for_subtitle_stream_in_alass)
+def update_additional_ffsubsync_args():
+    global additional_ffsubsync_args
+    new_args = simpledialog.askstring(LABEL_ADDITIONAL_FFSUBSYNC_ARGS, PROMPT_ADDITIONAL_FFSUBSYNC_ARGS, initialvalue=additional_ffsubsync_args)
+    if new_args is not None:
+        additional_ffsubsync_args = new_args
+        update_config("additional_ffsubsync_args", additional_ffsubsync_args)
+def update_additional_alass_args():
+    global additional_alass_args
+    new_args = simpledialog.askstring(LABEL_ADDITIONAL_ALASS_ARGS, PROMPT_ADDITIONAL_ALASS_ARGS, initialvalue=additional_alass_args)
+    if new_args is not None:
+        additional_alass_args = new_args
+        update_config("additional_alass_args", additional_alass_args)
+keep_converted_subtitles = config.get("keep_converted_subtitles", False)
+keep_extracted_subtitles = config.get("keep_extracted_subtitles", False)
+additional_ffsubsync_args = config.get("additional_ffsubsync_args", "")
+additional_alass_args = config.get("additional_alass_args", "")
+backup_subtitles_before_overwriting = config.get("backup_subtitles_before_overwriting", False)
+remember_the_changes = config.get("remember_the_changes", False)
+check_video_for_subtitle_stream_in_alass = config.get("check_video_for_subtitle_stream_in_alass", False)
+# Add "Settings" icon
+settings_icon = PhotoImage(file="settings.png")  # Adjust the subsample values to make the image smaller
+settings_label = ttk.Label(top_right_frame, image=settings_icon, cursor="hand2", background="SystemButtonFace")
+# Create a dropdown menu for settings
+settings_menu = Menu(top_right_frame, tearoff=0)
+keep_converted_var = tk.BooleanVar(value=keep_converted_subtitles)
+keep_extracted_var = tk.BooleanVar(value=keep_extracted_subtitles)
+backup_subtitles_var = tk.BooleanVar(value=backup_subtitles_before_overwriting)
+remember_the_changes_var = tk.BooleanVar(value=remember_the_changes)
+check_video_for_subtitle_stream_var = tk.BooleanVar(value=check_video_for_subtitle_stream_in_alass)  # New variable
+settings_menu.add_command(label=LABEL_ADDITIONAL_FFSUBSYNC_ARGS, command=update_additional_ffsubsync_args)
+settings_menu.add_command(label=LABEL_ADDITIONAL_ALASS_ARGS, command=update_additional_alass_args)
+settings_menu.add_separator()
+settings_menu.add_checkbutton(label=LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM, command=toggle_check_video_for_subtitle_stream_in_alass, variable=check_video_for_subtitle_stream_var)
+settings_menu.add_checkbutton(label=LABEL_BACKUP_SUBTITLES, command=toggle_backup_subtitles_before_overwriting, variable=backup_subtitles_var)
+settings_menu.add_checkbutton(label=LABEL_KEEP_CONVERTED_SUBTITLES, command=toggle_keep_converted_subtitles, variable=keep_converted_var)
+settings_menu.add_checkbutton(label=LABEL_KEEP_EXTRACTED_SUBTITLES, command=toggle_keep_extracted_subtitles, variable=keep_extracted_var)
+settings_menu.add_separator()
+settings_menu.add_checkbutton(label=LABEL_REMEMBER_THE_CHANGES, command=toggle_remember_the_changes, variable=remember_the_changes_var)
+settings_menu.add_command(label=LABEL_RESET_TO_DEFAULT_SETTINGS, command=reset_to_default_settings)
+def open_settings(event):
+    settings_menu.post(event.x_root, event.y_root)
+settings_label.bind("<Button-1>", open_settings)
+settings_label.grid(row=0, column=1, sticky="ne", padx=(5,10), pady=(10,0))
+# settings end
 # Customizing the style of the tabs
 style = ttk.Style()
 # Set custom theme
@@ -740,8 +908,7 @@ style.map("TSeparator", background=[("","SystemButtonFace")])
 
 # ---------------- Automatic Tab ---------------- #
 # Extract subtitles from video (ALASS)
-def extract_subtitles(video_file, subtitle_file):
-    messages = []
+def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
     # Get the subtitle streams and their codecs using ffprobe
     cmd = [
         "ffprobe",
@@ -764,13 +931,13 @@ def extract_subtitles(video_file, subtitle_file):
     # Filter for compatible codecs
     compatible_subtitles = [stream for stream in subtitle_streams if stream[1] in ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS]
     if len(compatible_subtitles) > 0:
-        output_folder = os.path.join(os.path.dirname(video_file), "extracted_subtitles_" + os.path.basename(video_file))
+        output_folder = os.path.join(output_dir, "extracted_subtitles_" + os.path.basename(video_file))
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
-        messages.append(FOUND_COMPATIBLE_SUBTITLES.format(count=len(compatible_subtitles), output_folder=output_folder))
+        log_window.insert(tk.END, f"{FOUND_COMPATIBLE_SUBTITLES.format(count=len(compatible_subtitles), output_folder=output_folder)}\n")
     else:
-        messages.append(NO_COMPATIBLE_SUBTITLES)
-        return False, messages
+        log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
+        return False
     # Prepare ffmpeg command to extract all subtitle streams in one go
     ffmpeg_base_cmd = ["ffmpeg", "-y", "-i", video_file]
     output_files = []
@@ -785,23 +952,23 @@ def extract_subtitles(video_file, subtitle_file):
         # Add -map argument before the corresponding codec and output file
         ffmpeg_base_cmd.extend(["-map", f"0:{stream}", "-c:s", codec, output_file])
     if not output_files:
-        messages.append(NO_COMPATIBLE_SUBTITLES)
-        return False, messages
+        log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
+        return False
     # Run the ffmpeg command with properly placed -map arguments
     result = subprocess.run(ffmpeg_base_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
     if result.returncode == 0:
         for output_file in output_files:
-            messages.append(SUCCESSFULLY_EXTRACTED.format(filename=os.path.basename(output_file)))
+            log_window.insert(tk.END, f"{SUCCESSFULLY_EXTRACTED.format(filename=os.path.basename(output_file))}\n")
         # Find the closest subtitle to the original subtitle
-        messages.append(CHOOSING_BEST_SUBTITLE)
+        log_window.insert(tk.END, f"{CHOOSING_BEST_SUBTITLE}\n")
         closest_subtitle, score = choose_best_subtitle(subtitle_file, extracted_subtitles_folder=output_folder)
         if closest_subtitle:
-            messages.append(CHOSEN_SUBTITLE.format(filename=os.path.basename(closest_subtitle), score=score))
-            return closest_subtitle, messages
-        return True, messages
+            log_window.insert(tk.END, f"{CHOSEN_SUBTITLE.format(filename=os.path.basename(closest_subtitle), score=score)}\n")
+            return closest_subtitle
+        return True
     else:
-        messages.append(FAILED_TO_EXTRACT_SUBTITLES.format(error=result.stderr))
-        return False, messages
+        log_window.insert(tk.END, f"{FAILED_TO_EXTRACT_SUBTITLES.format(error=result.stderr)}\n")
+        return False
 
 def parse_timestamps(subtitle_file):
     try:
@@ -1114,6 +1281,36 @@ def create_backup(file_path):
     shutil.copy2(file_path, backup_file)
     return backup_file
 
+def convert_to_srt(subtitle_file, output_dir, log_window):
+    file_extension = os.path.splitext(subtitle_file)[-1].lower()
+    original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
+    srt_file = os.path.join(output_dir, 'converted_' + original_base_name + '.srt')
+    log_window.insert(tk.END, f"{PREPARING_SYNC.format(base_name=original_base_name, file_extension=file_extension)}\n")
+    converters = {
+        '.ttml': convert_ttml_or_dfxp_to_srt,
+        '.dfxp': convert_ttml_or_dfxp_to_srt,
+        '.itt': convert_ttml_or_dfxp_to_srt,
+        '.vtt': convert_vtt_to_srt,
+        '.sbv': convert_sbv_to_srt,
+        '.sub': convert_sub_to_srt,
+        '.ass': convert_ass_to_srt,
+        '.ssa': convert_ass_to_srt,
+        '.stl': convert_stl_to_srt
+    }
+    converter = converters.get(file_extension)
+    if converter:
+        try:
+            log_window.insert(tk.END, f"{CONVERTING_SUBTITLE.format(file_extension=file_extension.upper())}\n")
+            converter(subtitle_file, srt_file)
+        except Exception as e:
+            log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
+            return None
+        log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
+        return srt_file
+    else:
+        log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
+        return None
+
 # Convert subtitles to SRT End
 def start_batch_sync():
     global selected_destination_folder
@@ -1226,37 +1423,6 @@ def start_batch_sync():
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
 
-    # Convert files if necessary
-    def convert_to_srt(subtitle_file):
-        file_extension = os.path.splitext(subtitle_file)[-1].lower()
-        original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
-        srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + original_base_name + '.srt')
-        log_window.insert(tk.END, f"{PREPARING_SYNC.format(base_name=original_base_name, file_extension=file_extension)}\n")
-        converters = {
-            '.ttml': convert_ttml_or_dfxp_to_srt,
-            '.dfxp': convert_ttml_or_dfxp_to_srt,
-            '.itt': convert_ttml_or_dfxp_to_srt,
-            '.vtt': convert_vtt_to_srt,
-            '.sbv': convert_sbv_to_srt,
-            '.sub': convert_sub_to_srt,
-            '.ass': convert_ass_to_srt,
-            '.ssa': convert_ass_to_srt,
-            '.stl': convert_stl_to_srt
-        }
-        converter = converters.get(file_extension)
-        if converter:
-            try:
-                log_window.insert(tk.END, f"{CONVERTING_SUBTITLE.format(file_extension=file_extension.upper())}\n")
-                converter(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-                return None
-            log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
-            return srt_file
-        else:
-            log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
-            return None
-
     def execute_cmd(cmd):
             decoding_error_occurred = False
             try:
@@ -1284,7 +1450,6 @@ def start_batch_sync():
                     log_window.see(tk.END)
                     if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                         decoding_error_occurred = True
-                    
                 process.wait()
                 if "error" in output.lower():
                         return 1, decoding_error_occurred
@@ -1393,10 +1558,13 @@ def start_batch_sync():
                     log_window.insert(tk.END, f"\n{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n")
                     continue 
                 original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
+                video_file_converted = None
+                subtitle_file_converted = None
+                closest_subtitle = None
                 # Convert subtitle file if necessary
                 unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
                 if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
-                    subtitle_file_converted = convert_to_srt(subtitle_file)
+                    subtitle_file_converted = convert_to_srt(subtitle_file, base_output_dir, log_window)
                     if subtitle_file_converted:
                         subtitle_file = subtitle_file_converted
                     else:
@@ -1405,17 +1573,14 @@ def start_batch_sync():
                 log_window.insert(tk.END, f"[{completed_items + 1}/{total_items}] Syncing {os.path.basename(original_subtitle_file)} with {os.path.basename(video_file)}...\n")
                 if sync_tool == SYNC_TOOL_ALASS:
                     # if it is a video file, extract subtitle streams
-                    if video_file.lower().endswith(tuple(VIDEO_EXTENSIONS)):
-                        log_window.insert(tk.END, CHECKING_SUBTITLE_STREAMS)
-                        closest_subtitle, message = extract_subtitles(video_file, subtitle_file)
-                        for msg in message:
-                            log_window.insert(tk.END, msg)
-                            log_window.see(tk.END)
+                    if video_file.lower().endswith(tuple(VIDEO_EXTENSIONS)) and check_video_for_subtitle_stream_in_alass:
+                        log_window.insert(tk.END, CHECKING_SUBTITLE_STREAMS+"\n")
+                        closest_subtitle = extract_subtitles(video_file, subtitle_file, base_output_dir, log_window)
                         if closest_subtitle:
                             video_file = closest_subtitle
                 # Convert video file if necessary
                 if video_file.lower().endswith(tuple(unsupported_extensions)):
-                    video_file_converted = convert_to_srt(video_file)
+                    video_file_converted = convert_to_srt(video_file, base_output_dir, log_window)
                     if video_file_converted:
                         video_file = video_file_converted
                     else:
@@ -1437,9 +1602,9 @@ def start_batch_sync():
                     output_subtitle_file = os.path.splitext(output_subtitle_file)[0] + '.srt'
                 if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
                     # if there is a file with the same name as the output_subtitle_file, create a backup
-                    if os.path.exists(output_subtitle_file):
+                    if os.path.exists(output_subtitle_file) and backup_subtitles_before_overwriting:
                         new_output_subtitle_file = create_backup(output_subtitle_file)
-                        log_window.insert(tk.END, f"{BACKUP_CREATED.format(output_subtitle_file=new_output_subtitle_file)}")
+                        log_window.insert(tk.END, f"{BACKUP_CREATED.format(output_subtitle_file=new_output_subtitle_file)}\n")
                 # Handle autosync suffix
                 # Updated regex pattern to match filenames starting with 'autosync_' followed by the base name
                 # and ending with '_2', '_3', etc.
@@ -1474,6 +1639,8 @@ def start_batch_sync():
                         cmd += " --speed-optimization 0"
                     if alass_disable_fps_guessing_var.get():
                         cmd += " --disable-fps-guessing"
+                    if additional_alass_args:
+                        cmd += f" {additional_alass_args}"
                 else:
                     log_message(INVALID_SYNC_TOOL, "error", tab='auto')
                     return
@@ -1490,6 +1657,8 @@ def start_batch_sync():
                                 log_window.insert(tk.END, f"{ENABLED_GSS}\n")
                             if ffsubsync_option_vad_var.get():
                                 log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
+                            if additional_ffsubsync_args:
+                                log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n")
                     elif sync_tool == SYNC_TOOL_ALASS:
                         if split_penalty == 0:
                             log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
@@ -1499,6 +1668,8 @@ def start_batch_sync():
                             log_window.insert(tk.END, f"{ALASS_SPEED_OPTIMIZATION_LOG}\n")
                         if alass_disable_fps_guessing_var.get():
                             log_window.insert(tk.END, f"{ALASS_DISABLE_FPS_GUESSING_LOG}\n")
+                        if additional_alass_args:
+                            log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_alass_args)}\n")
                     log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
                     process = subprocess.Popen(
                         cmd, shell=True, stdout=subprocess.PIPE,
@@ -1517,7 +1688,7 @@ def start_batch_sync():
                         encoding_inc = detect_encoding(subtitle_file)
                         # if decoding_error_occurred, retry with detected encodings
                         if returncode != 0 and decoding_error_occurred:
-                            log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG)
+                            log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG+"\n\n")
                             if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                                 encoding_ref = detect_encoding(video_file)
                                 cmd += f" --encoding-ref={encoding_ref}"
@@ -1527,16 +1698,28 @@ def start_batch_sync():
                         # If the encoding of synced subtitle is not the same as encoding_inc, change it
                         if synced_subtitle_encoding != encoding_inc:
                             change_encoding_msg = CHANGING_ENCODING_MSG.format(synced_subtitle_encoding=synced_subtitle_encoding, encoding_inc=encoding_inc)
-                            log_window.insert(tk.END, change_encoding_msg)
+                            log_window.insert(tk.END, "\n"+change_encoding_msg+"\n")
                             try:
                                 with open(output_subtitle_file, 'r', encoding=synced_subtitle_encoding) as f:
                                     content = f.read()
                                 with open(output_subtitle_file, 'w', encoding=encoding_inc) as f:
                                     f.write(content)
-                                log_window.insert(tk.END, ENCODING_CHANGED_MSG+"\n")
+                                log_window.insert(tk.END, "\n"+ENCODING_CHANGED_MSG+"\n")
                             except Exception as e:
                                 error_msg = ERROR_CHANGING_ENCODING_MSG.format(error_message=str(e))
-                                log_window.insert(tk.END, error_msg)
+                                log_window.insert(tk.END, "\n"+error_msg+"\n")
+                        # if keep_extracted_subtitles is False, delete the extracted subtitle folder which is the folder of closest_subtitle.
+                        if not keep_extracted_subtitles and closest_subtitle:
+                            log_window.insert(tk.END, f"{DELETING_EXTRACTED_SUBTITLE_FOLDER}\n\n")
+                            shutil.rmtree(os.path.dirname(closest_subtitle))
+                        # if video_file_converted or subtitle_file_converted is not None and keep_converted_subtitles is False, delete the converted files
+                        if not keep_converted_subtitles:
+                            if video_file_converted:
+                                log_window.insert(tk.END, f"{DELETING_CONVERTED_SUBTITLE}\n\n")
+                                os.remove(video_file_converted)
+                            if subtitle_file_converted:
+                                log_window.insert(tk.END, f"{DELETING_CONVERTED_SUBTITLE}\n\n")
+                                os.remove(subtitle_file_converted)
                     if cancel_flag:
                         process_list.remove(process)
                         restore_window()
@@ -1548,10 +1731,8 @@ def start_batch_sync():
                         log_window.insert(tk.END, f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n")
                         failure_count += 1
                         failed_syncs.append((video_file, subtitle_file))  # store the failed pairs
-
-                        
                 except Exception as e:
-                    error_msg = "\n"+ERROR_OCCURRED.format(error_message=str(e))+"\n\n"
+                    error_msg = "\n"+ERROR_OCCURRED.format(error_message=str(e))+"\n"
                     failure_count += 1
                     failed_syncs.append((video_file, subtitle_file))  # store the failed pairs
                     log_window.insert(tk.END, error_msg)
@@ -1729,161 +1910,211 @@ def toggle_batch_mode():
                     options_states[option] = 'disabled'
                     option.config(state='normal')
 
-def process_files(filepaths):
+def process_files(filepaths, reference_pairs=False):
     subtitle_files = []
     video_files = []
-    # Separate the files into video and subtitle lists
-    for filepath in filepaths:
-        if os.path.isdir(filepath):
-            for root, _, files in os.walk(filepath):
-                for file in files:
-                    full_path = os.path.join(root, file)
-                    if full_path.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                        subtitle_files.append(full_path)
-                    elif full_path.lower().endswith(tuple(VIDEO_EXTENSIONS)):
-                        video_files.append(full_path)
-        else:
-            if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
+    if reference_pairs:
+        # Handle reference subtitle pairs
+        subtitle_files = []
+        reference_files = []
+        for i, filepath in enumerate(filepaths):
+            if i % 2 == 0:
+                reference_files.append(filepath)
+            else:
                 subtitle_files.append(filepath)
-            elif filepath.lower().endswith(tuple(VIDEO_EXTENSIONS)):
-                video_files.append(filepath)
-    # Check if there are any video or subtitle files
-    if not subtitle_files and not video_files:
-        log_message(DROP_VALID_FILES, "error", tab='auto')
-        batch_input.config(bg="lightgray")
-        return
-    max_length = max(len(subtitle_files), len(video_files))
-    subtitle_files.extend([None] * (max_length - len(subtitle_files)))
-    video_files.extend([None] * (max_length - len(video_files)))
-    pairs_added = 0
-    files_not_paired = 0
-    duplicates = 0
-    existing_pairs = set()
-    for parent in treeview.get_children():
-        parent_values = treeview.item(parent, "values")
-        if parent_values and parent_values[0]:
-            video_file = os.path.normpath(parent_values[0].lower())
-            subtitles = treeview.get_children(parent)
-            for sub in subtitles:
-                values = treeview.item(sub, "values")
-                if values and values[0]:
-                    subtitle_file = os.path.normpath(values[0].lower())
-                    existing_pairs.add((video_file, subtitle_file))
-    incomplete_pairs = []
-    complete_pairs = []
-    # Pair videos with subtitles based on the same filename (search within the same directory first, then parent directories)
-    for video_file in sorted(video_files, key=lambda x: os.path.basename(x) if x else ''):
-        video_name = os.path.basename(video_file) if video_file else NO_VIDEO
-        subtitle_name = NO_SUBTITLE
-        subtitle_file = None
-        if video_file:
-            video_dir = os.path.dirname(video_file)
-            # Check if there is a subtitle in the same directory with the same name as the video
-            base_name = os.path.splitext(os.path.basename(video_file))[0]
-            for sub_file in subtitle_files[:]:
-                if sub_file and os.path.dirname(sub_file) == video_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
-                    subtitle_file = sub_file
-                    subtitle_name = os.path.basename(subtitle_file)
-                    subtitle_files.remove(sub_file)
-                    break
-            # If no subtitle is found in the same directory, check parent directories
-            if not subtitle_file:
-                parent_dir = video_dir
-                while parent_dir != os.path.dirname(parent_dir):  # Check parent directories until root
-                    parent_dir = os.path.dirname(parent_dir)
-                    for sub_file in subtitle_files[:]:
-                        if sub_file and os.path.dirname(sub_file) == parent_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
-                            subtitle_file = sub_file
-                            subtitle_name = os.path.basename(subtitle_file)
-                            subtitle_files.remove(sub_file)
-                            break
-                    if subtitle_file:
+        if not subtitle_files or not reference_files:
+            log_message(DROP_VALID_FILES, "error", tab='auto')
+            return
+        pairs_added = 0
+        duplicates = 0
+        existing_pairs = set()
+        for parent in treeview.get_children():
+            parent_values = treeview.item(parent, "values")
+            if parent_values and parent_values[0]:
+                ref_file = os.path.normpath(parent_values[0].lower())
+                subtitles = treeview.get_children(parent)
+                for sub in subtitles:
+                    values = treeview.item(sub, "values")
+                    if values and values[0]:
+                        subtitle_file = os.path.normpath(values[0].lower())
+                        existing_pairs.add((ref_file, subtitle_file))
+        complete_pairs = []
+        for ref_file, sub_file in zip(reference_files, subtitle_files):
+            ref_name = os.path.basename(ref_file)
+            sub_name = os.path.basename(sub_file)
+            norm_ref = os.path.normpath(ref_file.lower())
+            norm_sub = os.path.normpath(sub_file.lower())
+            pair = (norm_ref, norm_sub)
+            if pair not in existing_pairs:
+                existing_pairs.add(pair)
+                pairs_added += 1
+                complete_pairs.append((ref_name, sub_name, ref_file, sub_file))
+            else:
+                duplicates += 1
+        batch_input.grid_remove()
+        tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+        for ref_name, sub_name, ref_file, sub_file in complete_pairs:
+            parent_id = treeview.insert("", "end", text=ref_name, values=(ref_file,), open=True)
+            treeview.insert(parent_id, "end", text=sub_name, values=(sub_file,))
+            treeview.item(parent_id, tags=("paired",))
+        messages = []
+        if pairs_added > 0:
+            messages.append(f"Added {pairs_added} reference subtitle pair{'s' if pairs_added != 1 else ''}")
+        if duplicates > 0:
+            messages.append(f"Skipped {duplicates} duplicate pair{'s' if duplicates != 1 else ''}")
+        if messages:
+            log_message(" and ".join(messages) + ".", "info", tab='auto')
+    else:
+        for filepath in filepaths:
+            if os.path.isdir(filepath):
+                for root, _, files in os.walk(filepath):
+                    for file in files:
+                        full_path = os.path.join(root, file)
+                        if full_path.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
+                            subtitle_files.append(full_path)
+                        elif full_path.lower().endswith(tuple(VIDEO_EXTENSIONS)):
+                            video_files.append(full_path)
+            else:
+                if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
+                    subtitle_files.append(filepath)
+                elif filepath.lower().endswith(tuple(VIDEO_EXTENSIONS)):
+                    video_files.append(filepath)
+        # Check if there are any video or subtitle files
+        if not subtitle_files and not video_files:
+            log_message(DROP_VALID_FILES, "error", tab='auto')
+            batch_input.config(bg="lightgray")
+            return
+        max_length = max(len(subtitle_files), len(video_files))
+        subtitle_files.extend([None] * (max_length - len(subtitle_files)))
+        video_files.extend([None] * (max_length - len(video_files)))
+        pairs_added = 0
+        files_not_paired = 0
+        duplicates = 0
+        existing_pairs = set()
+        for parent in treeview.get_children():
+            parent_values = treeview.item(parent, "values")
+            if parent_values and parent_values[0]:
+                video_file = os.path.normpath(parent_values[0].lower())
+                subtitles = treeview.get_children(parent)
+                for sub in subtitles:
+                    values = treeview.item(sub, "values")
+                    if values and values[0]:
+                        subtitle_file = os.path.normpath(values[0].lower())
+                        existing_pairs.add((video_file, subtitle_file))
+        incomplete_pairs = []
+        complete_pairs = []
+        # Pair videos with subtitles based on the same filename (search within the same directory first, then parent directories)
+        for video_file in sorted(video_files, key=lambda x: os.path.basename(x) if x else ''):
+            video_name = os.path.basename(video_file) if video_file else NO_VIDEO
+            subtitle_name = NO_SUBTITLE
+            subtitle_file = None
+            if video_file:
+                video_dir = os.path.dirname(video_file)
+                # Check if there is a subtitle in the same directory with the same name as the video
+                base_name = os.path.splitext(os.path.basename(video_file))[0]
+                for sub_file in subtitle_files[:]:
+                    if sub_file and os.path.dirname(sub_file) == video_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
+                        subtitle_file = sub_file
+                        subtitle_name = os.path.basename(subtitle_file)
+                        subtitle_files.remove(sub_file)
                         break
-            if subtitle_file:
+                # If no subtitle is found in the same directory, check parent directories
+                if not subtitle_file:
+                    parent_dir = video_dir
+                    while parent_dir != os.path.dirname(parent_dir):  # Check parent directories until root
+                        parent_dir = os.path.dirname(parent_dir)
+                        for sub_file in subtitle_files[:]:
+                            if sub_file and os.path.dirname(sub_file) == parent_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
+                                subtitle_file = sub_file
+                                subtitle_name = os.path.basename(subtitle_file)
+                                subtitle_files.remove(sub_file)
+                                break
+                        if subtitle_file:
+                            break
+                if subtitle_file:
+                    norm_video = os.path.normpath(video_file.lower())
+                    norm_subtitle = os.path.normpath(subtitle_file.lower())
+                    pair = (norm_video, norm_subtitle)
+                    if pair in existing_pairs:
+                        duplicates += 1
+                        continue
+                    existing_pairs.add(pair)
+                    pairs_added += 1
+                    complete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+                else:
+                    files_not_paired += 1
+                    incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+            else:
+                incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+        # Handle remaining unpaired subtitles
+        unpaired_subtitles = list(filter(None, subtitle_files))
+        if len(unpaired_subtitles) == 1 and len(video_files) == 1 and video_files[0] is not None:
+            user_choice = messagebox.askyesno(PAIR_FILES_TITLE, PAIR_FILES_MESSAGE)
+            if user_choice:
+                subtitle_file = unpaired_subtitles[0]
+                video_file = video_files[0]
                 norm_video = os.path.normpath(video_file.lower())
                 norm_subtitle = os.path.normpath(subtitle_file.lower())
                 pair = (norm_video, norm_subtitle)
-                if pair in existing_pairs:
-                    duplicates += 1
-                    continue
-                existing_pairs.add(pair)
-                pairs_added += 1
-                complete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
-            else:
-                files_not_paired += 1
-                incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
-        else:
-            incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
-    # Handle remaining unpaired subtitles
-    unpaired_subtitles = list(filter(None, subtitle_files))
-    if len(unpaired_subtitles) == 1 and len(video_files) == 1 and video_files[0] is not None:
-        user_choice = messagebox.askyesno(PAIR_FILES_TITLE, PAIR_FILES_MESSAGE)
-        if user_choice:
-            subtitle_file = unpaired_subtitles[0]
-            video_file = video_files[0]
-            norm_video = os.path.normpath(video_file.lower())
-            norm_subtitle = os.path.normpath(subtitle_file.lower())
-            pair = (norm_video, norm_subtitle)
-            if pair not in existing_pairs:
-                existing_pairs.add(pair)
-                pairs_added = 1
-                files_not_paired = 0
-                complete_pairs.append((os.path.basename(video_file), os.path.basename(subtitle_file), video_file, subtitle_file))
-            else:
-                duplicates += 1
-                pairs_added = 0
-                files_not_paired = 0
-            # Remove the video file from incomplete pairs if it was added
-            incomplete_pairs = [pair for pair in incomplete_pairs if pair[2] != video_file]
-        else:
-            incomplete_pairs.append((NO_VIDEO, os.path.basename(unpaired_subtitles[0]), None, unpaired_subtitles[0]))
-            files_not_paired += 1
-    else:
-        if unpaired_subtitles:
-            unpaired_count = len(unpaired_subtitles)
-            user_choice = messagebox.askyesno(UNPAIRED_SUBTITLES_TITLE, UNPAIRED_SUBTITLES_MESSAGE.format(unpaired_count=unpaired_count))
-            for sub_file in unpaired_subtitles:
-                subtitle_name = os.path.basename(sub_file)
-                if user_choice:
-                    incomplete_pairs.append((NO_VIDEO, subtitle_name, None, sub_file))
+                if pair not in existing_pairs:
+                    existing_pairs.add(pair)
+                    pairs_added = 1
+                    files_not_paired = 0
+                    complete_pairs.append((os.path.basename(video_file), os.path.basename(subtitle_file), video_file, subtitle_file))
                 else:
-                    incomplete_pairs.append((subtitle_name, NO_SUBTITLE, sub_file, None))
+                    duplicates += 1
+                    pairs_added = 0
+                    files_not_paired = 0
+                # Remove the video file from incomplete pairs if it was added
+                incomplete_pairs = [pair for pair in incomplete_pairs if pair[2] != video_file]
+            else:
+                incomplete_pairs.append((NO_VIDEO, os.path.basename(unpaired_subtitles[0]), None, unpaired_subtitles[0]))
                 files_not_paired += 1
-    # Insert incomplete pairs first
-    for video_name, subtitle_name, video_file, subtitle_file in incomplete_pairs:
-        if video_file:
-            parent_id = treeview.insert("", "end", text=video_name, values=(rf"{video_file}",), open=True)
-            treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file if subtitle_file else ""))
-        elif subtitle_file:
-            parent_id = treeview.insert("", "end", text=NO_VIDEO, values=("",), open=True)
+        else:
+            if unpaired_subtitles:
+                unpaired_count = len(unpaired_subtitles)
+                user_choice = messagebox.askyesno(UNPAIRED_SUBTITLES_TITLE, UNPAIRED_SUBTITLES_MESSAGE.format(unpaired_count=unpaired_count))
+                for sub_file in unpaired_subtitles:
+                    subtitle_name = os.path.basename(sub_file)
+                    if user_choice:
+                        incomplete_pairs.append((NO_VIDEO, subtitle_name, None, sub_file))
+                    else:
+                        incomplete_pairs.append((subtitle_name, NO_SUBTITLE, sub_file, None))
+                    files_not_paired += 1
+        # Insert incomplete pairs first
+        for video_name, subtitle_name, video_file, subtitle_file in incomplete_pairs:
+            if video_file:
+                parent_id = treeview.insert("", "end", text=video_name, values=(rf"{video_file}",), open=True)
+                treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file if subtitle_file else ""))
+            elif subtitle_file:
+                parent_id = treeview.insert("", "end", text=NO_VIDEO, values=("",), open=True)
+                treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
+            else:
+                continue
+            treeview.item(parent_id, tags=("incomplete",))
+            if not video_file and not subtitle_file:
+                treeview.delete(parent_id)
+        # Insert complete pairs
+        for video_name, subtitle_name, video_file, subtitle_file in complete_pairs:
+            parent_id = treeview.insert("", "end", text=video_name, values=(video_file,), open=True)
             treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
-        else:
-            continue
-        treeview.item(parent_id, tags=("incomplete",))
-        if not video_file and not subtitle_file:
-            treeview.delete(parent_id)
-    # Insert complete pairs
-    for video_name, subtitle_name, video_file, subtitle_file in complete_pairs:
-        parent_id = treeview.insert("", "end", text=video_name, values=(video_file,), open=True)
-        treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
-        treeview.item(parent_id, tags=("paired",))
-    # Handle UI updates and logging
-    batch_input.grid_remove()
-    tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
-    messages = []
-    if pairs_added > 0:
-        messages.append(PAIRS_ADDED.format(count=pairs_added, s='s' if pairs_added != 1 else ''))
-    if files_not_paired > 0:
-        if pairs_added < 1 or (duplicates > 0 and pairs_added < 1):
-            messages.append(UNPAIRED_FILES_ADDED.format(count=files_not_paired, s='s' if files_not_paired != 1 else ''))
-        else:
-            messages.append(UNPAIRED_FILES.format(count=files_not_paired, s='s' if files_not_paired != 1 else ''))
-    if duplicates > 0:
-        messages.append(DUPLICATE_PAIRS_SKIPPED.format(count=duplicates, s='s' if duplicates != 1 else ''))
-    if messages:
-        log_message(" and ".join(messages) + ".", "info", tab='auto')
+            treeview.item(parent_id, tags=("paired",))
+        # Handle UI updates and logging
+        batch_input.grid_remove()
+        tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+        messages = []
+        if pairs_added > 0:
+            messages.append(PAIRS_ADDED.format(count=pairs_added, s='s' if pairs_added != 1 else ''))
+        if files_not_paired > 0:
+            if pairs_added < 1 or (duplicates > 0 and pairs_added < 1):
+                messages.append(UNPAIRED_FILES_ADDED.format(count=files_not_paired, s='s' if files_not_paired != 1 else ''))
+            else:
+                messages.append(UNPAIRED_FILES.format(count=files_not_paired, s='s' if files_not_paired != 1 else ''))
+        if duplicates > 0:
+            messages.append(DUPLICATE_PAIRS_SKIPPED.format(count=duplicates, s='s' if duplicates != 1 else ''))
+        if messages:
+            log_message(" and ".join(messages) + ".", "info", tab='auto')
 
-# Function to select a folder
 def select_folder():
     folder_path = filedialog.askdirectory()
     if folder_path:
@@ -1893,6 +2124,373 @@ def browse_batch(event=None):
     paths = filedialog.askopenfilenames(filetypes = [(VIDEO_OR_SUBTITLE_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))])
     if paths:
         process_files(paths)
+
+# REFERENCE SUBTITLE / SUBTITLE PAIRING START
+def reference_subtitle_subtitle_pairs():
+    window = tk.Toplevel()
+    window.title(MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS)
+    # Store file paths
+    ref_file_paths = []
+    sub_file_paths = []
+    # Set window size and constraints
+    width = 800
+    height = 600
+    window.geometry(f"{width}x{height}")
+    window.minsize(width-100, height-100)
+    # Center the window
+    x = (window.winfo_screenwidth() // 2) - (width // 2)
+    y = (window.winfo_screenheight() // 2) - (height // 2)
+    window.geometry(f'{width}x{height}+{x}+{y}')
+    window.update_idletasks()
+    # Create explanation frame
+    explanation_frame = ttk.Frame(window, padding="10")
+    explanation_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
+    explanation_label = ttk.Label(explanation_frame, text=EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING, wraplength=800, justify="left", background="SystemButtonFace")
+    explanation_label.pack(fill="x")
+    frame_left = ttk.Frame(window, padding=(10, 0, 5, 0), width=300)
+    frame_left.grid(row=1, column=0, sticky="nsew")
+    frame_left.pack_propagate(False)
+    frame_right = ttk.Frame(window, padding=(5, 0, 10, 0), width=300)
+    frame_right.grid(row=1, column=1, sticky="nsew")
+    frame_right.pack_propagate(False)
+    frame_bottom = ttk.Frame(window, padding=(10, 10))
+    frame_bottom.grid(row=2, column=0, columnspan=2, sticky="ew")
+    window.grid_columnconfigure(0, weight=1, minsize=300)
+    window.grid_columnconfigure(1, weight=1, minsize=300)
+    window.grid_rowconfigure(1, weight=1)
+    ref_header = ttk.Frame(frame_left)
+    ref_header.pack(fill="x", pady=(0, 5))
+    ref_header.grid_columnconfigure(0, weight=1)
+    sub_header = ttk.Frame(frame_right)
+    sub_header.pack(fill="x", pady=(0, 5))
+    sub_header.grid_columnconfigure(0, weight=1)
+    # Create labels and buttons in headers
+    ref_label = ttk.Label(ref_header, text=REF_LABEL_TEXT, anchor="w", background="SystemButtonFace")
+    ref_label.grid(row=0, column=0, sticky="w")
+    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: process_files(listbox_left, ref_file_paths, show_ui=True, input_label=ref_input, header_frame=ref_header), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_add_btn.grid(row=0, column=1, padx=(5, 0))
+    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_remove_btn.grid(row=0, column=2, padx=(5, 0))
+    sub_label = ttk.Label(sub_header, text=SUB_LABEL_TEXT, anchor="w", background="SystemButtonFace")
+    sub_label.grid(row=0, column=0, sticky="w")
+    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: process_files(listbox_right, sub_file_paths, show_ui=True, input_label=sub_input, header_frame=sub_header), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_add_btn.grid(row=0, column=1, padx=(5, 0))
+    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_remove_btn.grid(row=0, column=2, padx=(5, 0))
+    ref_header.pack_forget()
+    sub_header.pack_forget()
+    # Create options menus
+    ref_options = tk.Menu(window, tearoff=0)
+    ref_options.add_command(label=CONTEXT_MENU_SHOW_PATH, command=lambda: show_path(listbox_left, ref_file_paths))
+    ref_options.add_command(label=CONTEXT_MENU_REMOVE, command=lambda: remove_selected_item(listbox_left, ref_file_paths))
+    ref_options.add_separator()
+    ref_options.add_command(label=BUTTON_ADD_FILES, command=lambda: process_files(listbox_left, ref_file_paths, show_ui=True, input_label=ref_input, header_frame=ref_header))
+    ref_options.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: clear_files(listbox_left, ref_file_paths, ref_header, ref_input))
+    sub_options = tk.Menu(window, tearoff=0)
+    sub_options.add_command(label=CONTEXT_MENU_SHOW_PATH, command=lambda: show_path(listbox_right, sub_file_paths))
+    sub_options.add_command(label=CONTEXT_MENU_REMOVE, command=lambda: remove_selected_item(listbox_right, sub_file_paths))
+    sub_options.add_separator()
+    sub_options.add_command(label=BUTTON_ADD_FILES, command=lambda: process_files(listbox_right, sub_file_paths, show_ui=True, input_label=sub_input, header_frame=sub_header))
+    sub_options.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: clear_files(listbox_right, sub_file_paths, sub_header, sub_input))
+    ref_input = tk.Label(frame_left, text=REF_DROP_TEXT, bg="lightgray", relief="ridge", width=50, height=5, cursor="hand2")
+    ref_input_text = tk.Label(frame_left, text=REF_LABEL_TEXT, fg="black", relief="ridge", padx=5, borderwidth=1)
+    ref_input_text.place(in_=ref_input, relx=0, rely=0, anchor="nw")
+    ref_input.pack(fill="both", expand=True)
+    sub_input = tk.Label(frame_right, text=SUB_DROP_TEXT, bg="lightgray", relief="ridge", width=50, height=5, cursor="hand2")
+    sub_input_text = tk.Label(frame_right, text=SUB_LABEL_TEXT, fg="black", relief="ridge", padx=5, borderwidth=1)
+    sub_input_text.place(in_=sub_input, relx=0, rely=0, anchor="nw")
+    sub_input.pack(fill="both", expand=True)
+    # Create listboxes
+    listbox_left = tk.Listbox(frame_left, selectmode=tk.SINGLE, borderwidth=2)
+    listbox_right = tk.Listbox(frame_right, selectmode=tk.SINGLE, borderwidth=2)
+    def log_message_reference(message, msg_type=None):
+        global current_log_type
+        font_style = ("Arial", 8, "bold")
+        if msg_type == "error":
+            current_log_type = "error"
+            color = "red"
+            bg_color = "RosyBrown1"
+        elif msg_type == "success":
+            current_log_type = "success"
+            color = "green"
+            bg_color = "lightgreen"
+        elif msg_type == "info":
+            current_log_type = "info"
+            color = "black"
+            bg_color = "lightgoldenrodyellow"
+        else:
+            current_log_type = None
+            color = "black"
+            bg_color = "lightgrey"
+        label_message_reference.config(text=message, fg=color, bg=bg_color, font=font_style)
+        if message:
+            label_message_reference.grid(row=10, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
+        else:
+            label_message_reference.grid_forget()
+        label_message_reference.config(cursor="")
+        label_message_reference.unbind("<Button-1>")
+        label_message_reference.update_idletasks()
+    label_message_reference = tk.Label(window, text="", fg="black", anchor="center")
+    label_message_reference.bind("<Configure>", update_wraplengt)
+    label_message_reference.grid_remove()
+    def on_enter(event):
+        event.widget.configure(bg="lightblue")
+    def on_leave(event):
+        event.widget.configure(bg="lightgray")
+    def show_listbox(input_label, listbox, header_frame):
+        input_label.pack_forget()
+        header_frame.pack(fill="x", pady=(0, 5))
+        listbox.pack(fill="both", expand=True)
+    def clear_files(listbox, file_paths_list, header_frame, input_label):
+        header_frame.pack_forget()
+        listbox.pack_forget()
+        input_label.pack(fill="both", expand=True)
+        file_paths_list.clear()
+        listbox.delete(0, tk.END)
+        # Update both listboxes to refresh pairing colors
+        sort_both_listboxes()
+        log_message_reference("Files cleared.", "info")
+    def validate_subtitle_file(filepath):
+        return any(filepath.lower().endswith(ext) for ext in SUBTITLE_EXTENSIONS)
+    def extract_season_episode(filename):
+        """
+        Extract season and episode numbers from filename.
+        Matches patterns like: S01E01, S1E1, 1x01, etc.
+        """
+        patterns = [
+            r'[Ss](\d{1,2})[Ee](\d{1,2})',      # S01E01, S1E1
+            r'(\d{1,2})[xX](\d{1,2})'           # 1x01, 01x01, 1X01, 01X01
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, filename)
+            if match:
+                season, episode = match.groups()
+                return int(season), int(episode)
+        return None
+    def format_display_text(filename):
+        """Format filename with season/episode prefix"""
+        se_info = extract_season_episode(filename)
+        if se_info:
+            season, episode = se_info
+            return f"[S{season:02d}E{episode:02d}] {filename}"
+        return filename
+    def get_existing_season_episodes(file_paths):
+        """Get set of (season, episode) tuples from existing files"""
+        existing_se = set()
+        for path in file_paths:
+            filename = os.path.basename(path)
+            se_info = extract_season_episode(filename)
+            if se_info:
+                existing_se.add(se_info)
+        return existing_se
+    def get_se_info_from_path(filepath):
+        """Extract season-episode info from filepath"""
+        filename = os.path.basename(filepath)
+        return extract_season_episode(filename)
+    def find_paired_files(left_paths, right_paths):
+        """Returns indices of paired files in both lists"""
+        paired_indices = []
+        for i, left_path in enumerate(left_paths):
+            left_se = get_se_info_from_path(left_path)
+            if not left_se:
+                continue
+            for j, right_path in enumerate(right_paths):
+                right_se = get_se_info_from_path(right_path)
+                if left_se == right_se:
+                    paired_indices.append((i, j))
+                    break
+        return paired_indices
+    def update_listbox_colors(listbox_left, listbox_right, left_paths, right_paths):
+        """Update background colors for paired items"""
+        for lb in [listbox_left, listbox_right]:
+            for i in range(lb.size()):
+                lb.itemconfig(i, {'bg': 'white'})
+        # Set paired items background to light green
+        paired = find_paired_files(left_paths, right_paths)
+        for left_idx, right_idx in paired:
+            listbox_left.itemconfig(left_idx, {'bg': 'light green'})
+            listbox_right.itemconfig(right_idx, {'bg': 'light green'})
+    def sort_listbox_with_pairs(listbox, file_paths_list, other_paths):
+        """Sort listbox items with paired items first"""
+        items = []
+        paired_indices = {i for i, _ in find_paired_files(file_paths_list, other_paths)}
+        for i in range(listbox.size()):
+            is_paired = i in paired_indices
+            items.append((i, listbox.get(i), file_paths_list[i], is_paired))
+        # Sort: paired items first, then alphabetically within groups
+        items.sort(key=lambda x: (-x[3], x[1]))  # -x[3] puts True (paired) before False
+        listbox.delete(0, tk.END)
+        file_paths_list.clear()
+        for _, display_text, filepath, _ in items:
+            listbox.insert(tk.END, display_text)
+            file_paths_list.append(filepath)
+    def sort_listbox(listbox, file_paths_list):
+        """Sort listbox items considering pairs"""
+        other_paths = sub_file_paths if file_paths_list is ref_file_paths else ref_file_paths
+        sort_listbox_with_pairs(listbox, file_paths_list, other_paths)
+        update_listbox_colors(listbox_left, listbox_right, ref_file_paths, sub_file_paths)
+    def sort_both_listboxes():
+        """Sort both listboxes keeping pairs aligned"""
+        sort_listbox(listbox_left, ref_file_paths)
+        sort_listbox(listbox_right, sub_file_paths)
+    def process_files_reference(listbox, file_paths_list, filepaths=None, show_ui=True, input_label=None, header_frame=None):
+        """Combined function for handling file loading and processing"""
+        other_file_paths = sub_file_paths if file_paths_list is ref_file_paths else ref_file_paths
+        other_file_paths_abs = [os.path.abspath(p) for p in other_file_paths]
+        existing_paths_abs = [os.path.abspath(p) for p in file_paths_list]
+        if filepaths is None:
+            filepaths = filedialog.askopenfilenames(
+                filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
+            if not filepaths:
+                log_message_reference(NO_FILES_SELECTED, "info")
+                return
+        existing_se = get_existing_season_episodes(file_paths_list)
+        valid_files = []
+        invalid_format_files = []
+        se_duplicate_files = []
+        for path in filepaths:
+            if os.path.isdir(path):
+                for root, _, files in os.walk(path):
+                    for file in files:
+                        full_path = os.path.join(root, file)
+                        abs_path = os.path.abspath(full_path)
+                        if validate_subtitle_file(full_path):
+                            se_info = extract_season_episode(file)
+                            if se_info:
+                                if se_info in existing_se:
+                                    se_duplicate_files.append(file)
+                                else:
+                                    valid_files.append(abs_path)
+                                    existing_se.add(se_info)
+                            else:
+                                invalid_format_files.append(file)
+            elif validate_subtitle_file(path):
+                filename = os.path.basename(path)
+                abs_path = os.path.abspath(path)
+                se_info = extract_season_episode(filename)
+                if se_info:
+                    if se_info in existing_se:
+                        se_duplicate_files.append(filename)
+                    else:
+                        valid_files.append(abs_path)
+                        existing_se.add(se_info)
+                else:
+                    invalid_format_files.append(filename)
+
+        if not valid_files and not se_duplicate_files:
+            if invalid_format_files:
+                log_message_reference(FILES_MUST_CONTAIN_PATTERNS, "error")
+            else:
+                log_message_reference(NO_VALID_SUBTITLE_FILES, "error")
+            return
+        if show_ui and input_label and header_frame:
+            show_listbox(input_label, listbox, header_frame)
+        added_files = 0
+        skipped_files = 0
+        duplicate_in_other = 0
+        for filepath in valid_files:
+            # Check against absolute paths
+            if filepath not in existing_paths_abs:
+                # Check against absolute paths in other listbox
+                if filepath in other_file_paths_abs:
+                    duplicate_in_other += 1
+                    continue
+                display_text = format_display_text(os.path.basename(filepath))
+                listbox.insert(tk.END, display_text)
+                file_paths_list.append(filepath)
+                added_files += 1
+            else:
+                skipped_files += 1
+        if added_files > 0:
+            sort_listbox(listbox, file_paths_list)
+        messages = []
+        if added_files > 0:
+            messages.append(ADDED_FILES_TEXT.format(added_files=added_files))
+        if skipped_files > 0:
+            messages.append(SKIPPED_DUPLICATE_FILES_TEXT.format(skipped_files=skipped_files))
+        if duplicate_in_other > 0:
+            messages.append(SKIPPED_OTHER_LIST_FILES_TEXT.format(duplicate_in_other=duplicate_in_other))
+        if se_duplicate_files:
+            messages.append(SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT.format(len=len(se_duplicate_files)))
+        if invalid_format_files:
+            messages.append(SKIPPED_INVALID_FORMAT_FILES_TEXT.format(len=len(invalid_format_files)))
+        if messages:
+            log_message_reference(". ".join(messages) + ".", "info")
+        sort_both_listboxes()
+    def on_file_drop(event, listbox, file_paths_list, input_label=None, header_frame=None):
+        filepaths = window.tk.splitlist(event.data)
+        process_files_reference(listbox, file_paths_list, filepaths, bool(input_label and header_frame), input_label, header_frame)
+    def load_files(listbox, file_paths_list):
+        filepaths = filedialog.askopenfilenames(
+            filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
+        if filepaths:
+            process_files_reference(listbox, file_paths_list, filepaths, show_ui=True, input_label=ref_input if listbox == listbox_left else sub_input,header_frame=ref_header if listbox == listbox_left else sub_header)
+        else:
+            log_message_reference(NO_FILES_SELECTED, "info")
+    def show_path(listbox, file_paths_list):
+        selected = listbox.curselection()
+        if selected:
+            filepath = file_paths_list[selected[0]]
+            subprocess.run(['explorer', '/select,', os.path.normpath(filepath)])
+        else:
+            log_message_reference(NO_FILES_SELECTED_TO_SHOW_PATH, "info")
+    def on_right_click(event, menu):
+        menu.post(event.x_root, event.y_root)
+    def remove_selected_item(listbox, file_paths_list):
+        selected = listbox.curselection()
+        if selected:
+            file_paths_list.pop(selected[0])
+            listbox.delete(selected[0])
+            sort_listbox(listbox, file_paths_list)
+            log_message_reference(REMOVED_ITEM, "info")
+        else:
+            log_message_reference(NO_ITEM_SELECTED_TO_REMOVE, "info")
+    def process_pairs():
+        ref_files = ref_file_paths
+        sub_files = sub_file_paths
+        
+        if not ref_files or not sub_files:
+            log_message_reference("No subtitle pairs to process.", "error")
+            return
+        paired_indices = find_paired_files(ref_files, sub_files)
+        if not paired_indices:
+            log_message_reference("No matching subtitle pairs found.", "error")
+            return
+        files_to_process = []
+        for ref_idx, sub_idx in paired_indices:
+            files_to_process.append(ref_files[ref_idx])
+            files_to_process.append(sub_files[sub_idx])
+        if files_to_process:
+            process_files(files_to_process, reference_pairs=True)
+            window.destroy()
+        else:
+            log_message_reference("No valid subtitle pairs to process.", "error")
+    def cancel():
+        window.destroy()
+    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg="white", bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground="white", relief=tk.RAISED, borderwidth=2, cursor="hand2")
+    cancel_btn.pack(side="left", padx=(0, 5))
+    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg="white", bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground="white", relief=tk.RAISED, borderwidth=2, cursor="hand2")
+    process_btn.pack(side="left", fill="x", expand=True)
+    ref_input.bind("<Button-1>", lambda e: load_files(listbox_left, ref_file_paths))
+    ref_input.bind("<Enter>", on_enter)
+    ref_input.bind("<Leave>", on_leave)
+    ref_input.drop_target_register(DND_FILES)
+    ref_input.dnd_bind('<<Drop>>', lambda e: on_file_drop(e, listbox_left, ref_file_paths, ref_input, ref_header))
+    sub_input.bind("<Button-1>", lambda e: load_files(listbox_right, sub_file_paths))
+    sub_input.bind("<Enter>", on_enter)
+    sub_input.bind("<Leave>", on_leave)
+    sub_input.drop_target_register(DND_FILES)
+    sub_input.dnd_bind('<<Drop>>', lambda e: on_file_drop(e, listbox_right, sub_file_paths, sub_input, sub_header))
+    listbox_left.drop_target_register(DND_FILES)
+    listbox_left.dnd_bind('<<Drop>>', lambda e: on_file_drop(e, listbox_left, ref_file_paths))
+    listbox_right.drop_target_register(DND_FILES)
+    listbox_right.dnd_bind('<<Drop>>', lambda e: on_file_drop(e, listbox_right, sub_file_paths))
+    listbox_left.bind("<Delete>", lambda e: remove_selected_item(listbox_left, ref_file_paths))
+    listbox_right.bind("<Delete>", lambda e: remove_selected_item(listbox_right, sub_file_paths))
+    listbox_left.bind("<Button-3>", lambda e: on_right_click(e, ref_options))
+    listbox_right.bind("<Button-3>", lambda e: on_right_click(e, sub_options))
+    window.mainloop()
+# REFERENCE SUBTITLE / SUBTITLE PAIRING END
 
 def on_batch_drop(event):
     filepaths = automatic_tab.tk.splitlist(event.data)
@@ -2102,7 +2700,13 @@ def show_context_menu(event):
     context_menu.add_command(label=CONTEXT_MENU_CHANGE, command=change_selected_item)
     context_menu.add_separator()  # Add a separator
     context_menu.add_command(label=CONTEXT_MENU_ADD_PAIR, command=add_pair)
-    context_menu.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: treeview.delete(*treeview.get_children()))
+    def clear_all():
+        treeview.delete(*treeview.get_children())
+        tree_frame.grid_remove()
+        batch_input.grid()
+        log_message("", "info", tab='auto')
+
+    context_menu.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=clear_all)
     context_menu.post(event.x_root, event.y_root)
 # Bind the right-click event to the Treeview to show the context menu
 treeview.bind("<Button-3>", show_context_menu)
@@ -2164,6 +2768,7 @@ button_addfile.config(menu=options_menu)
 options_menu.add_command(label=CONTEXT_MENU_ADD_PAIR, command=add_pair)
 options_menu.add_command(label=MENU_ADD_FOLDER, command=select_folder)
 options_menu.add_command(label=MENU_ADD_MULTIPLE_FILES, command=browse_batch)
+options_menu.add_command(label=MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS, command=reference_subtitle_subtitle_pairs)
 # Update the grid layout
 button_addfile.grid(row=0, column=0, padx=(5,2.5), pady=5, sticky="ew")
 button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
@@ -2343,7 +2948,7 @@ def start_automatic_sync():
         output_dir = desktop_path
     elif action == OPTION_REPLACE_ORIGINAL_SUBTITLE:
         output_subtitle_file = subtitle_file
-        output_dir = None
+        output_dir = os.path.dirname(subtitle_file)
     elif action == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
         output_dir = os.path.dirname(video_file)
         base_name, ext = os.path.splitext(os.path.basename(subtitle_file))
@@ -2475,54 +3080,6 @@ def start_automatic_sync():
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
 
-    def convert_to_srt(subtitle_file):
-        file_extension = os.path.splitext(subtitle_file)[-1].lower()
-        base_name = os.path.basename(os.path.splitext(subtitle_file)[0])
-        srt_file = os.path.join(os.path.dirname(subtitle_file), 'converted_' + base_name + '.srt')
-        log_window.insert(tk.END, f"{PREPARING_SYNC.format(base_name=base_name, file_extension=file_extension)}\n")
-        if file_extension in ['.ttml', '.dfxp', '.itt']:
-            log_window.insert(tk.END, f"{CONVERTING_TTML}\n")
-            try:
-                convert_ttml_or_dfxp_to_srt(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-        elif file_extension == '.vtt':
-            log_window.insert(tk.END, f"{CONVERTING_VTT}\n")
-            try:
-                convert_vtt_to_srt(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-        elif file_extension == '.sbv':
-            log_window.insert(tk.END, f"{CONVERTING_SBV}\n")
-            try:
-                convert_sbv_to_srt(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-        elif file_extension == '.sub':
-            log_window.insert(tk.END, f"{CONVERTING_SUB}\n")
-            try:
-                convert_sub_to_srt(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-        elif file_extension in ['.ass', '.ssa']:
-            log_window.insert(tk.END, f"{CONVERTING_ASS}\n")
-            try:
-                convert_ass_to_srt(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-        elif file_extension == '.stl':
-            log_window.insert(tk.END, f"{CONVERTING_STL}\n")
-            try:
-                convert_stl_to_srt(subtitle_file, srt_file)
-            except Exception as e:
-                log_window.insert(tk.END, f"{ERROR_CONVERTING_SUBTITLE.format(error_message=str(e))}\n")
-        else:
-            log_window.insert(tk.END, f"{CONVERSION_NOT_SUPPORTED.format(file_extension=file_extension)}\n")
-            return None
-        if srt_file:
-            log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
-            return srt_file
-
     def update_progress_auto(progress_bar, value):
         adjusted_value = min(97, max(1, value))
         progress_bar["value"] = adjusted_value
@@ -2537,6 +3094,8 @@ def start_automatic_sync():
                     cmd += (" --gss")
                 if ffsubsync_option_vad_var.get():
                     cmd += (" --vad=auditok")
+            if additional_ffsubsync_args:
+                cmd += f" {additional_ffsubsync_args}"
         elif sync_tool == SYNC_TOOL_ALASS:
             if split_penalty == 0:
                 cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
@@ -2546,6 +3105,8 @@ def start_automatic_sync():
                 cmd += " --speed-optimization 0"
             if alass_disable_fps_guessing_var.get():
                 cmd += " --disable-fps-guessing"
+            if additional_alass_args:
+                cmd += f" {additional_alass_args}"
         else:
             log_window.insert(tk.END, f"{INVALID_SYNC_TOOL_SELECTED}\n")
             return None
@@ -2567,6 +3128,8 @@ def start_automatic_sync():
                     log_window.insert(tk.END, f"{ENABLED_GSS}\n")
                 if ffsubsync_option_vad_var.get():
                     log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
+                if additional_ffsubsync_args:
+                    log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n")
         elif sync_tool == SYNC_TOOL_ALASS:
             if split_penalty == 0:
                 log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
@@ -2576,6 +3139,8 @@ def start_automatic_sync():
                 log_window.insert(tk.END, f"{ALASS_SPEED_OPTIMIZATION_LOG}\n")
             if alass_disable_fps_guessing_var.get():
                 log_window.insert(tk.END, f"{ALASS_DISABLE_FPS_GUESSING_LOG}\n")
+            if additional_alass_args:
+                log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_alass_args)}\n")
         log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
         progress_line_number = log_window.index(tk.END).split(".")[0]
         decoding_error_occurred = False
@@ -2596,31 +3161,25 @@ def start_automatic_sync():
             log_window.see(tk.END)
             if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                 decoding_error_occurred = True
-            
         if process is not None:
             process.wait()
             if process.returncode == 0:  # Check if the process finished successfully
-                if "error" in output.lower() or not os.path.exists(output_subtitle_file):
-                    log_message(SYNC_ERROR_OCCURRED, "error", output_subtitle_file, tab='auto')
+                if "error" in output.lower() or not os.path.exists(output_subtitle_file) and not decoding_error_occurred:
+                    return 1, decoding_error_occurred
                 else:
-                    log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
-                    log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
-                button_cancel_automatic_sync.grid_remove()
-                log_window.grid(pady=(10, 10), rowspan=2)
-                button_go_back.grid()
-                button_generate_again.grid()
-                
-                return process.returncode, decoding_error_occurred
+                    return process.returncode, decoding_error_occurred
             else:
-                return 1, decoding_error_occurred  # Ensure a tuple is returned in case process is None
-        return 1, decoding_error_occurred  # Ensure a tuple is returned in case process is None
-
+                return process.returncode, decoding_error_occurred
+        return 1, decoding_error_occurred
     def run_subprocess():
         global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
         split_penalty = alass_split_penalty_var.get()
+        video_file_converted = None
+        subtitle_file_converted = None
+        closest_subtitle = None
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             # if there is a file with the same name as the output_subtitle_file, create a backup
-            if os.path.exists(output_subtitle_file):
+            if os.path.exists(output_subtitle_file) and backup_subtitles_before_overwriting:
                 new_output_subtitle_file = create_backup(output_subtitle_file)
                 log_window.insert(tk.END, f"{BACKUP_CREATED.format(output_subtitle_file=new_output_subtitle_file)}\n")
         unsupported_extensions = [ext for ext in SUBTITLE_EXTENSIONS if ext not in SUPPORTED_SUBTITLE_EXTENSIONS]
@@ -2628,19 +3187,20 @@ def start_automatic_sync():
             if not output_subtitle_file.lower().endswith(tuple(SUPPORTED_SUBTITLE_EXTENSIONS)):
                 output_subtitle_file = output_subtitle_file.rsplit('.', 1)[0] + '.srt'
             if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
-                subtitle_file = convert_to_srt(subtitle_file)
+                subtitle_file_converted = convert_to_srt(subtitle_file, output_dir, log_window)
+                if subtitle_file_converted:
+                    subtitle_file = subtitle_file_converted
             if sync_tool == SYNC_TOOL_ALASS:
                 # if it is a video file, extract subtitle streams
-                if video_file.lower().endswith(tuple(VIDEO_EXTENSIONS)):
-                    log_window.insert(tk.END, CHECKING_SUBTITLE_STREAMS)
-                    closest_subtitle, message = extract_subtitles(video_file, subtitle_file)
-                    for msg in message:
-                        log_window.insert(tk.END, msg)
-                        log_window.see(tk.END)
+                if video_file.lower().endswith(tuple(VIDEO_EXTENSIONS)) and check_video_for_subtitle_stream_in_alass:
+                    log_window.insert(tk.END, CHECKING_SUBTITLE_STREAMS+"\n")
+                    closest_subtitle = extract_subtitles(video_file, subtitle_file, output_dir, log_window)
                     if closest_subtitle:
                         video_file = closest_subtitle
             if video_file.lower().endswith(tuple(unsupported_extensions)):
-                video_file = convert_to_srt(video_file)
+                video_file_converted = convert_to_srt(video_file, output_dir, log_window)
+                if video_file_converted:
+                    video_file = video_file_converted
             cmd = build_cmd()
             if cmd is None:
                 return
@@ -2651,26 +3211,48 @@ def start_automatic_sync():
                 encoding_inc = detect_encoding(subtitle_file)
                 # if decoding_error_occurred, retry with detected encodings
                 if returncode != 0 and decoding_error_occurred:
-                    log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG)
+                    log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG+"\n\n")
                     if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         encoding_ref = detect_encoding(video_file)
                         cmd += f" --encoding-ref={encoding_ref}"
                     cmd += f" --encoding-inc={encoding_inc}"
-                    execute_cmd(cmd)
+                    returncode, decoding_error_occurred = execute_cmd(cmd)
                 synced_subtitle_encoding = detect_encoding(output_subtitle_file)
                 # If the encoding of synced subtitle is not the same as encoding_inc, change it
                 if synced_subtitle_encoding != encoding_inc:
                     change_encoding_msg = CHANGING_ENCODING_MSG.format(synced_subtitle_encoding=synced_subtitle_encoding, encoding_inc=encoding_inc)
-                    log_window.insert(tk.END, change_encoding_msg)
+                    log_window.insert(tk.END, "\n"+change_encoding_msg+"\n")
                     try:
                         with open(output_subtitle_file, 'r', encoding=synced_subtitle_encoding) as f:
                             content = f.read()
                         with open(output_subtitle_file, 'w', encoding=encoding_inc) as f:
                             f.write(content)
-                        log_window.insert(tk.END, ENCODING_CHANGED_MSG)
+                        log_window.insert(tk.END, "\n"+ENCODING_CHANGED_MSG+"\n")
                     except Exception as e:
                         error_msg = ERROR_CHANGING_ENCODING_MSG.format(error_message=str(e))
-                        log_window.insert(tk.END, error_msg)
+                        log_window.insert(tk.END, "\n"+error_msg+"\n")
+                # if keep_extracted_subtitles is False, delete the extracted subtitle folder which is the folder of closest_subtitle.
+                if not keep_extracted_subtitles and closest_subtitle:
+                    log_window.insert(tk.END, f"\n{DELETING_EXTRACTED_SUBTITLE_FOLDER}\n")
+                    shutil.rmtree(os.path.dirname(closest_subtitle))
+                # if video_file_converted or subtitle_file_converted is not None and keep_converted_subtitles is False, delete the converted files
+                if not keep_converted_subtitles:
+                    if video_file_converted:
+                        log_window.insert(tk.END, f"\n{DELETING_CONVERTED_SUBTITLE}\n")
+                        os.remove(video_file_converted)
+                    if subtitle_file_converted:
+                        log_window.insert(tk.END, f"\n{DELETING_CONVERTED_SUBTITLE}\n")
+                        os.remove(subtitle_file_converted)
+            process.wait()
+            if returncode == 0:
+                log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
+                log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
+            else:
+                log_message(SYNC_ERROR_OCCURRED, "error", output_subtitle_file, tab='auto')
+            button_cancel_automatic_sync.grid_remove()
+            log_window.grid(pady=(10, 10), rowspan=2)
+            button_go_back.grid()
+            button_generate_again.grid()
             log_window.insert(tk.END, f"\n{SYNCING_ENDED}\n")
             log_window.see(tk.END)
         except Exception as e:
@@ -2812,14 +3394,18 @@ remove_video_button = tk.Button(
 remove_video_button.grid_remove()
 sync_frame = tk.Frame(automatic_tab)
 sync_frame.grid(row=6, column=1, padx=(0, 10), pady=(5,10), sticky="e")
-ffsubsync_option_framerate_var = tk.BooleanVar()
-ffsubsync_option_gss_var = tk.BooleanVar()
-ffsubsync_option_vad_var = tk.BooleanVar()
-action_var_auto = tk.StringVar(value=OPTION_SAVE_NEXT_TO_SUBTITLE)
-sync_tool_var_auto = tk.StringVar(value=SYNC_TOOL_FFSUBSYNC)
-ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text=CHECKBOX_NO_FIX_FRAMERATE, variable=ffsubsync_option_framerate_var)
-ffsubsync_option_gss = tk.Checkbutton(automatic_tab, text=CHECKBOX_GSS, variable=ffsubsync_option_gss_var)
-ffsubsync_option_vad = tk.Checkbutton(automatic_tab, text=CHECKBOX_VAD, variable=ffsubsync_option_vad_var)
+ffsubsync_option_framerate_var = tk.BooleanVar(value=config.get('ffsubsync_option_framerate', False))
+ffsubsync_option_gss_var = tk.BooleanVar(value=config.get('ffsubsync_option_gss', False))
+ffsubsync_option_vad_var = tk.BooleanVar(value=config.get('ffsubsync_option_vad', False))
+action_var_auto_value = globals().get(config.get('action_var_auto', OPTION_SAVE_NEXT_TO_SUBTITLE), OPTION_SAVE_NEXT_TO_SUBTITLE)
+action_var_auto = tk.StringVar(value=action_var_auto_value)
+# Convert string values to actual variables
+sync_tool_var_auto_value = globals().get(config.get('sync_tool_var_auto', SYNC_TOOL_FFSUBSYNC), SYNC_TOOL_FFSUBSYNC)
+sync_tool_var_auto = tk.StringVar(value=sync_tool_var_auto_value)
+ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text=CHECKBOX_NO_FIX_FRAMERATE, variable=ffsubsync_option_framerate_var, command=lambda: update_config('ffsubsync_option_framerate', ffsubsync_option_framerate_var.get()))
+ffsubsync_option_gss = tk.Checkbutton(automatic_tab, text=CHECKBOX_GSS, variable=ffsubsync_option_gss_var, command=lambda: update_config('ffsubsync_option_gss', ffsubsync_option_gss_var.get()))
+ffsubsync_option_vad = tk.Checkbutton(automatic_tab, text=CHECKBOX_VAD, variable=ffsubsync_option_vad_var, command=lambda: update_config('ffsubsync_option_vad', ffsubsync_option_vad_var.get()))
+
 def select_destination_folder():
     global tooltip_action_menu_auto
     folder_path = filedialog.askdirectory()
@@ -2831,15 +3417,46 @@ def select_destination_folder():
     else:
         log_message(TEXT_NO_FOLDER_SELECTED, "error", tab='auto')
         action_var_auto.set(OPTION_SAVE_NEXT_TO_SUBTITLE)
+        
 def on_action_menu_change(*args):
-    log_message("", "info", tab='auto')
     tooltip_action_menu_auto = ToolTip(action_menu_auto, TOOLTIP_TEXT_ACTION_MENU_AUTO)
-    if action_var_auto.get() == OPTION_SELECT_DESTINATION_FOLDER:
+    log_message("", "info", tab='auto')
+    selected_option = action_var_auto.get()
+    if selected_option == OPTION_SELECT_DESTINATION_FOLDER:
         select_destination_folder()
+    else:
+        # Map the actual variable to its name
+        variable_name_map = {
+            OPTION_SAVE_NEXT_TO_SUBTITLE: "OPTION_SAVE_NEXT_TO_SUBTITLE",
+            OPTION_SAVE_NEXT_TO_VIDEO: "OPTION_SAVE_NEXT_TO_VIDEO",
+            OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME: "OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME",
+            OPTION_SAVE_TO_DESKTOP: "OPTION_SAVE_TO_DESKTOP",
+            OPTION_REPLACE_ORIGINAL_SUBTITLE: "OPTION_REPLACE_ORIGINAL_SUBTITLE"
+        }
+        variable_name = variable_name_map.get(selected_option, "")
+        update_config("action_var_auto", variable_name)
+
+def on_sync_tool_change(*args):
+    if sync_tool_var_auto.get() == SYNC_TOOL_ALASS:
+        update_config('sync_tool_var_auto', 'SYNC_TOOL_ALASS')
+        ffsubsync_option_framerate.grid_remove()
+        ffsubsync_option_gss.grid_remove()
+        ffsubsync_option_vad.grid_remove()
+        alass_disable_fps_guessing.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
+        alass_speed_optimization.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+        alass_split_penalty_slider.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="ew")
+    else:
+        update_config('sync_tool_var_auto', 'SYNC_TOOL_FFSUBSYNC')
+        alass_split_penalty_slider.grid_remove()
+        alass_speed_optimization.grid_remove()
+        alass_disable_fps_guessing.grid_remove()
+        ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
+        ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+        ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
 action_menu_auto = ttk.OptionMenu(
     automatic_tab, 
-    action_var_auto, 
-    OPTION_SAVE_NEXT_TO_SUBTITLE,
+    action_var_auto,
+    action_var_auto_value,
     OPTION_SAVE_NEXT_TO_SUBTITLE, 
     OPTION_SAVE_NEXT_TO_VIDEO,
     OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME,
@@ -2847,14 +3464,39 @@ action_menu_auto = ttk.OptionMenu(
     OPTION_REPLACE_ORIGINAL_SUBTITLE,
     OPTION_SELECT_DESTINATION_FOLDER
 )
+sync_tool_menu_auto = ttk.OptionMenu(
+    sync_frame, 
+    sync_tool_var_auto, 
+    sync_tool_var_auto_value, 
+    SYNC_TOOL_FFSUBSYNC, 
+    SYNC_TOOL_ALASS
+)
+sync_tool_var_auto.trace_add("write", on_sync_tool_change)
 action_var_auto.trace_add("write", on_action_menu_change)
-sync_tool_menu_auto = ttk.OptionMenu(sync_frame, sync_tool_var_auto, SYNC_TOOL_FFSUBSYNC, SYNC_TOOL_FFSUBSYNC, SYNC_TOOL_ALASS)
-alass_disable_fps_guessing_var = tk.BooleanVar()
-alass_disable_fps_guessing = tk.Checkbutton(automatic_tab, text=ALASS_DISABLE_FPS_GUESSING_TEXT, variable=alass_disable_fps_guessing_var)
-alass_speed_optimization_var = tk.BooleanVar()
-alass_speed_optimization = tk.Checkbutton(automatic_tab, text=ALASS_SPEED_OPTIMIZATION_TEXT, variable=alass_speed_optimization_var)
-alass_split_penalty_var = tk.IntVar(value=7)
-alass_split_penalty_slider = tk.Scale(automatic_tab, from_=0, to=100, orient="horizontal", variable=alass_split_penalty_var, label=LABEL_SPLIT_PENALTY)
+alass_disable_fps_guessing_var = tk.BooleanVar(value=config.get('alass_disable_fps_guessing', False))
+alass_speed_optimization_var = tk.BooleanVar(value=config.get('alass_speed_optimization', False))
+alass_split_penalty_var = tk.IntVar(value=config.get('alass_split_penalty', 7))
+alass_disable_fps_guessing = tk.Checkbutton(
+    automatic_tab, 
+    text=ALASS_DISABLE_FPS_GUESSING_TEXT, 
+    variable=alass_disable_fps_guessing_var, 
+    command=lambda: update_config('alass_disable_fps_guessing', alass_disable_fps_guessing_var.get())
+)
+alass_speed_optimization = tk.Checkbutton(
+    automatic_tab, 
+    text=ALASS_SPEED_OPTIMIZATION_TEXT, 
+    variable=alass_speed_optimization_var, 
+    command=lambda: update_config('alass_speed_optimization', alass_speed_optimization_var.get())
+)
+alass_split_penalty_slider = tk.Scale(
+    automatic_tab, 
+    from_=0, 
+    to=100, 
+    orient="horizontal", 
+    variable=alass_split_penalty_var, 
+    label=LABEL_SPLIT_PENALTY, 
+    command=lambda value: update_config('alass_split_penalty', alass_split_penalty_var.get())
+)
 tooltip_ffsubsync_option_framerate = ToolTip(ffsubsync_option_framerate, TOOLTIP_FRAMERATE)
 tooltip_ffsubsync_option_gss = ToolTip(ffsubsync_option_gss, TOOLTIP_GSS)
 tooltip_ffsubsync_option_vad = ToolTip(ffsubsync_option_vad, TOOLTIP_VAD)
@@ -2864,24 +3506,20 @@ tooltip_alass_speed_optimization = ToolTip(alass_speed_optimization, TOOLTIP_ALA
 tooltip_alass_disable_fps_guessing = ToolTip(alass_disable_fps_guessing, TOOLTIP_ALASS_DISABLE_FPS_GUESSING)
 video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
 subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
-ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
-ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-def on_sync_tool_change(*args):
-    if sync_tool_var_auto.get() == SYNC_TOOL_ALASS:
-        ffsubsync_option_framerate.grid_remove()
-        ffsubsync_option_gss.grid_remove()
-        ffsubsync_option_vad.grid_remove()
-        alass_disable_fps_guessing.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
-        alass_speed_optimization.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-        alass_split_penalty_slider.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="ew")
-    else:
-        alass_split_penalty_slider.grid_remove()
-        alass_speed_optimization.grid_remove()
-        alass_disable_fps_guessing.grid_remove()
-        ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
-        ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-        ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+if sync_tool_var_auto.get() == SYNC_TOOL_ALASS:
+    ffsubsync_option_framerate.grid_remove()
+    ffsubsync_option_gss.grid_remove()
+    ffsubsync_option_vad.grid_remove()
+    alass_disable_fps_guessing.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
+    alass_speed_optimization.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+    alass_split_penalty_slider.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="ew")
+else:
+    alass_split_penalty_slider.grid_remove()
+    alass_speed_optimization.grid_remove()
+    alass_disable_fps_guessing.grid_remove()
+    ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
+    ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+    ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
 sync_tool_var_auto.trace_add("write", on_sync_tool_change)
 sync_tool_label = tk.Label(sync_frame, text="Sync using", fg="black")
 sync_tool_label.grid(row=0, column=0, padx=(5, 0), sticky="w")
