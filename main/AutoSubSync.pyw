@@ -252,6 +252,7 @@ NO_FILES_SELECTED_TO_SHOW_PATH = "No file selected to show path."
 REMOVED_ITEM = "Removed item."
 FILES_MUST_CONTAIN_PATTERNS = "Files must contain patterns like S01E01, 1x01 etc."
 NO_VALID_SUBTITLE_FILES = "No valid subtitle files found."
+default_encoding = sys.getfilesystemencoding()
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # Icon fix
@@ -918,7 +919,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
         "-of", "csv=p=0",
         video_file
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
     # Parse the ffprobe output to extract stream index, codec_name, and language
     subtitle_streams = []
     for line in result.stdout.splitlines():
@@ -955,7 +956,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
         log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
         return False
     # Run the ffmpeg command with properly placed -map arguments
-    result = subprocess.run(ffmpeg_base_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    result = subprocess.run(ffmpeg_base_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
     if result.returncode == 0:
         for output_file in output_files:
             log_window.insert(tk.END, f"{SUCCESSFULLY_EXTRACTED.format(filename=os.path.basename(output_file))}\n")
@@ -1379,7 +1380,7 @@ def start_batch_sync():
                 try:
                     subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)],
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                     creationflags=subprocess.CREATE_NO_WINDOW)
+                                     creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
                 except Exception as e:
                     log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
         log_message(BATCH_SYNC_CANCELLED, "error", tab='auto')
@@ -1443,9 +1444,11 @@ def start_batch_sync():
         root.update_idletasks()
 
     def execute_cmd(cmd):
+            
             decoding_error_occurred = False
             try:
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding='utf-8')
+                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
+
                 for output in process.stdout:
                     if cancel_flag:
                         process.kill()
@@ -1692,7 +1695,7 @@ def start_batch_sync():
                     log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
                     process = subprocess.Popen(
                         cmd, shell=True, stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT, universal_newlines=True
+                        stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace'
                     )
                     process_list.append(process)
                 except Exception as e:
@@ -2703,7 +2706,7 @@ def show_path():
         if item_values and item_values[0]:
             path = item_values[0]
             folder = os.path.dirname(path)
-            subprocess.run(['explorer', '/select,', os.path.normpath(path)])
+            subprocess.run(['explorer', '/select,', os.path.normpath(path)], encoding=default_encoding, errors='replace')
 def show_context_menu(event):
     # Clear previous dynamic menu items
     context_menu.delete(0, tk.END)
@@ -3011,7 +3014,7 @@ def start_automatic_sync():
         global process
         if process:
             try:
-                subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW)
+                subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
                 process = None
                 log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
             except Exception as e:
@@ -3134,7 +3137,7 @@ def start_automatic_sync():
     def execute_cmd(cmd):
         global process, progress_line_number, subtitle_file, video_file, output_subtitle_file, split_penalty
         split_penalty = alass_split_penalty_var.get()
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding='utf-8')
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
         progress_bar["value"] = 1
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
             if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
