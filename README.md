@@ -28,6 +28,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - **Batch Mode:**
    - Enable batch mode to process multiple files at once. Drag and drop multiple files or folders into the batch input area.
    - You can also add `reference subtitle - subtitle` pairs in batch mode. Just try to add subtitles and it will ask you how you want to add them. You can add them as subtitles with [no video] or reference subtitles with [no subtitle] input.
+   - Also, use `Reference subtitle/subtitle parir` to automaticallty pair multiple subtitles with similar names. For example “S01E01 pairs with 01x01.
    - `Double click` any item to change them.
    - Use `del` key to delete any item.
      
@@ -41,8 +42,19 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
    - Select whether to save the shifted subtitle to the desktop or replace the original subtitle file.
 - **Start Shifting:**
    - Click the `Shift Subtitle` button to apply the time shift.
+ 
+### Settings (Top Right Corner)
+- Additional arguments for ffsubsync: Configure additional arguments for ffsubsync.
+- Additional arguments for alass: Configure additional arguments for alass.
+- Check video for subtitle stream in alass: Toggle for checking the subtitle streams in video for alass.
+- Backup subtitles before overwriting: Toggle for creating a backup of subtitles before overwriting them.
+- Keep converted subtitles: Toggle for keeping the converted subtitles after synchronization.
+- Keep Extracted Subtitles: Toggle to keeping the extracted subtitles after synchronization.
+- Remember the Changes: Toggle for remembering changes made.
+- Reset to Default Settings: Restore settings to default values.
 
 ## `Features`
+- “Reference Subtitle/Subtitle Pairing”, so you can automaticallty pair multiple subtitles with similar names. For example “S01E01 pairs with 01x01”
 - Choose between alass and ffsubsync for automatic subtitle syncing.
 - Batch processing for multiple video/reference subtitle and subtitle pairs.
 - Support for different subtitle types: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .itt, .stl.
