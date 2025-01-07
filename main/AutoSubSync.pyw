@@ -276,8 +276,8 @@ def update_config(key, value):
             json.dump(config, config_file, indent=4)
 # Alass integration
 def find_ffmpeg_paths():
-    ffmpeg_path = subprocess.check_output("where ffmpeg", shell=True).decode().strip()
-    ffprobe_path = subprocess.check_output("where ffprobe", shell=True).decode().strip()
+    ffmpeg_path = subprocess.check_output("where ffmpeg", shell=True).decode('utf-8', errors='ignore').strip()
+    ffprobe_path = subprocess.check_output("where ffprobe", shell=True).decode('utf-8', errors='ignore').strip()
     return ffmpeg_path, ffprobe_path
 ffmpeg_path, ffprobe_path = find_ffmpeg_paths()
 env = os.environ.copy()
