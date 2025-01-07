@@ -57,7 +57,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - “Reference Subtitle/Subtitle Pairing”, so you can automaticallty pair multiple subtitles with similar names. For example “S01E01 pairs with 01x01”
 - Choose between alass and ffsubsync for automatic subtitle syncing.
 - Batch processing for multiple video/reference subtitle and subtitle pairs.
-- Support for different subtitle types: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .itt, .stl.
+- Support for different subtitle formats: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .itt, .stl.
 - Automatic Subtitle Synchronization: Automatically sync the subtitles with the video/reference subtitle, using [ffsubsync](https://github.com/smacke/ffsubsync) or [alass](https://github.com/kaegi/alass).
 - Subtitle Shifting: Easily adjust subtitle timing by specifying the number of milliseconds to shift.
 - Drag and Drop: Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
