@@ -12,6 +12,50 @@ set PYTHON_PATH=python_embedded\pythonw.exe
 set PYTHON_EMBEDDED_URL=https://github.com/wojiushixiaobai/Python-Embed-Win64/releases/download/3.12.8/python-3.12.8-embed-amd64.zip
 set PYTHON_EMBEDDED_FILE=%PROJECTFOLDER%\python_embedded.zip
 
+:: Check if ffmpeg is installed
+ffmpeg -version >nul 2>&1 && (set ffmpeg_installed=true) || (set ffmpeg_installed=false)
+if not "%ffmpeg_installed%"=="true" (
+    echo ffmpeg is required to run this program.
+    set /p "install_ffmpeg=Do you want to install ffmpeg (y/n)?: "
+    if /i "!install_ffmpeg!"=="y" (
+        echo Installing ffmpeg...
+        winget install ffmpeg --accept-package-agreements
+        if errorlevel 1 (
+            echo Download failed using winget method. Trying chocolatey method...
+            :: Check admin rights
+            goto check_Permissions
+            :continue_install_ffmpeg
+            choco -v >nul 2>&1
+            if errorlevel 1 (
+                echo Installing chocolatey...
+                powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+                if errorlevel 1 (
+                    echo Failed to install chocolatey. You need to install ffmpeg manually.
+                    pause
+                    exit /b
+                )
+                call %refrenv%
+            )
+            choco install ffmpeg-full -y
+            if errorlevel 1 (
+                echo Failed to install ffmpeg using chocolatey. Please install ffmpeg manually and try again.
+                pause
+                exit /b
+            )
+        )
+        set ffmpeg_installed=true
+        goto ffmpeg_ok
+    ) else (
+        echo ffmpeg is required to run this program. Please install ffmpeg and try again.
+        pause
+        exit /b
+    )
+    :ffmpeg_ok
+    echo ffmpeg installed successfully.
+    :: Refresh the environment variables
+    call %refrenv%
+)
+
 :: Check if python_embedded directory exists
 if not exist "python_embedded" (
     if not exist %PYTHON_EMBEDDED_FILE% (
@@ -66,53 +110,6 @@ if not exist "python_embedded" (
 :: Display provided argument if any
 if not "%~1"=="" (
     echo Open with: "%~1"
-)
-
-:: Check if the required programs are installed
-%PYTHON_PATH% --version >nul 2>&1 && (set python_installed=true) || (set python_installed=false)
-ffmpeg -version >nul 2>&1 && (set ffmpeg_installed=true) || (set ffmpeg_installed=false)
-
-:: Check if ffmpeg is installed
-if not "%ffmpeg_installed%"=="true" (
-    echo ffmpeg is required to run this program.
-    set /p "install_ffmpeg=Do you want to install ffmpeg (y/n)?: "
-    if /i "!install_ffmpeg!"=="y" (
-        echo Installing ffmpeg...
-        winget install ffmpeg --accept-package-agreements
-        if errorlevel 1 (
-            echo Download failed using winget method. Trying chocolatey method...
-            :: Check admin rights
-            goto check_Permissions
-            :continue_install_ffmpeg
-            choco -v >nul 2>&1
-            if errorlevel 1 (
-                echo Installing chocolatey...
-                powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
-                if errorlevel 1 (
-                    echo Failed to install chocolatey. You need to install ffmpeg manually.
-                    pause
-                    exit /b
-                )
-                call %refrenv%
-            )
-            choco install ffmpeg-full -y
-            if errorlevel 1 (
-                echo Failed to install ffmpeg using chocolatey. Please install ffmpeg manually and try again.
-                pause
-                exit /b
-            )
-        )
-        set ffmpeg_installed=true
-        goto ffmpeg_ok
-    ) else (
-        echo ffmpeg is required to run this program. Please install ffmpeg and try again.
-        pause
-        exit /b
-    )
-    :ffmpeg_ok
-    echo ffmpeg installed successfully.
-    :: Refresh the environment variables
-    call %refrenv%
 )
 
 :: Check if the current directory has changed since the last run
