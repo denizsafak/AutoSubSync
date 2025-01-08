@@ -14,7 +14,7 @@ import ctypes
 import json
 # Program information
 PROGRAM_NAME = "AutoSubSync"
-VERSION = "v3.0"
+VERSION = "v3.1"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 # File extensions
 FFSUBSYNC_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa']
@@ -255,6 +255,8 @@ NO_VALID_SUBTITLE_FILES = "No valid subtitle files found."
 default_encoding = sys.getfilesystemencoding()
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# ffsubsync path
+ffs_exe_path = r"../python_embedded\scripts\ffs.exe"
 # Icon fix
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
 # Config file
@@ -1444,11 +1446,9 @@ def start_batch_sync():
         root.update_idletasks()
 
     def execute_cmd(cmd):
-            
             decoding_error_occurred = False
             try:
                 process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
-
                 for output in process.stdout:
                     if cancel_flag:
                         process.kill()
@@ -1643,7 +1643,7 @@ def start_batch_sync():
                     )
                     suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'"{ffs_exe_path}" "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if ffsubsync_option_framerate_var.get():
                             cmd += " --no-fix-framerate"
@@ -3108,7 +3108,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'"{ffs_exe_path}" "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if ffsubsync_option_framerate_var.get():
                     cmd += " --no-fix-framerate"
