@@ -8,7 +8,8 @@ set requirementsFile=%PROJECTFOLDER%\requirements.txt
 set CURRENT_DIR=%CD%
 set LAST_DIR_FILE=%PROJECTFOLDER%\last_known_directory.txt
 set refrenv=%PROJECTFOLDER%\refrenv.bat
-set PYTHON_PATH=python_embedded\pythonw.exe
+set PYTHON_PATH=python_embedded\python.exe
+set PYTHONW_PATH=python_embedded\pythonw.exe
 set PYTHON_EMBEDDED_URL=https://github.com/wojiushixiaobai/Python-Embed-Win64/releases/download/3.12.8/python-3.12.8-embed-amd64.zip
 set PYTHON_EMBEDDED_FILE=%PROJECTFOLDER%\python_embedded.zip
 
@@ -56,8 +57,9 @@ if not "%ffmpeg_installed%"=="true" (
     call %refrenv%
 )
 
-:: Check if python_embedded directory exists
-if not exist "python_embedded" (
+:: Check if Python exists
+%PYTHON_PATH% -m chardet --version >nul 2>&1 && (set python_installed=true) || (set python_installed=false)
+if "%python_installed%"=="false" (
     if not exist %PYTHON_EMBEDDED_FILE% (
         echo Downloading python_embedded.zip...
         curl -L -o %PYTHON_EMBEDDED_FILE% %PYTHON_EMBEDDED_URL%
@@ -71,13 +73,17 @@ if not exist "python_embedded" (
             )
         )
     )
-    echo Creating python_embedded directory...
-    mkdir python_embedded
-    if errorlevel 1 (
-        echo Failed to create python_embedded directory.
-        pause
-        exit /b
+
+    if not exist "python_embedded" (
+        echo Creating python_embedded directory...
+        mkdir python_embedded
+        if errorlevel 1 (
+            echo Failed to create python_embedded directory.
+            pause
+            exit /b
+        )
     )
+    
     echo Unzipping python_embedded.zip...
     tar -xf %PYTHON_EMBEDDED_FILE% -C python_embedded
     if errorlevel 1 (
@@ -89,6 +95,7 @@ if not exist "python_embedded" (
             exit /b
         )
     )
+
     ::del %PYTHON_EMBEDDED_FILE%
     echo Editing python312._pth file...
     echo import site >> python_embedded\python312._pth
@@ -142,7 +149,7 @@ call :install_requirements
 
 :: Run the program
 echo Starting %NAME%...
-start /B "" "%PYTHON_PATH%" %RUN% %* > nul 2>&1
+start /B "" "%PYTHONW_PATH%" %RUN% %* > nul 2>&1
 if errorlevel 1 (
     echo Failed to start %NAME%. Please try again.
     pause
@@ -156,7 +163,7 @@ for /f "tokens=1,* delims==" %%i in (%requirementsFile%) do (
     if "%%j"=="" (
         if not defined installed[%%i] (
             echo Installing latest package: %%i
-            %PYTHON_PATH% -m pip install %%i --upgrade --quiet
+            %PYTHON_PATH% -m pip install %%i --upgrade --quiet  --no-warn-script-location
             if errorlevel 1 (
                 echo Failed to install %%i. Please check your internet connection and try again.
                 pause
@@ -166,7 +173,7 @@ for /f "tokens=1,* delims==" %%i in (%requirementsFile%) do (
     ) else (
         if not "!installed[%%i]!"=="%%j" (
             echo Installing package: %%i==%%j
-            %PYTHON_PATH% -m pip install %%i==%%j --upgrade --quiet
+            %PYTHON_PATH% -m pip install %%i==%%j --upgrade --quiet  --no-warn-script-location
             if errorlevel 1 (
                 echo Failed to install %%i==%%j. Please check your internet connection and try again.
                 pause
