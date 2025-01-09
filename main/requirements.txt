@@ -1,4 +1,4 @@
-chardet
-tkinterdnd2
-ffsubsync
-requests
+chardet==5.2.0
+tkinterdnd2==0.4.2
+requests==2.32.3
+ffsubsync==0.4.27

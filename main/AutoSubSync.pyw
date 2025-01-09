@@ -28,8 +28,6 @@ try:
 except FileNotFoundError:
     VERSION = " UNKNOWN VERSION"
     messagebox.showerror("Error", "VERSION file not found.")
-# Language selection
-LANGUAGE = config.get("language", "en")
 # Program information
 PROGRAM_NAME = "AutoSubSync"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
@@ -60,6 +58,15 @@ COLOR_PROGRESSBAR = "#00a31e"  # Bright green color for progress bar
 COLOR_ONE = "light grey"
 COLOR_TWO = "lightgreen"
 COLOR_THREE = "lightblue"
+# Language selection (ALL TRANSLATIONS ARE LOCATED IN "texts.py")
+LANGUAGE = config.get("language", "en")
+LANGUAGES = {
+    "English": "en",
+    "Español": "es",
+    "Türkçe": "tr",
+    "中国人": "zh",
+    "Русский": "ru"
+}
 # Tooltip texts for checkboxes
 TOOLTIP_SAVE_TO_DESKTOP = texts.TOOLTIP_SAVE_TO_DESKTOP[LANGUAGE]
 TOOLTIP_REPLACE_ORIGINAL = texts.TOOLTIP_REPLACE_ORIGINAL[LANGUAGE]
@@ -681,7 +688,7 @@ def open_directory(filepath):
         subprocess.run(f'explorer /select,"{selected_file}"')
 
 def update_wraplengt(event=None):
-    event.widget.config(wraplength=event.widget.winfo_width() - 60)
+    event.widget.config(wraplength=event.widget.winfo_width() - 40)
 
 def checkbox_selected(var):
     if var.get():
@@ -691,12 +698,14 @@ def checkbox_selected(var):
             save_to_desktop_var.set(False)
             
 def place_window_top_right(event=None, margin=50):
+    root.update_idletasks()  # Ensure the window dimensions are updated
     width = root.winfo_width()
     height = root.winfo_height()
-    x = root.winfo_screenwidth() - width - margin - 10
-    y = margin
-    root.geometry('{}x{}+{}+{}'.format(width, height, x, y))
-
+    screen_width = root.winfo_screenwidth()
+    x = screen_width - width - margin  # Apply margin on the right side
+    y = margin # Margin on the top, converted to integer
+    root.geometry(f'{width}x{height}+{x}+{y}')
+    
 class ToolTip:
     def __init__(self, widget, text):
         self.widget = widget
@@ -874,7 +883,9 @@ def check_for_updates():
     try:
         response = requests.get(GITHUB_VERSION_URL)
         latest_version = response.text.strip()
-        if latest_version != VERSION:
+        def parse_version(v):
+            return [int(x) for x in v.split('.')]
+        if parse_version(latest_version) > parse_version(VERSION):
             if messagebox.askyesno(texts.UPDATE_AVAILABLE_TITLE[LANGUAGE], texts.UPDATE_AVAILABLE_TEXT[LANGUAGE].format(latest_version=latest_version)):
                 os.system("start " + GITHUB_LATEST_RELEASE_URL)
     except Exception:
@@ -903,9 +914,8 @@ settings_menu = Menu(top_right_frame, tearoff=0)
 # Add language selection to the settings menu
 language_var = tk.StringVar(value=LANGUAGE)
 language_menu = Menu(settings_menu, tearoff=0)
-language_menu.add_radiobutton(label="English", variable=language_var, value="en", command=lambda: set_language("en"))
-language_menu.add_radiobutton(label="Español", variable=language_var, value="es", command=lambda: set_language("es"))
-language_menu.add_radiobutton(label="Türkçe", variable=language_var, value="tr", command=lambda: set_language("tr"))
+for label, code in LANGUAGES.items():
+    language_menu.add_radiobutton(label=label, variable=language_var, value=code, command=lambda c=code: set_language(c))
 settings_menu.add_cascade(label=LANGUAGE_LABEL_TEXT, menu=language_menu)
 # Add other settings to the settings menu
 keep_converted_var = tk.BooleanVar(value=keep_converted_subtitles)
@@ -1385,7 +1395,6 @@ def create_backup(file_path):
         suffix += 1
     shutil.copy2(file_path, backup_file)
     return backup_file
-
 def convert_to_srt(subtitle_file, output_dir, log_window):
     file_extension = os.path.splitext(subtitle_file)[-1].lower()
     original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
@@ -1458,16 +1467,15 @@ def start_batch_sync():
     cancel_flag = False
 
     def cancel_batch_sync():
-        nonlocal cancel_flag
+        global process, cancel_flag
         cancel_flag = True
         for process in process_list:
             if process and process.poll() is None:
                 try:
-                    subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)],
-                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                     creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
+                    subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
                 except Exception as e:
                     log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+                    
         log_message(BATCH_SYNC_CANCELLED, "error", tab='auto')
         root.update_idletasks()
         restore_window()
@@ -1528,44 +1536,44 @@ def start_batch_sync():
         label_message_auto.grid_remove()
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
-
     def execute_cmd(cmd):
-            decoding_error_occurred = False
-            try:
-                process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
-                for output in process.stdout:
-                    if cancel_flag:
-                        process.kill()
-                        restore_window()
-                        return 1, decoding_error_occurred  # Ensure a tuple is returned
-                    if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                        match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
-                    elif sync_tool == SYNC_TOOL_ALASS:
-                        match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
-                        if not match_percentage:
-                            match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
-                    if match_percentage:
-                        percentage = float(match_percentage.group(1))
-                        adjusted_value = min(97, max(1, percentage))
-                        progress_increment = (adjusted_value / 100) * (100 / total_items)
-                        progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
-                    if "%" in output:
-                        log_window.replace("end-2l", "end-1l", output)
-                    else:
-                        log_window.insert(tk.END, output)
-                    log_window.see(tk.END)
-                    if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
-                        decoding_error_occurred = True
-                process.wait()
-                if "error" in output.lower():
-                        return 1, decoding_error_occurred
-                return process.returncode, decoding_error_occurred
-            except Exception as e:
-                error_msg = f"{ERROR_EXECUTING_COMMAND}{str(e)}\n"
-                log_window.insert(tk.END, error_msg)
-                return 1, decoding_error_occurred  # Ensure a tuple is returned
-        
+        global process, cancel_flag
+        decoding_error_occurred = False
+        try:
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
+            for output in process.stdout:
+                if cancel_flag:
+                    process.kill()
+                    restore_window()
+                    return 1, decoding_error_occurred  # Ensure a tuple is returned
+                if sync_tool == SYNC_TOOL_FFSUBSYNC:
+                    match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
+                elif sync_tool == SYNC_TOOL_ALASS:
+                    match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
+                    if not match_percentage:
+                        match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
+                if match_percentage:
+                    percentage = float(match_percentage.group(1))
+                    adjusted_value = min(97, max(1, percentage))
+                    progress_increment = (adjusted_value / 100) * (100 / total_items)
+                    progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
+                if "%" in output:
+                    log_window.replace("end-2l", "end-1l", output)
+                else:
+                    log_window.insert(tk.END, output)
+                if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
+                    decoding_error_occurred = True
+            process.wait()
+            if "error" in output.lower():
+                return 1, decoding_error_occurred
+            return process.returncode, decoding_error_occurred
+        except Exception as e:
+            error_msg = f"{ERROR_EXECUTING_COMMAND}{str(e)}\n"
+            log_window.insert(tk.END, error_msg)
+            return 1, decoding_error_occurred  # Ensure a tuple is returned
+
     def run_batch_process():
+        global cancel_flag
         nonlocal completed_items
         success_count = 0
         failure_count = 0
@@ -1573,6 +1581,7 @@ def start_batch_sync():
         subtitles_to_process = []
         failed_syncs = []
         add_suffix = True
+        cancel_flag = False
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             add_suffix = False
         for parent in tree_items:
@@ -1846,7 +1855,6 @@ def start_batch_sync():
                 completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
-            log_window.see(tk.END)
         
         log_window.insert(tk.END, f"{BATCH_SYNC_COMPLETED}\n")
         log_window.insert(tk.END, f"{SYNC_SUCCESS_COUNT.format(success_count=success_count)}\n")
@@ -1908,7 +1916,6 @@ def start_batch_sync():
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
-
         button_go_back = tk.Button(
             automatic_tab,
             text=GO_BACK,
@@ -1928,6 +1935,12 @@ def start_batch_sync():
         log_window = tk.Text(automatic_tab, wrap="word")
         log_window.config(font=("Arial", 7))
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
+        # See the end when the log window is modified
+        def on_log_window_modified(event):
+            log_window.see(tk.END)
+            log_window.edit_modified(False)  # Reset the modified flag
+        log_window.bind('<<Modified>>', on_log_window_modified)
+        log_window.edit_modified(False)
         progress_bar = ttk.Progressbar(automatic_tab, orient="horizontal", length=200, mode="determinate")
         progress_bar.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="ew", columnspan=2)
         root.update_idletasks()
@@ -1937,6 +1950,8 @@ def start_batch_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
+        # Bind the <<Modified>> event to the log window
+        
 # Global variable to store options state
 options_states = {}
 def toggle_batch_mode():
@@ -1971,7 +1986,7 @@ def toggle_batch_mode():
             remove_subtitle_button.grid_remove()
             remove_video_button.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
-            tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+            tree_frame.grid()
             # Enable options if disabled
             options_states = {}
             for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
@@ -2058,7 +2073,7 @@ def process_files(filepaths, reference_pairs=False):
             else:
                 duplicates += 1
         batch_input.grid_remove()
-        tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+        tree_frame.grid()
         for ref_name, sub_name, ref_file, sub_file in complete_pairs:
             parent_id = treeview.insert("", "end", text=ref_name, values=(ref_file,), open=True)
             treeview.insert(parent_id, "end", text=sub_name, values=(sub_file,))
@@ -2069,7 +2084,7 @@ def process_files(filepaths, reference_pairs=False):
         if duplicates > 0:
             messages.append(SKIPPED_DUPLICATES_MSG.format(duplicates, 's' if duplicates != 1 else ''))
         if messages:
-            log_message(" and ".join(messages) + ".", "info", tab='auto')
+            log_message(", ".join(messages) + ".", "info", tab='auto')
     else:
         for filepath in filepaths:
             if os.path.isdir(filepath):
@@ -2207,19 +2222,19 @@ def process_files(filepaths, reference_pairs=False):
             treeview.item(parent_id, tags=("paired",))
         # Handle UI updates and logging
         batch_input.grid_remove()
-        tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+        tree_frame.grid()
         messages = []
         if pairs_added > 0:
-            messages.append(PAIRS_ADDED.format(count=pairs_added, s='s' if pairs_added != 1 else ''))
+            messages.append(PAIRS_ADDED.format(count=pairs_added))
         if files_not_paired > 0:
             if pairs_added < 1 or (duplicates > 0 and pairs_added < 1):
-                messages.append(UNPAIRED_FILES_ADDED.format(count=files_not_paired, s='s' if files_not_paired != 1 else ''))
+                messages.append(UNPAIRED_FILES_ADDED.format(count=files_not_paired))
             else:
-                messages.append(UNPAIRED_FILES.format(count=files_not_paired, s='s' if files_not_paired != 1 else ''))
+                messages.append(UNPAIRED_FILES.format(count=files_not_paired))
         if duplicates > 0:
-            messages.append(DUPLICATE_PAIRS_SKIPPED.format(count=duplicates, s='s' if duplicates != 1 else ''))
+            messages.append(DUPLICATE_PAIRS_SKIPPED.format(count=duplicates))
         if messages:
-            log_message(" and ".join(messages) + ".", "info", tab='auto')
+            log_message(", ".join(messages) + ".", "info", tab='auto')
 
 def select_folder():
     folder_path = filedialog.askdirectory()
@@ -2630,7 +2645,7 @@ def add_pair():
             log_message(PAIR_ADDED, "info", tab='auto')
             # Handle UI updates
             batch_input.grid_remove()
-            tree_frame.grid(row=0, column=0, padx=5, pady=(5,0), sticky="nsew", columnspan=2, rowspan=2)
+            tree_frame.grid()
         else:
             log_message(SELECT_SUBTITLE, "error", tab='auto')
     else:
@@ -2823,9 +2838,6 @@ treeview.bind("<Button-3>", show_context_menu)
 treeview.bind("<Control-a>", select_all)
 treeview.bind("<Delete>", delete_selected)
 treeview.bind("<Double-1>", on_double_click)
-# Create a vertical scrollbar for the Treeview
-treeview_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=treeview.yview)
-treeview.configure(yscrollcommand=treeview_scrollbar.set)
 # Create buttons for adding, changing, and removing items
 button_change_item = tk.Button(
     tree_frame,
@@ -2879,11 +2891,15 @@ options_menu.add_command(label=MENU_ADD_FOLDER, command=select_folder)
 options_menu.add_command(label=MENU_ADD_MULTIPLE_FILES, command=browse_batch)
 options_menu.add_command(label=MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS, command=reference_subtitle_subtitle_pairs)
 # Update the grid layout
-button_addfile.grid(row=0, column=0, padx=(5,2.5), pady=5, sticky="ew")
+button_addfile.grid(row=0, column=0, padx=(0,2.5), pady=5, sticky="ew")
 button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
-button_remove_item.grid(row=0, column=2,columnspan=3, padx=(2.5,5), pady=5, sticky="ew")
-treeview.grid(row=1, column=0, columnspan=3, padx=5, pady=(5,0), sticky="nsew")
-treeview_scrollbar.grid(row=1, column=3, sticky="ns", pady=(5,0))
+button_remove_item.grid(row=0, column=2, padx=(2.5,0), pady=5, sticky="ew")
+treeview.grid(row=1, column=0, columnspan=3, padx=(0,20), pady=(5,0), sticky="nsew")
+# Create a vertical scrollbar for the Treeview
+treeview_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=treeview.yview)
+treeview_scrollbar.grid(row=1, column=2, sticky="nes", pady=(5,0))
+treeview.configure(yscrollcommand=treeview_scrollbar.set)
+tree_frame.grid(row=0, column=0, padx=10, pady=(5,0), sticky="nsew", rowspan=2, columnspan=2)
 tree_frame.grid_remove()
 batch_input.grid_remove()
 # Start batch mode end
@@ -3023,6 +3039,8 @@ def on_subtitle_drop(event):
 process = None
 
 def start_automatic_sync():
+    global process, subtitle_file, video_file, output_subtitle_file, cancel_flag
+    cancel_flag = False  # Add a flag to check if the process is cancelled
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
@@ -3097,18 +3115,20 @@ def start_automatic_sync():
             filename = f"autosync_{base_name}_{suffix}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
             suffix += 1
+
     def cancel_automatic_sync():
-        global process
-        if process:
-            try:
-                subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
-                process = None
-                log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
-            except Exception as e:
-                log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
-        else:
-            log_message(NO_SYNC_PROCESS, "error", tab='auto')
-        restore_window()
+            global process, cancel_flag
+            cancel_flag = True  # Set the flag to True when cancelling
+            if process:
+                try:
+                    subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
+                    process = None
+                    log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
+                except Exception as e:
+                    log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+            else:
+                log_message(NO_SYNC_PROCESS, "error", tab='auto')
+            restore_window()
         
     def cancel_process_on_window_close():
         if process:
@@ -3148,6 +3168,7 @@ def start_automatic_sync():
         button_generate_again.grid_remove()
         button_cancel_automatic_sync.grid_remove()
         automatic_tab.columnconfigure(0, weight=0)
+        automatic_tab.rowconfigure(1, weight=1)
         root.update_idletasks()
 
     def generate_again():
@@ -3254,6 +3275,8 @@ def start_automatic_sync():
         progress_line_number = log_window.index(tk.END).split(".")[0]
         decoding_error_occurred = False
         for output in process.stdout:
+            if cancel_flag:  # Check if the process is cancelled
+                break
             if sync_tool == SYNC_TOOL_FFSUBSYNC:
                 match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
             elif sync_tool == SYNC_TOOL_ALASS:
@@ -3267,7 +3290,6 @@ def start_automatic_sync():
                 log_window.replace("end-2l", "end-1l", output)
             else:
                 log_window.insert(tk.END, output)
-            log_window.see(tk.END)
             if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                 decoding_error_occurred = True
         if process is not None:
@@ -3280,6 +3302,7 @@ def start_automatic_sync():
             else:
                 return process.returncode, decoding_error_occurred
         return 1, decoding_error_occurred
+
     def run_subprocess():
         global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
         split_penalty = alass_split_penalty_var.get()
@@ -3363,14 +3386,14 @@ def start_automatic_sync():
             button_go_back.grid()
             button_generate_again.grid()
             log_window.insert(tk.END, f"\n{SYNCING_ENDED}\n")
-            log_window.see(tk.END)
         except Exception as e:
             log_window.insert(tk.END, f"{ERROR_OCCURRED.format(error_message=str(e))}\n")
         finally:
-            log_window.see(tk.END)
-            progress_bar.grid_remove()
-            automatic_tab.rowconfigure(1, weight=1)
-            root.update_idletasks()
+            if not cancel_flag: 
+                progress_bar.grid_remove()
+                automatic_tab.rowconfigure(1, weight=1)
+                root.update_idletasks()
+                log_window.see(tk.END)
         root.update_idletasks()
     try:
         subtitle_input.grid_remove()
@@ -3438,6 +3461,12 @@ def start_automatic_sync():
         log_window = tk.Text(automatic_tab, wrap="word")
         log_window.config(font=("Arial", 7))
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
+        # See the end when the log window is modified
+        def on_log_window_modified(event):
+            log_window.see(tk.END)
+            log_window.edit_modified(False)  # Reset the modified flag
+        log_window.bind('<<Modified>>', on_log_window_modified)
+        log_window.edit_modified(False)
         progress_bar = ttk.Progressbar(automatic_tab, orient="horizontal", length=200, mode="determinate")
         progress_bar.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="ew", columnspan=2)
         root.update_idletasks()
@@ -3870,9 +3899,6 @@ def run_after_startup():
     if notify_about_updates:
         check_for_updates()
 root.after(2000, run_after_startup)
-root.update_idletasks()
-# Place the window at the top right corner of the screen
-place_window_top_right()
 # Select subtitle file if specified as argument
 select_subtitle_at_startup()
 # Calculate minimum width and height based on elements inside
@@ -3881,6 +3907,9 @@ min_height_automatic = sum(widget.winfo_reqheight() for widget in (label_drop_bo
 min_height_manual = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, label_milliseconds, entry_milliseconds, button_minus, button_plus, button_sync, check_save_to_desktop, check_replace_original))
 min_height = max(min_height_automatic, min_height_manual)
 root.minsize(min_width, min_height)  # Set minimum size for the window
+# Place the window at the top right corner of the screen
+root.update_idletasks()
+place_window_top_right()
 # if icon exists, set it as the window icon
 if os.path.exists('icon.ico'):
     root.iconbitmap('icon.ico')
