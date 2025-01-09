@@ -1,4 +1,6 @@
 {
+    "language": "en",
+    "notify_about_updates": true,
     "remember_the_changes": true,
     "ffsubsync_option_framerate": false,
     "ffsubsync_option_gss": false,

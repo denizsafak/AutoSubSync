@@ -1,4 +1,4 @@
 chardet
-pysubs2
 tkinterdnd2
 ffsubsync
+requests
