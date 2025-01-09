@@ -221,7 +221,6 @@ NO_MATCHING_SUBTITLE_PAIRS_FOUND = texts.NO_MATCHING_SUBTITLE_PAIRS_FOUND[LANGUA
 NO_SUBTITLE_PAIRS_TO_PROCESS = texts.NO_SUBTITLE_PAIRS_TO_PROCESS[LANGUAGE]
 # Log window messages
 SYNCING_LOG_TEXT = texts.SYNCING_LOG_TEXT[LANGUAGE]
-
 INVALID_PARENT_ITEM = texts.INVALID_PARENT_ITEM[LANGUAGE]
 SKIP_NO_VIDEO_NO_SUBTITLE = texts.SKIP_NO_VIDEO_NO_SUBTITLE[LANGUAGE]
 SKIP_NO_SUBTITLE = texts.SKIP_NO_SUBTITLE[LANGUAGE]
@@ -290,8 +289,6 @@ REMOVED_ITEM = texts.REMOVED_ITEM[LANGUAGE]
 FILES_MUST_CONTAIN_PATTERNS = texts.FILES_MUST_CONTAIN_PATTERNS[LANGUAGE]
 NO_VALID_SUBTITLE_FILES = texts.NO_VALID_SUBTITLE_FILES[LANGUAGE]
 default_encoding = sys.getfilesystemencoding()
-# ffsubsync path
-ffs_exe_path = r"../python_embedded\scripts\ffs.exe"
 # Icon fix
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
 def update_config(key, value):
@@ -1736,7 +1733,7 @@ def start_batch_sync():
                     )
                     suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'"{ffs_exe_path}" "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if ffsubsync_option_framerate_var.get():
                             cmd += " --no-fix-framerate"
@@ -3216,7 +3213,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'"{ffs_exe_path}" "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if ffsubsync_option_framerate_var.get():
                     cmd += " --no-fix-framerate"
