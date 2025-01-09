@@ -91,27 +91,14 @@ if not exist "python_embedded" (
     )
     ::del %PYTHON_EMBEDDED_FILE%
     echo Editing python312._pth file...
-    powershell -Command "(Get-Content 'python_embedded\\python312._pth') -replace '#import site', 'import site' | Set-Content 'python_embedded\\python312._pth'"
-    if errorlevel 1 (
-        echo Failed to edit python312._pth file. Trying alternative method...
-        (
-            echo import site
-            type python_embedded\python312._pth | findstr /v "#import site"
-        ) > python_embedded\python312_temp._pth
-        move /Y python_embedded\python312_temp._pth python_embedded\python312._pth
+    echo import site >> python_embedded\python312._pth
+    echo ../main  >> python_embedded\python312._pth
         if errorlevel 1 (
-            echo Failed to edit python312._pth file. Please edit the file manually and try again. You need to replace '#import site' with 'import site'. You can find the file in python_embedded directory. After editing, please run this script again.
+            echo Failed to add import site and ../main to python312._pth file. Please edit the file manually and try again. You need to add 'import site' and '../main' to the file. You can find the file in python_embedded directory. After editing, please run this script again.
             pause
             exit /b
         )
     )
-    echo ../main >> python_embedded\python312._pth
-    if errorlevel 1 (
-        echo Failed to add ../main to python312._pth file. Please edit the file manually and try again. You need to add '../main' to the file. You can find the file in python_embedded directory. After editing, please run this script again.
-        pause
-        exit /b
-    )
-)
 
 :: Display provided argument if any
 if not "%~1"=="" (
