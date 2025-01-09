@@ -105,6 +105,12 @@ if not exist "python_embedded" (
             exit /b
         )
     )
+    echo ../main >> python_embedded\python312._pth
+    if errorlevel 1 (
+        echo Failed to add ../main to python312._pth file. Please edit the file manually and try again. You need to add '../main' to the file. You can find the file in python_embedded directory. After editing, please run this script again.
+        pause
+        exit /b
+    )
 )
 
 :: Display provided argument if any
