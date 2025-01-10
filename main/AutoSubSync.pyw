@@ -289,6 +289,7 @@ REMOVED_ITEM = texts.REMOVED_ITEM[LANGUAGE]
 FILES_MUST_CONTAIN_PATTERNS = texts.FILES_MUST_CONTAIN_PATTERNS[LANGUAGE]
 NO_VALID_SUBTITLE_FILES = texts.NO_VALID_SUBTITLE_FILES[LANGUAGE]
 default_encoding = sys.getfilesystemencoding()
+ffsubsync_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'python_embedded', 'Scripts', 'ffs.exe')
 # Icon fix
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
 def update_config(key, value):
@@ -1733,7 +1734,7 @@ def start_batch_sync():
                     )
                     suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'{ffsubsync_path} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if ffsubsync_option_framerate_var.get():
                             cmd += " --no-fix-framerate"
@@ -3213,7 +3214,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'ffs "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'{ffsubsync_path} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if ffsubsync_option_framerate_var.get():
                     cmd += " --no-fix-framerate"
