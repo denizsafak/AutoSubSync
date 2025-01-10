@@ -642,23 +642,23 @@ EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "en": """How the Pairing Works?
     """+PROGRAM_NAME+""" will automatically match reference subtitles and subtitle files with similar names. 
     For example: "S01E01.srt" will be paired with "1x01.srt"
-    Supported combinations: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1""",
+    Supported combinations: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1, 101""",
     "es": """¿Cómo funciona el emparejamiento?
     """+PROGRAM_NAME+""" emparejará automáticamente los subtítulos de referencia y los archivos de subtítulos con nombres similares. 
     Por ejemplo: "S01E01.srt" se emparejará con "1x01.srt"
-    Combinaciones compatibles: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1""",
+    Combinaciones compatibles: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1, 101""",
     "tr": """Eşleştirme Nasıl Çalışır?
     """+PROGRAM_NAME+""" benzer isimlere sahip referans altyazıları ve altyazı dosyalarını otomatik olarak eşleştirecektir. 
     Örneğin: "S01E01.srt" "1x01.srt" ile eşleştirilecektir
-    Desteklenen kombinasyonlar: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1""",
+    Desteklenen kombinasyonlar: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1, 101""",
     "zh": """配对如何工作？
     """+PROGRAM_NAME+""" 将自动匹配具有相似名称的参考字幕和字幕文件。
     例如："S01E01.srt" 将与 "1x01.srt" 配对
-    支持的组合：S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1""",
+    支持的组合：S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1, 101""",
     "ru": """Как работает сопоставление?
     """+PROGRAM_NAME+""" автоматически сопоставит эталонные субтитры и файлы субтитров с похожими именами.
     Например: "S01E01.srt" будет сопоставлен с "1x01.srt"
-    Поддерживаемые комбинации: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1"""
+    Поддерживаемые комбинации: S01E01, S1E1, S01E1, S1E01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 SUCCESS_LOG_TEXT = {
     "en": "Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}",

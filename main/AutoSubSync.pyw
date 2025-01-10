@@ -2377,8 +2377,9 @@ def reference_subtitle_subtitle_pairs():
         Matches patterns like: S01E01, S1E1, 1x01, etc.
         """
         patterns = [
-            r'[Ss](\d{1,2})[Ee](\d{1,2})',      # S01E01, S1E1
-            r'(\d{1,2})[xX](\d{1,2})'           # 1x01, 01x01, 1X01, 01X01
+            r'[Ss](\d{1,2})[Ee](\d{1,2})',  # S01E01, S1E1
+            r'(\d{1,2})[xX](\d{1,2})',      # 1x01, 01x01, 1X01, 01X01
+            r'\b(\d)(\d{2})\b'              # 101, 201
         ]
         for pattern in patterns:
             match = re.search(pattern, filename)
