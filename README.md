@@ -71,7 +71,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
 
 > [!IMPORTANT]
-> - The automatic sync feature is not perfect. I recommend you to check the subtitle after syncing.
+> - The automatic sync feature is not always perfect. I recommend you to check the subtitle after syncing.
 
 > [!NOTE]
 > - This script is primarily intended for Windows. Adaptations might be needed for other operating systems.
