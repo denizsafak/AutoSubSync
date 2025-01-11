@@ -2384,13 +2384,13 @@ def reference_subtitle_subtitle_pairs():
     # Create labels and buttons in headers
     ref_label = ttk.Label(ref_header, text=REF_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     ref_label.grid(row=0, column=0, sticky="w")
-    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths, type="reference"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     ref_add_btn.grid(row=0, column=1, padx=(5, 0))
     ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     ref_remove_btn.grid(row=0, column=2, padx=(5, 0))
     sub_label = ttk.Label(sub_header, text=SUB_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     sub_label.grid(row=0, column=0, sticky="w")
-    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths, type = "subtitle"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     sub_add_btn.grid(row=0, column=1, padx=(5, 0))
     sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     sub_remove_btn.grid(row=0, column=2, padx=(5, 0))
@@ -2401,13 +2401,13 @@ def reference_subtitle_subtitle_pairs():
     ref_options.add_command(label=CONTEXT_MENU_SHOW_PATH, command=lambda: show_path(listbox_left, ref_file_paths))
     ref_options.add_command(label=CONTEXT_MENU_REMOVE, command=lambda: remove_selected_item(listbox_left, ref_file_paths))
     ref_options.add_separator()
-    ref_options.add_command(label=BUTTON_ADD_FILES, command=lambda: load_files(listbox_left, ref_file_paths))
+    ref_options.add_command(label=BUTTON_ADD_FILES, command=lambda: load_files(listbox_left, ref_file_paths, type="reference"))
     ref_options.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: clear_files(listbox_left, ref_file_paths, ref_header, ref_input))
     sub_options = tk.Menu(window, tearoff=0)
     sub_options.add_command(label=CONTEXT_MENU_SHOW_PATH, command=lambda: show_path(listbox_right, sub_file_paths))
     sub_options.add_command(label=CONTEXT_MENU_REMOVE, command=lambda: remove_selected_item(listbox_right, sub_file_paths))
     sub_options.add_separator()
-    sub_options.add_command(label=BUTTON_ADD_FILES, command=lambda: load_files(listbox_right, sub_file_paths))
+    sub_options.add_command(label=BUTTON_ADD_FILES, command=lambda: load_files(listbox_right, sub_file_paths, type="subtitle"))
     sub_options.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: clear_files(listbox_right, sub_file_paths, sub_header, sub_input))
     ref_input = tk.Label(frame_left, text=REF_DROP_TEXT, bg=COLOR_ONE, fg=COLOR_BW, relief="ridge", width=50, height=5, cursor="hand2")
     ref_input_text = tk.Label(frame_left, text=REF_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW, relief="ridge", padx=5, borderwidth=border_fix)
@@ -2467,17 +2467,15 @@ def reference_subtitle_subtitle_pairs():
         # Update both listboxes to refresh pairing colors
         sort_both_listboxes()
         log_message_reference("Files cleared.", "info")
-    def validate_subtitle_file(filepath):
-        return any(filepath.lower().endswith(ext) for ext in SUBTITLE_EXTENSIONS)
     def extract_season_episode(filename):
         """
         Extract season and episode numbers from filename.
         Matches patterns like: S01E01, S1E1, 1x01, etc.
         """
         patterns = [
-            r'[Ss](\d{1,2})[EeBb](\d{1,2})',  # S01E01, S1E1
-            r'(\d{1,2})[xX](\d{1,2})',      # 1x01, 01x01, 1X01, 01X01
-            r'\b(\d)(\d{2})\b'              # 101, 201
+            r'[Ss](\d{1,2})[EeBb](\d{1,2})',         # S01E01, S1E1
+            r'(\d{1,2})[xX](\d{1,2})',               # 1x01, 01x01, 1X01, 01X01
+            r'\b(\d)(\d{2})\b'                       # 101, 201
         ]
         for pattern in patterns:
             match = re.search(pattern, filename)
@@ -2523,7 +2521,6 @@ def reference_subtitle_subtitle_pairs():
         for lb in [listbox_left, listbox_right]:
             for i in range(lb.size()):
                 lb.itemconfig(i, {'bg': COLOR_WB})
-        # Set paired items background to light green
         paired = find_paired_files(left_paths, right_paths)
         for left_idx, right_idx in paired:
             listbox_left.itemconfig(left_idx, {'bg': COLOR_TWO})
@@ -2552,13 +2549,18 @@ def reference_subtitle_subtitle_pairs():
         sort_listbox(listbox_left, ref_file_paths)
         sort_listbox(listbox_right, sub_file_paths)
     def process_files_reference(listbox, file_paths_list, filepaths=None, show_ui=True, input_label=None, header_frame=None):
-        """Combined function for handling file loading and processing"""
         other_file_paths = sub_file_paths if file_paths_list is ref_file_paths else ref_file_paths
         other_file_paths_abs = [os.path.abspath(p) for p in other_file_paths]
         existing_paths_abs = [os.path.abspath(p) for p in file_paths_list]
+        valid_extensions = SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS if file_paths_list is ref_file_paths else SUBTITLE_EXTENSIONS
+        def validate_file(filepath):
+            return any(filepath.lower().endswith(ext) for ext in valid_extensions)
         if filepaths is None:
-            filepaths = filedialog.askopenfilenames(
-                filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
+            if file_paths_list is ref_file_paths:
+                filetypes = [(VIDEO_OR_SUBTITLE_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))]
+            else:
+                filetypes = [(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))]
+            filepaths = filedialog.askopenfilenames(filetypes=filetypes)
             if not filepaths:
                 log_message_reference(NO_FILES_SELECTED, "info")
                 return
@@ -2572,7 +2574,7 @@ def reference_subtitle_subtitle_pairs():
                     for file in files:
                         full_path = os.path.join(root, file)
                         abs_path = os.path.abspath(full_path)
-                        if validate_subtitle_file(full_path):
+                        if validate_file(full_path):
                             se_info = extract_season_episode(file)
                             if se_info:
                                 if se_info in existing_se:
@@ -2582,7 +2584,7 @@ def reference_subtitle_subtitle_pairs():
                                     existing_se.add(se_info)
                             else:
                                 invalid_format_files.append(file)
-            elif validate_subtitle_file(path):
+            elif validate_file(path):
                 filename = os.path.basename(path)
                 abs_path = os.path.abspath(path)
                 se_info = extract_season_episode(filename)
@@ -2638,9 +2640,12 @@ def reference_subtitle_subtitle_pairs():
     def on_file_drop(event, listbox, file_paths_list, input_label=None, header_frame=None):
         filepaths = window.tk.splitlist(event.data)
         process_files_reference(listbox, file_paths_list, filepaths, bool(input_label and header_frame), input_label, header_frame)
-    def load_files(listbox, file_paths_list):
-        filepaths = filedialog.askopenfilenames(
-            filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
+    def load_files(listbox, file_paths_list, type):
+        if type == "reference":
+            filetypes=[(VIDEO_OR_SUBTITLE_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))]
+        else:
+            filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))]
+        filepaths = filedialog.askopenfilenames(filetypes=filetypes)
         if filepaths:
             process_files_reference(listbox, file_paths_list, filepaths, show_ui=True, input_label=ref_input if listbox == listbox_left else sub_input,header_frame=ref_header if listbox == listbox_left else sub_header)
         else:
@@ -2689,12 +2694,12 @@ def reference_subtitle_subtitle_pairs():
     cancel_btn.pack(side="left", padx=(0, 5))
     process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg=COLOR_WB, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2")
     process_btn.pack(side="left", fill="x", expand=True)
-    ref_input.bind("<Button-1>", lambda e: load_files(listbox_left, ref_file_paths))
+    ref_input.bind("<Button-1>", lambda e: load_files(listbox_left, ref_file_paths, type="reference"))
     ref_input.bind("<Enter>", on_enter)
     ref_input.bind("<Leave>", on_leave)
     ref_input.drop_target_register(DND_FILES)
     ref_input.dnd_bind('<<Drop>>', lambda e: on_file_drop(e, listbox_left, ref_file_paths, ref_input, ref_header))
-    sub_input.bind("<Button-1>", lambda e: load_files(listbox_right, sub_file_paths))
+    sub_input.bind("<Button-1>", lambda e: load_files(listbox_right, sub_file_paths, type="subtitle"))
     sub_input.bind("<Enter>", on_enter)
     sub_input.bind("<Leave>", on_leave)
     sub_input.drop_target_register(DND_FILES)
@@ -3717,9 +3722,9 @@ def on_action_menu_change(*args):
         variable_name_map = {
             OPTION_SAVE_NEXT_TO_SUBTITLE: "OPTION_SAVE_NEXT_TO_SUBTITLE",
             OPTION_SAVE_NEXT_TO_VIDEO: "OPTION_SAVE_NEXT_TO_VIDEO",
+            OPTION_REPLACE_ORIGINAL_SUBTITLE: "OPTION_REPLACE_ORIGINAL_SUBTITLE",
             OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME: "OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME",
-            OPTION_SAVE_TO_DESKTOP: "OPTION_SAVE_TO_DESKTOP",
-            OPTION_REPLACE_ORIGINAL_SUBTITLE: "OPTION_REPLACE_ORIGINAL_SUBTITLE"
+            OPTION_SAVE_TO_DESKTOP: "OPTION_SAVE_TO_DESKTOP"
         }
         variable_name = variable_name_map.get(selected_option, "")
         update_config("action_var_auto", variable_name)
@@ -3748,11 +3753,11 @@ action_menu_auto = ttk.OptionMenu(
     automatic_tab, 
     action_var_auto,
     action_var_auto_value,
-    OPTION_SAVE_NEXT_TO_SUBTITLE, 
+    OPTION_SAVE_NEXT_TO_SUBTITLE,
+    OPTION_REPLACE_ORIGINAL_SUBTITLE,
     OPTION_SAVE_NEXT_TO_VIDEO,
     OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME,
     OPTION_SAVE_TO_DESKTOP, 
-    OPTION_REPLACE_ORIGINAL_SUBTITLE,
     OPTION_SELECT_DESTINATION_FOLDER
 )
 action_menu_auto.configure(style='TMenubutton')
@@ -4003,7 +4008,7 @@ button_minus = tk.Button(
     manual_tab, text="-",
     command=decrease_milliseconds,
     padx=10,
-    pady=5,
+    pady=6,
     fg=COLOR_WB,
     bg=DEFAULT_BUTTON_COLOR,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
@@ -4016,7 +4021,7 @@ button_plus = tk.Button(
     manual_tab, text="+",
     command=increase_milliseconds,
     padx=10,
-    pady=5,
+    pady=6,
     fg=COLOR_WB,
     bg=DEFAULT_BUTTON_COLOR,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,

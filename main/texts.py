@@ -3,18 +3,18 @@ class TranslationDict(dict):
         return self.get("en", "")
 PROGRAM_NAME = "AutoSubSync"
 TOOLTIP_SAVE_TO_DESKTOP = {
-    "en": "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the original subtitle's folder.",
-    "ess": "Marque esta casilla si desea guardar el nuevo subtítulo en su escritorio. Si no está marcado, se guardará en la carpeta del subtítulo original.",
-    "tr": "Yeni altyazıyı masaüstüne kaydetmek istiyorsanız bu kutuyu işaretleyin. İşaretlenmezse, orijinal altyazının klasörüne kaydedilecektir.",
-    "zh": "如果您想将新字幕保存到桌面，请选中此框。如果未选中，它将保存在原始字幕的文件夹中。",
-    "ru": "Если вы хотите сохранить новый субтитр на рабочем столе, установите этот флажок. Если флажок не установлен, он будет сохранен в папке оригинальных субтитров."
+    "en": "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the input subtitle's folder.",
+    "es": "Marque esta casilla si desea guardar el nuevo subtítulo en su escritorio. Si no está marcado, se guardará en la carpeta del subtítulo de entrada.",
+    "tr": "Yeni altyazıyı masaüstüne kaydetmek istiyorsanız bu kutuyu işaretleyin. İşaretlenmezse, girdi altyazının klasörüne kaydedilecektir.",
+    "zh": "如果您想将新字幕保存到桌面，请选中此框。如果未选中，它将保存在输入字幕的文件夹中。",
+    "ru": "Отметьте этот флажок, если хотите сохранить новый субтитр на рабочем столе. Если флажок не установлен, он будет сохранен в папке входных субтитров."
 }
 TOOLTIP_REPLACE_ORIGINAL = {
-    "en": "Check this box if you want to replace the original subtitle file with the new one. Please be careful. It will overwrite the current subtitle.",
-    "es": "Marque esta casilla si desea reemplazar el archivo de subtítulos original con el nuevo. Por favor, tenga cuidado. Sobrescribirá el subtítulo actual.",
-    "tr": "Orijinal altyazı dosyasını yenisiyle değiştirmek istiyorsanız bu kutuyu işaretleyin. Lütfen dikkatli olun. Mevcut altyazının üzerine yazacaktır.",
-    "zh": "如果您想用新的字幕文件替换原始字幕文件，请选中此框。请小心。它将覆盖当前字幕。",
-    "ru": "Если вы хотите заменить оригинальный файл субтитров на новый, установите этот флажок. Пожалуйста, будьте осторожны. Он перезапишет текущий субтитр."
+    "en": "Check this box if you want to replace the input subtitle file with the new one. Please be careful. It will overwrite the current subtitle.",
+    "es": "Marque esta casilla si desea reemplazar el archivo de subtítulos de entrada con el nuevo. Por favor, tenga cuidado. Sobrescribirá el subtítulo actual.",
+    "tr": "Girdi altyazı dosyasını yenisiyle değiştirmek istiyorsanız bu kutuyu işaretleyin. Lütfen dikkatli olun. Mevcut altyazının üzerine yazacaktır.",
+    "zh": "如果您想用新字幕文件替换输入字幕文件，请选中此框。请小心。它将覆盖当前字幕。",
+    "ru": "Отметьте этот флажок, если хотите заменить входной файл субтитров новым. Пожалуйста, будьте осторожны. Он перезапишет текущие субтитры."
 }
 TOOLTIP_GSS = {
     "en": "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
@@ -373,11 +373,11 @@ SYNC_TOOL_ALASS = {
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_SUBTITLE = {
-    "en": "Save next to subtitle",
-    "es": "Guardar junto al subtítulo",
-    "tr": "Altyazının yanına kaydet",
-    "zh": "保存到字幕旁",
-    "ru": "Сохранить рядом с субтитрами"
+    "en": "Save next to input subtitle",
+    "es": "Guardar junto al subtítulo de entrada",
+    "tr": "Girdi altyazının yanına kaydet",
+    "zh": "保存在输入字幕旁",
+    "ru": "Сохранить рядом с входными субтитрами"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO = {
@@ -405,11 +405,11 @@ OPTION_SAVE_TO_DESKTOP = {
 }
 # TEXT SHOULD BE SHORT
 OPTION_REPLACE_ORIGINAL_SUBTITLE = {
-    "en": "Replace original subtitle",
-    "es": "Reemplazar subtítulo original",
-    "tr": "Orijinal altyazıyı değiştir",
-    "zh": "替换原始字幕",
-    "ru": "Сохранить на раб. стол"
+    "en": "Overwrite input subtitle",
+    "es": "Sobrescribir subtítulo de entrada",
+    "tr": "Girdi altyazının üzerine yaz",
+    "zh": "覆盖输入字幕",
+    "ru": "Перезаписать входные субтитры"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SELECT_DESTINATION_FOLDER = {
@@ -470,18 +470,18 @@ UNPAIRED_SUBTITLES_TITLE = {
     "ru": "Несопоставленные субтитры"
 }
 UNPAIRED_SUBTITLES_MESSAGE = {
-    "en": "There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video] tag?",
-    "es": "Hay {unpaired_count} subtítulo(s) no emparejado(s). ¿Quieres agregarlos como subtítulos con la etiqueta [sin video]?",
-    "tr": "{unpaired_count} eşleşmemiş altyazı var. Bunları [video yok] etiketiyle altyazı olarak eklemek istiyor musunuz?",
-    "zh": "有 {unpaired_count} 个未配对的字幕。您要将它们添加为带有 [no video] 标签的字幕吗？",
-    "ru": "Есть {unpaired_count} несопоставленный(ые) субтитр(ы). Хотите добавить их как субтитры с тегом [нет видео]?"
+    "en": "There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video/reference subtitle] tag?",
+    "es": "Hay {unpaired_count} subtítulo(s) no emparejado(s). ¿Quieres agregarlos como subtítulos con la etiqueta [sin video/subtítulo de referencia]?",
+    "tr": "{unpaired_count} eşleşmemiş altyazı var. Bunları [video/referans altyazı yok] etiketiyle altyazı olarak eklemek istiyor musunuz?",
+    "zh": "有 {unpaired_count} 个未配对的字幕。您要将它们添加为带有 [无视频/参考字幕] 标签的字幕吗？",
+    "ru": "Есть {unpaired_count} несопоставленный(ые) субтитр(ы). Хотите добавить их как субтитры с тегом [нет видео/справочных субтитров]?"
 }
 NO_VIDEO = {
-    "en": "[no video]",
-    "es": "[sin video]",
-    "tr": "[video yok]",
-    "zh": "[没有视频]",
-    "ru": "[нет видео]"
+    "en": "[no video/reference subtitle]",
+    "es": "[sin video/subtítulo de referencia]",
+    "tr": "[video/referans altyazı yok]",
+    "zh": "[无视频/参考字幕]",
+    "ru": "[нет видео/справочных субтитров]"
 }
 NO_SUBTITLE = {
     "en": "[no subtitle]",
@@ -505,11 +505,11 @@ VIDEO_INPUT_LABEL = {
     "ru": "Видео/Справочные субтитры"
 }
 SUBTITLE_INPUT_LABEL = {
-    "en": "Subtitle",
-    "es": "Subtítulo",
-    "tr": "Altyazı",
-    "zh": "字幕",
-    "ru": "Субтитры"
+    "en": "Input Subtitle",
+    "es": "Subtítulo de entrada",
+    "tr": "Girdi Altyazı",
+    "zh": "输入字幕",
+    "ru": "Входные субтитры"
 }
 SUBTITLE_FILES_TEXT = {
     "en": "Subtitle files",
@@ -575,11 +575,11 @@ MENU_ADD_MULTIPLE_FILES = {
     "ru": "Добавить несколько файлов"
 }
 MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
-    "en": "Add Reference Subtitle/Subtitle Pairs",
-    "es": "Agregar pares de subtítulos de referencia/subtítulos",
-    "tr": "Referans Altyazı/Altyazı Çiftleri Ekle",
-    "zh": "添加参考字幕/字幕对",
-    "ru": "Добавить пары субтитров/субтитров справки"
+    "en": "Auto-Pairing with Season/Episode",
+    "es": "Emparejamiento automático por Temporada/Episodio",
+    "tr": "Sezon/Bölüm ile Otomatik Eşleme",
+    "zh": "按季/集自动配对",
+    "ru": "Автоматическое сопоставление по сезону/эпизоду"
 }
 ALASS_SPEED_OPTIMIZATION_TEXT = {
     "en": "Disable speed optimization",
@@ -596,11 +596,11 @@ ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "ru": "Отключить догадку FPS"
 }
 REF_DROP_TEXT = {
-    "en": "Drag and drop reference subtitles here\nor click to browse.",
-    "es": "Arrastre y suelte subtítulos de referencia aquí\no haga clic para buscar.",
-    "tr": "Referans altyazıları buraya sürükleyip bırakın\nveya göz atmak için tıklayın.",
-    "zh": "将参考字幕拖放到此处\n或点击浏览。",
-    "ru": "Перетащите сюда справочные субтитры\nили нажмите, чтобы выбрать."
+    "en": "Drop videos or reference subtitles here\nor click to browse.",
+    "es": "Suelta videos o subtítulos de referencia aquí\no haz clic para buscar.",
+    "tr": "Videoları veya referans altyazıları buraya sürükleyip bırakın\nveya göz atmak için tıklayın.",
+    "zh": "将视频或参考字幕拖放到此处\n或点击浏览。",
+    "ru": "Перетащите видео или справочные субтитры сюда\nили нажмите, чтобы выбрать."
 }
 SUB_DROP_TEXT = {
     "en": "Drag and drop subtitles here\nor click to browse.",
@@ -610,18 +610,18 @@ SUB_DROP_TEXT = {
     "ru": "Перетащите сюда субтитры\nили нажмите, чтобы выбрать."
 }
 REF_LABEL_TEXT = {
-    "en": "Reference Subtitles",
-    "es": "Subtítulos de referencia",
-    "tr": "Referans Altyazılar",
-    "zh": "参考字幕",
-    "ru": "Справочные субтитры"
+    "en": "Videos/Reference Subtitles",
+    "es": "Videos/Subtítulos de referencia",
+    "tr": "Videolar/Referans Altyazılar", 
+    "zh": "视频/参考字幕",
+    "ru": "Видео/Справочные субтитры"
 }
 SUB_LABEL_TEXT = {
-    "en": "Subtitles",
-    "es": "Subtítulos",
-    "tr": "Altyazılar",
-    "zh": "字幕",
-    "ru": "Субтитры"
+    "en": "Input Subtitles",
+    "es": "Subtítulos de entrada",
+    "tr": "Girdi Altyazılar",
+    "zh": "输入字幕",
+    "ru": "Входные субтитры"
 }
 PROCESS_PAIRS = {
     "en": "Add Pairs",
@@ -640,24 +640,24 @@ SYNC_TOOL_LABEL_TEXT = {
 }
 EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "en": """How the Pairing Works?
-    """+PROGRAM_NAME+""" will automatically match reference subtitles and subtitle files with similar names. 
-    For example: "S01E01.srt" will be paired with "1x01.srt"
+    """+PROGRAM_NAME+""" will automatically match videos or reference subtitles with subtitle files using similar names.
+    For example: "S01E01.srt/mkv" will be paired with "1x01.srt"
     Supported combinations: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
     "es": """¿Cómo funciona el emparejamiento?
-    """+PROGRAM_NAME+""" emparejará automáticamente los subtítulos de referencia y los archivos de subtítulos con nombres similares. 
-    Por ejemplo: "S01E01.srt" se emparejará con "1x01.srt"
+    """+PROGRAM_NAME+""" emparejará automáticamente los videos o subtítulos de referencia con los archivos de subtítulos usando nombres similares.
+    Por ejemplo: "S01E01.srt/mkv" se emparejará con "1x01.srt"
     Combinaciones compatibles: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
     "tr": """Eşleştirme Nasıl Çalışır?
-    """+PROGRAM_NAME+""" benzer isimlere sahip referans altyazıları ve altyazı dosyalarını otomatik olarak eşleştirecektir. 
-    Örneğin: "S01E01.srt" "1x01.srt" ile eşleştirilecektir
+    """+PROGRAM_NAME+""" benzer isimlere sahip videoları veya referans altyazıları hedef altyazı dosyaları ile otomatik olarak eşleştirecektir.
+    Örneğin: "S01E01.srt/mkv" ile "1x01.srt" eşleştirilecektir.
     Desteklenen kombinasyonlar: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
     "zh": """配对如何工作？
-    """+PROGRAM_NAME+""" 将自动匹配具有相似名称的参考字幕和字幕文件。
-    例如："S01E01.srt" 将与 "1x01.srt" 配对
+    """+PROGRAM_NAME+""" 将自动匹配具有相似名称的视频或参考字幕与字幕文件。
+    例如："S01E01.srt/mkv" 将与 "1x01.srt" 配对
     支持的组合：S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
     "ru": """Как работает сопоставление?
-    """+PROGRAM_NAME+""" автоматически сопоставит эталонные субтитры и файлы субтитров с похожими именами.
-    Например: "S01E01.srt" будет сопоставлен с "1x01.srt"
+    """+PROGRAM_NAME+""" автоматически сопоставит видео или справочные субтитры с файлами субтитров, используя похожие имена.
+    Например: "S01E01.srt/mkv" будет сопоставлен с "1x01.srt"
     Поддерживаемые комбинации: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 THEME_TEXT = {
@@ -720,11 +720,11 @@ NON_ZERO_MILLISECONDS = {
     "ru": "Пожалуйста, введите ненулевое значение для миллисекунд."
 }
 SELECT_ONLY_ONE_OPTION = {
-    "en": "Please select only one option: Save to Desktop or Replace Original Subtitle.",
-    "es": "Por favor, seleccione solo una opción: Guardar en el escritorio o Reemplazar el subtítulo original.",
-    "tr": "Lütfen yalnızca bir seçenek seçin: Masaüstüne Kaydet veya Orijinal Altyazıyı Değiştir.",
-    "zh": "请只选择一个选项：保存到桌面或替换原始字幕。",
-    "ru": "Пожалуйста, выберите только один вариант: Сохранить на рабочем столе или Заменить оригинальный субтитр."
+    "en": "Please select only one option: Save to Desktop or Replace Input Subtitle.",
+    "es": "Por favor, seleccione solo una opción: Guardar en el escritorio o Reemplazar el subtítulo de entrada.",
+    "tr": "Lütfen yalnızca bir seçenek seçin: Masaüstüne kaydet veya Girdi altyazıyı değiştir.",
+    "zh": "请只选择一个选项：保存到桌面或替换输入字幕。",
+    "ru": "Пожалуйста, выберите только один вариант: Сохранить на рабочий стол или Заменить входные субтитры."
 }
 VALID_NUMBER_MILLISECONDS = {
     "en": "Please enter a valid number of milliseconds.",
@@ -939,7 +939,7 @@ UNPAIRED_FILES_ADDED = {
 UNPAIRED_FILES = {
     "en": "{count} unpaired file(s)",
     "es": "{count} archivo(s) no emparejado(s)",
-    "tr": "{count} eşleşmemiş dosya",
+    "tr": "{count} eşleşmemiş dosya var",
     "zh": "{count} 个未配对文件",
     "ru": "{count} несопоставленный файл(ы)"
 }
@@ -1063,11 +1063,11 @@ TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "ru": "Выбранная папка назначения не существует."
 }
 ADDED_PAIRS_MSG = {
-    "en": "Added {} reference subtitle pair{}",
-    "es": "Agregado {} par{} de subtítulos de referencia",
-    "tr": "{} referans altyazı çifti eklendi",
-    "zh": "添加了 {} 个参考字幕对",
-    "ru": "Добавлено {} пар{а} справочных субтитров"
+    "en": "{} pairs automatically matched",
+    "es": "{} pares emparejados automáticamente",
+    "tr": "{} çift otomatik olarak eşleştirildi",
+    "zh": "{} 对字幕自动匹配",
+    "ru": "{} пары автоматически сопоставлены"
 }
 SKIPPED_DUPLICATES_MSG = {
     "en": "Skipped {} duplicate pair{}",
@@ -1343,11 +1343,11 @@ ALASS_DISABLE_FPS_GUESSING_LOG = {
     "ru": "Отключено: Угадывание FPS..."
 }
 CHANGING_ENCODING_MSG = {
-    "en": "Encoding of the synced subtitle does not match the original subtitle's encoding. Changing from {synced_subtitle_encoding} to {encoding_inc}...",
-    "es": "La codificación del subtítulo sincronizado no coincide con la codificación del subtítulo original. Cambiando de {synced_subtitle_encoding} a {encoding_inc}...",
-    "tr": "Senkronize altyazının kodlaması, orijinal altyazının kodlamasıyla eşleşmiyor. {synced_subtitle_encoding} kodlamasından {encoding_inc} kodlamasına geçiliyor...",
-    "zh": "同步字幕的编码与原始字幕的编码不匹配。正在从 {synced_subtitle_encoding} 更改为 {encoding_inc}...",
-    "ru": "Кодировка синхронизированных субтитров не совпадает с кодировкой оригинальных субтитров. Изменение с {synced_subtitle_encoding} на {encoding_inc}..."
+    "en": "The synchronized subtitle's encoding does not match the input subtitle's encoding. Changing from {synced_subtitle_encoding} encoding to {encoding_inc} encoding...",
+    "es": "La codificación del subtítulo sincronizado no coincide con la codificación del subtítulo de entrada. Cambiando de codificación {synced_subtitle_encoding} a codificación {encoding_inc}...",
+    "tr": "Senkronize altyazının kodlaması, girdi altyazının kodlamasıyla eşleşmiyor. {synced_subtitle_encoding} kodlamasından {encoding_inc} kodlamasına geçiliyor...",
+    "zh": "同步字幕的编码与输入字幕的编码不匹配。正在从 {synced_subtitle_encoding} 编码更改为 {encoding_inc} 编码...",
+    "ru": "Кодировка синхронизированных субтитров не совпадает с кодировкой входных субтитров. Изменение кодировки с {synced_subtitle_encoding} на {encoding_inc}..."
 }
 ENCODING_CHANGED_MSG = {
     "en": "Encoding changed successfully.",
@@ -1460,7 +1460,6 @@ DELETING_CONVERTED_SUBTITLE = {
     "tr": "Dönüştürülmüş altyazı dosyası siliniyor...",
     "zh": "正在检查视频的字幕流...",
     "ru": "Удаление преобразованного файла субтитров..."
-
 }
 ADDED_FILES_TEXT = {
     "en": "Added {added_files} files",
@@ -1533,32 +1532,32 @@ FILES_MUST_CONTAIN_PATTERNS = {
     "ru": "Файлы должны содержать шаблоны типа S01E01, 1x01 и т. д."
 }
 NO_VALID_SUBTITLE_FILES = {
-    "en": "No valid subtitle files found.",
+    "en": "No valid files found.",
     "es": "No se encontraron archivos de subtítulos válidos.",
     "tr": "Geçerli altyazı dosyası bulunamadı.",
     "zh": "找不到有效的字幕文件。",
     "ru": "Действительные файлы субтитров не найдены."
 }
 NO_SUBTITLE_PAIRS_TO_PROCESS = {
-    "en": "No subtitle pairs to process.",
-    "es": "No hay pares de subtítulos para procesar.",
-    "tr": "İşlenecek altyazı çifti yok.",
-    "zh": "没有要处理的字幕对。",
-    "ru": "Нет пар субтитров для обработки."
+    "en": "No pairs to process.",
+    "es": "No hay pares para procesar.",
+    "tr": "İşlenecek çift yok.",
+    "zh": "没有要处理的对。",
+    "ru": "Нет пар для обработки."
 }
 NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
-    "en": "No matching subtitle pairs found.",
-    "es": "No se encontraron pares de subtítulos coincidentes.",
-    "tr": "Eşleşen altyazı çifti bulunamadı.",
-    "zh": "找不到匹配的字幕对。",
-    "ru": "Совпадающие пары субтитров не найдены."
+    "en": "No matching pairs found.",
+    "es": "No se encontraron pares coincidentes.",
+    "tr": "Eşleşen çift bulunamadı.",
+    "zh": "找不到匹配的对。",
+    "ru": "Совпадающие пары не найдены."
 }
 NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
-    "en": "No valid subtitle pairs to process.",
-    "es": "No hay pares de subtítulos válidos para procesar.",
-    "tr": "İşlenecek geçerli altyazı çifti yok.",
-    "zh": "没有有效的字幕对要处理。",
-    "ru": "Нет действительных пар субтитров для обработки."
+    "en": "No valid pairs to process.",
+    "es": "No hay pares válidos para procesar.",
+    "tr": "İşlenecek geçerli çift yok.",
+    "zh": "没有有效的对要处理。",
+    "ru": "Нет действительных пар для обработки."
 }
 for name, obj in list(globals().items()):
     if isinstance(obj, dict) and name != "TranslationDict":
