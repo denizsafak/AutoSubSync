@@ -28,7 +28,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - **Batch Mode:**
    - Enable batch mode to process multiple files at once. Drag and drop multiple files or folders into the batch input area.
    - You can also add `reference subtitle - subtitle` pairs in batch mode. Just try to add subtitles and it will ask you how you want to add them. You can add them as subtitles with [no video] or reference subtitles with [no subtitle] input.
-   - Also, use `Reference subtitle/subtitle pair` to automaticallty pair multiple subtitles with similar names. For example “S01E01 pairs with 01x01.
+   - Also, use `Auto-Pairing with Season/Episode` to automaticallty pair multiple subtitles with similar names. For example “S01E01 pairs with 01x01.
    - `Double click` any item to change them.
    - Use `del` key to delete any item.
      
@@ -55,8 +55,10 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - Remember the Changes: Toggle for remembering changes made.
 - Reset to Default Settings: Restore settings to default values.
 
+<img title="Auto-Pairing" src='images/Auto-Pairing.png'>
+
 ## `Features`
-- “Reference Subtitle/Subtitle Pairing”, so you can automaticallty pair multiple subtitles with similar names. For example “S01E01 pairs with 01x01”
+- “Auto-Pairing with Season/Episode” you can pair videos and reference subtitles with subtitles automatically using Season/Episode patterns like S01E01, 1x01, etc.
 - Choose between alass and ffsubsync for automatic subtitle syncing.
 - Batch processing for multiple video/reference subtitle and subtitle pairs.
 - Support for different subtitle formats: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .itt, .stl.
