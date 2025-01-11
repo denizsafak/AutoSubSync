@@ -660,6 +660,37 @@ EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     Например: "S01E01.srt" будет сопоставлен с "1x01.srt"
     Поддерживаемые комбинации: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
+THEME_TEXT = {
+    "en": "Theme",
+    "es": "Tema",
+    "tr": "Tema",
+    "zh": "主题",
+    "ru": "Тема"
+}
+
+THEME_SYSTEM_TEXT = {
+    "en": "System",
+    "es": "Sistema",
+    "tr": "Sistem",
+    "zh": "系统",
+    "ru": "Система"
+}
+
+THEME_DARK_TEXT = {
+    "en": "Dark",
+    "es": "Oscuro",
+    "tr": "Koyu",
+    "zh": "暗",
+    "ru": "Темный"
+}
+
+THEME_LIGHT_TEXT = {
+    "en": "Light",
+    "es": "Claro",
+    "tr": "Açık",
+    "zh": "亮",
+    "ru": "Светлый"
+}
 SUCCESS_LOG_TEXT = {
     "en": "Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}",
     "es": "¡Éxito! Subtítulo desplazado por {milliseconds} milisegundos y guardado en: {new_subtitle_file}",

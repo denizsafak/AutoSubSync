@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 import ctypes
 import json
 import requests
+import winreg
 import texts
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +29,17 @@ try:
 except FileNotFoundError:
     VERSION = " UNKNOWN VERSION"
     messagebox.showerror("Error", "VERSION file not found.")
+def is_dark_mode():
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            return value == 0
+    except:
+        return False
+# Get the theme from the config, or set it based on the system's theme
+THEME = config.get("theme", "system")
+if THEME == "system":
+    THEME = "dark" if is_dark_mode() else "light"
 # Program information
 PROGRAM_NAME = "AutoSubSync"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
@@ -39,25 +51,68 @@ ALASS_SUPPORTED_EXTENSIONS = ['.srt', '.ass', '.ssa', '.sub', '.idx']
 ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt"}
 SUBTITLE_EXTENSIONS = ['.srt', '.vtt', '.sbv', '.sub', '.ass', '.ssa', '.dfxp', '.ttml', '.itt', '.stl', '.idx']
 VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.3gp', '.h264', '.h265', '.hevc']
-# Colors
-DEFULT_BUTTON_COLOR = "gray50"
-DEFAULT_BUTTON_COLOR_ACTIVE = "gray40"
-BUTTON_COLOR_MANUAL = "#32993a"
-BUTTON_COLOR_MANUAL_ACTIVE = "#2d8a35"
-BUTTON_COLOR_AUTO = "royal blue"
-BUTTON_COLOR_AUTO_ACTIVE = "RoyalBlue3"
-BUTTON_COLOR_BATCH = "#b05958"
-BUTTON_COLOR_BATCH_ACTIVE = "#a15150"
-BUTTON_COLOR_BATCH_OPTIONS = "gray80"
-BUTTON_COLOR_BATCH_OPTIONS_ACTIVE = "gray70"
-COLOR_PRIMARY = "#C0C0C0"       # Inactive tab color
-COLOR_SECONDARY = "#707070"     # Active tab color
-COLOR_BACKGROUND = "SystemButtonFace"    # Background color
-COLOR_TEXT = "black"            # Text color
-COLOR_PROGRESSBAR = "#00a31e"  # Bright green color for progress bar
-COLOR_ONE = "light grey"
-COLOR_TWO = "lightgreen"
-COLOR_THREE = "lightblue"
+# Define color schemes for light and dark themes
+COLOR_SCHEMES = {
+    "COLOR_BW": ("black", "white"),
+    "COLOR_WB": ("white", "black"),
+    "COLOR_PRIMARY": ("gray85", "gray10"),
+    "COLOR_SECONDARY": ("gray75", "gray30"),
+    "COLOR_TAB_INACTVE": ("gray20", "gray60"),
+    "COLOR_BACKGROUND": ("SystemButtonFace", "#202020"),
+    "COLOR_PROGRESSBAR": ("#00a31e", "#00a31e"),
+    "COLOR_ONE": ("lightgrey", "grey5"),
+    "COLOR_TWO": ("lightgreen", "#0a420a"),
+    "COLOR_THREE": ("lightblue", "#12303b"),
+    "COLOR_FOUR": ("lightgoldenrodyellow", "#5c5c0a"),
+    "COLOR_FIVE": ("lightcoral", "#5b0b0b"),
+    "COLOR_SIX": ("RosyBrown1", "red4"),
+    "COLOR_SEVEN": ("#007FFF", "#389afc"),
+    "COLOR_EIGHT": ("red", "#ffeded"),
+    "COLOR_NINE": ("green", "lightgreen"),
+    "COLOR_OPTIONS": ("gray85", "gray30"),
+    "TREEVIEW_SELECTED_COLOR": ('steelblue', '#325d81'),
+    "COLOR_MILISECONDS_HIGH": ("aliceblue", "#001b33"),
+    "COLOR_MILISECONDS_LOW": ("mistyrose", "#330500"),
+    "DEFAULT_BUTTON_COLOR": ("gray60", "gray50"),
+    "DEFAULT_BUTTON_COLOR_ACTIVE": ("gray50", "gray40"),
+    "BUTTON_COLOR_MANUAL": ("#32993a", "#3ec149"),
+    "BUTTON_COLOR_MANUAL_ACTIVE": ("#2d8a35", "#38ad42"),
+    "BUTTON_COLOR_AUTO": ("royalblue", "#6699ff"),
+    "BUTTON_COLOR_AUTO_ACTIVE": ("RoyalBlue3", "#6585e7"),
+    "BUTTON_COLOR_BATCH": ("#b05958", "#be7674"),
+    "BUTTON_COLOR_BATCH_ACTIVE": ("#a15150", "#b66463"),
+}
+# Select the appropriate color scheme based on the theme
+is_dark_theme = THEME == "dark"
+border_fix = 0 if is_dark_theme else 1
+COLOR_BACKGROUND = COLOR_SCHEMES["COLOR_BACKGROUND"][is_dark_theme]
+COLOR_BW = COLOR_SCHEMES["COLOR_BW"][is_dark_theme]
+COLOR_WB = COLOR_SCHEMES["COLOR_WB"][is_dark_theme]
+COLOR_PRIMARY = COLOR_SCHEMES["COLOR_PRIMARY"][is_dark_theme]
+COLOR_SECONDARY = COLOR_SCHEMES["COLOR_SECONDARY"][is_dark_theme]
+COLOR_TAB_INACTVE = COLOR_SCHEMES["COLOR_TAB_INACTVE"][is_dark_theme]
+COLOR_PROGRESSBAR = COLOR_SCHEMES["COLOR_PROGRESSBAR"][is_dark_theme]
+COLOR_ONE = COLOR_SCHEMES["COLOR_ONE"][is_dark_theme]
+COLOR_TWO = COLOR_SCHEMES["COLOR_TWO"][is_dark_theme]
+COLOR_THREE = COLOR_SCHEMES["COLOR_THREE"][is_dark_theme]
+COLOR_FOUR = COLOR_SCHEMES["COLOR_FOUR"][is_dark_theme]
+COLOR_FIVE = COLOR_SCHEMES["COLOR_FIVE"][is_dark_theme]
+COLOR_SIX = COLOR_SCHEMES["COLOR_SIX"][is_dark_theme]
+COLOR_SEVEN = COLOR_SCHEMES["COLOR_SEVEN"][is_dark_theme]
+COLOR_EIGHT = COLOR_SCHEMES["COLOR_EIGHT"][is_dark_theme]
+COLOR_NINE = COLOR_SCHEMES["COLOR_NINE"][is_dark_theme]
+COLOR_OPTIONS = COLOR_SCHEMES["COLOR_OPTIONS"][is_dark_theme]
+TREEVIEW_SELECTED_COLOR = COLOR_SCHEMES["TREEVIEW_SELECTED_COLOR"][is_dark_theme]
+COLOR_MILISECONDS_HIGH = COLOR_SCHEMES["COLOR_MILISECONDS_HIGH"][is_dark_theme]
+COLOR_MILISECONDS_LOW = COLOR_SCHEMES["COLOR_MILISECONDS_LOW"][is_dark_theme]
+DEFAULT_BUTTON_COLOR = COLOR_SCHEMES["DEFAULT_BUTTON_COLOR"][is_dark_theme]
+DEFAULT_BUTTON_COLOR_ACTIVE = COLOR_SCHEMES["DEFAULT_BUTTON_COLOR_ACTIVE"][is_dark_theme]
+BUTTON_COLOR_MANUAL = COLOR_SCHEMES["BUTTON_COLOR_MANUAL"][is_dark_theme]
+BUTTON_COLOR_MANUAL_ACTIVE = COLOR_SCHEMES["BUTTON_COLOR_MANUAL_ACTIVE"][is_dark_theme]
+BUTTON_COLOR_AUTO = COLOR_SCHEMES["BUTTON_COLOR_AUTO"][is_dark_theme]
+BUTTON_COLOR_AUTO_ACTIVE = COLOR_SCHEMES["BUTTON_COLOR_AUTO_ACTIVE"][is_dark_theme]
+BUTTON_COLOR_BATCH = COLOR_SCHEMES["BUTTON_COLOR_BATCH"][is_dark_theme]
+BUTTON_COLOR_BATCH_ACTIVE = COLOR_SCHEMES["BUTTON_COLOR_BATCH_ACTIVE"][is_dark_theme]
 # Language selection (ALL TRANSLATIONS ARE LOCATED IN "texts.py")
 LANGUAGE = config.get("language", "en")
 LANGUAGES = {
@@ -160,6 +215,10 @@ SUB_LABEL_TEXT = texts.SUB_LABEL_TEXT[LANGUAGE]
 PROCESS_PAIRS = texts.PROCESS_PAIRS[LANGUAGE]
 SYNC_TOOL_LABEL_TEXT = texts.SYNC_TOOL_LABEL_TEXT[LANGUAGE]
 EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = texts.EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING[LANGUAGE]
+THEME_TEXT = texts.THEME_TEXT[LANGUAGE]
+THEME_SYSTEM_TEXT = texts.THEME_SYSTEM_TEXT[LANGUAGE]
+THEME_DARK_TEXT = texts.THEME_DARK_TEXT[LANGUAGE]
+THEME_LIGHT_TEXT = texts.THEME_LIGHT_TEXT[LANGUAGE]
 # Log messages
 SUCCESS_LOG_TEXT = texts.SUCCESS_LOG_TEXT[LANGUAGE]
 SYNC_SUCCESS_MESSAGE = texts.SYNC_SUCCESS_MESSAGE[LANGUAGE]
@@ -290,6 +349,7 @@ FILES_MUST_CONTAIN_PATTERNS = texts.FILES_MUST_CONTAIN_PATTERNS[LANGUAGE]
 NO_VALID_SUBTITLE_FILES = texts.NO_VALID_SUBTITLE_FILES[LANGUAGE]
 default_encoding = sys.getfilesystemencoding()
 ffsubsync_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'python_embedded', 'Scripts', 'ffs.exe')
+ffsubsync_path = f'"{ffsubsync_path}"'
 # Icon fix
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
 def update_config(key, value):
@@ -629,28 +689,28 @@ def on_enter(event):
 
 def on_leave(event):
     if hasattr(event.widget, 'tooltip_text'):
-        event.widget.config(bg=COLOR_TWO)
+        event.widget.config(bg=COLOR_TWO, fg=COLOR_BW)
     else:
-        event.widget.config(bg=COLOR_ONE)
+        event.widget.config(bg=COLOR_ONE, fg=COLOR_BW)
 current_log_type = None
 def log_message(message, msg_type=None, filepath=None, tab='both'):
     global current_log_type
     font_style = ("Arial", 8, "bold")
     if msg_type == "error":
         current_log_type = "error"
-        color = "red"
-        bg_color = "RosyBrown1"
+        color = COLOR_EIGHT
+        bg_color = COLOR_SIX
     elif msg_type == "success":
         current_log_type = "success"
-        color = "green"
+        color = COLOR_NINE
         bg_color = COLOR_TWO
     elif msg_type == "info":
         current_log_type = "info"
-        color = "black"
-        bg_color = "lightgoldenrodyellow"
+        color = COLOR_BW
+        bg_color = COLOR_FOUR
     else:
         current_log_type = None
-        color = "black"
+        color = COLOR_BW
         bg_color = COLOR_ONE
     if tab in ['both', 'auto']:
         label_message_auto.config(text=message, fg=color, bg=bg_color, font=font_style)
@@ -757,11 +817,28 @@ def on_manual_tab_selected(event=None):
     if not entry_milliseconds.get():
         entry_milliseconds.insert(0, "0")
 
+def dark_title_bar(window):
+    if THEME == "dark":
+        try:
+            window.update()
+            DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+            set_window_attribute = ctypes.windll.dwmapi.DwmSetWindowAttribute
+            get_parent = ctypes.windll.user32.GetParent
+            hwnd = get_parent(window.winfo_id())
+            rendering_policy = DWMWA_USE_IMMERSIVE_DARK_MODE
+            value = 2
+            value = ctypes.c_int(value)
+            set_window_attribute(hwnd, rendering_policy, ctypes.byref(value), ctypes.sizeof(value))
+        except Exception:
+            pass
+
 root = TkinterDnD.Tk()
 root.title(PROGRAM_NAME +" v"+VERSION)
+root.configure(background=COLOR_BACKGROUND)  # Set window background color
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)  # Allow label_drop_box to fill empty space
 root.withdraw() # Hide the window while it's being built
+
 # Create tabs
 tab_control = ttk.Notebook(root)
 automatic_tab = ttk.Frame(tab_control)
@@ -782,11 +859,12 @@ tab_control.grid(row=0, column=0, sticky="nsew")
 top_right_frame = ttk.Frame(root)
 top_right_frame.grid(row=0, column=0, sticky="ne", padx=0, pady=0)
 # Add "GitHub" label on the right side of the tabs
-github_label = ttk.Label(top_right_frame, text="GitHub", cursor="hand2", foreground="#007FFF", background="SystemButtonFace", underline=True)
+github_label = ttk.Label(top_right_frame, text="GitHub", cursor="hand2", background=COLOR_BACKGROUND, foreground=COLOR_SEVEN, underline=True)
 github_label.bind("<Button-1>", lambda event: os.system("start "+GITHUB_URL))
 github_label.grid(row=0, column=0, sticky="ne", padx=0, pady=(10,0))
 # Settings
 default_settings = {
+    "theme": "system",
     "remember_the_changes": True,
     "notify_about_updates": True,
     "ffsubsync_option_framerate": False,
@@ -896,6 +974,12 @@ def toggle_notify_about_updates():
     if notify_about_updates:
         check_for_updates()
 
+def set_theme(theme):
+    global THEME
+    THEME = theme
+    update_config("theme", THEME)
+    restart_program()
+
 notify_about_updates = config.get("notify_about_updates", True)
 keep_converted_subtitles = config.get("keep_converted_subtitles", False)
 keep_extracted_subtitles = config.get("keep_extracted_subtitles", False)
@@ -906,7 +990,7 @@ remember_the_changes = config.get("remember_the_changes", False)
 check_video_for_subtitle_stream_in_alass = config.get("check_video_for_subtitle_stream_in_alass", False)
 # Add "Settings" icon
 settings_icon = PhotoImage(file="settings.png")  # Adjust the subsample values to make the image smaller
-settings_label = ttk.Label(top_right_frame, image=settings_icon, cursor="hand2", background="SystemButtonFace")
+settings_label = ttk.Label(top_right_frame, image=settings_icon, cursor="hand2", background=COLOR_BACKGROUND, foreground=COLOR_BW)
 # Create a dropdown menu for settings
 settings_menu = Menu(top_right_frame, tearoff=0)
 # Add language selection to the settings menu
@@ -915,6 +999,14 @@ language_menu = Menu(settings_menu, tearoff=0)
 for label, code in LANGUAGES.items():
     language_menu.add_radiobutton(label=label, variable=language_var, value=code, command=lambda c=code: set_language(c))
 settings_menu.add_cascade(label=LANGUAGE_LABEL_TEXT, menu=language_menu)
+# Add theme selection to the settings menu
+theme_var = tk.StringVar(value=config.get("theme", "system"))
+theme_menu = Menu(settings_menu, tearoff=0)
+themes = {"system": THEME_SYSTEM_TEXT, "dark": THEME_DARK_TEXT, "light": THEME_LIGHT_TEXT}
+for key, display in themes.items():
+    theme_menu.add_radiobutton(label=display, variable=theme_var, value=key, command=lambda t=key: set_theme(t))
+settings_menu.add_cascade(label=THEME_TEXT, menu=theme_menu)
+settings_menu.add_separator()
 # Add other settings to the settings menu
 keep_converted_var = tk.BooleanVar(value=keep_converted_subtitles)
 keep_extracted_var = tk.BooleanVar(value=keep_extracted_subtitles)
@@ -947,6 +1039,7 @@ style.theme_create("custom", parent="alt", settings={
             "tabposition": "nw",
             "tabmargins": [10, 5, 2, 0],
             "background": COLOR_BACKGROUND,
+            "foreground": COLOR_BW,
             "borderwidth": 0,
         }
     },
@@ -955,23 +1048,24 @@ style.theme_create("custom", parent="alt", settings={
             "padding": [15, 5],
             "font": ("TkDefaultFont", 10, "normal"),
             "background": COLOR_PRIMARY,
-            "foreground": COLOR_TEXT,
+            "foreground": COLOR_TAB_INACTVE,
             "borderwidth": 1,
         },
         "map": {
             "background": [("selected", COLOR_SECONDARY)],
-            "foreground": [("selected", "white")]
+            "foreground": [("selected", COLOR_BW)]
         }
     },
     "TFrame": {
         "configure": {
-            "background": COLOR_BACKGROUND
+            "background": COLOR_BACKGROUND,
+            "foreground": COLOR_BW
         }
     },
     "TProgressbar": {
         "configure": {
             "background": COLOR_PROGRESSBAR,
-            "troughcolor": COLOR_BACKGROUND,
+            "troughcolor": COLOR_ONE,
             "borderwidth": 1
         }
     }
@@ -981,7 +1075,7 @@ add_separator = ttk.Separator(automatic_tab, orient='horizontal')
 add_separator.grid(row=0, column=0, sticky="new", padx=11, pady=0, columnspan=6)
 add_separator = ttk.Separator(manual_tab, orient='horizontal')
 add_separator.grid(row=0, column=0, sticky="new", padx=11, pady=0, columnspan=6)
-style.map("TSeparator", background=[("","SystemButtonFace")])
+style.map("TSeparator", background=[("",COLOR_BACKGROUND)])
 
 # ---------------- Automatic Tab ---------------- #
 # Extract subtitles from video (ALASS)
@@ -1889,10 +1983,10 @@ def start_batch_sync():
             command=cancel_batch_sync,
             padx=10,
             pady=10,
-            fg="white",
-            bg=DEFULT_BUTTON_COLOR,
+            fg=COLOR_WB,
+            bg=DEFAULT_BUTTON_COLOR,
             activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-            activeforeground="white",
+            activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2"
@@ -1904,10 +1998,10 @@ def start_batch_sync():
             command=generate_again,
             padx=10,
             pady=10,
-            fg="white",
+            fg=COLOR_WB,
             bg=BUTTON_COLOR_AUTO,
             activebackground=BUTTON_COLOR_AUTO_ACTIVE,
-            activeforeground="white",
+            activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2"
@@ -1920,10 +2014,10 @@ def start_batch_sync():
             command=lambda: [log_message("", "info", tab='auto'), restore_window()],
             padx=10,
             pady=10,
-            fg="white",
-            bg=DEFULT_BUTTON_COLOR,
+            fg=COLOR_WB,
+            bg=DEFAULT_BUTTON_COLOR,
             activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-            activeforeground="white",
+            activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2"
@@ -1931,7 +2025,7 @@ def start_batch_sync():
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
-        log_window.config(font=("Arial", 7))
+        log_window.config(font=("Arial", 7), bg=COLOR_WB, fg=COLOR_BW)
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         # See the end when the log window is modified
         def on_log_window_modified(event):
@@ -1958,8 +2052,8 @@ def toggle_batch_mode():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
-            batch_mode_button.config(text=BATCH_MODE_TEXT, bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
-            button_start_automatic_sync.config(text=START_AUTOMATIC_SYNC_TEXT, bg=BUTTON_COLOR_AUTO, activebackground=BUTTON_COLOR_AUTO_ACTIVE, command=start_automatic_sync)
+            batch_mode_button.config(text=BATCH_MODE_TEXT, bg=DEFAULT_BUTTON_COLOR, fg=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text=START_AUTOMATIC_SYNC_TEXT, bg=BUTTON_COLOR_AUTO, fg=COLOR_WB, activebackground=BUTTON_COLOR_AUTO_ACTIVE, command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             if getattr(subtitle_input, 'tooltip_text', None):
@@ -1977,8 +2071,8 @@ def toggle_batch_mode():
             options_states = {}
         else:
             batch_mode_var.set(True)
-            batch_mode_button.config(text=NORMAL_MODE_TEXT, bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
-            button_start_automatic_sync.config(text=START_BATCH_SYNC_TEXT, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, command=start_batch_sync)
+            batch_mode_button.config(text=NORMAL_MODE_TEXT, bg=DEFAULT_BUTTON_COLOR, fg=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text=START_BATCH_SYNC_TEXT, bg=BUTTON_COLOR_BATCH, fg=COLOR_WB, activebackground=BUTTON_COLOR_BATCH_ACTIVE, command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             remove_subtitle_button.grid_remove()
@@ -1995,8 +2089,8 @@ def toggle_batch_mode():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
             batch_mode_var.set(False)
-            batch_mode_button.config(text=BATCH_MODE_TEXT, bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
-            button_start_automatic_sync.config(text=START_AUTOMATIC_SYNC_TEXT, bg=BUTTON_COLOR_AUTO, activebackground=BUTTON_COLOR_AUTO_ACTIVE, command=start_automatic_sync)
+            batch_mode_button.config(text=BATCH_MODE_TEXT, bg=DEFAULT_BUTTON_COLOR, fg=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text=START_AUTOMATIC_SYNC_TEXT, bg=BUTTON_COLOR_AUTO, fg=COLOR_WB, activebackground=BUTTON_COLOR_AUTO_ACTIVE, command=start_automatic_sync)
             subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=2)
             video_input.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=2)
             if getattr(subtitle_input, 'tooltip_text', None):
@@ -2014,8 +2108,8 @@ def toggle_batch_mode():
             options_states = {}
         else:
             batch_mode_var.set(True)
-            batch_mode_button.config(text=NORMAL_MODE_TEXT, bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
-            button_start_automatic_sync.config(text=START_BATCH_SYNC_TEXT, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, command=start_batch_sync)
+            batch_mode_button.config(text=NORMAL_MODE_TEXT, bg=DEFAULT_BUTTON_COLOR, fg=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
+            button_start_automatic_sync.config(text=START_BATCH_SYNC_TEXT, bg=BUTTON_COLOR_BATCH, fg=COLOR_WB, activebackground=BUTTON_COLOR_BATCH_ACTIVE, command=start_batch_sync)
             subtitle_input.grid_remove()
             video_input.grid_remove()
             remove_subtitle_button.grid_remove()
@@ -2101,7 +2195,7 @@ def process_files(filepaths, reference_pairs=False):
         # Check if there are any video or subtitle files
         if not subtitle_files and not video_files:
             log_message(DROP_VALID_FILES, "error", tab='auto')
-            batch_input.config(bg=COLOR_ONE)
+            batch_input.config(bg=COLOR_ONE, fg=COLOR_BW)
             return
         max_length = max(len(subtitle_files), len(video_files))
         subtitle_files.extend([None] * (max_length - len(subtitle_files)))
@@ -2247,7 +2341,9 @@ def browse_batch(event=None):
 # REFERENCE SUBTITLE / SUBTITLE PAIRING START
 def reference_subtitle_subtitle_pairs():
     window = tk.Toplevel()
+    dark_title_bar(window)
     window.title(MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS)
+    window.configure(background=COLOR_BACKGROUND)
     # Store file paths
     ref_file_paths = []
     sub_file_paths = []
@@ -2264,7 +2360,7 @@ def reference_subtitle_subtitle_pairs():
     # Create explanation frame
     explanation_frame = ttk.Frame(window, padding="10")
     explanation_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
-    explanation_label = ttk.Label(explanation_frame, text=EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING, wraplength=800, justify="left", background="SystemButtonFace")
+    explanation_label = ttk.Label(explanation_frame, text=EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING, wraplength=800, justify="left", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     explanation_label.pack(fill="x")
     frame_left = ttk.Frame(window, padding=(10, 0, 5, 0), width=300)
     frame_left.grid(row=1, column=0, sticky="nsew")
@@ -2284,17 +2380,17 @@ def reference_subtitle_subtitle_pairs():
     sub_header.pack(fill="x", pady=(0, 5))
     sub_header.grid_columnconfigure(0, weight=1)
     # Create labels and buttons in headers
-    ref_label = ttk.Label(ref_header, text=REF_LABEL_TEXT, anchor="w", background="SystemButtonFace")
+    ref_label = ttk.Label(ref_header, text=REF_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     ref_label.grid(row=0, column=0, sticky="w")
-    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     ref_add_btn.grid(row=0, column=1, padx=(5, 0))
-    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     ref_remove_btn.grid(row=0, column=2, padx=(5, 0))
-    sub_label = ttk.Label(sub_header, text=SUB_LABEL_TEXT, anchor="w", background="SystemButtonFace")
+    sub_label = ttk.Label(sub_header, text=SUB_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     sub_label.grid(row=0, column=0, sticky="w")
-    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     sub_add_btn.grid(row=0, column=1, padx=(5, 0))
-    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg="white", bg=DEFULT_BUTTON_COLOR, activeforeground="white", activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
     sub_remove_btn.grid(row=0, column=2, padx=(5, 0))
     ref_header.pack_forget()
     sub_header.pack_forget()
@@ -2311,35 +2407,35 @@ def reference_subtitle_subtitle_pairs():
     sub_options.add_separator()
     sub_options.add_command(label=BUTTON_ADD_FILES, command=lambda: load_files(listbox_right, sub_file_paths))
     sub_options.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: clear_files(listbox_right, sub_file_paths, sub_header, sub_input))
-    ref_input = tk.Label(frame_left, text=REF_DROP_TEXT, bg=COLOR_ONE, relief="ridge", width=50, height=5, cursor="hand2")
-    ref_input_text = tk.Label(frame_left, text=REF_LABEL_TEXT, fg="black", relief="ridge", padx=5, borderwidth=1)
+    ref_input = tk.Label(frame_left, text=REF_DROP_TEXT, bg=COLOR_ONE, fg=COLOR_BW, relief="ridge", width=50, height=5, cursor="hand2")
+    ref_input_text = tk.Label(frame_left, text=REF_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW, relief="ridge", padx=5, borderwidth=border_fix)
     ref_input_text.place(in_=ref_input, relx=0, rely=0, anchor="nw")
     ref_input.pack(fill="both", expand=True)
-    sub_input = tk.Label(frame_right, text=SUB_DROP_TEXT, bg=COLOR_ONE, relief="ridge", width=50, height=5, cursor="hand2")
-    sub_input_text = tk.Label(frame_right, text=SUB_LABEL_TEXT, fg="black", relief="ridge", padx=5, borderwidth=1)
+    sub_input = tk.Label(frame_right, text=SUB_DROP_TEXT, bg=COLOR_ONE, fg=COLOR_BW, relief="ridge", width=50, height=5, cursor="hand2")
+    sub_input_text = tk.Label(frame_right, text=SUB_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW, relief="ridge", padx=5, borderwidth=border_fix)
     sub_input_text.place(in_=sub_input, relx=0, rely=0, anchor="nw")
     sub_input.pack(fill="both", expand=True)
     # Create listboxes
-    listbox_left = tk.Listbox(frame_left, selectmode=tk.SINGLE, borderwidth=2)
-    listbox_right = tk.Listbox(frame_right, selectmode=tk.SINGLE, borderwidth=2)
+    listbox_left = tk.Listbox(frame_left, selectmode=tk.SINGLE, borderwidth=2, background=COLOR_WB, fg=COLOR_BW)
+    listbox_right = tk.Listbox(frame_right, selectmode=tk.SINGLE, borderwidth=2, background=COLOR_WB, fg=COLOR_BW)
     def log_message_reference(message, msg_type=None):
         global current_log_type
         font_style = ("Arial", 8, "bold")
         if msg_type == "error":
             current_log_type = "error"
-            color = "red"
-            bg_color = "RosyBrown1"
+            color = COLOR_EIGHT
+            bg_color = COLOR_SIX
         elif msg_type == "success":
             current_log_type = "success"
-            color = "green"
+            color = COLOR_NINE
             bg_color = COLOR_TWO
         elif msg_type == "info":
             current_log_type = "info"
-            color = "black"
-            bg_color = "lightgoldenrodyellow"
+            color = COLOR_BW
+            bg_color = COLOR_FOUR
         else:
             current_log_type = None
-            color = "black"
+            color = COLOR_BW
             bg_color = COLOR_ONE
         label_message_reference.config(text=message, fg=color, bg=bg_color, font=font_style)
         if message:
@@ -2349,13 +2445,13 @@ def reference_subtitle_subtitle_pairs():
         label_message_reference.config(cursor="")
         label_message_reference.unbind("<Button-1>")
         label_message_reference.update_idletasks()
-    label_message_reference = tk.Label(window, text="", fg="black", anchor="center")
+    label_message_reference = tk.Label(window, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
     label_message_reference.bind("<Configure>", update_wraplengt)
     label_message_reference.grid_remove()
     def on_enter(event):
         event.widget.configure(bg=COLOR_THREE)
     def on_leave(event):
-        event.widget.configure(bg=COLOR_ONE)
+        event.widget.configure(bg=COLOR_ONE, fg=COLOR_BW)
     def show_listbox(input_label, listbox, header_frame):
         input_label.pack_forget()
         header_frame.pack(fill="x", pady=(0, 5))
@@ -2424,12 +2520,12 @@ def reference_subtitle_subtitle_pairs():
         """Update background colors for paired items"""
         for lb in [listbox_left, listbox_right]:
             for i in range(lb.size()):
-                lb.itemconfig(i, {'bg': 'white'})
+                lb.itemconfig(i, {'bg': COLOR_WB})
         # Set paired items background to light green
         paired = find_paired_files(left_paths, right_paths)
         for left_idx, right_idx in paired:
-            listbox_left.itemconfig(left_idx, {'bg': 'lightgreen'})
-            listbox_right.itemconfig(right_idx, {'bg': 'lightgreen'})
+            listbox_left.itemconfig(left_idx, {'bg': COLOR_TWO})
+            listbox_right.itemconfig(right_idx, {'bg': COLOR_TWO})
     def sort_listbox_with_pairs(listbox, file_paths_list, other_paths):
         """Sort listbox items with paired items first"""
         items = []
@@ -2587,9 +2683,9 @@ def reference_subtitle_subtitle_pairs():
             log_message_reference(NO_VALID_SUBTITLE_PAIRS_TO_PROCESS, "error")
     def cancel():
         window.destroy()
-    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg="white", bg=DEFULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground="white", relief=tk.RAISED, borderwidth=2, cursor="hand2")
+    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2")
     cancel_btn.pack(side="left", padx=(0, 5))
-    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg="white", bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground="white", relief=tk.RAISED, borderwidth=2, cursor="hand2")
+    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg=COLOR_WB, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2")
     process_btn.pack(side="left", fill="x", expand=True)
     ref_input.bind("<Button-1>", lambda e: load_files(listbox_left, ref_file_paths))
     ref_input.bind("<Enter>", on_enter)
@@ -2755,9 +2851,8 @@ def remove_selected_item():
     else:
         log_message(SELECT_ITEM_TO_REMOVE, "error", tab='auto')
 
-batch_input = tk.Label(automatic_tab, text=BATCH_INPUT_TEXT, bg=COLOR_ONE, relief="ridge", width=40, height=5, cursor="hand2")
-
-batch_input_text = tk.Label(automatic_tab, text=BATCH_INPUT_LABEL_TEXT, fg="black", relief="ridge", padx=5, borderwidth=1)
+batch_input = tk.Label(automatic_tab, text=BATCH_INPUT_TEXT, bg=COLOR_ONE, fg=COLOR_BW, relief="ridge", width=40, height=5, cursor="hand2")
+batch_input_text = tk.Label(automatic_tab, text=BATCH_INPUT_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW, relief="ridge", padx=5, borderwidth=border_fix)
 batch_input_text.place(in_=batch_input, relx=0, rely=0, anchor="nw")
 batch_input.bind("<Button-1>", lambda event: options_menu.post(event.x_root, event.y_root))
 batch_input.bind("<Button-3>", lambda event: options_menu.post(event.x_root, event.y_root))
@@ -2774,7 +2869,7 @@ tree_frame.rowconfigure(1, weight=1)
 treeview = ttk.Treeview(tree_frame, show='tree')
 # Add tags and styles for paired and incomplete entries
 treeview.tag_configure("paired", background=COLOR_TWO)
-treeview.tag_configure("incomplete", background="lightcoral")
+treeview.tag_configure("incomplete", background=COLOR_FIVE)
 # Enable drag-and-drop on Treeview
 treeview.drop_target_register(DND_FILES)
 treeview.dnd_bind('<<Drop>>', on_batch_drop)
@@ -2842,12 +2937,13 @@ button_change_item = tk.Button(
     tree_frame,
     text=CONTEXT_MENU_CHANGE,
     command=change_selected_item,
-    padx=10,
-    pady=5,
-    fg="black",
-    bg=BUTTON_COLOR_BATCH_OPTIONS,
-    activebackground=BUTTON_COLOR_BATCH_OPTIONS_ACTIVE,
-    activeforeground="black",
+    font='Arial 8 bold',
+    padx=4,
+    pady=0,
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
+    activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
@@ -2856,29 +2952,31 @@ button_remove_item = tk.Button(
     tree_frame,
     text=CONTEXT_MENU_REMOVE,
     command=remove_selected_item,
-    padx=10,
-    pady=5,
-    fg="black",
-    bg=BUTTON_COLOR_BATCH_OPTIONS,
-    activebackground=BUTTON_COLOR_BATCH_OPTIONS_ACTIVE,
-    activeforeground="black",
+    font='Arial 8 bold',
+    padx=4,
+    pady=0,
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
+    activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
 )
 style = ttk.Style()
-style.configure("Treeview", rowheight=25)
-style.map("Treeview", background=[('selected', 'steel blue')])
+style.configure("Treeview", rowheight=25, background=COLOR_ONE, fieldbackground=COLOR_WB, foreground=COLOR_BW)
+style.map("Treeview", background=[('selected', TREEVIEW_SELECTED_COLOR)])
 # Replace the "Add Pair" button with a Menubutton
 button_addfile = tk.Menubutton(
     tree_frame,
     text=BUTTON_ADD_FILES,
-    padx=10,
-    pady=7.5,
-    fg="black",
-    bg=BUTTON_COLOR_BATCH_OPTIONS,
-    activebackground=BUTTON_COLOR_BATCH_OPTIONS,
-    activeforeground="black",
+    font='Arial 8 bold',
+    padx=4,
+    pady=3,
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
+    activebackground=DEFAULT_BUTTON_COLOR,
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
@@ -2894,8 +2992,13 @@ button_addfile.grid(row=0, column=0, padx=(0,2.5), pady=5, sticky="ew")
 button_change_item.grid(row=0, column=1, padx=(2.5,2.5), pady=5, sticky="ew")
 button_remove_item.grid(row=0, column=2, padx=(2.5,0), pady=5, sticky="ew")
 treeview.grid(row=1, column=0, columnspan=3, padx=(0,20), pady=(5,0), sticky="nsew")
+style.configure('Vertical.TScrollbar', 
+                background=COLOR_BACKGROUND, 
+                troughcolor=COLOR_ONE, 
+                arrowcolor=COLOR_BW)
+
 # Create a vertical scrollbar for the Treeview
-treeview_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=treeview.yview)
+treeview_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=treeview.yview, style='Vertical.TScrollbar')
 treeview_scrollbar.grid(row=1, column=2, sticky="nes", pady=(5,0))
 treeview.configure(yscrollcommand=treeview_scrollbar.set)
 tree_frame.grid(row=0, column=0, padx=10, pady=(5,0), sticky="nsew", rowspan=2, columnspan=2)
@@ -2904,12 +3007,12 @@ batch_input.grid_remove()
 # Start batch mode end
 # Start automatic sync begin
 def remove_subtitle_input():
-    subtitle_input.config(text=SUBTITLE_INPUT_TEXT, bg=COLOR_ONE, font=("Segoe UI", 9, "normal"))
+    subtitle_input.config(text=SUBTITLE_INPUT_TEXT, bg=COLOR_ONE, fg=COLOR_BW, font=("Segoe UI", 9, "normal"))
     del subtitle_input.tooltip_text
     remove_subtitle_button.grid_remove()
 
 def remove_video_input():
-    video_input.config(text=VIDEO_INPUT_TEXT, bg=COLOR_ONE, font=("Segoe UI", 9, "normal"))
+    video_input.config(text=VIDEO_INPUT_TEXT, bg=COLOR_ONE, fg=COLOR_BW, font=("Segoe UI", 9, "normal"))
     del video_input.tooltip_text
     ffsubsync_option_gss.config(state=tk.NORMAL)
     ffsubsync_option_vad.config(state=tk.NORMAL)
@@ -2923,20 +3026,20 @@ def browse_subtitle(event=None):
     if subtitle_file_auto:
         subtitle_input.config(text=subtitle_file_auto, font=("Calibri", 10, "bold"))
         subtitle_input.tooltip_text = subtitle_file_auto
-        subtitle_input.config(bg=COLOR_TWO)
+        subtitle_input.config(bg=COLOR_TWO, fg=COLOR_BW)
         remove_subtitle_button.grid(row=1, column=1, padx=(0, 12), pady=(2,0), sticky="ne")
         log_message("", "info", tab='auto')
     else:
         if subtitle_file_auto != '':
             log_message(SELECT_SUBTITLE, "error", tab='auto')
-            subtitle_input.config(bg=COLOR_ONE)
+            subtitle_input.config(bg=COLOR_ONE, fg=COLOR_BW)
 
 def browse_video(event=None):
     video_file = filedialog.askopenfilename(filetypes=[(VIDEO_OR_SUBTITLE_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]))])
     if video_file:
         video_input.config(text=video_file, font=("Calibri", 10, "bold"))
         video_input.tooltip_text = video_file
-        video_input.config(bg=COLOR_TWO)
+        video_input.config(bg=COLOR_TWO, fg=COLOR_BW)
         remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
         log_message("", "info", tab='auto')
         if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
@@ -2951,7 +3054,7 @@ def browse_video(event=None):
     else:
         if video_file != '':
             log_message(SELECT_VIDEO_OR_SUBTITLE, "error", tab='auto')
-            video_input.config(bg=COLOR_ONE)
+            video_input.config(bg=COLOR_ONE, fg=COLOR_BW)
 
 def on_video_drop(event):
     files = event.widget.tk.splitlist(event.data)
@@ -2966,10 +3069,10 @@ def on_video_drop(event):
         if video_file and subtitle_file:
             video_input.config(text=video_file, font=("Calibri", 10, "bold"))
             video_input.tooltip_text = video_file
-            video_input.config(bg=COLOR_TWO)
+            video_input.config(bg=COLOR_TWO, fg=COLOR_BW)
             subtitle_input.config(text=subtitle_file, font=("Calibri", 10, "bold"))
             subtitle_input.tooltip_text = subtitle_file
-            subtitle_input.config(bg=COLOR_TWO)
+            subtitle_input.config(bg=COLOR_TWO, fg=COLOR_BW)
             remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
             remove_subtitle_button.grid(row=1, column=1, padx=(0, 12), pady=(2,0), sticky="ne")
             log_message("", "info", tab='auto')
@@ -2984,7 +3087,7 @@ def on_video_drop(event):
     if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS)):
         video_input.config(text=filepath, font=("Calibri", 10, "bold"))
         video_input.tooltip_text = filepath
-        video_input.config(bg=COLOR_TWO)
+        video_input.config(bg=COLOR_TWO, fg=COLOR_BW)
         remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
         log_message("", "info", tab='auto')
         if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
@@ -3011,10 +3114,10 @@ def on_subtitle_drop(event):
         if video_file and subtitle_file:
             video_input.config(text=video_file, font=("Calibri", 10, "bold"))
             video_input.tooltip_text = video_file
-            video_input.config(bg=COLOR_TWO)
+            video_input.config(bg=COLOR_TWO, fg=COLOR_BW)
             subtitle_input.config(text=subtitle_file, font=("Calibri", 10, "bold"))
             subtitle_input.tooltip_text = subtitle_file
-            subtitle_input.config(bg=COLOR_TWO)
+            subtitle_input.config(bg=COLOR_TWO, fg=COLOR_BW)
             remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
             remove_subtitle_button.grid(row=1, column=1, padx=(0, 12), pady=(2,0), sticky="ne")
             log_message("", "info", tab='auto')
@@ -3029,7 +3132,7 @@ def on_subtitle_drop(event):
     if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
         subtitle_input.config(text=filepath, font=("Calibri", 10, "bold"))
         subtitle_input.tooltip_text = filepath
-        subtitle_input.config(bg=COLOR_TWO)
+        subtitle_input.config(bg=COLOR_TWO, fg=COLOR_BW)
         remove_subtitle_button.grid(row=1, column=1, padx=(0, 11), pady=(2,0), sticky="ne")
         log_message("", "info", tab='auto')
     else:
@@ -3171,9 +3274,9 @@ def start_automatic_sync():
         root.update_idletasks()
 
     def generate_again():
-        subtitle_input.config(text=SUBTITLE_INPUT_TEXT, bg=COLOR_ONE, font=("Segoe UI", 9, "normal"))
+        subtitle_input.config(text=SUBTITLE_INPUT_TEXT, bg=COLOR_ONE, fg=COLOR_BW, font=("Segoe UI", 9, "normal"))
         del subtitle_input.tooltip_text
-        video_input.config(text=VIDEO_INPUT_TEXT, bg=COLOR_ONE, font=("Segoe UI", 9, "normal"))
+        video_input.config(text=VIDEO_INPUT_TEXT, bg=COLOR_ONE, fg=COLOR_BW, font=("Segoe UI", 9, "normal"))
         del video_input.tooltip_text
         subtitle_input.grid()
         video_input.grid()
@@ -3416,10 +3519,10 @@ def start_automatic_sync():
             command=cancel_automatic_sync,
             padx=10,
             pady=10,
-            fg="white",
-            bg=DEFULT_BUTTON_COLOR,
+            fg=COLOR_WB,
+            bg=DEFAULT_BUTTON_COLOR,
             activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-            activeforeground="white",
+            activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2"
@@ -3431,10 +3534,10 @@ def start_automatic_sync():
             command=generate_again,
             padx=10,
             pady=10,
-            fg="white",
+            fg=COLOR_WB,
             bg=BUTTON_COLOR_AUTO,
             activebackground=BUTTON_COLOR_AUTO_ACTIVE,
-            activeforeground="white",
+            activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2"
@@ -3447,10 +3550,10 @@ def start_automatic_sync():
             command=lambda: [log_message("", "info", tab='auto'), restore_window()],
             padx=10,
             pady=10,
-            fg="white",
-            bg=DEFULT_BUTTON_COLOR,
+            fg=COLOR_WB,
+            bg=DEFAULT_BUTTON_COLOR,
             activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-            activeforeground="white",
+            activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2"
@@ -3458,7 +3561,7 @@ def start_automatic_sync():
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
-        log_window.config(font=("Arial", 7))
+        log_window.config(font=("Arial", 7), bg=COLOR_WB, fg=COLOR_BW)
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         # See the end when the log window is modified
         def on_log_window_modified(event):
@@ -3476,12 +3579,30 @@ def start_automatic_sync():
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
 # Start automatic sync end
-label_message_auto = tk.Label(automatic_tab, text="", fg="black", anchor="center")
-subtitle_input = tk.Label(automatic_tab, text=SUBTITLE_INPUT_TEXT, bg=COLOR_ONE, relief="ridge", width=40, height=5, cursor="hand2")
-video_input = tk.Label(automatic_tab, text=VIDEO_INPUT_TEXT, bg=COLOR_ONE, relief="ridge", width=40, height=5, cursor="hand2")
-video_input_text = tk.Label(automatic_tab, text=VIDEO_INPUT_LABEL, fg="black", relief="ridge", padx=5, borderwidth=1)
+label_message_auto = tk.Label(automatic_tab, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
+subtitle_input = tk.Label(
+    automatic_tab, 
+    text=SUBTITLE_INPUT_TEXT, 
+    bg=COLOR_ONE, 
+    fg=COLOR_BW, 
+    relief="ridge",
+    width=40, 
+    height=5, 
+    cursor="hand2"
+)
+video_input = tk.Label(
+    automatic_tab, 
+    text=VIDEO_INPUT_TEXT, 
+    bg=COLOR_ONE, 
+    fg=COLOR_BW, 
+    relief="ridge",
+    width=40, 
+    height=5, 
+    cursor="hand2"
+)
+video_input_text = tk.Label(automatic_tab, text=VIDEO_INPUT_LABEL, bg=COLOR_BACKGROUND, fg=COLOR_BW, relief="ridge", padx=5, borderwidth=border_fix)
 video_input_text.place(in_=video_input, relx=0, rely=0, anchor="nw")
-subtitle_input_text = tk.Label(automatic_tab, text=SUBTITLE_INPUT_LABEL, fg="black", relief="ridge", padx=5, borderwidth=1) 
+subtitle_input_text = tk.Label(automatic_tab, text=SUBTITLE_INPUT_LABEL, bg=COLOR_BACKGROUND, fg=COLOR_BW, relief="ridge", padx=5, borderwidth=border_fix) 
 subtitle_input_text.place(in_=subtitle_input, relx=0, rely=0, anchor="nw")
 button_start_automatic_sync = tk.Button(
     automatic_tab,
@@ -3489,10 +3610,10 @@ button_start_automatic_sync = tk.Button(
     command=start_automatic_sync,
     padx=10,
     pady=10,
-    fg="white",
+    fg=COLOR_WB,
     bg=BUTTON_COLOR_AUTO,
     activebackground=BUTTON_COLOR_AUTO_ACTIVE,
-    activeforeground="white",
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
@@ -3504,9 +3625,9 @@ remove_subtitle_button = tk.Button(
     command=remove_subtitle_input,
     padx=4,
     pady=0,
-    fg="white",
-    bg=DEFULT_BUTTON_COLOR,
-    activeforeground="white",
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
+    activeforeground=COLOR_WB,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     relief=tk.RIDGE,
     borderwidth=1,
@@ -3520,16 +3641,16 @@ remove_video_button = tk.Button(
     command=remove_video_input,
     padx=(4),
     pady=0,
-    fg="white",
-    bg=DEFULT_BUTTON_COLOR,
-    activeforeground="white",
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
+    activeforeground=COLOR_WB,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     relief=tk.RIDGE,
     borderwidth=1,
     cursor="hand2"
 )
 remove_video_button.grid_remove()
-sync_frame = tk.Frame(automatic_tab)
+sync_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
 sync_frame.grid(row=6, column=1, padx=(0, 10), pady=(5,10), sticky="e")
 ffsubsync_option_framerate_var = tk.BooleanVar(value=config.get('ffsubsync_option_framerate', False))
 ffsubsync_option_gss_var = tk.BooleanVar(value=config.get('ffsubsync_option_gss', False))
@@ -3539,10 +3660,38 @@ action_var_auto = tk.StringVar(value=action_var_auto_value)
 # Convert string values to actual variables
 sync_tool_var_auto_value = globals().get(config.get('sync_tool_var_auto', SYNC_TOOL_FFSUBSYNC), SYNC_TOOL_FFSUBSYNC)
 sync_tool_var_auto = tk.StringVar(value=sync_tool_var_auto_value)
-ffsubsync_option_framerate = tk.Checkbutton(automatic_tab, text=CHECKBOX_NO_FIX_FRAMERATE, variable=ffsubsync_option_framerate_var, command=lambda: update_config('ffsubsync_option_framerate', ffsubsync_option_framerate_var.get()))
-ffsubsync_option_gss = tk.Checkbutton(automatic_tab, text=CHECKBOX_GSS, variable=ffsubsync_option_gss_var, command=lambda: update_config('ffsubsync_option_gss', ffsubsync_option_gss_var.get()))
-ffsubsync_option_vad = tk.Checkbutton(automatic_tab, text=CHECKBOX_VAD, variable=ffsubsync_option_vad_var, command=lambda: update_config('ffsubsync_option_vad', ffsubsync_option_vad_var.get()))
-
+ffsubsync_option_framerate = tk.Checkbutton(
+    automatic_tab,
+    text=CHECKBOX_NO_FIX_FRAMERATE,
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
+    variable=ffsubsync_option_framerate_var,
+    command=lambda: update_config('ffsubsync_option_framerate', ffsubsync_option_framerate_var.get()),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
+)
+ffsubsync_option_gss = tk.Checkbutton(
+    automatic_tab,
+    text=CHECKBOX_GSS,
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
+    variable=ffsubsync_option_gss_var,
+    command=lambda: update_config('ffsubsync_option_gss', ffsubsync_option_gss_var.get()),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
+)
+ffsubsync_option_vad = tk.Checkbutton(
+    automatic_tab,text=CHECKBOX_VAD,
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
+    variable=ffsubsync_option_vad_var,
+    command=lambda: update_config('ffsubsync_option_vad', ffsubsync_option_vad_var.get()),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
+)
 def select_destination_folder():
     global tooltip_action_menu_auto
     folder_path = filedialog.askdirectory()
@@ -3590,6 +3739,9 @@ def on_sync_tool_change(*args):
         ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
         ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
         ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+
+style.configure('TMenubutton', background=COLOR_OPTIONS, foreground=COLOR_BW, relief="flat")
+
 action_menu_auto = ttk.OptionMenu(
     automatic_tab, 
     action_var_auto,
@@ -3601,6 +3753,8 @@ action_menu_auto = ttk.OptionMenu(
     OPTION_REPLACE_ORIGINAL_SUBTITLE,
     OPTION_SELECT_DESTINATION_FOLDER
 )
+action_menu_auto.configure(style='TMenubutton')
+
 sync_tool_menu_auto = ttk.OptionMenu(
     sync_frame, 
     sync_tool_var_auto, 
@@ -3608,6 +3762,7 @@ sync_tool_menu_auto = ttk.OptionMenu(
     SYNC_TOOL_FFSUBSYNC, 
     SYNC_TOOL_ALASS
 )
+sync_tool_menu_auto.configure(style='TMenubutton')
 sync_tool_var_auto.trace_add("write", on_sync_tool_change)
 action_var_auto.trace_add("write", on_action_menu_change)
 alass_disable_fps_guessing_var = tk.BooleanVar(value=config.get('alass_disable_fps_guessing', False))
@@ -3615,24 +3770,42 @@ alass_speed_optimization_var = tk.BooleanVar(value=config.get('alass_speed_optim
 alass_split_penalty_var = tk.IntVar(value=config.get('alass_split_penalty', 7))
 alass_disable_fps_guessing = tk.Checkbutton(
     automatic_tab, 
-    text=ALASS_DISABLE_FPS_GUESSING_TEXT, 
+    text=ALASS_DISABLE_FPS_GUESSING_TEXT,
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
     variable=alass_disable_fps_guessing_var, 
-    command=lambda: update_config('alass_disable_fps_guessing', alass_disable_fps_guessing_var.get())
+    command=lambda: update_config('alass_disable_fps_guessing', alass_disable_fps_guessing_var.get()),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
 )
+
 alass_speed_optimization = tk.Checkbutton(
     automatic_tab, 
-    text=ALASS_SPEED_OPTIMIZATION_TEXT, 
+    text=ALASS_SPEED_OPTIMIZATION_TEXT,
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
     variable=alass_speed_optimization_var, 
-    command=lambda: update_config('alass_speed_optimization', alass_speed_optimization_var.get())
+    command=lambda: update_config('alass_speed_optimization', alass_speed_optimization_var.get()),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
 )
 alass_split_penalty_slider = tk.Scale(
     automatic_tab, 
     from_=0, 
     to=100, 
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
+    border=0,
     orient="horizontal", 
     variable=alass_split_penalty_var, 
     label=LABEL_SPLIT_PENALTY, 
-    command=lambda value: update_config('alass_split_penalty', alass_split_penalty_var.get())
+    command=lambda value: update_config('alass_split_penalty', alass_split_penalty_var.get()),
+    highlightthickness=5,
+    highlightbackground=COLOR_BACKGROUND,  # Change the border color
+    troughcolor=COLOR_ONE, # Set the background color of the trough
+    activebackground=COLOR_BACKGROUND  # Set the background color when hovering
 )
 tooltip_ffsubsync_option_framerate = ToolTip(ffsubsync_option_framerate, TOOLTIP_FRAMERATE)
 tooltip_ffsubsync_option_gss = ToolTip(ffsubsync_option_gss, TOOLTIP_GSS)
@@ -3658,7 +3831,7 @@ else:
     ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
     ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
 sync_tool_var_auto.trace_add("write", on_sync_tool_change)
-sync_tool_label = tk.Label(sync_frame, text=SYNC_TOOL_LABEL_TEXT, fg="black")
+sync_tool_label = tk.Label(sync_frame, text=SYNC_TOOL_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW)
 sync_tool_label.grid(row=0, column=0, padx=(5, 0), sticky="w")
 sync_tool_menu_auto.grid(row=0, column=0, padx=(70, 0), sticky="w")
 action_menu_auto.grid(row=6, column=0, padx=(10, 0), pady=(5,10), sticky="w", columnspan=2)
@@ -3671,10 +3844,10 @@ batch_mode_button = tk.Button(
     command=toggle_batch_mode,
     padx=10,
     pady=10,
-    fg="white",
-    bg=DEFULT_BUTTON_COLOR,
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-    activeforeground="white",
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
@@ -3704,32 +3877,32 @@ def on_drop(event):
     filepaths = event.widget.tk.splitlist(event.data)
     if len(filepaths) != 1:
         log_message(DROP_SINGLE_SUBTITLE_FILE, "error", tab='manual')
-        label_drop_box.config(bg=COLOR_ONE)
+        label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)
         return
     filepath = filepaths[0]
     if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
         label_drop_box.config(text=filepath, font=("Calibri", 10, "bold"))
         label_drop_box.tooltip_text = filepath
-        label_drop_box.config(bg=COLOR_TWO)
+        label_drop_box.config(bg=COLOR_TWO, fg=COLOR_WB)
         button_clear.grid()
         log_message("", "info", tab='manual')
     else:
         log_message(DROP_SUBTITLE_FILE, "error", tab='manual')
-        label_drop_box.config(bg=COLOR_ONE)
+        label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)
 
 def browse_file(event=None):
     subtitle_file = filedialog.askopenfilename(filetypes=[(SUBTITLE_FILES_TEXT, ";".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS]))])
     if subtitle_file:
         label_drop_box.config(text=subtitle_file, font=("Calibri", 10, "bold"))
         label_drop_box.tooltip_text = subtitle_file
-        label_drop_box.config(bg=COLOR_TWO)  # Change background color to light green
+        label_drop_box.config(bg=COLOR_TWO, fg=COLOR_BW)  # Change background color to light green
         button_clear.grid()
         log_message("", "info", tab='manual')
     else:
         # Check if the user canceled the dialog
         if subtitle_file != '':
             log_message(SELECT_SUBTITLE, "error", tab='manual')
-            label_drop_box.config(bg=COLOR_ONE)  # Restore background color to light gray
+            label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)  # Restore background color to light gray
 
 def select_subtitle_at_startup():
     if len(sys.argv) > 1:
@@ -3738,24 +3911,24 @@ def select_subtitle_at_startup():
             # For manual tab
             label_drop_box.config(text=subtitle_file, font=("Calibri", 10, "bold"))
             label_drop_box.tooltip_text = subtitle_file
-            label_drop_box.config(bg=COLOR_TWO)
+            label_drop_box.config(bg=COLOR_TWO, fg=COLOR_WB)
             log_message("", "info", tab='manual')
             button_clear.grid()
             # For automatic tab
             subtitle_input.config(text=subtitle_file, font=("Calibri", 10, "bold"))
             subtitle_input.tooltip_text = subtitle_file
-            subtitle_input.config(bg=COLOR_TWO)
+            subtitle_input.config(bg=COLOR_TWO, fg=COLOR_WB)
             remove_subtitle_button.grid()
             log_message("", "info", tab='auto')
         elif not os.path.isfile(subtitle_file):
             log_message(FILE_NOT_EXIST, "error", tab='manual')
-            label_drop_box.config(bg=COLOR_ONE)
+            label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)
         elif len(sys.argv) > 2:
             log_message(MULTIPLE_ARGUMENTS, "error", tab='manual')
-            label_drop_box.config(bg=COLOR_ONE)
+            label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)
         else:
             log_message(INVALID_FILE_FORMAT, "error", tab='manual')
-            label_drop_box.config(bg=COLOR_ONE)
+            label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)
 
 def increase_milliseconds():
     current_value = int(entry_milliseconds.get() or 0)
@@ -3785,11 +3958,11 @@ def validate_input(new_value):
     try:
         value = int(new_value)
         if value > 0:
-            entry_milliseconds.config(bg="aliceblue")
+            entry_milliseconds.config(bg=COLOR_MILISECONDS_HIGH)
         elif value == 0:
-            entry_milliseconds.config(bg="white")
+            entry_milliseconds.config(bg=COLOR_WB)
         else:
-            entry_milliseconds.config(bg="mistyrose1")
+            entry_milliseconds.config(bg=COLOR_MILISECONDS_LOW)
         return True  # Input is a valid integer
     except ValueError:
         return False  # Input is not a valid integer
@@ -3800,15 +3973,15 @@ def clear_entry(event):
 
 def clear_label_drop_box():
     label_drop_box.config(text=LABEL_DROP_BOX)
-    label_drop_box.config(bg=COLOR_ONE)
+    label_drop_box.config(bg=COLOR_ONE, fg=COLOR_BW)
     del label_drop_box.tooltip_text
     button_clear.grid_remove()
 
-label_drop_box = tk.Label(manual_tab, text=LABEL_DROP_BOX, bg=COLOR_ONE, relief="ridge", width=40, height=17, cursor="hand2")
+label_drop_box = tk.Label(manual_tab, text=LABEL_DROP_BOX, bg=COLOR_ONE, fg=COLOR_BW, relief="ridge", width=40, height=17, cursor="hand2")
 label_separator = ttk.Separator(manual_tab, orient='horizontal')
-label_message_manual = tk.Label(manual_tab, text="", fg="black", anchor="center")
-label_milliseconds = tk.Label(manual_tab, text=LABEL_SHIFT_SUBTITLE, anchor="w")
-entry_milliseconds = tk.Entry(manual_tab, cursor="xterm", width=15, justify="center", borderwidth=2, validate='key')
+label_message_manual = tk.Label(manual_tab, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
+label_milliseconds = tk.Label(manual_tab, text=LABEL_SHIFT_SUBTITLE, anchor="w", bg=COLOR_BACKGROUND, fg=COLOR_BW)
+entry_milliseconds = tk.Entry(manual_tab, cursor="xterm", width=15, justify="center", borderwidth=2, validate='key', bg=COLOR_WB, fg=COLOR_BW)
 entry_milliseconds.config(validatecommand=(root.register(validate_input), '%P'))
 button_clear = tk.Button(
     manual_tab, text="X",
@@ -3816,9 +3989,9 @@ button_clear = tk.Button(
     font='Arial 8 bold',
     padx=4,
     pady=0,
-    fg="white",
-    bg=DEFULT_BUTTON_COLOR,
-    activeforeground="white",
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
+    activeforeground=COLOR_WB,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     relief=tk.RIDGE,
     borderwidth=1,
@@ -3829,10 +4002,10 @@ button_minus = tk.Button(
     command=decrease_milliseconds,
     padx=10,
     pady=5,
-    fg="white",
-    bg=DEFULT_BUTTON_COLOR,
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-    activeforeground="white",
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
@@ -3842,10 +4015,10 @@ button_plus = tk.Button(
     command=increase_milliseconds,
     padx=10,
     pady=5,
-    fg="white",
-    bg=DEFULT_BUTTON_COLOR,
+    fg=COLOR_WB,
+    bg=DEFAULT_BUTTON_COLOR,
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
-    activeforeground="white",
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
@@ -3856,22 +4029,40 @@ button_sync = tk.Button(
     command=sync_subtitle,
     padx=10,
     pady=10,
-    fg="white",
+    fg=COLOR_WB,
     bg=BUTTON_COLOR_MANUAL,
     activebackground=BUTTON_COLOR_MANUAL_ACTIVE,
-    activeforeground="white",
+    activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2"
 )
 save_to_desktop_var = tk.BooleanVar()
-check_save_to_desktop = tk.Checkbutton(manual_tab, text=OPTION_SAVE_TO_DESKTOP, variable=save_to_desktop_var, command=lambda: checkbox_selected(save_to_desktop_var))
+check_save_to_desktop = tk.Checkbutton(
+    manual_tab,
+    text=OPTION_SAVE_TO_DESKTOP,
+    background=COLOR_BACKGROUND,
+    foreground=COLOR_BW,
+    variable=save_to_desktop_var,
+    command=lambda: checkbox_selected(save_to_desktop_var),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
+)
 replace_original_var = tk.BooleanVar()
-check_replace_original = tk.Checkbutton(manual_tab, text=OPTION_REPLACE_ORIGINAL_SUBTITLE, variable=replace_original_var, command=lambda: checkbox_selected(replace_original_var))
+check_replace_original = tk.Checkbutton(
+    manual_tab,text=OPTION_REPLACE_ORIGINAL_SUBTITLE,
+    background=COLOR_BACKGROUND, foreground=COLOR_BW,
+    variable=replace_original_var, 
+    command=lambda: checkbox_selected(replace_original_var),
+    selectcolor=COLOR_WB,  # Change the checkbox square background
+    activebackground=COLOR_BACKGROUND,
+    activeforeground=COLOR_BW
+)
 label_drop_box.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=6)
 button_clear.grid(row=0, column=3, padx=(0,12), pady=(12,5), sticky="ne")
 button_clear.grid_remove()
-label_separator.grid(row=1, column=0, sticky="ew", padx=10, pady=5, columnspan=6)
+#label_separator.grid(row=1, column=0, sticky="ew", padx=10, pady=5, columnspan=6)
 label_milliseconds.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 button_minus.grid(row=2, column=1, padx=(0,5), pady=5, sticky="ew")
 entry_milliseconds.grid(row=2, column=2, pady=5, sticky="ew", ipady=7)
@@ -3909,6 +4100,7 @@ root.minsize(min_width, min_height)  # Set minimum size for the window
 # Place the window at the top right corner of the screen
 root.update_idletasks()
 place_window_top_right()
+dark_title_bar(root)
 # if icon exists, set it as the window icon
 if os.path.exists('icon.ico'):
     root.iconbitmap('icon.ico')
