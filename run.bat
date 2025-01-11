@@ -1,17 +1,25 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 cd /d "%~dp0"
+set CURRENT_DIR="%CD%"
+setlocal enabledelayedexpansion
 set NAME=AutoSubSync
 set PROJECTFOLDER=main
 set RUN=%PROJECTFOLDER%\AutoSubSync.pyw
 set requirementsFile=%PROJECTFOLDER%\requirements.txt
-set CURRENT_DIR=%CD%
 set LAST_DIR_FILE=%PROJECTFOLDER%\last_known_directory.txt
 set refrenv=%PROJECTFOLDER%\refrenv.bat
 set PYTHON_PATH=python_embedded\python.exe
 set PYTHONW_PATH=python_embedded\pythonw.exe
-set PYTHON_EMBEDDED_URL=https://github.com/wojiushixiaobai/Python-Embed-Win64/releases/download/3.12.8/python-3.12.8-embed-amd64.zip
-set PYTHON_EMBEDDED_FILE=%PROJECTFOLDER%\python_embedded.zip
+
+REM Python embedded download configuration for different architectures
+if "%PROCESSOR_ARCHITECTURE%"=="x86" (
+    set PYTHON_EMBEDDED_FILE=%PROJECTFOLDER%\python_embedded_win32.zip
+    set PYTHON_EMBEDDED_URL=https://github.com/wojiushixiaobai/Python-Embed-Win64/releases/download/3.12.8/python-3.12.8-embed-win32.zip
+) else (
+    set PYTHON_EMBEDDED_FILE=%PROJECTFOLDER%\python_embedded_amd64.zip
+    set PYTHON_EMBEDDED_URL=https://github.com/wojiushixiaobai/Python-Embed-Win64/releases/download/3.12.8/python-3.12.8-embed-amd64.zip
+)
 
 :: Check if ffmpeg is installed
 ffmpeg -version >nul 2>&1 && (set ffmpeg_installed=true) || (set ffmpeg_installed=false)
@@ -61,7 +69,7 @@ if not "%ffmpeg_installed%"=="true" (
 %PYTHON_PATH% -m chardet --version >nul 2>&1 && (set python_installed=true) || (set python_installed=false)
 if "%python_installed%"=="false" (
     if not exist %PYTHON_EMBEDDED_FILE% (
-        echo Downloading python_embedded.zip...
+        echo Downloading embedded Python...
         curl -L -o %PYTHON_EMBEDDED_FILE% %PYTHON_EMBEDDED_URL%
         if errorlevel 1 (
             echo Failed to download embedded Python with curl. Trying with PowerShell method...
@@ -84,7 +92,7 @@ if "%python_installed%"=="false" (
         )
     )
     
-    echo Unzipping python_embedded.zip...
+    echo Unzipping embedded Python...
     tar -xf %PYTHON_EMBEDDED_FILE% -C python_embedded
     if errorlevel 1 (
         echo Failed to unzip embedded Python with tar. Trying with PowerShell method...
@@ -115,9 +123,9 @@ if not "%~1"=="" (
 :: Check if the current directory has changed since the last run
 if exist "%LAST_DIR_FILE%" (
     set /p last_dir=<"%LAST_DIR_FILE%"
-    cd "%CURRENT_DIR%" && (
+    cd "!CURRENT_DIR!" && (
         if not exist "!last_dir!" (
-            echo Current directory: %CURRENT_DIR%
+            echo Current directory: !CURRENT_DIR!
             echo Last known directory: !last_dir!
             echo Looks like the directory of the program has been changed.
             :: Ask user if they want to reinstall requirements
@@ -126,15 +134,15 @@ if exist "%LAST_DIR_FILE%" (
                 echo Uninstalling ffsubsync...
                 %PYTHON_PATH% -m pip uninstall ffsubsync -y
                 echo Installing ffsubsync...
-                %PYTHON_PATH% -m pip install ffsubsync --quiet
+                %PYTHON_PATH% -m pip install ffsubsync --quiet  --no-warn-script-location
                 :: Update the last directory file
-                echo %CURRENT_DIR% > "%LAST_DIR_FILE%"
+                echo !CURRENT_DIR! > "%LAST_DIR_FILE%"
             )
         )
     )
 ) else (
     :: Create the last directory file if it doesn't exist
-    echo %CURRENT_DIR% > "%LAST_DIR_FILE%"
+    echo !CURRENT_DIR! > "%LAST_DIR_FILE%"
 )
 
 :: Get the list of installed packages using pip freeze
@@ -160,28 +168,17 @@ exit /b
 
 :install_requirements
 for /f "tokens=1,* delims==" %%i in (%requirementsFile%) do (
-    if "%%j"=="" (
-        if not defined installed[%%i] (
-            echo Installing latest package: %%i
-            %PYTHON_PATH% -m pip install %%i --upgrade --quiet  --no-warn-script-location
-            if errorlevel 1 (
-                echo Failed to install %%i. Please check your internet connection and try again.
-                pause
-                exit /b
-            )
-        )
-    ) else (
-        if not "!installed[%%i]!"=="%%j" (
-            echo Installing package: %%i==%%j
-            %PYTHON_PATH% -m pip install %%i==%%j --upgrade --quiet  --no-warn-script-location
-            if errorlevel 1 (
-                echo Failed to install %%i==%%j. Please check your internet connection and try again.
-                pause
-                exit /b
-            )
+    if not "!installed[%%i]!"=="%%j" (
+        echo Installing package: %%i==%%j
+        %PYTHON_PATH% -m pip install %%i==%%j --upgrade --quiet  --no-warn-script-location
+        if errorlevel 1 (
+            echo Failed to install %%i==%%j. Please check your internet connection and try again.
+            pause
+            exit /b
         )
     )
 )
+
 exit /b
 
 :check_Permissions
