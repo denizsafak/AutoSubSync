@@ -60,7 +60,8 @@ COLOR_SCHEMES = {
     "COLOR_TAB_INACTVE": ("gray20", "gray60"),
     "COLOR_BACKGROUND": ("SystemButtonFace", "#202020"),
     "COLOR_PROGRESSBAR": ("#00a31e", "#00a31e"),
-    "COLOR_ONE": ("lightgrey", "grey5"),
+    "COLOR_ZERO": ("lightgrey", "grey10"),
+    "COLOR_ONE": ("lightgrey", "grey20"),
     "COLOR_TWO": ("lightgreen", "#0a420a"),
     "COLOR_THREE": ("lightblue", "#12303b"),
     "COLOR_FOUR": ("lightgoldenrodyellow", "#5c5c0a"),
@@ -92,6 +93,7 @@ COLOR_PRIMARY = COLOR_SCHEMES["COLOR_PRIMARY"][is_dark_theme]
 COLOR_SECONDARY = COLOR_SCHEMES["COLOR_SECONDARY"][is_dark_theme]
 COLOR_TAB_INACTVE = COLOR_SCHEMES["COLOR_TAB_INACTVE"][is_dark_theme]
 COLOR_PROGRESSBAR = COLOR_SCHEMES["COLOR_PROGRESSBAR"][is_dark_theme]
+COLOR_ZERO = COLOR_SCHEMES["COLOR_ZERO"][is_dark_theme]
 COLOR_ONE = COLOR_SCHEMES["COLOR_ONE"][is_dark_theme]
 COLOR_TWO = COLOR_SCHEMES["COLOR_TWO"][is_dark_theme]
 COLOR_THREE = COLOR_SCHEMES["COLOR_THREE"][is_dark_theme]
@@ -2964,7 +2966,7 @@ button_remove_item = tk.Button(
     cursor="hand2"
 )
 style = ttk.Style()
-style.configure("Treeview", rowheight=25, background=COLOR_ONE, fieldbackground=COLOR_WB, foreground=COLOR_BW)
+style.configure("Treeview", rowheight=25, background=COLOR_ZERO, fieldbackground=COLOR_WB, foreground=COLOR_BW)
 style.map("Treeview", background=[('selected', TREEVIEW_SELECTED_COLOR)])
 # Replace the "Add Pair" button with a Menubutton
 button_addfile = tk.Menubutton(
