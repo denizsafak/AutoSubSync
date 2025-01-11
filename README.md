@@ -45,6 +45,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
  
 ### Settings (Top Right Corner)
 - Language: `English`, `Español`, `Türkçe`, `中国人`, `Русский`
+- Theme: `System`, `Dark`, `Light`
 - Additional arguments for ffsubsync: Configure additional arguments for ffsubsync.
 - Additional arguments for alass: Configure additional arguments for alass.
 - Check video for subtitle stream in alass: Toggle for checking the subtitle streams in video for alass.
