@@ -14,7 +14,6 @@ import json
 import requests
 import platform
 import texts
-
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -33,9 +32,15 @@ elif platform.system() == 'Linux' and platform.machine().endswith('64'):
 else:
     call_alass = "alass"  # fallback
 
-call_ffmpeg = "ffmpeg"
-call_ffprobe = "ffprobe"
-call_ffsubsync = "ffsubsync"
+# Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
+if platform.system() == 'Windows':
+    call_ffmpeg = os.path.join(ffmpeg_bin, "ffmpeg.exe")
+    call_ffprobe = os.path.join(ffmpeg_bin, "ffprobe.exe")
+    call_ffsubsync = os.path.join(ffsubsync_bin, "ffsubsync.exe")
+else:
+    call_ffmpeg = "ffmpeg"
+    call_ffprobe = "ffprobe"
+    call_ffsubsync = "ffsubsync"
 
 def create_process(cmd):
     kwargs = {
