@@ -13,6 +13,11 @@ datas = [
     (os.path.join(os.curdir, 'main', 'settings.png'), '.')
 ]
 
+with open('main/VERSION', 'r') as f:
+    version = f.read().strip()
+
+folder_name = f'AutoSubSync-v{version}'
+
 # Define ffsubsync binary path based on OS
 if platform.system() == 'Windows':
     ffsubsync_bin = os.path.join(os.curdir, 'venv', 'Scripts', 'ffs.exe')
@@ -69,5 +74,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='AutoSubSync',
+    name=folder_name,
 )
