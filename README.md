@@ -4,12 +4,11 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 <img title="AutoSubSync" src='images/AutoSubSync1.png'><img title="AutoSubSync" src='images/AutoSubSync2.png'><img title="AutoSubSync" src='images/AutoSubSync3.png'><img title="AutoSubSync" src='images/AutoSubSync4.png'>
 
 > # [Download the Latest Release](https://github.com/denizsafak/AutoSubSync/releases/latest)
-> You can download the latest version of the same script from this link.
+> You can download the latest executable version of AutoSubSync from this link.
 
 ## `How to Run?`
 - Extract the zip.
-- Run "run.bat" file.
-- After installing the requirements, AutoSubSync will start automatically.
+- Run "AutoSubSync.exe" file.
 
 ## `Useage`
 ### Automatic Synchronization
@@ -70,7 +69,6 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 
 ## `Credits`
 - Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync and alass. This is just a GUI application for Windows that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
-- Thanks [@wojiushixiaobai](https://github.com/wojiushixiaobai) for releasing [Pythob Embedded](https://github.com/wojiushixiaobai/Python-Embed-Win64). Offical Embedded Python does not include `tkinter` and `pip` modules that's required by AutoSubSync. With Embedded Python, you can run the program without having to install Python on your computer or downgrade your current version (due to ffsubsync's incompatibility with Python 3.13).
 - Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
 
 > [!IMPORTANT]
