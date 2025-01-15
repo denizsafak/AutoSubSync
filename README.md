@@ -68,7 +68,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - Informative Messages: Receive clear feedback messages indicating the success or failure of the synchronization process.
 
 ## `For developers and contributors`
-I need help for Linux and MacOS builds. I tested it in Ubuntu 22.04, it works but needs some configuration before runnig.
+Need help for Linux and MacOS builds. I tested it in Ubuntu 22.04, it works but needs some configuration before runnig. Also check [here](https://github.com/denizsafak/AutoSubSync/blob/main/main/resources/README.md).
 If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py (Currently tested on Windows, Python 12.8). Ensure Python is installed on your computer before proceeding.
 
 ## `Credits`
