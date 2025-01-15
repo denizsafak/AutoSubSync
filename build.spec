@@ -2,10 +2,10 @@
 
 import os
 import platform
-import shutil
 
 ffmpeg_bin = os.path.join(os.curdir, 'main', 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'main', 'resources', 'alass-bin')
+ffsubsync_bin = os.path.join(os.curdir, 'main', 'resources', 'ffsubsync-bin')
 
 datas = [
     (os.path.join(os.curdir, 'main', 'resources', 'config.json'), '.'),
@@ -18,23 +18,13 @@ with open('main/VERSION', 'r') as f:
 
 folder_name = f'AutoSubSync-v{version}'
 
-# Define ffsubsync binary path based on OS
-if platform.system() == 'Windows':
-    ffsubsync_bin = os.path.join(os.curdir, 'venv', 'Scripts', 'ffs.exe')
-    # Windows-specific DLL
-    arch_bits = int(platform.architecture()[0][:2])
-    if arch_bits == 64:
-        datas.append((os.path.join(os.curdir, 'main', 'resources', 'VCRUNTIME140_1.dll'), '.'))
-else:
-    ffsubsync_bin = os.path.join(os.curdir, 'venv', 'bin', 'ffs')
-
 a = Analysis(
     ['main/AutoSubSync.pyw'],
     pathex=[],
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
         (alass_bin, 'resources/alass-bin'),
-        (ffsubsync_bin, '.')
+        (ffsubsync_bin, 'resources/ffsubsync-bin'),
     ],
     datas=datas,
     hiddenimports=['pkg_resources.py2_warn'],

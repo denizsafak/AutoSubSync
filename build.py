@@ -1,8 +1,3 @@
-# Not sure if it works in other OS.
-# I tried to run it on Ubuntu 22.04 but I had to install extra libraries to make it work.
-# For example, "sudo apt install python3-pip" and "sudo apt install python3-tk"
-# If you are a Mac user, please test it and let me know if it works.
-
 import sys
 import os
 import subprocess
@@ -66,7 +61,7 @@ def create_zip():
     dist_dir = 'dist'
     platform_name = platform.system().lower()
     arch = platform.machine().lower()
-    zip_name = f'AutoSubSunc-v{version}-{platform_name}-{arch}.zip'
+    zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
     
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(dist_dir):
