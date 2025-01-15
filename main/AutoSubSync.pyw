@@ -15,17 +15,16 @@ import requests
 import platform
 import texts
 
-
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Define paths to the executables
 ffmpeg_bin = os.path.join(os.curdir, 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'resources', 'alass-bin')
+ffsubsync_bin = os.path.join(os.curdir, 'resources', 'ffsubsync-bin')
 # Add the paths to the system PATH environment variable
-os.environ["PATH"] += os.pathsep + ffmpeg_bin + os.pathsep + alass_bin
+os.environ["PATH"] += os.pathsep + ffmpeg_bin + os.pathsep + alass_bin + os.pathsep + ffsubsync_bin
 
-call_ffsubsync = "ffs"
 # Determine correct alass executable based on platform
 if platform.system() == 'Windows' and platform.machine().endswith('64'):
     call_alass = "alass-cli"
@@ -33,11 +32,10 @@ elif platform.system() == 'Linux' and platform.machine().endswith('64'):
     call_alass = "alass-linux64"
 else:
     call_alass = "alass"  # fallback
+
 call_ffmpeg = "ffmpeg"
 call_ffprobe = "ffprobe"
-
-
-
+call_ffsubsync = "ffsubsync"
 
 def create_process(cmd):
     kwargs = {
