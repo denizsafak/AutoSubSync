@@ -2,10 +2,6 @@
 Plan:
   -  `ffmpeg` and `ffprobe` comes embedded in [ffsubsync-bin](https://github.com/qwqcode/ffsubsync-bin). AutoSubSync also includes them, so there are duplicates. To save some filesize, I tried to create ffsubsync-bin that doesn't inclue ffmpeg binaries but didn't seem to work. It needs a fix.
 
-Instructions:
-  1) Run ffpmpeg_download.py, it will download the correct ffmpeg and ffprobe in `ffmpeg-bin` folder.
-  2) Create a folder called `ffsubsync-bin`. Download latest ffsubsync from [here](https://github.com/qwqcode/ffsubsync-bin), rename it to "ffsubsync.exe". (if Windows)
-
 Credits:
 ffpmpeg_download.py and ffsubsync-bin is copied from [@qwqcode](https://github.com/qwqcode)'s [ffsubsync-bin](https://github.com/qwqcode/ffsubsync-bin)
 
