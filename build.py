@@ -17,6 +17,19 @@ def ensure_ffmpeg():
         print("FFmpeg downloaded.")
     else:
         print("FFmpeg executables already exist. Skipping download.")
+        
+def ensure_ffsubsync():
+    exe = '.exe' if platform.system() == 'Windows' else ''
+    ffsubsync_dir = 'main/resources/ffsubsync-bin'
+    
+    if not os.path.exists(os.path.join(ffsubsync_dir, f'ffsubsync{exe}')):
+        print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
+        if subprocess.run(['python', 'main/resources/ffsubsync_bin_download.py'], text=True).returncode != 0:
+            print("Error downloading ffsubsync.")
+            sys.exit(1)
+        print("ffsubsync downloaded.")
+    else:
+        print("ffsubsync executable already exists. Skipping download.")
 
 def create_virtualenv():
     if not os.path.exists('venv'):
@@ -73,6 +86,7 @@ def create_zip():
 
 if __name__ == '__main__':
     ensure_ffmpeg()
+    ensure_ffsubsync()
     create_virtualenv()
     install_requirements()
     build_with_pyinstaller()
