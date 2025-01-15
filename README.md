@@ -67,6 +67,10 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - Customization Options: Choose whether to save the shifted subtitle file to the desktop or replace the original file.
 - Informative Messages: Receive clear feedback messages indicating the success or failure of the synchronization process.
 
+## `For developers and contributors`
+I need help for Linux and MacOS builds. I tested it in Ubuntu 22.04, it works but needs some configuration before runnig.
+If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py (Currently tested on Windows, Python 12.8). Ensure Python is installed on your computer before proceeding.
+
 ## `Credits`
 - Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync and alass. This is just a GUI application for Windows that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
 - Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
