@@ -10,7 +10,8 @@ ffsubsync_bin = os.path.join(os.curdir, 'main', 'resources', 'ffsubsync-bin')
 datas = [
     (os.path.join(os.curdir, 'main', 'resources', 'config.json'), '.'),
     (os.path.join(os.curdir, 'main', 'VERSION'), '.'),
-    (os.path.join(os.curdir, 'main', 'settings.png'), '.')
+    (os.path.join(os.curdir, 'main', 'settings.png'), '.'),
+    (os.path.join(os.curdir, 'main', 'icon.ico'), '.')
 ]
 
 with open('main/VERSION', 'r') as f:
