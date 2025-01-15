@@ -12,10 +12,54 @@ import xml.etree.ElementTree as ET
 import ctypes
 import json
 import requests
-import winreg
+import platform
 import texts
+
+
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# Define paths to the executables
+ffmpeg_bin = os.path.join(os.curdir, 'resources', 'ffmpeg-bin')
+alass_bin = os.path.join(os.curdir, 'resources', 'alass-bin')
+# Add the paths to the system PATH environment variable
+os.environ["PATH"] += os.pathsep + ffmpeg_bin + os.pathsep + alass_bin
+
+call_ffsubsync = "ffs"
+# Determine correct alass executable based on platform
+if platform.system() == 'Windows' and platform.machine().endswith('64'):
+    call_alass = "alass-cli"
+elif platform.system() == 'Linux' and platform.machine().endswith('64'):
+    call_alass = "alass-linux64"
+else:
+    call_alass = "alass"  # fallback
+call_ffmpeg = "ffmpeg"
+call_ffprobe = "ffprobe"
+
+
+
+
+def create_process(cmd):
+    kwargs = {
+        'shell': True,
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.STDOUT,
+        'universal_newlines': True,
+        'encoding': default_encoding,
+        'errors': 'replace'
+    }
+    
+    if platform.system() == "Windows":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        kwargs.update({
+            'startupinfo': startupinfo,
+            'creationflags': subprocess.CREATE_NO_WINDOW
+        })
+    
+    return subprocess.Popen(cmd, **kwargs)
+
 # Config file
 try:
     with open('config.json', 'r') as config_file:
@@ -30,12 +74,23 @@ except FileNotFoundError:
     VERSION = " UNKNOWN VERSION"
     messagebox.showerror("Error", "VERSION file not found.")
 def is_dark_mode():
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
-            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-            return value == 0
-    except:
-        return False
+    if platform.system() == "Windows":
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+                value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+                return value == 0
+        except:
+            return False
+    elif platform.system() == "Linux":
+        # Check for GNOME dark mode
+        try:
+            result = subprocess.run(['gsettings', 'get', 'org.gnome.desktop.interface', 'gtk-theme'], 
+                                 capture_output=True, text=True)
+            return 'dark' in result.stdout.lower()
+        except:
+            return False
+    return False
 # Get the theme from the config, or set it based on the system's theme
 THEME = config.get("theme", "system")
 if THEME == "system":
@@ -350,10 +405,8 @@ REMOVED_ITEM = texts.REMOVED_ITEM[LANGUAGE]
 FILES_MUST_CONTAIN_PATTERNS = texts.FILES_MUST_CONTAIN_PATTERNS[LANGUAGE]
 NO_VALID_SUBTITLE_FILES = texts.NO_VALID_SUBTITLE_FILES[LANGUAGE]
 default_encoding = sys.getfilesystemencoding()
-ffsubsync_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'python_embedded', 'Scripts', 'ffs.exe')
-ffsubsync_path = f'"{ffsubsync_path}"'
 # Icon fix
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID((PROGRAM_NAME+"."+VERSION).lower())
+
 def update_config(key, value):
     if remember_the_changes or key == 'remember_the_changes':
         try:
@@ -365,16 +418,6 @@ def update_config(key, value):
         config[key] = value
         with open('config.json', 'w') as config_file:
             json.dump(config, config_file, indent=4)
-# Alass integration
-def find_ffmpeg_paths():
-    ffmpeg_path = subprocess.check_output("where ffmpeg", shell=True).decode('utf-8', errors='ignore').strip()
-    ffprobe_path = subprocess.check_output("where ffprobe", shell=True).decode('utf-8', errors='ignore').strip()
-    return ffmpeg_path, ffprobe_path
-ffmpeg_path, ffprobe_path = find_ffmpeg_paths()
-env = os.environ.copy()
-env["ALASS_FFMPEG_PATH"] = ffmpeg_path
-env["ALASS_FFPROBE_PATH"] = ffprobe_path
-alass_cli_path = os.path.join(os.path.dirname(__file__), "alass", "alass-cli.exe")
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
 def log_message(message, level, tab='manual'):
@@ -741,11 +784,36 @@ def log_message(message, msg_type=None, filepath=None, tab='both'):
     label_message_manual.update_idletasks()
 
 def open_directory(filepath):
+    if not os.path.exists(filepath):
+        log_message("File not found", "error")
+        return
     directory = os.path.dirname(filepath)
-    if os.path.isdir(directory):
-        # Select the file in the file explorer
-        selected_file = os.path.realpath(filepath)
-        subprocess.run(f'explorer /select,"{selected_file}"')
+    filepath = os.path.normpath(os.path.realpath(filepath))
+    commands = {
+        "Windows": ['explorer', '/select,', filepath],
+        "Darwin": ['open', '-R', filepath],
+        "Linux": [
+            ['xdg-open', directory],
+            ['nautilus', directory],
+            ['dolphin', directory],
+            ['thunar', directory]
+        ]
+    }
+    system = platform.system()
+    try:
+        if system in ["Windows", "Darwin"]:
+            create_process(commands[system])
+        elif system == "Linux":
+            for cmd in commands["Linux"]:
+                try:
+                    create_process(cmd)
+                    break
+                except FileNotFoundError:
+                    continue
+        else:
+            log_message(f"Unsupported operating system: {system}", "error")
+    except Exception as e:
+        log_message(f"Error opening directory: {str(e)}", "error")
 
 def update_wraplengt(event=None):
     event.widget.config(wraplength=event.widget.winfo_width() - 40)
@@ -820,7 +888,7 @@ def on_manual_tab_selected(event=None):
         entry_milliseconds.insert(0, "0")
 
 def dark_title_bar(window):
-    if THEME == "dark":
+    if platform.system() == "Windows" and THEME == "dark":
         try:
             window.update()
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
@@ -831,7 +899,15 @@ def dark_title_bar(window):
             value = 2
             value = ctypes.c_int(value)
             set_window_attribute(hwnd, rendering_policy, ctypes.byref(value), ctypes.sizeof(value))
-        except Exception:
+        except:
+            pass
+    elif platform.system() == "Linux":
+        # No direct equivalent for Linux, but you could set window properties
+        try:
+            window.attributes('-type', 'normal')
+            if THEME == "dark":
+                window.attributes('-alpha', 0.95)  # Slightly transparent for dark theme
+        except:
             pass
 
 root = TkinterDnD.Tk()
@@ -887,8 +963,13 @@ default_settings = {
 
 def restart_program():
     python = sys.executable
-    script_path = os.path.abspath(__file__)
-    os.execl(python, python, script_path, *sys.argv[1:])
+    if getattr(sys, 'frozen', False):
+        # Running as an executable
+        os.execl(python, python)
+    else:
+        # Running as a script
+        script_path = os.path.abspath(__file__)
+        os.execl(python, python, script_path)
 
 def reset_to_default_settings():
     global keep_converted_subtitles, keep_extracted_subtitles, additional_ffsubsync_args, additional_alass_args, backup_subtitles_before_overwriting, check_video_for_subtitle_stream_in_alass
@@ -1082,65 +1163,80 @@ style.map("TSeparator", background=[("",COLOR_BACKGROUND)])
 # ---------------- Automatic Tab ---------------- #
 # Extract subtitles from video (ALASS)
 def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
-    # Get the subtitle streams and their codecs using ffprobe
-    cmd = [
-        "ffprobe",
+    if not os.path.exists(video_file):
+        log_window.insert(tk.END, f"\nVideo file not found: {video_file}\n")
+        return False
+    ffprobe_cmd = [
+        call_ffprobe,
         "-v", "error",
         "-select_streams", "s",
         "-show_entries", "stream=index,codec_name:stream_tags=language,title",
         "-of", "csv=p=0",
         video_file
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
-    # Parse the ffprobe output to extract stream index, codec_name, and language
-    subtitle_streams = []
-    for line in result.stdout.splitlines():
-        parts = line.split(",")
-        if len(parts) >= 2:  # Ensure there is at least index and codec_name
-            stream_index = parts[0]
-            codec_name = parts[1]
-            language = parts[2] if len(parts) > 2 else ""
-            subtitle_streams.append((stream_index, codec_name, language))
-    # Filter for compatible codecs
-    compatible_subtitles = [stream for stream in subtitle_streams if stream[1] in ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS]
-    if len(compatible_subtitles) > 0:
+    try:
+        # Use create_process for ffprobe
+        probe_process = create_process(ffprobe_cmd)
+        output, _ = probe_process.communicate()
+        
+        if probe_process.returncode != 0:
+            log_window.insert(tk.END, f"\nFFprobe failed to detect streams\n")
+            return False
+        # Parse subtitle streams
+        subtitle_streams = []
+        for line in output.splitlines():
+            if not line.strip():
+                continue
+            parts = line.split(",")
+            if len(parts) >= 2:
+                stream_index = parts[0].strip()
+                codec_name = parts[1].strip()
+                language = parts[2].strip() if len(parts) > 2 else ""
+                subtitle_streams.append((stream_index, codec_name, language))
+        # Filter compatible subtitles
+        compatible_subtitles = [
+            stream for stream in subtitle_streams 
+            if stream[1] in ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS
+        ]
+        if not compatible_subtitles:
+            log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
+            return False
+        # Setup output directory
         output_folder = os.path.join(output_dir, "extracted_subtitles_" + os.path.basename(video_file))
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+        os.makedirs(output_folder, exist_ok=True)
         log_window.insert(tk.END, f"{FOUND_COMPATIBLE_SUBTITLES.format(count=len(compatible_subtitles), output_folder=output_folder)}\n")
-    else:
-        log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
-        return False
-    # Prepare ffmpeg command to extract all subtitle streams in one go
-    ffmpeg_base_cmd = ["ffmpeg", "-y", "-i", video_file]
-    output_files = []
-    # Map arguments for all subtitle streams
-    for i, (stream, codec, language) in enumerate(compatible_subtitles):
-        ext = ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS.get(codec)
-        if not ext:
-            continue  # Skip unsupported codecs
-        lang_suffix = f"_{language}" if language else ""
-        output_file = f"{output_folder}/subtitle_{i+1}{lang_suffix}.{ext}"
-        output_files.append(output_file)
-        # Add -map argument before the corresponding codec and output file
-        ffmpeg_base_cmd.extend(["-map", f"0:{stream}", "-c:s", codec, output_file])
-    if not output_files:
-        log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
-        return False
-    # Run the ffmpeg command with properly placed -map arguments
-    result = subprocess.run(ffmpeg_base_cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
-    if result.returncode == 0:
-        for output_file in output_files:
-            log_window.insert(tk.END, f"{SUCCESSFULLY_EXTRACTED.format(filename=os.path.basename(output_file))}\n")
-        # Find the closest subtitle to the original subtitle
-        log_window.insert(tk.END, f"{CHOOSING_BEST_SUBTITLE}\n")
-        closest_subtitle, score = choose_best_subtitle(subtitle_file, extracted_subtitles_folder=output_folder)
-        if closest_subtitle:
-            log_window.insert(tk.END, f"{CHOSEN_SUBTITLE.format(filename=os.path.basename(closest_subtitle), score=score)}\n")
-            return closest_subtitle
-        return True
-    else:
-        log_window.insert(tk.END, f"{FAILED_TO_EXTRACT_SUBTITLES.format(error=result.stderr)}\n")
+        # Prepare FFmpeg command
+        ffmpeg_base_cmd = [call_ffmpeg, "-y", "-i", video_file]
+        output_files = []
+        # Add subtitle mappings
+        for i, (stream, codec, language) in enumerate(compatible_subtitles):
+            ext = ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS.get(codec)
+            if not ext:
+                continue
+            lang_suffix = f"_{language}" if language else ""
+            output_file = os.path.join(output_folder, f"subtitle_{i+1}{lang_suffix}.{ext}")
+            output_files.append(output_file)
+            ffmpeg_base_cmd.extend(["-map", f"0:{stream}", "-c:s", codec, output_file])
+        if not output_files:
+            log_window.insert(tk.END, f"{NO_COMPATIBLE_SUBTITLES}\n")
+            return False
+        # Execute FFmpeg using create_process
+        ffmpeg_process = create_process(ffmpeg_base_cmd)
+        output, _ = ffmpeg_process.communicate()
+        if ffmpeg_process.returncode == 0:
+            for output_file in output_files:
+                log_window.insert(tk.END, f"{SUCCESSFULLY_EXTRACTED.format(filename=os.path.basename(output_file))}\n")
+            log_window.insert(tk.END, f"{CHOOSING_BEST_SUBTITLE}\n")
+            closest_subtitle, score = choose_best_subtitle(subtitle_file, extracted_subtitles_folder=output_folder)
+            if closest_subtitle:
+                log_window.insert(tk.END, f"{CHOSEN_SUBTITLE.format(filename=os.path.basename(closest_subtitle), score=score)}\n")
+                return closest_subtitle
+            return True
+        else:
+            log_window.insert(tk.END, f"{FAILED_TO_EXTRACT_SUBTITLES.format(error=output)}\n")
+            return False
+    except Exception as e:
+        log_window.insert(tk.END, f"\nError during extraction: {str(e)}\n")
         return False
 
 def parse_timestamps(subtitle_file):
@@ -1561,14 +1657,26 @@ def start_batch_sync():
     cancel_flag = False
 
     def cancel_batch_sync():
-        global process, cancel_flag
+        global process, cancel_flag, process_list
         cancel_flag = True
+        
         for process in process_list:
-            if process and process.poll() is None:
-                try:
-                    subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
-                except Exception as e:
-                    log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+            try:
+                system = platform.system()
+                if system == "Windows":
+                    create_process(['taskkill', '/F', '/T', '/PID', str(process.pid)], hide_output=True)
+                elif system in ["Linux", "Darwin"]:
+                    process.kill()
+                    try:
+                        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                    except (ProcessLookupError, OSError):
+                        pass
+                else:
+                    log_message(f"Unsupported operating system: {system}", "error", tab='auto')
+            except Exception as e:
+                log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+    
+        process_list.clear()
                     
         log_message(BATCH_SYNC_CANCELLED, "error", tab='auto')
         root.update_idletasks()
@@ -1634,12 +1742,12 @@ def start_batch_sync():
         global process, cancel_flag
         decoding_error_occurred = False
         try:
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
+            process = create_process(cmd)
             for output in process.stdout:
                 if cancel_flag:
                     process.kill()
-                    restore_window()
-                    return 1, decoding_error_occurred  # Ensure a tuple is returned
+                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                    break
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
                 elif sync_tool == SYNC_TOOL_ALASS:
@@ -1680,8 +1788,7 @@ def start_batch_sync():
             add_suffix = False
         for parent in tree_items:
             if cancel_flag:
-                restore_window()
-                return
+                break
             parent_values = treeview.item(parent, "values")
             if not parent_values:
                 log_window.insert(tk.END, f"{INVALID_PARENT_ITEM}\n")
@@ -1690,8 +1797,7 @@ def start_batch_sync():
             subtitles = treeview.get_children(parent)
             for sub in subtitles:
                 if cancel_flag:
-                    restore_window()
-                    return
+                    break
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
                 if not subtitle_file and not video_file:
@@ -1745,8 +1851,7 @@ def start_batch_sync():
             skip = False
         for parent in tree_items:
             if cancel_flag:
-                restore_window()
-                return
+                break
             parent_values = treeview.item(parent, "values")
             if not parent_values:
                 continue
@@ -1754,8 +1859,7 @@ def start_batch_sync():
             subtitles = treeview.get_children(parent)
             for sub in subtitles:
                 if cancel_flag:
-                    restore_window()
-                    return
+                    break
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
                 original_subtitle_file = subtitle_file  # Store the original subtitle file name
@@ -1830,7 +1934,7 @@ def start_batch_sync():
                     )
                     suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'{ffsubsync_path} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if ffsubsync_option_framerate_var.get():
                             cmd += " --no-fix-framerate"
@@ -1841,9 +1945,9 @@ def start_batch_sync():
                 elif sync_tool == SYNC_TOOL_ALASS:
                     split_penalty = alass_split_penalty_var.get()
                     if split_penalty == 0:
-                        cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
+                        cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
                     else:
-                        cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
+                        cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
                     if alass_speed_optimization_var.get():
                         cmd += " --speed-optimization 0"
                     if alass_disable_fps_guessing_var.get():
@@ -1880,10 +1984,7 @@ def start_batch_sync():
                         if additional_alass_args:
                             log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_alass_args)}\n")
                     log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
-                    process = subprocess.Popen(
-                        cmd, shell=True, stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace'
-                    )
+                    process = create_process(cmd)
                     process_list.append(process)
                 except Exception as e:
                     log_window.insert(tk.END, f"{FAILED_START_PROCESS.format(error_message=str(e))}\n")
@@ -1930,8 +2031,6 @@ def start_batch_sync():
                                 log_window.insert(tk.END, f"{DELETING_CONVERTED_SUBTITLE}\n\n")
                                 os.remove(subtitle_file_converted)
                     if cancel_flag:
-                        process_list.remove(process)
-                        restore_window()
                         return
                     if returncode == 0:
                         log_window.insert(tk.END, f"{SYNC_SUCCESS.format(output_subtitle_file=output_subtitle_file)}")
@@ -1945,26 +2044,28 @@ def start_batch_sync():
                     failure_count += 1
                     failed_syncs.append((video_file, subtitle_file))  # store the failed pairs
                     log_window.insert(tk.END, error_msg)
-                process_list.remove(process)
+                if process in process_list:
+                    process_list.remove(process)
                 completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
-        
-        log_window.insert(tk.END, f"{BATCH_SYNC_COMPLETED}\n")
-        log_window.insert(tk.END, f"{SYNC_SUCCESS_COUNT.format(success_count=success_count)}\n")
-        if failure_count > 0:
-            log_window.insert(tk.END, f"{SYNC_FAILURE_COUNT_BATCH.format(failure_count=failure_count)}\n")
-            failcount = 0
-            for pair in failed_syncs:
-                failcount += 1
-                log_window.insert(tk.END, f'{failcount}) "{pair[0]}" - "{pair[1]}"\n')
-        log_message(BATCH_SYNC_COMPLETED, "success", tab='auto')
-        button_cancel_batch_sync.grid_remove()
-        log_window.grid(pady=(10, 10), rowspan=2)
-        button_go_back.grid()
-        button_generate_again.grid()
-        progress_bar.grid_remove()
-        log_window.see(tk.END)
+        if not cancel_flag:
+            log_window.insert(tk.END, f"{BATCH_SYNC_COMPLETED}\n")
+            log_window.insert(tk.END, f"{SYNC_SUCCESS_COUNT.format(success_count=success_count)}\n")
+            if failure_count > 0:
+                log_window.insert(tk.END, f"{SYNC_FAILURE_COUNT_BATCH.format(failure_count=failure_count)}\n")
+                failcount = 0
+                for pair in failed_syncs:
+                    failcount += 1
+                    log_window.insert(tk.END, f'{failcount}) "{pair[0]}" - "{pair[1]}"\n')
+            log_message(BATCH_SYNC_COMPLETED, "success", tab='auto')
+            button_cancel_batch_sync.grid_remove()
+            log_window.grid(pady=(10, 10), rowspan=2)
+            button_go_back.grid()
+            button_generate_again.grid()
+            progress_bar.grid_remove()
+            log_window.see(tk.END)
+            root.after(50, lambda: log_window.see(tk.END))
     try:
         batch_input.grid_remove()
         tree_frame.grid_remove()
@@ -2652,11 +2753,32 @@ def reference_subtitle_subtitle_pairs():
             log_message_reference(NO_FILES_SELECTED, "info")
     def show_path(listbox, file_paths_list):
         selected = listbox.curselection()
-        if selected:
-            filepath = file_paths_list[selected[0]]
-            subprocess.run(['explorer', '/select,', os.path.normpath(filepath)])
-        else:
+        if not selected:
             log_message_reference(NO_FILES_SELECTED_TO_SHOW_PATH, "info")
+            return
+
+        filepath = file_paths_list[selected[0]]
+        normalized_path = os.path.normpath(filepath)
+        
+        try:
+            system = platform.system()
+            if system == "Windows":
+                subprocess.run(['explorer', '/select,', normalized_path], 
+                            creationflags=subprocess.CREATE_NO_WINDOW)
+            elif system == "Darwin":  # macOS
+                subprocess.run(['open', '-R', normalized_path])
+            elif system == "Linux":
+                # Try common file managers
+                for fm in ['xdg-open', 'nautilus', 'dolphin', 'thunar']:
+                    try:
+                        subprocess.run([fm, os.path.dirname(normalized_path)])
+                        break
+                    except FileNotFoundError:
+                        continue
+            else:
+                log_message_reference("Unsupported operating system for showing file location", "error")
+        except Exception as e:
+            log_message_reference(f"Error showing file location: {str(e)}", "error")
     def on_right_click(event, menu):
         menu.post(event.x_root, event.y_root)
     def remove_selected_item(listbox, file_paths_list):
@@ -2780,10 +2902,11 @@ def change_selected_item():
                 children = treeview.get_children(selected_item)
                 for child in children:
                     child_values = treeview.item(child, "values")
-                    child_file = os.path.normpath(child_values[0]) if child_values else ""
-                    if new_file.lower() == child_file.lower():
-                        log_message(SAME_FILE_ERROR, "error", tab='auto')
-                        return
+                    if child_values:
+                        child_file = os.path.normpath(child_values[0])
+                        if new_file.lower() == child_file.lower():
+                            log_message(SAME_FILE_ERROR, "error", tab='auto')
+                            return
             else:
                 if new_file.lower() == parent_file.lower():
                     log_message(SAME_FILE_ERROR, "error", tab='auto')
@@ -2904,12 +3027,31 @@ context_menu.add_command(label=CONTEXT_MENU_CLEAR_ALL, command=lambda: treeview.
 # Function to show the context menu
 def show_path():
     selected_item = treeview.selection()
-    if selected_item:
-        item_values = treeview.item(selected_item, "values")
-        if item_values and item_values[0]:
-            path = item_values[0]
-            folder = os.path.dirname(path)
-            subprocess.run(['explorer', '/select,', os.path.normpath(path)], encoding=default_encoding, errors='replace')
+    if not selected_item:
+        return
+
+    item_values = treeview.item(selected_item, "values")
+    if not item_values or not item_values[0]:
+        return
+
+    path = os.path.normpath(item_values[0])
+    try:
+        system = platform.system()
+        if system == "Windows":
+            subprocess.run(['explorer', '/select,', path], 
+                         encoding=default_encoding, 
+                         errors='replace',
+                         creationflags=subprocess.CREATE_NO_WINDOW)
+        elif system == "Darwin":  # macOS
+            subprocess.run(['open', '-R', path],
+                         encoding=default_encoding, 
+                         errors='replace')
+        elif system == "Linux":
+            subprocess.run(['xdg-open', os.path.dirname(path)],
+                         encoding=default_encoding, 
+                         errors='replace')
+    except Exception as e:
+        log_message(f"Error showing file location: {str(e)}", "error")
 def show_context_menu(event):
     # Clear previous dynamic menu items
     context_menu.delete(0, tk.END)
@@ -3226,24 +3368,32 @@ def start_automatic_sync():
             suffix += 1
 
     def cancel_automatic_sync():
-            global process, cancel_flag
-            cancel_flag = True  # Set the flag to True when cancelling
-            if process:
-                try:
-                    subprocess.Popen(['taskkill', '/F', '/T', '/PID', str(process.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW, encoding=default_encoding, errors='replace')
-                    process = None
-                    log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
-                except Exception as e:
-                    log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
-            else:
-                log_message(NO_SYNC_PROCESS, "error", tab='auto')
-            restore_window()
+        global process, cancel_flag
+        cancel_flag = True
+        if process:
+            try:
+                if platform.system() == "Windows":
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], 
+                                    stdout=subprocess.DEVNULL, 
+                                    stderr=subprocess.DEVNULL,
+                                    creationflags=subprocess.CREATE_NO_WINDOW)
+                else:
+                    process.kill()
+                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                process = None
+                log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
+            except Exception as e:
+                log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+        else:
+            log_message(NO_SYNC_PROCESS, "error", tab='auto')
+        restore_window()
         
     def cancel_process_on_window_close():
         if process:
             cancel_automatic_sync()
         root.destroy()
         os._exit(0)
+
     root.protocol("WM_DELETE_WINDOW", cancel_process_on_window_close)
 
     def restore_window():
@@ -3325,7 +3475,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'{ffsubsync_path} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if ffsubsync_option_framerate_var.get():
                     cmd += " --no-fix-framerate"
@@ -3337,9 +3487,9 @@ def start_automatic_sync():
                 cmd += f" {additional_ffsubsync_args}"
         elif sync_tool == SYNC_TOOL_ALASS:
             if split_penalty == 0:
-                cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
+                cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
             else:
-                cmd = f'"{alass_cli_path}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
+                cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
             if alass_speed_optimization_var.get():
                 cmd += " --speed-optimization 0"
             if alass_disable_fps_guessing_var.get():
@@ -3354,7 +3504,7 @@ def start_automatic_sync():
     def execute_cmd(cmd):
         global process, progress_line_number, subtitle_file, video_file, output_subtitle_file, split_penalty
         split_penalty = alass_split_penalty_var.get()
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding=default_encoding, errors='replace')
+        process = create_process(cmd)
         progress_bar["value"] = 1
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
             if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
@@ -3401,7 +3551,7 @@ def start_automatic_sync():
                 log_window.insert(tk.END, output)
             if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                 decoding_error_occurred = True
-        if process is not None:
+        if process is not None and not cancel_flag:
             process.wait()
             if process.returncode == 0:  # Check if the process finished successfully
                 if "error" in output.lower() or not os.path.exists(output_subtitle_file) and not decoding_error_occurred:
@@ -3484,6 +3634,8 @@ def start_automatic_sync():
                     if subtitle_file_converted:
                         log_window.insert(tk.END, f"\n{DELETING_CONVERTED_SUBTITLE}\n")
                         os.remove(subtitle_file_converted)
+            if cancel_flag:
+                return
             process.wait()
             if returncode == 0:
                 log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
@@ -3691,9 +3843,8 @@ ffsubsync_option_gss = tk.Checkbutton(
 )
 ffsubsync_option_vad = tk.Checkbutton(
     automatic_tab,text=CHECKBOX_VAD,
-    background=COLOR_BACKGROUND,
-    foreground=COLOR_BW,
-    variable=ffsubsync_option_vad_var,
+    background=COLOR_BACKGROUND, foreground=COLOR_BW,
+    variable=ffsubsync_option_vad_var, 
     command=lambda: update_config('ffsubsync_option_vad', ffsubsync_option_vad_var.get()),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
@@ -3913,6 +4064,7 @@ def browse_file(event=None):
 
 def select_subtitle_at_startup():
     if len(sys.argv) > 1:
+        messagebox.showinfo("Command Line Arguments", f"sys.argv: {sys.argv}")
         subtitle_file = sys.argv[1]
         if os.path.isfile(subtitle_file) and subtitle_file.lower().endswith('.srt'):
             # For manual tab
@@ -4109,7 +4261,23 @@ root.update_idletasks()
 place_window_top_right()
 dark_title_bar(root)
 # if icon exists, set it as the window icon
-if os.path.exists('icon.ico'):
-    root.iconbitmap('icon.ico')
+try:
+    if platform.system() == "Windows":
+        if os.path.exists('icon.ico'):
+            root.iconbitmap('icon.ico')
+    else:  # Linux or macOS
+        if os.path.exists('icon.png'):
+            icon = PhotoImage(file='icon.png')
+            root.iconphoto(True, icon)
+except Exception as e:
+    pass
 root.deiconify() # Show the window after it's been built
+if __name__ == "__main__":
+    # Import Linux-specific modules if needed
+    if platform.system() == "Linux":
+        import signal
+        # Enable process group handling for Linux
+        os.setpgrp()
+    
+    # ...rest of the main code...
 root.mainloop()
