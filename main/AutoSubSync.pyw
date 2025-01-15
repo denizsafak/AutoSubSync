@@ -408,8 +408,6 @@ REMOVED_ITEM = texts.REMOVED_ITEM[LANGUAGE]
 FILES_MUST_CONTAIN_PATTERNS = texts.FILES_MUST_CONTAIN_PATTERNS[LANGUAGE]
 NO_VALID_SUBTITLE_FILES = texts.NO_VALID_SUBTITLE_FILES[LANGUAGE]
 default_encoding = sys.getfilesystemencoding()
-# Icon fix
-
 def update_config(key, value):
     if remember_the_changes or key == 'remember_the_changes':
         try:
@@ -4269,8 +4267,8 @@ try:
         if os.path.exists('icon.ico'):
             root.iconbitmap('icon.ico')
     else:  # Linux or macOS
-        if os.path.exists('icon.png'):
-            icon = PhotoImage(file='icon.png')
+        if os.path.exists('icon.ico'):
+            icon = PhotoImage(file='icon.ico')
             root.iconphoto(True, icon)
 except Exception as e:
     pass
