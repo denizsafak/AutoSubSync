@@ -14,6 +14,7 @@ import json
 import requests
 import platform
 import texts
+
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -116,7 +117,7 @@ COLOR_SCHEMES = {
     "COLOR_PRIMARY": ("gray85", "gray10"),
     "COLOR_SECONDARY": ("gray75", "gray30"),
     "COLOR_TAB_INACTVE": ("gray20", "gray60"),
-    "COLOR_BACKGROUND": ("SystemButtonFace", "#202020"),
+    "COLOR_BACKGROUND": ("#f2f3f2", "#202020"),
     "COLOR_PROGRESSBAR": ("#00a31e", "#00a31e"),
     "COLOR_ZERO": ("lightgrey", "grey10"),
     "COLOR_ONE": ("lightgrey", "grey20"),
@@ -1040,16 +1041,20 @@ def set_language(lang):
     restart_program()
 
 def check_for_updates():
-    try:
-        response = requests.get(GITHUB_VERSION_URL)
-        latest_version = response.text.strip()
-        def parse_version(v):
-            return [int(x) for x in v.split('.')]
-        if parse_version(latest_version) > parse_version(VERSION):
-            if messagebox.askyesno(texts.UPDATE_AVAILABLE_TITLE[LANGUAGE], texts.UPDATE_AVAILABLE_TEXT[LANGUAGE].format(latest_version=latest_version)):
-                os.system("start " + GITHUB_LATEST_RELEASE_URL)
-    except Exception:
-        pass
+    def update_check():
+        try:
+            response = requests.get(GITHUB_VERSION_URL)
+            latest_version = response.text.strip()
+            def parse_version(v):
+                return [int(x) for x in v.split('.')]
+            if parse_version(latest_version) > parse_version(VERSION):
+                if messagebox.askyesno(texts.UPDATE_AVAILABLE_TITLE[LANGUAGE], texts.UPDATE_AVAILABLE_TEXT[LANGUAGE].format(latest_version=latest_version)):
+                    os.system("start " + GITHUB_LATEST_RELEASE_URL)
+        except Exception:
+            pass
+
+    update_thread = threading.Thread(target=update_check)
+    update_thread.start()
 
 def toggle_notify_about_updates():
     global notify_about_updates
@@ -2093,7 +2098,8 @@ def start_batch_sync():
             activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
-            cursor="hand2"
+            cursor="hand2",
+            highlightthickness=0
         )
         button_cancel_batch_sync.grid(row=6, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again = tk.Button(
@@ -2108,7 +2114,8 @@ def start_batch_sync():
             activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
-            cursor="hand2"
+            cursor="hand2",
+            highlightthickness=0
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
@@ -2124,7 +2131,8 @@ def start_batch_sync():
             activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
-            cursor="hand2"
+            cursor="hand2",
+            highlightthickness=0
         )
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
@@ -2486,15 +2494,15 @@ def reference_subtitle_subtitle_pairs():
     # Create labels and buttons in headers
     ref_label = ttk.Label(ref_header, text=REF_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     ref_label.grid(row=0, column=0, sticky="w")
-    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths, type="reference"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths, type="reference"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
     ref_add_btn.grid(row=0, column=1, padx=(5, 0))
-    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
     ref_remove_btn.grid(row=0, column=2, padx=(5, 0))
     sub_label = ttk.Label(sub_header, text=SUB_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     sub_label.grid(row=0, column=0, sticky="w")
-    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths, type = "subtitle"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths, type = "subtitle"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
     sub_add_btn.grid(row=0, column=1, padx=(5, 0))
-    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2")
+    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
     sub_remove_btn.grid(row=0, column=2, padx=(5, 0))
     ref_header.pack_forget()
     sub_header.pack_forget()
@@ -2813,9 +2821,9 @@ def reference_subtitle_subtitle_pairs():
             log_message_reference(NO_VALID_SUBTITLE_PAIRS_TO_PROCESS, "error")
     def cancel():
         window.destroy()
-    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2")
+    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2",highlightthickness=0)
     cancel_btn.pack(side="left", padx=(0, 5))
-    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg=COLOR_WB, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2")
+    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg=COLOR_WB, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2",highlightthickness=0)
     process_btn.pack(side="left", fill="x", expand=True)
     ref_input.bind("<Button-1>", lambda e: load_files(listbox_left, ref_file_paths, type="reference"))
     ref_input.bind("<Enter>", on_enter)
@@ -3096,7 +3104,8 @@ button_change_item = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 button_remove_item = tk.Button(
     tree_frame,
@@ -3111,7 +3120,8 @@ button_remove_item = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 style = ttk.Style()
 style.configure("Treeview", rowheight=25, background=COLOR_ZERO, fieldbackground=COLOR_WB, foreground=COLOR_BW)
@@ -3685,7 +3695,8 @@ def start_automatic_sync():
             activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
-            cursor="hand2"
+            cursor="hand2",
+            highlightthickness=0
         )
         button_cancel_automatic_sync.grid(row=6, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again = tk.Button(
@@ -3700,7 +3711,8 @@ def start_automatic_sync():
             activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
-            cursor="hand2"
+            cursor="hand2",
+            highlightthickness=0
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(00,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
@@ -3716,7 +3728,8 @@ def start_automatic_sync():
             activeforeground=COLOR_WB,
             relief=tk.RAISED,
             borderwidth=2,
-            cursor="hand2"
+            cursor="hand2",
+            highlightthickness=0
         )
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
@@ -3776,7 +3789,8 @@ button_start_automatic_sync = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 remove_subtitle_button = tk.Button(
     automatic_tab,
@@ -3791,7 +3805,8 @@ remove_subtitle_button = tk.Button(
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     relief=tk.RIDGE,
     borderwidth=1,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 remove_subtitle_button.grid_remove()
 remove_video_button = tk.Button(
@@ -3807,7 +3822,8 @@ remove_video_button = tk.Button(
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     relief=tk.RIDGE,
     borderwidth=1,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 remove_video_button.grid_remove()
 sync_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
@@ -3829,7 +3845,8 @@ ffsubsync_option_framerate = tk.Checkbutton(
     command=lambda: update_config('ffsubsync_option_framerate', ffsubsync_option_framerate_var.get()),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 ffsubsync_option_gss = tk.Checkbutton(
     automatic_tab,
@@ -3840,7 +3857,8 @@ ffsubsync_option_gss = tk.Checkbutton(
     command=lambda: update_config('ffsubsync_option_gss', ffsubsync_option_gss_var.get()),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 ffsubsync_option_vad = tk.Checkbutton(
     automatic_tab,text=CHECKBOX_VAD,
@@ -3849,7 +3867,8 @@ ffsubsync_option_vad = tk.Checkbutton(
     command=lambda: update_config('ffsubsync_option_vad', ffsubsync_option_vad_var.get()),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 def select_destination_folder():
     global tooltip_action_menu_auto
@@ -3936,7 +3955,8 @@ alass_disable_fps_guessing = tk.Checkbutton(
     command=lambda: update_config('alass_disable_fps_guessing', alass_disable_fps_guessing_var.get()),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 
 alass_speed_optimization = tk.Checkbutton(
@@ -3948,7 +3968,8 @@ alass_speed_optimization = tk.Checkbutton(
     command=lambda: update_config('alass_speed_optimization', alass_speed_optimization_var.get()),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 alass_split_penalty_slider = tk.Scale(
     automatic_tab, 
@@ -4009,7 +4030,8 @@ batch_mode_button = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 batch_mode_button.grid(row=5, column=0, padx=(10,2.5), pady=10, sticky="w")
 # Ensure button_start_automatic_sync is set to expand horizontally
@@ -4155,7 +4177,8 @@ button_clear = tk.Button(
     activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
     relief=tk.RIDGE,
     borderwidth=1,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 button_minus = tk.Button(
     manual_tab, text="-",
@@ -4168,7 +4191,8 @@ button_minus = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 button_plus = tk.Button(
     manual_tab, text="+",
@@ -4181,7 +4205,8 @@ button_plus = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 button_sync = tk.Button(
     manual_tab,
@@ -4195,7 +4220,8 @@ button_sync = tk.Button(
     activeforeground=COLOR_WB,
     relief=tk.RAISED,
     borderwidth=2,
-    cursor="hand2"
+    cursor="hand2",
+    highlightthickness=0
 )
 save_to_desktop_var = tk.BooleanVar()
 check_save_to_desktop = tk.Checkbutton(
@@ -4207,7 +4233,8 @@ check_save_to_desktop = tk.Checkbutton(
     command=lambda: checkbox_selected(save_to_desktop_var),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 replace_original_var = tk.BooleanVar()
 check_replace_original = tk.Checkbutton(
@@ -4217,7 +4244,8 @@ check_replace_original = tk.Checkbutton(
     command=lambda: checkbox_selected(replace_original_var),
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW
+    activeforeground=COLOR_BW,
+    highlightthickness=0
 )
 label_drop_box.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=6)
 button_clear.grid(row=0, column=3, padx=(0,12), pady=(12,5), sticky="ne")
@@ -4259,8 +4287,8 @@ min_height = max(min_height_automatic, min_height_manual)
 root.minsize(min_width, min_height)  # Set minimum size for the window
 # Place the window at the top right corner of the screen
 root.update_idletasks()
-place_window_top_right()
 dark_title_bar(root)
+place_window_top_right()
 # if icon exists, set it as the window icon
 try:
     if platform.system() == "Windows":
@@ -4272,13 +4300,11 @@ try:
             root.iconphoto(True, icon)
 except Exception as e:
     pass
-root.deiconify() # Show the window after it's been built
 if __name__ == "__main__":
     # Import Linux-specific modules if needed
     if platform.system() == "Linux":
         import signal
         # Enable process group handling for Linux
         os.setpgrp()
-    
-    # ...rest of the main code...
+root.deiconify() # Show the window after it's been built
 root.mainloop()

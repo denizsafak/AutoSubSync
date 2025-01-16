@@ -1,4 +1,4 @@
-chardet==5.2.0
-tkinterdnd2==0.4.2
-requests==2.32.3
+chardet
+tkinterdnd2
+requests
 pyinstaller
