@@ -28,7 +28,7 @@ a = Analysis(
         (ffsubsync_bin, 'resources/ffsubsync-bin'),
     ],
     datas=datas,
-    hiddenimports=['pkg_resources.py2_warn'],
+    hiddenimports=[],
     hookspath=['main/resources/hooks'],
     hooksconfig={},
     runtime_hooks=[],

@@ -1,3 +1,6 @@
+# On Linux systems, you may need to install the following packages:
+# sudo apt-get install python3-venv python3-pip python3-tk
+
 import sys
 import os
 import subprocess
@@ -11,7 +14,7 @@ def ensure_ffmpeg():
     if not all(os.path.exists(os.path.join(ffmpeg_dir, f'{app}{exe}')) 
                for app in ['ffmpeg', 'ffprobe']):
         print("FFmpeg executables not found, running ffmpeg_download.py...")
-        if subprocess.run(['python', 'main/resources/ffmpeg_download.py'], text=True).returncode != 0:
+        if subprocess.run([sys.executable, 'main/resources/ffmpeg_download.py'], text=True).returncode != 0:
             print("Error downloading FFmpeg.")
             sys.exit(1)
         print("FFmpeg downloaded.")
@@ -24,7 +27,7 @@ def ensure_ffsubsync():
     
     if not os.path.exists(os.path.join(ffsubsync_dir, f'ffsubsync{exe}')):
         print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
-        if subprocess.run(['python', 'main/resources/ffsubsync_bin_download.py'], text=True).returncode != 0:
+        if subprocess.run([sys.executable, 'main/resources/ffsubsync_bin_download.py'], text=True).returncode != 0:
             print("Error downloading ffsubsync.")
             sys.exit(1)
         print("ffsubsync downloaded.")
@@ -34,7 +37,7 @@ def ensure_ffsubsync():
 def create_virtualenv():
     if not os.path.exists('venv'):
         print("Creating virtual environment...")
-        completed_process = subprocess.run(['python', '-m', 'venv', 'venv'], text=True)
+        completed_process = subprocess.run([sys.executable, '-m', 'venv', 'venv'], text=True)
         if completed_process.returncode != 0:
             print("Error creating virtual environment.")
             sys.exit(completed_process.returncode)
@@ -48,7 +51,7 @@ def install_requirements():
         pip_executable = 'venv\\Scripts\\pip'
     else:
         pip_executable = 'venv/bin/pip'
-    completed_process = subprocess.run([pip_executable, 'install', '-r', 'main/requirements.txt'], text=True)
+    completed_process = subprocess.run([pip_executable, 'install', '-r', 'main/requirements.txt', '--upgrade'], text=True)
     if completed_process.returncode != 0:
         print("Error installing requirements.")
         sys.exit(completed_process.returncode)
