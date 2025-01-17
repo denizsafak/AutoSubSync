@@ -91,7 +91,11 @@ def create_archive():
     if platform_name == 'linux':
         tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
         with tarfile.open(tar_name, 'w:gz') as tar:
-            tar.add(dist_dir, arcname=os.path.basename(dist_dir))
+            for root, _, files in os.walk(dist_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, dist_dir)
+                    tar.add(file_path, arcname=arcname)
         print(f"Tar.gz archive created: {tar_name}")
     else:
         if platform_name == 'darwin':
