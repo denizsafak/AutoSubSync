@@ -2,11 +2,6 @@ name: Build AutoSubSync
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    tags:
-      - v*
 
 env:
   DIST_DIR: /tmp/builds
@@ -44,7 +39,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-venv python3-pip python3-tk python3-requests
+          sudo apt-get install -y python3-venv python3-tk
 
       - name: Install required modules globally
         run: |
@@ -59,6 +54,35 @@ jobs:
         with:
           name: build-artifacts-${{ matrix.file_name }}
           path: |
-            dist/
             *.zip
             *.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Read version from VERSION file
+        id: get_version
+        run: |
+          VERSION=$(cat main/VERSION)
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_assets
+
+      - name: Create a new release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.version }}
+          release_name: AutoSubSync v${{ env.version }}
+          draft: false
+          prerelease: false
+          files: release_assets/*.zip, release_assets/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
