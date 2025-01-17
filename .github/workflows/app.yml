@@ -75,3 +75,5 @@ jobs:
           files: ${{ env.RELEASE_FILES }}
           generate_release_notes: true
           draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
