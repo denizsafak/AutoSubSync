@@ -46,6 +46,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-venv python3-pip python3-tk python3-requests
 
+      - name: Install required modules globally
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests venv tkinter
+
       - name: Run build script
         run: |
           python build.py
