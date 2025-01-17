@@ -88,7 +88,14 @@ def create_archive():
     platform_name = platform.system().lower()
     arch = platform.machine().lower()
     
-    if platform.system() == 'Windows':
+    if platform_name == 'linux':
+        tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
+        with tarfile.open(tar_name, 'w:gz') as tar:
+            tar.add(dist_dir, arcname=os.path.basename(dist_dir))
+        print(f"Tar.gz archive created: {tar_name}")
+    else:
+        if platform_name == 'darwin':
+            platform_name = 'macos'
         zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(dist_dir):
@@ -97,11 +104,6 @@ def create_archive():
                     arcname = os.path.relpath(file_path, dist_dir)
                     zipf.write(file_path, arcname)
         print(f"Zip archive created: {zip_name}")
-    else:
-        tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
-        with tarfile.open(tar_name, 'w:gz') as tar:
-            tar.add(dist_dir, arcname=os.path.basename(dist_dir))
-        print(f"Tar.gz archive created: {tar_name}")
 
 if __name__ == '__main__':
     check_modules()
