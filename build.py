@@ -1,11 +1,21 @@
 # On Linux systems, you may need to install the following packages:
-# sudo apt-get install python3-venv python3-pip python3-tk
+# sudo apt-get install python3-venv python3-pip python3-tk python3-requests
 
 import sys
 import os
 import subprocess
 import platform
 import zipfile
+import tarfile
+import importlib.util
+
+def check_modules():
+    required_modules = ['tkinter', 'venv', 'requests']
+    for module in required_modules:
+        if importlib.util.find_spec(module) is None:
+            print(f"Module {module} is not installed.")
+            sys.exit(1)
+    print("All required modules are installed.")
 
 def ensure_ffmpeg():
     exe = '.exe' if platform.system() == 'Windows' else ''
@@ -68,29 +78,36 @@ def build_with_pyinstaller():
         print("Error building with PyInstaller.")
         sys.exit(completed_process.returncode)
     print("Build completed.")
-
-def create_zip():
-    print("Creating zip archive...")
+    
+def create_archive():
+    print("Creating archive...")
     with open('main/VERSION', 'r') as f:
         version = f.read().strip()
     
     dist_dir = 'dist'
     platform_name = platform.system().lower()
     arch = platform.machine().lower()
-    zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
     
-    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, _, files in os.walk(dist_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, dist_dir)
-                zipf.write(file_path, arcname)
-    print(f"Zip archive created: {zip_name}")
+    if platform.system() == 'Windows':
+        zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
+        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(dist_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, dist_dir)
+                    zipf.write(file_path, arcname)
+        print(f"Zip archive created: {zip_name}")
+    else:
+        tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
+        with tarfile.open(tar_name, 'w:gz') as tar:
+            tar.add(dist_dir, arcname=os.path.basename(dist_dir))
+        print(f"Tar.gz archive created: {tar_name}")
 
 if __name__ == '__main__':
+    check_modules()
     ensure_ffmpeg()
     ensure_ffsubsync()
     create_virtualenv()
     install_requirements()
     build_with_pyinstaller()
-    create_zip()
+    create_archive()
