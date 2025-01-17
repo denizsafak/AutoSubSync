@@ -76,4 +76,4 @@ jobs:
           generate_release_notes: true
           draft: true
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
