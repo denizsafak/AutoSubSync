@@ -72,7 +72,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           prerelease: false
-          files: ${{ env.RELEASE_FILES }}
+          files: ${{ env.DIST_DIR }}/*
           generate_release_notes: true
           draft: true
         env:
