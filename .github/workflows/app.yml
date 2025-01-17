@@ -73,7 +73,7 @@ jobs:
         with:
           prerelease: false
           files: ${{ env.DIST_DIR }}/*
-          generate_release_notes: true
+          generate_release_notes: false
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
