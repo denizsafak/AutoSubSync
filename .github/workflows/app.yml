@@ -58,31 +58,21 @@ jobs:
             *.tar.gz
 
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-
-      - name: Read version from VERSION file
-        id: get_version
-        run: |
-          VERSION=$(cat main/VERSION)
-          echo "version=$VERSION" >> $GITHUB_ENV
-
-      - name: Download build artifacts
+      - name: Download builds
         uses: actions/download-artifact@v4
         with:
-          path: release_assets
+          path: ${{ env.DIST_DIR }}
+          pattern: build-*
+          merge-multiple: true
 
-      - name: Create a new release
-        uses: actions/create-release@v1
+      - name: Release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.version }}
-          release_name: AutoSubSync v${{ env.version }}
-          draft: false
           prerelease: false
-          files: release_assets/*.zip, release_assets/*.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ env.RELEASE_FILES }}
+          generate_release_notes: true
+          draft: true
