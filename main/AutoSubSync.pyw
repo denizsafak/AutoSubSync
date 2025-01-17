@@ -114,10 +114,10 @@ VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.webm', '.flv', '.mov', '.wmv', '.m
 COLOR_SCHEMES = {
     "COLOR_BW": ("black", "white"),
     "COLOR_WB": ("white", "black"),
+    "COLOR_BACKGROUND": ("#f1f0f1", "#202020"),
     "COLOR_PRIMARY": ("gray85", "gray10"),
     "COLOR_SECONDARY": ("gray75", "gray30"),
     "COLOR_TAB_INACTVE": ("gray20", "gray60"),
-    "COLOR_BACKGROUND": ("#f2f3f2", "#202020"),
     "COLOR_PROGRESSBAR": ("#00a31e", "#00a31e"),
     "COLOR_ZERO": ("lightgrey", "grey10"),
     "COLOR_ONE": ("lightgrey", "grey20"),
