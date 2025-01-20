@@ -12,8 +12,11 @@ import importlib.util
 def check_modules():
     required_modules = ['tkinter', 'venv', 'requests']
     for module in required_modules:
-        if importlib.util.find_spec(module) is None:
-            print(f"Module {module} is not installed.")
+        try:
+            if importlib.util.find_spec(module) is None:
+                raise ImportError(f"Module '{module}' is not installed.")
+        except ImportError as e:
+            print(e)
             sys.exit(1)
     print("All required modules are installed.")
 
