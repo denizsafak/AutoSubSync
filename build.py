@@ -9,11 +9,13 @@ import importlib.util
 def check_modules():
     required_modules = ['pip', 'tkinter', 'venv']
     for module in required_modules:
-        if importlib.util.find_spec(module) is None:
+        try:
+            importlib.import_module(module)
+        except ImportError:
             if module == 'pip':
                 sys.stderr.write("Module 'pip' is not installed. Please install it using your system's package manager.\n")
                 sys.stderr.write("Debian: sudo apt-get install python3-pip\n")
-                sys.stderr.write("Arch Linux: sudo pacman -S python-pip\n")
+                sys.stderr.write("Arch Linux: sudo pacman -S python\n")
                 sys.stderr.write("Fedora: sudo dnf install python3-pip\n")
                 sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
