@@ -11,7 +11,7 @@ If new version of alass releases, please just replace "/alass-bin/alass-cli.exe"
 
 ```
 Current ffsubsync version: v0.4.27
-GitHub: https://github.com/qwqcode/ffsubsync-bin/releases/tag/v0.4.26
+GitHub: https://github.com/denizsafak/ffsubsync-bin-core/releases/tag/v0.4.27
 Release Date: Nov 18, 2024
 ```
 
