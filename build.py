@@ -15,7 +15,7 @@ def check_modules():
             if module == 'pip':
                 sys.stderr.write("Module 'pip' is not installed. Please install it using your system's package manager.\n")
                 sys.stderr.write("Debian: sudo apt-get install python3-pip\n")
-                sys.stderr.write("Arch Linux: sudo pacman -S python\n")
+                sys.stderr.write("Arch Linux: sudo pacman -Syu python python-pip\n")
                 sys.stderr.write("Fedora: sudo dnf install python3-pip\n")
                 sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
@@ -29,7 +29,7 @@ def check_modules():
             elif module == 'venv':
                 sys.stderr.write("Module 'venv' is not installed. Please install it using your system's package manager.\n")
                 sys.stderr.write("Debian: sudo apt-get install python3-venv\n")
-                sys.stderr.write("Arch Linux: sudo pacman -S python\n")
+                sys.stderr.write("Arch Linux: sudo pacman -Syu python python-venv\n")
                 sys.stderr.write("Fedora: sudo dnf install python3-venv\n")
                 sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
