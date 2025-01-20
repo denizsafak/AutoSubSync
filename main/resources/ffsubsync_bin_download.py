@@ -6,7 +6,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
 
 # URL base for downloading the latest ffsubsync binary
-FFSUBSYNC_GITHUB_URL = "https://github.com/qwqcode/ffsubsync-bin/releases/latest/download"
+FFSUBSYNC_GITHUB_URL = "https://github.com/denizsafak/ffsubsync-bin-core/releases/latest/download"
 DIST_BIN_PATH = 'ffsubsync-bin'
 
 def get_bin_name(bin_name):
