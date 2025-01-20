@@ -3987,7 +3987,7 @@ alass_split_penalty_slider = tk.Scale(
     label=LABEL_SPLIT_PENALTY, 
     command=lambda value: update_config('alass_split_penalty', alass_split_penalty_var.get()),
     highlightthickness=5,
-    highlightbackground=COLOR_BACKGROUND,  # Change the border color
+    highlightbackground=COLOR_BACKGROUND, # Change the border color
     troughcolor=COLOR_ONE, # Set the background color of the trough
     activebackground=COLOR_BACKGROUND  # Set the background color when hovering
 )
@@ -4017,7 +4017,7 @@ else:
 sync_tool_var_auto.trace_add("write", on_sync_tool_change)
 sync_tool_label = tk.Label(sync_frame, text=SYNC_TOOL_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW)
 sync_tool_label.grid(row=0, column=0, padx=(5, 0), sticky="w")
-sync_tool_menu_auto.grid(row=0, column=0, padx=(70, 0), sticky="w")
+sync_tool_menu_auto.grid(row=0, column=1, padx=(0, 0), sticky="w")
 action_menu_auto.grid(row=6, column=0, padx=(10, 0), pady=(5,10), sticky="w", columnspan=2)
 subtitle_input.drop_target_register(DND_FILES)
 automatic_tab.columnconfigure(1, weight=1)
