@@ -13,6 +13,7 @@ import ctypes
 import json
 import requests
 import platform
+import webbrowser
 import texts
 
 # Set the working directory to the script's directory
@@ -940,7 +941,8 @@ top_right_frame = ttk.Frame(root)
 top_right_frame.grid(row=0, column=0, sticky="ne", padx=0, pady=0)
 # Add "GitHub" label on the right side of the tabs
 github_label = ttk.Label(top_right_frame, text="GitHub", cursor="hand2", background=COLOR_BACKGROUND, foreground=COLOR_SEVEN, underline=True)
-github_label.bind("<Button-1>", lambda event: os.system("start "+GITHUB_URL))
+# Add at top of file with other imports:
+github_label.bind("<Button-1>", lambda event: webbrowser.open(GITHUB_URL))
 github_label.grid(row=0, column=0, sticky="ne", padx=0, pady=(10,0))
 # Settings
 default_settings = {
@@ -1049,7 +1051,7 @@ def check_for_updates():
                 return [int(x) for x in v.split('.')]
             if parse_version(latest_version) > parse_version(VERSION):
                 if messagebox.askyesno(texts.UPDATE_AVAILABLE_TITLE[LANGUAGE], texts.UPDATE_AVAILABLE_TEXT[LANGUAGE].format(latest_version=latest_version)):
-                    os.system("start " + GITHUB_LATEST_RELEASE_URL)
+                    webbrowser.open(GITHUB_LATEST_RELEASE_URL)
         except Exception:
             pass
 
@@ -1660,30 +1662,30 @@ def start_batch_sync():
     
     total_items = valid_pairs
     completed_items = 0
-    cancel_flag = False
+    cancel_flag_batch = False
 
     def cancel_batch_sync():
-        global process, cancel_flag, process_list
-        cancel_flag = True
+        global process, cancel_flag_batch, process_list
+        cancel_flag_batch = True
         
         for process in process_list:
             try:
-                system = platform.system()
-                if system == "Windows":
+                if platform.system() == "Windows":
                     create_process(['taskkill', '/F', '/T', '/PID', str(process.pid)], hide_output=True)
-                elif system in ["Linux", "Darwin"]:
-                    process.kill()
-                    try:
-                        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                    except (ProcessLookupError, OSError):
-                        pass
                 else:
-                    log_message(f"Unsupported operating system: {system}", "error", tab='auto')
+                    # Try graceful termination first
+                    process.terminate()
+                    # Wait briefly for process to end
+                    try:
+                        process.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
+                        # If process doesn't respond, force kill
+                        process.kill()
             except Exception as e:
                 log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
-    
+
         process_list.clear()
-                    
+                        
         log_message(BATCH_SYNC_CANCELLED, "error", tab='auto')
         root.update_idletasks()
         restore_window()
@@ -1745,14 +1747,12 @@ def start_batch_sync():
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
     def execute_cmd(cmd):
-        global process, cancel_flag
+        global process, cancel_flag_batch
         decoding_error_occurred = False
         try:
             process = create_process(cmd)
             for output in process.stdout:
-                if cancel_flag:
-                    process.kill()
-                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                if cancel_flag_batch:
                     break
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
@@ -1781,7 +1781,7 @@ def start_batch_sync():
             return 1, decoding_error_occurred  # Ensure a tuple is returned
 
     def run_batch_process():
-        global cancel_flag
+        global cancel_flag_batch
         nonlocal completed_items
         success_count = 0
         failure_count = 0
@@ -1789,11 +1789,11 @@ def start_batch_sync():
         subtitles_to_process = []
         failed_syncs = []
         add_suffix = True
-        cancel_flag = False
+        cancel_flag_batch = False
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             add_suffix = False
         for parent in tree_items:
-            if cancel_flag:
+            if cancel_flag_batch:
                 break
             parent_values = treeview.item(parent, "values")
             if not parent_values:
@@ -1802,7 +1802,7 @@ def start_batch_sync():
             video_file = parent_values[0] if len(parent_values) > 0 else ""
             subtitles = treeview.get_children(parent)
             for sub in subtitles:
-                if cancel_flag:
+                if cancel_flag_batch:
                     break
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
@@ -1856,7 +1856,7 @@ def start_batch_sync():
         else:
             skip = False
         for parent in tree_items:
-            if cancel_flag:
+            if cancel_flag_batch:
                 break
             parent_values = treeview.item(parent, "values")
             if not parent_values:
@@ -1864,7 +1864,7 @@ def start_batch_sync():
             video_file = parent_values[0] if len(parent_values) > 0 else ""
             subtitles = treeview.get_children(parent)
             for sub in subtitles:
-                if cancel_flag:
+                if cancel_flag_batch:
                     break
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
@@ -2036,7 +2036,7 @@ def start_batch_sync():
                             if subtitle_file_converted:
                                 log_window.insert(tk.END, f"{DELETING_CONVERTED_SUBTITLE}\n\n")
                                 os.remove(subtitle_file_converted)
-                    if cancel_flag:
+                    if cancel_flag_batch:
                         return
                     if returncode == 0:
                         log_window.insert(tk.END, f"{SYNC_SUCCESS.format(output_subtitle_file=output_subtitle_file)}")
@@ -2055,7 +2055,7 @@ def start_batch_sync():
                 completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
-        if not cancel_flag:
+        if not cancel_flag_batch:
             log_window.insert(tk.END, f"{BATCH_SYNC_COMPLETED}\n")
             log_window.insert(tk.END, f"{SYNC_SUCCESS_COUNT.format(success_count=success_count)}\n")
             if failure_count > 0:
@@ -2795,7 +2795,7 @@ def reference_subtitle_subtitle_pairs():
         if selected:
             file_paths_list.pop(selected[0])
             listbox.delete(selected[0])
-            sort_listbox(listbox, file_paths_list)
+            sort_both_listboxes()
             log_message_reference(REMOVED_ITEM, "info")
         else:
             log_message_reference(NO_ITEM_SELECTED_TO_REMOVE, "info")
@@ -3379,25 +3379,29 @@ def start_automatic_sync():
             suffix += 1
 
     def cancel_automatic_sync():
-        global process, cancel_flag
-        cancel_flag = True
-        if process:
-            try:
-                if platform.system() == "Windows":
-                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], 
-                                    stdout=subprocess.DEVNULL, 
-                                    stderr=subprocess.DEVNULL,
-                                    creationflags=subprocess.CREATE_NO_WINDOW)
-                else:
-                    process.kill()
-                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-                process = None
-                log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
-            except Exception as e:
-                log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
-        else:
-            log_message(NO_SYNC_PROCESS, "error", tab='auto')
-        restore_window()
+            global process, cancel_flag
+            cancel_flag = True
+            if process:
+                try:
+                    if platform.system() == "Windows":
+                        subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], 
+                                        stdout=subprocess.DEVNULL, 
+                                        stderr=subprocess.DEVNULL,
+                                        creationflags=subprocess.CREATE_NO_WINDOW)
+                    else:
+                        # Try graceful termination first
+                        process.terminate()
+                        try:
+                            process.wait(timeout=5)  # Wait up to 5 seconds
+                        except subprocess.TimeoutExpired:
+                            process.kill()  # Force kill if timeout
+                    process = None
+                    log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
+                except Exception as e:
+                    log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+            else:
+                log_message(NO_SYNC_PROCESS, "error", tab='auto')
+            restore_window()
         
     def cancel_process_on_window_close():
         if process:
@@ -4300,11 +4304,5 @@ try:
             root.iconphoto(True, icon)
 except Exception as e:
     pass
-if __name__ == "__main__":
-    # Import Linux-specific modules if needed
-    if platform.system() == "Linux":
-        import signal
-        # Enable process group handling for Linux
-        os.setpgrp()
 root.deiconify() # Show the window after it's been built
 root.mainloop()
