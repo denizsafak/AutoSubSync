@@ -12,12 +12,13 @@ import importlib.util
 def check_modules():
     required_modules = ['tkinter', 'venv', 'requests']
     for module in required_modules:
-        try:
-            if importlib.util.find_spec(module) is None:
-                raise ImportError(f"Module '{module}' is not installed.")
-        except ImportError as e:
-            print(e)
-            sys.exit(1)
+        if importlib.util.find_spec(module) is None:
+            if module in ['requests', 'venv']:
+                print(f"Module '{module}' is not installed. Installing...")
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', module])
+            else:
+                sys.stderr.write(f"Module '{module}' is not installed.\n")
+                sys.exit(1)
     print("All required modules are installed.")
 
 def ensure_ffmpeg():
