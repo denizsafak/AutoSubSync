@@ -137,6 +137,7 @@ def create_archive():
         print(f"Zip archive created: {zip_name}")
 
 if __name__ == '__main__':
+    check_modules()
     create_virtualenv()
     install_requirements()
     ensure_ffmpeg()
