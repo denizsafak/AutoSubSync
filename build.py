@@ -1,6 +1,3 @@
-# On Linux systems, you may need to install the following packages:
-# sudo apt-get install python3-venv python3-pip python3-tk python3-requests
-
 import sys
 import os
 import subprocess
@@ -10,54 +7,34 @@ import tarfile
 import importlib.util
 
 def check_modules():
-    required_modules = ['pip', 'tkinter', 'venv', 'requests']
-    for module in required_modules:
-        if importlib.util.find_spec(module) is None:
-            if module in ['requests', 'venv']:
-                print(f"Module '{module}' is not installed. Installing...")
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', module])
-            elif module == 'pip':
-                sys.stderr.write("Module 'pip' is not installed. Please install it using your system's package manager.\n")
-                sys.stderr.write("Debian: sudo apt-get install python3-pip\n")
-                sys.stderr.write("Arch Linux: sudo pacman -S python-pip\n")
-                sys.stderr.write("Fedora: sudo dnf install python3-pip\n")
-                sys.stderr.write("macOS: brew install python3\n")
-                sys.exit(1)
-            elif module == 'tkinter':
-                sys.stderr.write("Module 'tkinter' is not installed. Please install it using your system's package manager.\n")
-                sys.stderr.write("Debian: sudo apt-get install python3-tk\n")
-                sys.stderr.write("Arch Linux: sudo pacman -S tk\n")
-                sys.stderr.write("Fedora: sudo dnf install python3-tkinter\n")
-                sys.stderr.write("macOS: brew install python-tk\n")
-                sys.exit(1)
-    print("All required modules are installed.")
+    required_modules = {
+        'pip': {
+            'Debian': 'sudo apt-get install python3-pip',
+            'Arch Linux': 'sudo pacman -S python-pip',
+            'Fedora': 'sudo dnf install python3-pip',
+            'macOS': 'brew install python3'
+        },
+        'tkinter': {
+            'Debian': 'sudo apt-get install python3-tk',
+            'Arch Linux': 'sudo pacman -S tk',
+            'Fedora': 'sudo dnf install python3-tkinter',
+            'macOS': 'brew install python-tk'
+        },
+        'venv': {
+            'Debian': 'sudo apt-get install python3-venv',
+            'Arch Linux': 'sudo pacman -S python-virtualenv',
+            'Fedora': 'sudo dnf install python3-virtualenv',
+            'macOS': 'brew install python3'
+        }
+    }
 
-def ensure_ffmpeg():
-    exe = '.exe' if platform.system() == 'Windows' else ''
-    ffmpeg_dir = 'main/resources/ffmpeg-bin'
-    
-    if not all(os.path.exists(os.path.join(ffmpeg_dir, f'{app}{exe}')) 
-               for app in ['ffmpeg', 'ffprobe']):
-        print("FFmpeg executables not found, running ffmpeg_download.py...")
-        if subprocess.run([sys.executable, 'main/resources/ffmpeg_download.py'], text=True).returncode != 0:
-            print("Error downloading FFmpeg.")
+    for module, commands in required_modules.items():
+        if importlib.util.find_spec(module) is None:
+            sys.stderr.write(f"Module '{module}' is not installed. Please install it using your system's package manager.\n")
+            for system, command in commands.items():
+                sys.stderr.write(f"{system}: {command}\n")
             sys.exit(1)
-        print("FFmpeg downloaded.")
-    else:
-        print("FFmpeg executables already exist. Skipping download.")
-        
-def ensure_ffsubsync():
-    exe = '.exe' if platform.system() == 'Windows' else ''
-    ffsubsync_dir = 'main/resources/ffsubsync-bin'
-    
-    if not os.path.exists(os.path.join(ffsubsync_dir, f'ffsubsync{exe}')):
-        print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
-        if subprocess.run([sys.executable, 'main/resources/ffsubsync_bin_download.py'], text=True).returncode != 0:
-            print("Error downloading ffsubsync.")
-            sys.exit(1)
-        print("ffsubsync downloaded.")
-    else:
-        print("ffsubsync executable already exists. Skipping download.")
+    print("All required modules are installed.")
 
 def create_virtualenv():
     if not os.path.exists('venv'):
@@ -81,6 +58,41 @@ def install_requirements():
         print("Error installing requirements.")
         sys.exit(completed_process.returncode)
     print("Requirements installed.")
+
+def ensure_ffmpeg():
+    exe = '.exe' if platform.system() == 'Windows' else ''
+    ffmpeg_dir = 'main/resources/ffmpeg-bin'
+    
+    if not all(os.path.exists(os.path.join(ffmpeg_dir, f'{app}{exe}')) 
+               for app in ['ffmpeg', 'ffprobe']):
+        print("FFmpeg executables not found, running ffmpeg_download.py...")
+        if platform.system() == 'Windows':
+            python_executable = 'venv\\Scripts\\python'
+        else:
+            python_executable = 'venv/bin/python'
+        if subprocess.run([python_executable, 'main/resources/ffmpeg_download.py'], text=True).returncode != 0:
+            print("Error downloading FFmpeg.")
+            sys.exit(1)
+        print("FFmpeg downloaded.")
+    else:
+        print("FFmpeg executables already exist. Skipping download.")
+        
+def ensure_ffsubsync():
+    exe = '.exe' if platform.system() == 'Windows' else ''
+    ffsubsync_dir = 'main/resources/ffsubsync-bin'
+    
+    if not os.path.exists(os.path.join(ffsubsync_dir, f'ffsubsync{exe}')):
+        print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
+        if platform.system() == 'Windows':
+            python_executable = 'venv\\Scripts\\python'
+        else:
+            python_executable = 'venv/bin/python'
+        if subprocess.run([python_executable, 'main/resources/ffsubsync_bin_download.py'], text=True).returncode != 0:
+            print("Error downloading ffsubsync.")
+            sys.exit(1)
+        print("ffsubsync downloaded.")
+    else:
+        print("ffsubsync executable already exists. Skipping download.")
 
 def build_with_pyinstaller():
     print("Building with PyInstaller...")
@@ -125,10 +137,9 @@ def create_archive():
         print(f"Zip archive created: {zip_name}")
 
 if __name__ == '__main__':
-    check_modules()
-    ensure_ffmpeg()
-    ensure_ffsubsync()
     create_virtualenv()
     install_requirements()
+    ensure_ffmpeg()
+    ensure_ffsubsync()
     build_with_pyinstaller()
     create_archive()
