@@ -7,6 +7,12 @@ import io
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
 
+# This fork ↓ has a newer version of ffsubsync.
+# If the current ffsubsync does not release a new version in the future, use the one below.
+# I won't update it for a while because there is no issues in the current one, so far.
+
+# FFMPEG_GITHUB_URL = "https://github.com/davepagurek/ffmpeg-static/releases/latest/download"
+
 # URL base for downloading the latest FFmpeg binary
 FFMPEG_GITHUB_URL = "https://github.com/eugeneware/ffmpeg-static/releases/latest/download"
 DIST_BIN_PATH = 'ffmpeg-bin'
