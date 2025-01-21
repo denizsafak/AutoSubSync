@@ -1,4 +1,4 @@
-name: Build AutoSubSync
+name: AutoSubSync
 
 on:
   workflow_dispatch:
