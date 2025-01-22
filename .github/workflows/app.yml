@@ -84,10 +84,10 @@ jobs:
       - name: Parse versions.json
         id: parse_versions
         run: |
-          version=$(jq -r '.AutoSubSync' main/resources/versions.json)
-          ffmpeg_version=$(jq -r '.ffmpeg' main/resources/versions.json)
-          ffsubsync_version=$(jq -r '.ffsubsync' main/resources/versions.json)
-          alass_version=$(jq -r '.alass' main/resources/versions.json)
+          version=$(jq -r '.AutoSubSync' versions.json)
+          ffmpeg_version=$(jq -r '.ffmpeg' versions.json)
+          ffsubsync_version=$(jq -r '.ffsubsync' versions.json)
+          alass_version=$(jq -r '.alass' versions.json)
           echo "version=$version" >> $GITHUB_ENV
           echo "ffmpeg_version=$ffmpeg_version" >> $GITHUB_ENV
           echo "ffsubsync_version=$ffsubsync_version" >> $GITHUB_ENV
