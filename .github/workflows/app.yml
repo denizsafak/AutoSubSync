@@ -61,10 +61,10 @@ jobs:
         run: |
           if (Test-Path main/resources/versions.json) {
             $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
-            echo "::set-output name=version::$($json.AutoSubSync)"
-            echo "::set-output name=ffmpeg_version::$($json.ffmpeg)"
-            echo "::set-output name=ffsubsync_version::$($json.ffsubsync)"
-            echo "::set-output name=alass_version::$($json.alass)"
+            echo "version=$($json.AutoSubSync)" >> $env:GITHUB_OUTPUT
+            echo "ffmpeg_version=$($json.ffmpeg)" >> $env:GITHUB_OUTPUT
+            echo "ffsubsync_version=$($json.ffsubsync)" >> $env:GITHUB_OUTPUT
+            echo "alass_version=$($json.alass)" >> $env:GITHUB_OUTPUT
           } else {
             Write-Host "versions.json not found"
           }
@@ -95,9 +95,9 @@ jobs:
           tag_name: "v${{ needs.build.outputs.version }}"
           name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
-            >${{ needs.build.outputs.ffmpeg_version }}
-            >${{ needs.build.outputs.ffsubsync_version }}
-            >${{ needs.build.outputs.alass_version }}
+            [ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
+            [ffsubsync](https://github.com/smacke/ffsubsync): ${{ needs.build.outputs.ffsubsync_version }}
+            [alass](https://github.com/kaegi/alass): ${{ needs.build.outputs.alass_version }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
