@@ -94,6 +94,15 @@ def ensure_ffsubsync():
     else:
         print("ffsubsync executable already exists. Skipping download.")
 
+def get_autosubsync_version():
+    try:
+        with open("main/VERSION", "r") as f:
+            version = f.read().strip()
+        print(f"Detected AutoSubSync version: {version}")
+        return version
+    except:
+        return "unknown"
+
 def get_ffmpeg_version():
     try:
         ffmpeg_path = os.path.join("main", "resources", "ffmpeg-bin", "ffmpeg.exe")
@@ -130,6 +139,7 @@ def get_alass_version():
 def check_versions():
     if platform.system() == 'Windows':
         versions = {
+            "AutoSubSync": get_autosubsync_version(),
             "ffmpeg": get_ffmpeg_version(),
             "ffsubsync": get_ffsubsync_version(),
             "alass": get_alass_version()
