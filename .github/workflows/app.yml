@@ -25,6 +25,12 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+      ffmpeg_version: ${{ steps.set-version.outputs.ffmpeg_version }}
+      ffsubsync_version: ${{ steps.set-version.outputs.ffsubsync_version }}
+      alass_version: ${{ steps.set-version.outputs.alass_version }}
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -51,13 +57,14 @@ jobs:
 
       - name: Parse versions.json (Windows)
         if: matrix.os == 'windows-latest'
+        id: set-version
         run: |
           if (Test-Path main/resources/versions.json) {
             $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
-            echo "version=$($json.AutoSubSync)" | Out-File -FilePath $env:GITHUB_ENV -Append
-            echo "ffmpeg_version=$($json.ffmpeg)" | Out-File -FilePath $env:GITHUB_ENV -Append
-            echo "ffsubsync_version=$($json.ffsubsync)" | Out-File -FilePath $env:GITHUB_ENV -Append
-            echo "alass_version=$($json.alass)" | Out-File -FilePath $env:GITHUB_ENV -Append
+            echo "::set-output name=version::$($json.AutoSubSync)"
+            echo "::set-output name=ffmpeg_version::$($json.ffmpeg)"
+            echo "::set-output name=ffsubsync_version::$($json.ffsubsync)"
+            echo "::set-output name=alass_version::$($json.alass)"
           } else {
             Write-Host "versions.json not found"
           }
@@ -85,12 +92,12 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ env.version }}"
-          name: "AutoSubSync v${{ env.version }}"
+          tag_name: "v${{ needs.build.outputs.version }}"
+          name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
-            >${{ env.ffmpeg_version }}
-            >${{ env.ffsubsync_version }}
-            >${{ env.alass_version }}
+            >${{ needs.build.outputs.ffmpeg_version }}
+            >${{ needs.build.outputs.ffsubsync_version }}
+            >${{ needs.build.outputs.alass_version }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
