@@ -57,12 +57,17 @@ jobs:
             *.zip
             *.tar.gz
 
-      - name: Upload versions.json
+      - name: Parse versions.json
         if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: versions-json
-          path: main/resources/versions.json
+        run: |
+          version=$(jq -r '.AutoSubSync' main/resources/versions.json)
+          ffmpeg_version=$(jq -r '.ffmpeg' main/resources/versions.json)
+          ffsubsync_version=$(jq -r '.ffsubsync' main/resources/versions.json)
+          alass_version=$(jq -r '.alass' main/resources/versions.json)
+          echo "version=$version" >> $GITHUB_ENV
+          echo "ffmpeg_version=$ffmpeg_version" >> $GITHUB_ENV
+          echo "ffsubsync_version=$ffsubsync_version" >> $GITHUB_ENV
+          echo "alass_version=$alass_version" >> $GITHUB_ENV
 
   release:
     needs: build
@@ -75,33 +80,15 @@ jobs:
           pattern: build-*
           merge-multiple: true
 
-      - name: Download versions.json
-        uses: actions/download-artifact@v4
-        with:
-          name: versions-json
-          path: versions.json
-
-      - name: Parse versions.json
-        id: parse_versions
-        run: |
-          version=$(jq -r '.AutoSubSync' versions.json)
-          ffmpeg_version=$(jq -r '.ffmpeg' versions.json)
-          ffsubsync_version=$(jq -r '.ffsubsync' versions.json)
-          alass_version=$(jq -r '.alass' versions.json)
-          echo "version=$version" >> $GITHUB_ENV
-          echo "ffmpeg_version=$ffmpeg_version" >> $GITHUB_ENV
-          echo "ffsubsync_version=$ffsubsync_version" >> $GITHUB_ENV
-          echo "alass_version=$alass_version" >> $GITHUB_ENV
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ env.version }}"
           release_name: "AutoSubSync v${{ env.version }}"
           body: |
-            ffmpeg: ${{ env.ffmpeg_version }}
-            ffsubsync: ${{ env.ffsubsync_version }}
-            alass: ${{ env.alass_version }}
+            >ffmpeg: ${{ env.ffmpeg_version }}
+            >ffsubsync: ${{ env.ffsubsync_version }}
+            >alass: ${{ env.alass_version }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
