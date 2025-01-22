@@ -1,7 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+import sys
 import platform
+
+# Add current directory to Python path
+sys.path.insert(0, os.getcwd())
+from main.version import VSVersionInfo
 
 ffmpeg_bin = os.path.join(os.curdir, 'main', 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'main', 'resources', 'alass-bin')
@@ -56,6 +61,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=os.path.join(os.curdir, 'main', 'icon.ico'),
+    version=VSVersionInfo
 )
 
 coll = COLLECT(
