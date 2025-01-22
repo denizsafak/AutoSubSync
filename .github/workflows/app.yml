@@ -95,9 +95,9 @@ jobs:
           tag_name: "v${{ needs.build.outputs.version }}"
           name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
-            [ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
-            [ffsubsync](https://github.com/smacke/ffsubsync): ${{ needs.build.outputs.ffsubsync_version }}
-            [alass](https://github.com/kaegi/alass): ${{ needs.build.outputs.alass_version }}
+            >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
+            >[ffsubsync](https://github.com/smacke/ffsubsync): ${{ needs.build.outputs.ffsubsync_version }}
+            >[alass](https://github.com/kaegi/alass): ${{ needs.build.outputs.alass_version }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
