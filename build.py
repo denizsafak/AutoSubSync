@@ -115,6 +115,8 @@ def create_archive():
     arch = platform.machine().lower()
     
     if platform_name == 'linux':
+        if arch == 'x86_64':
+            arch = 'amd64'
         tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
         with tarfile.open(tar_name, 'w:gz') as tar:
             for root, _, files in os.walk(dist_dir):
