@@ -5,6 +5,7 @@ import platform
 import zipfile
 import tarfile
 import importlib.util
+import json
 
 def check_modules():
     required_modules = ['pip', 'tkinter', 'venv']
@@ -93,6 +94,52 @@ def ensure_ffsubsync():
     else:
         print("ffsubsync executable already exists. Skipping download.")
 
+def get_ffmpeg_version():
+    try:
+        ffmpeg_path = os.path.join("main", "resources", "ffmpeg-bin", "ffmpeg.exe")
+        result = subprocess.run([ffmpeg_path, "-version"], capture_output=True, text=True)
+        first_line = result.stdout.split('\n')[0]
+        # Split by -www and take first part
+        version = first_line.split('-www')[0].strip()
+        # Print version info
+        print(f"Detected FFmpeg version: {version}")
+        return version
+    except:
+        return "unknown"
+
+def get_ffsubsync_version():
+    try:
+        ffsubsync_path = os.path.join("main", "resources", "ffsubsync-bin", "ffsubsync.exe")
+        result = subprocess.run([ffsubsync_path, "--version"], capture_output=True, text=True)
+        version = result.stdout.strip()
+        print(f"Detected ffsubsync version: {version}")
+        return version
+    except:
+        return "unknown"
+
+def get_alass_version():
+    try:
+        alass_path = os.path.join("main", "resources", "alass-bin", "alass-cli.exe")
+        result = subprocess.run([alass_path, "--version"], capture_output=True, text=True)
+        version = result.stdout.strip()
+        print(f"Detected alass version: {version}")
+        return version
+    except:
+        return "unknown"
+
+def check_versions():
+    if platform.system() == 'Windows':
+        versions = {
+            "ffmpeg": get_ffmpeg_version(),
+            "ffsubsync": get_ffsubsync_version(),
+            "alass": get_alass_version()
+        }
+        print("Writing versions to 'versions.json'...")
+        with open(os.path.join("main", "resources", "versions.json"), "w") as f:
+            json.dump(versions, f, indent=2)
+    else:
+        print("Skipping version check for non-Windows platform.")
+
 def build_with_pyinstaller():
     print("Building with PyInstaller...")
     if platform.system() == 'Windows':
@@ -143,5 +190,6 @@ if __name__ == '__main__':
     install_requirements()
     ensure_ffmpeg()
     ensure_ffsubsync()
+    check_versions()
     build_with_pyinstaller()
     create_archive()
