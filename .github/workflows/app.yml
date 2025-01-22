@@ -57,17 +57,18 @@ jobs:
             *.zip
             *.tar.gz
 
-      - name: Parse versions.json
+      - name: Parse versions.json (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          version=$(jq -r '.AutoSubSync' main/resources/versions.json)
-          ffmpeg_version=$(jq -r '.ffmpeg' main/resources/versions.json)
-          ffsubsync_version=$(jq -r '.ffsubsync' main/resources/versions.json)
-          alass_version=$(jq -r '.alass' main/resources/versions.json)
-          echo "version=$version" >> $GITHUB_ENV
-          echo "ffmpeg_version=$ffmpeg_version" >> $GITHUB_ENV
-          echo "ffsubsync_version=$ffsubsync_version" >> $GITHUB_ENV
-          echo "alass_version=$alass_version" >> $GITHUB_ENV
+          $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
+          $version = $json.AutoSubSync
+          $ffmpeg_version = $json.ffmpeg
+          $ffsubsync_version = $json.ffsubsync
+          $alass_version = $json.alass
+          echo "version=$version" >> $env:GITHUB_ENV
+          echo "ffmpeg_version=$ffmpeg_version" >> $env:GITHUB_ENV
+          echo "ffsubsync_version=$ffsubsync_version" >> $env:GITHUB_ENV
+          echo "alass_version=$alass_version" >> $env:GITHUB_ENV
 
   release:
     needs: build
