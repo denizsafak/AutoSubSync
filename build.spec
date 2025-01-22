@@ -6,7 +6,10 @@ import platform
 
 # Add current directory to Python path
 sys.path.insert(0, os.getcwd())
-from main.version import VSVersionInfo
+
+# Only import VSVersionInfo on Windows, because it gives error when building in other OS's.
+if platform.system() == 'Windows':
+    from main.version import VSVersionInfo
 
 ffmpeg_bin = os.path.join(os.curdir, 'main', 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'main', 'resources', 'alass-bin')
