@@ -49,6 +49,19 @@ jobs:
         run: |
           python build.py
 
+      - name: Parse versions.json (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          if (Test-Path main/resources/versions.json) {
+            $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
+            echo "version=$($json.AutoSubSync)" | Out-File -FilePath $env:GITHUB_ENV -Append
+            echo "ffmpeg_version=$($json.ffmpeg)" | Out-File -FilePath $env:GITHUB_ENV -Append
+            echo "ffsubsync_version=$($json.ffsubsync)" | Out-File -FilePath $env:GITHUB_ENV -Append
+            echo "alass_version=$($json.alass)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            Write-Host "versions.json not found"
+          }
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -57,26 +70,10 @@ jobs:
             *.zip
             *.tar.gz
 
-      - name: Parse versions.json (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          if (Test-Path main/resources/versions.json) {
-            $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
-            $version = $json.AutoSubSync
-            $ffmpeg_version = $json.ffmpeg
-            $ffsubsync_version = $json.ffsubsync
-            $alass_version = $json.alass
-            echo "version=$version" >> $env:GITHUB_ENV
-            echo "ffmpeg_version=$ffmpeg_version" >> $env:GITHUB_ENV
-            echo "ffsubsync_version=$ffsubsync_version" >> $env:GITHUB_ENV
-            echo "alass_version=$alass_version" >> $env:GITHUB_ENV
-          } else {
-            Write-Host "versions.json not found"
-          }
-
   release:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Download builds
         uses: actions/download-artifact@v4
