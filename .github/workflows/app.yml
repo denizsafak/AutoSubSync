@@ -60,15 +60,19 @@ jobs:
       - name: Parse versions.json (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
-          $version = $json.AutoSubSync
-          $ffmpeg_version = $json.ffmpeg
-          $ffsubsync_version = $json.ffsubsync
-          $alass_version = $json.alass
-          echo "version=$version" >> $env:GITHUB_ENV
-          echo "ffmpeg_version=$ffmpeg_version" >> $env:GITHUB_ENV
-          echo "ffsubsync_version=$ffsubsync_version" >> $env:GITHUB_ENV
-          echo "alass_version=$alass_version" >> $env:GITHUB_ENV
+          if (Test-Path main/resources/versions.json) {
+            $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
+            $version = $json.AutoSubSync
+            $ffmpeg_version = $json.ffmpeg
+            $ffsubsync_version = $json.ffsubsync
+            $alass_version = $json.alass
+            echo "version=$version" >> $env:GITHUB_ENV
+            echo "ffmpeg_version=$ffmpeg_version" >> $env:GITHUB_ENV
+            echo "ffsubsync_version=$ffsubsync_version" >> $env:GITHUB_ENV
+            echo "alass_version=$alass_version" >> $env:GITHUB_ENV
+          } else {
+            Write-Host "versions.json not found"
+          }
 
   release:
     needs: build
@@ -85,11 +89,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ env.version }}"
-          release_name: "AutoSubSync v${{ env.version }}"
+          name: "AutoSubSync v${{ env.version }}"
           body: |
-            >ffmpeg: ${{ env.ffmpeg_version }}
-            >ffsubsync: ${{ env.ffsubsync_version }}
-            >alass: ${{ env.alass_version }}
+            >${{ env.ffmpeg_version }}
+            >${{ env.ffsubsync_version }}
+            >${{ env.alass_version }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
