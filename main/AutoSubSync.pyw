@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
+from datetime import datetime
+import psutil
 import ctypes
 import json
 import requests
@@ -27,7 +29,7 @@ ffsubsync_bin = os.path.join(os.curdir, 'resources', 'ffsubsync-bin')
 os.environ["PATH"] += os.pathsep + ffmpeg_bin + os.pathsep + alass_bin + os.pathsep + ffsubsync_bin
 
 # Determine correct alass executable based on platform
-if platform.system() == 'Windows' and platform.machine().endswith('64'):
+if platform.system() == 'Windows':
     call_alass = "alass-cli"
 elif platform.system() == 'Linux' and platform.machine().endswith('64'):
     call_alass = "alass-linux64"
@@ -177,12 +179,17 @@ BUTTON_COLOR_BATCH = COLOR_SCHEMES["BUTTON_COLOR_BATCH"][is_dark_theme]
 BUTTON_COLOR_BATCH_ACTIVE = COLOR_SCHEMES["BUTTON_COLOR_BATCH_ACTIVE"][is_dark_theme]
 # Language selection (ALL TRANSLATIONS ARE LOCATED IN "texts.py")
 LANGUAGE = config.get("language", "en")
-LANGUAGES = {
+LANGUAGES = { 
     "English": "en",
-    "Español": "es",
+    "Español": "es", 
     "Türkçe": "tr",
+    "Polski": "pl",
+    "Українська": "uk",
+    "Русский": "ru",
     "中国人": "zh",
-    "Русский": "ru"
+    "日本語": "ja",
+    "한국어": "ko",
+    "हिन्दी": "hi"
 }
 # Tooltip texts for checkboxes
 TOOLTIP_SAVE_TO_DESKTOP = texts.TOOLTIP_SAVE_TO_DESKTOP[LANGUAGE]
@@ -237,6 +244,10 @@ LABEL_KEEP_EXTRACTED_SUBTITLES = texts.LABEL_KEEP_EXTRACTED_SUBTITLES[LANGUAGE]
 LABEL_REMEMBER_THE_CHANGES = texts.LABEL_REMEMBER_THE_CHANGES[LANGUAGE]
 LABEL_RESET_TO_DEFAULT_SETTINGS = texts.LABEL_RESET_TO_DEFAULT_SETTINGS[LANGUAGE]
 # Options
+LABEL_KEEP_LOG_RECORDS = texts.LABEL_KEEP_LOG_RECORDS[LANGUAGE]
+LABEL_OPEN_LOGS_FOLDER = texts.LABEL_OPEN_LOGS_FOLDER[LANGUAGE]
+LABEL_CLEAR_ALL_LOGS = texts.LABEL_CLEAR_ALL_LOGS[LANGUAGE]
+LOG_FILES_DELETE_WARNING = texts.LOG_FILES_DELETE_WARNING[LANGUAGE]
 SYNC_TOOL_FFSUBSYNC = texts.SYNC_TOOL_FFSUBSYNC[LANGUAGE]
 SYNC_TOOL_ALASS = texts.SYNC_TOOL_ALASS[LANGUAGE]
 OPTION_SAVE_NEXT_TO_SUBTITLE = texts.OPTION_SAVE_NEXT_TO_SUBTITLE[LANGUAGE]
@@ -944,9 +955,11 @@ github_label = ttk.Label(top_right_frame, text="GitHub", cursor="hand2", backgro
 # Add at top of file with other imports:
 github_label.bind("<Button-1>", lambda event: webbrowser.open(GITHUB_URL))
 github_label.grid(row=0, column=0, sticky="ne", padx=0, pady=(10,0))
+
 # Settings
 default_settings = {
     "theme": "system",
+    "keep_logs": True,
     "remember_the_changes": True,
     "notify_about_updates": True,
     "ffsubsync_option_framerate": False,
@@ -1071,6 +1084,49 @@ def set_theme(theme):
     update_config("theme", THEME)
     restart_program()
 
+def open_logs_folder():
+    logs_folder = os.path.join(os.path.dirname(__file__), "logs")
+    if not os.path.exists(logs_folder):
+        os.makedirs(logs_folder)
+    os.startfile(logs_folder)
+
+def check_logs_exist():
+    try:
+        logs_folder = os.path.join(os.getcwd(), "logs")
+        txt_files = [f for f in os.listdir(logs_folder) if os.path.isfile(os.path.join(logs_folder, f)) and f.endswith('.txt')]
+        return len(txt_files)
+    except:
+        return 0
+
+def clear_all_logs():
+    logs_folder = os.path.join(os.path.dirname(__file__), "logs")
+    if os.path.exists(logs_folder):
+        num_txt_files = check_logs_exist()
+        if num_txt_files == 0:
+            return
+        if messagebox.askyesno(WARNING, LOG_FILES_DELETE_WARNING.format(count=num_txt_files)):
+            txt_files = [entry.path for entry in os.scandir(logs_folder) if entry.is_file() and entry.name.endswith('.txt')]
+            for file_path in txt_files:
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+
+def toggle_keep_logs():
+    global keep_logs
+    keep_logs = not keep_logs
+    update_config("keep_logs", keep_logs)
+
+def open_settings(event):
+    global logs_exist, log_state
+    logs_exist = check_logs_exist()
+    log_state = "normal" if logs_exist > 0 else "disabled"
+    settings_menu.entryconfig(LABEL_CLEAR_ALL_LOGS, state=log_state)
+    settings_menu.post(event.x_root, event.y_root)
+
+logs_exist = check_logs_exist()
+log_state = "normal" if logs_exist > 0 else "disabled"
+keep_logs = config.get("keep_logs", True)
 notify_about_updates = config.get("notify_about_updates", True)
 keep_converted_subtitles = config.get("keep_converted_subtitles", False)
 keep_extracted_subtitles = config.get("keep_extracted_subtitles", False)
@@ -1099,6 +1155,7 @@ for key, display in themes.items():
 settings_menu.add_cascade(label=THEME_TEXT, menu=theme_menu)
 settings_menu.add_separator()
 # Add other settings to the settings menu
+keep_logs_var = tk.BooleanVar(value=keep_logs)
 keep_converted_var = tk.BooleanVar(value=keep_converted_subtitles)
 keep_extracted_var = tk.BooleanVar(value=keep_extracted_subtitles)
 backup_subtitles_var = tk.BooleanVar(value=backup_subtitles_before_overwriting)
@@ -1113,14 +1170,19 @@ settings_menu.add_checkbutton(label=LABEL_BACKUP_SUBTITLES, command=toggle_backu
 settings_menu.add_checkbutton(label=LABEL_KEEP_CONVERTED_SUBTITLES, command=toggle_keep_converted_subtitles, variable=keep_converted_var)
 settings_menu.add_checkbutton(label=LABEL_KEEP_EXTRACTED_SUBTITLES, command=toggle_keep_extracted_subtitles, variable=keep_extracted_var)
 settings_menu.add_separator()
+# Add Logs options
+settings_menu.add_checkbutton(label=LABEL_KEEP_LOG_RECORDS, command=toggle_keep_logs, variable=keep_logs_var)
+settings_menu.add_command(label=LABEL_OPEN_LOGS_FOLDER, command=open_logs_folder)
+settings_menu.add_command(label=LABEL_CLEAR_ALL_LOGS, command=clear_all_logs, state=log_state)
+settings_menu.add_separator()
+# Other options
 settings_menu.add_checkbutton(label=NOTIFY_ABOUT_UPDATES_TEXT, command=toggle_notify_about_updates, variable=notify_about_updates_var)
 settings_menu.add_checkbutton(label=LABEL_REMEMBER_THE_CHANGES, command=toggle_remember_the_changes, variable=remember_the_changes_var)
 settings_menu.add_command(label=LABEL_RESET_TO_DEFAULT_SETTINGS, command=reset_to_default_settings)
-def open_settings(event):
-    settings_menu.post(event.x_root, event.y_root)
 settings_label.bind("<Button-1>", open_settings)
 settings_label.grid(row=0, column=1, sticky="ne", padx=(5,10), pady=(10,0))
 # settings end
+
 # Customizing the style of the tabs
 style = ttk.Style()
 # Set custom theme
@@ -1593,6 +1655,18 @@ def create_backup(file_path):
         suffix += 1
     shutil.copy2(file_path, backup_file)
     return backup_file
+
+def save_log_file(log_window, suffix=""):
+    if keep_logs:
+        # Save log window content to a log file
+        log_content = log_window.get("1.0", tk.END)
+        log_folder = "logs"
+        os.makedirs(log_folder, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_filename = os.path.join(log_folder, f"{timestamp}{suffix}.txt")
+        with open(log_filename, "w", encoding="utf-8") as log_file:
+            log_file.write(log_content)
+
 def convert_to_srt(subtitle_file, output_dir, log_window):
     file_extension = os.path.splitext(subtitle_file)[-1].lower()
     original_base_name = os.path.basename(os.path.splitext(subtitle_file)[0])  # Store original base name
@@ -1622,17 +1696,111 @@ def convert_to_srt(subtitle_file, output_dir, log_window):
     else:
         log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
         return None
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Define paths to the executables
+ffmpeg_bin = os.path.join(os.curdir, 'resources', 'ffmpeg-bin')
+alass_bin = os.path.join(os.curdir, 'resources', 'alass-bin')
+ffsubsync_bin = os.path.join(os.curdir, 'resources', 'ffsubsync-bin')
+# Add the paths to the system PATH environment variable
+os.environ["PATH"] += os.pathsep + ffmpeg_bin + os.pathsep + alass_bin + os.pathsep + ffsubsync_bin
+
+# Determine correct alass executable based on platform
+if platform.system() == 'Windows':
+    call_alass = "alass-cli"
+elif platform.system() == 'Linux' and platform.machine().endswith('64'):
+    call_alass = "alass-linux64"
+else:
+    call_alass = "alass"  # fallback
+
+# Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
+if platform.system() == 'Windows':
+    call_ffmpeg = os.path.join(ffmpeg_bin, "ffmpeg.exe")
+    call_ffprobe = os.path.join(ffmpeg_bin, "ffprobe.exe")
+    call_ffsubsync = os.path.join(ffsubsync_bin, "ffsubsync.exe")
+else:
+    call_ffmpeg = "ffmpeg"
+    call_ffprobe = "ffprobe"
+    call_ffsubsync = "ffsubsync"
+
+def create_process(cmd):
+    kwargs = {
+        'shell': True,
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.STDOUT,
+        'universal_newlines': True,
+        'encoding': default_encoding,
+        'errors': 'replace'
+    }
+    
+    if platform.system() == "Windows":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        kwargs.update({
+            'startupinfo': startupinfo,
+            'creationflags': subprocess.CREATE_NO_WINDOW
+        })
+    
+    return subprocess.Popen(cmd, **kwargs)
+
+def kill_process_tree(pid):
+    try:
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)
+        # First try to terminate children gracefully
+        for child in children:
+            try:
+                child.terminate()
+            except:
+                pass
+        # Give them some time to terminate
+        gone, still_alive = psutil.wait_procs(children, timeout=3)
+        # Kill remaining children forcefully
+        for child in still_alive:
+            try:
+                child.kill()
+            except:
+                pass
+        # Kill parent process
+        try:
+            parent.terminate()
+            parent.wait(3)
+        except:
+            try:
+                parent.kill()
+            except:
+                pass
+    except psutil.NoSuchProcess:
+        pass
 
 # Convert subtitles to SRT End
 def start_batch_sync():
-    global selected_destination_folder
+    global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
     elif sync_tool == 'ffsubsync':
         SUPPORTED_SUBTITLE_EXTENSIONS = FFSUBSYNC_SUPPORTED_EXTENSIONS
-    global process_list, output_subtitle_files
-    process_list = []
+    process = None
     output_subtitle_files = []
     tree_items = treeview.get_children()
     if action_var_auto.get()  == OPTION_SELECT_DESTINATION_FOLDER:
@@ -1665,30 +1833,18 @@ def start_batch_sync():
     cancel_flag_batch = False
 
     def cancel_batch_sync():
-        global process, cancel_flag_batch, process_list
+        global cancel_flag_batch, process
         cancel_flag_batch = True
-        
-        for process in process_list:
+        if process:
             try:
-                if platform.system() == "Windows":
-                    create_process(['taskkill', '/F', '/T', '/PID', str(process.pid)], hide_output=True)
-                else:
-                    # Try graceful termination first
-                    process.terminate()
-                    # Wait briefly for process to end
-                    try:
-                        process.wait(timeout=1)
-                    except subprocess.TimeoutExpired:
-                        # If process doesn't respond, force kill
-                        process.kill()
+                kill_process_tree(process.pid)
+                process = None
             except Exception as e:
                 log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
-
-        process_list.clear()
-                        
         log_message(BATCH_SYNC_CANCELLED, "error", tab='auto')
         root.update_idletasks()
         restore_window()
+        
     def restore_window():
         batch_input.grid()
         button_start_automatic_sync.grid()
@@ -1717,6 +1873,7 @@ def start_batch_sync():
         tree_frame.grid()  # Show tree_frame
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
+
     def generate_again():
         treeview.delete(*treeview.get_children())
         batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
@@ -1746,32 +1903,51 @@ def start_batch_sync():
         label_message_auto.grid_remove()
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
+
     def execute_cmd(cmd):
-        global process, cancel_flag_batch
+        global cancel_flag_batch, process
         decoding_error_occurred = False
         try:
             process = create_process(cmd)
+            previous_line_had_percentage = False
             for output in process.stdout:
                 if cancel_flag_batch:
-                    break
+                    return
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
+                    # Remove timestamps
+                    output = re.sub(r'\[\d{2}:\d{2}:\d{2}\]\s*', '', output)
+                    # Strip leading spaces
+                    output = output.lstrip()
+                    # If no "INFO|WARNING|CRITICAL|ERROR" in output, add 9 spaces
+                    if not re.search(r'\b(INFO|WARNING|CRITICAL|ERROR)\b', output):
+                        output = '         ' + output
+                    output = ' ' + output
                     match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
                 elif sync_tool == SYNC_TOOL_ALASS:
+                    # Modify ALASS output to show shorter progress bar
+                    if '[' in output and ']' in output:
+                        output = shorten_progress_bar(output)
                     match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
                     if not match_percentage:
                         match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
                 if match_percentage:
+                    if previous_line_had_percentage:
+                        log_window.replace("end-2l", "end-1l", output)
+                    else:
+                        log_window.insert(tk.END, output)
+                    previous_line_had_percentage = True
                     percentage = float(match_percentage.group(1))
                     adjusted_value = min(97, max(1, percentage))
                     progress_increment = (adjusted_value / 100) * (100 / total_items)
                     progress_bar["value"] = (completed_items / total_items) * 100 + progress_increment
-                if "%" in output:
-                    log_window.replace("end-2l", "end-1l", output)
                 else:
                     log_window.insert(tk.END, output)
+                    previous_line_had_percentage = False
+
                 if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                     decoding_error_occurred = True
-            process.wait()
+            if process:
+                process.wait()
             if "error" in output.lower():
                 return 1, decoding_error_occurred
             return process.returncode, decoding_error_occurred
@@ -1781,20 +1957,19 @@ def start_batch_sync():
             return 1, decoding_error_occurred  # Ensure a tuple is returned
 
     def run_batch_process():
-        global cancel_flag_batch
-        nonlocal completed_items
+        global cancel_flag_batch, process
+        nonlocal completed_items, total_items
         success_count = 0
         failure_count = 0
         subtitles_to_skip = set()
         subtitles_to_process = []
         failed_syncs = []
         add_suffix = True
-        cancel_flag_batch = False
         if action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE or action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
             add_suffix = False
         for parent in tree_items:
             if cancel_flag_batch:
-                break
+                return
             parent_values = treeview.item(parent, "values")
             if not parent_values:
                 log_window.insert(tk.END, f"{INVALID_PARENT_ITEM}\n")
@@ -1802,8 +1977,6 @@ def start_batch_sync():
             video_file = parent_values[0] if len(parent_values) > 0 else ""
             subtitles = treeview.get_children(parent)
             for sub in subtitles:
-                if cancel_flag_batch:
-                    break
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
                 if not subtitle_file and not video_file:
@@ -1853,19 +2026,19 @@ def start_batch_sync():
                 ALREADY_SYNCED_FILES_TITLE,
                 ALREADY_SYNCED_FILES_MESSAGE.format(count=count)
             )
+            if skip:
+                total_items -= count
         else:
             skip = False
         for parent in tree_items:
             if cancel_flag_batch:
-                break
+                return
             parent_values = treeview.item(parent, "values")
             if not parent_values:
                 continue
             video_file = parent_values[0] if len(parent_values) > 0 else ""
             subtitles = treeview.get_children(parent)
             for sub in subtitles:
-                if cancel_flag_batch:
-                    break
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
                 original_subtitle_file = subtitle_file  # Store the original subtitle file name
@@ -1874,7 +2047,7 @@ def start_batch_sync():
                 if not subtitle_file:
                     continue
                 if subtitle_file in subtitles_to_skip and skip:
-                    log_window.insert(tk.END, f"\n{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n")
+                    log_window.insert(tk.END, f"{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n\n")
                     continue 
                 original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
                 video_file_converted = None
@@ -1989,9 +2162,7 @@ def start_batch_sync():
                             log_window.insert(tk.END, f"{ALASS_DISABLE_FPS_GUESSING_LOG}\n")
                         if additional_alass_args:
                             log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_alass_args)}\n")
-                    log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
-                    process = create_process(cmd)
-                    process_list.append(process)
+                    log_window.insert(tk.END, f"{SYNCING_STARTED}\n")                    
                 except Exception as e:
                     log_window.insert(tk.END, f"{FAILED_START_PROCESS.format(error_message=str(e))}\n")
                     log_message(FAILED_START_PROCESS.format(error_message=str(e)), "error", tab='auto')
@@ -2050,8 +2221,6 @@ def start_batch_sync():
                     failure_count += 1
                     failed_syncs.append((video_file, subtitle_file))  # store the failed pairs
                     log_window.insert(tk.END, error_msg)
-                if process in process_list:
-                    process_list.remove(process)
                 completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
@@ -2072,6 +2241,27 @@ def start_batch_sync():
             progress_bar.grid_remove()
             log_window.see(tk.END)
             root.after(50, lambda: log_window.see(tk.END))
+            save_log_file(log_window, suffix='_batch')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     try:
         batch_input.grid_remove()
         tree_frame.grid_remove()
@@ -2099,7 +2289,9 @@ def start_batch_sync():
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2",
-            highlightthickness=0
+            highlightthickness=0,
+            takefocus=0,
+            state='normal'
         )
         button_cancel_batch_sync.grid(row=6, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again = tk.Button(
@@ -2115,7 +2307,9 @@ def start_batch_sync():
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2",
-            highlightthickness=0
+            highlightthickness=0,
+            takefocus=0,
+            state='normal'
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
@@ -2132,12 +2326,14 @@ def start_batch_sync():
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2",
-            highlightthickness=0
+            highlightthickness=0,
+            takefocus=0,
+            state='normal'
         )
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
-        log_window.config(font=("Arial", 7), bg=COLOR_WB, fg=COLOR_BW)
+        log_window.config(font=("Consolas", 7, "bold"), bg=COLOR_WB, fg=COLOR_BW)
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         # See the end when the log window is modified
         def on_log_window_modified(event):
@@ -2494,15 +2690,15 @@ def reference_subtitle_subtitle_pairs():
     # Create labels and buttons in headers
     ref_label = ttk.Label(ref_header, text=REF_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     ref_label.grid(row=0, column=0, sticky="w")
-    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths, type="reference"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
+    ref_add_btn = tk.Button(ref_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_left, ref_file_paths, type="reference"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0,takefocus=0,state='normal')
     ref_add_btn.grid(row=0, column=1, padx=(5, 0))
-    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
+    ref_remove_btn = tk.Button(ref_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_left, ref_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0,takefocus=0,state='normal')
     ref_remove_btn.grid(row=0, column=2, padx=(5, 0))
     sub_label = ttk.Label(sub_header, text=SUB_LABEL_TEXT, anchor="w", background=COLOR_BACKGROUND, foreground=COLOR_BW)
     sub_label.grid(row=0, column=0, sticky="w")
-    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths, type = "subtitle"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
+    sub_add_btn = tk.Button(sub_header, text=BUTTON_ADD_FILES, font='Arial 8 bold', command=lambda: load_files(listbox_right, sub_file_paths, type = "subtitle"), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0,takefocus=0,state='normal')
     sub_add_btn.grid(row=0, column=1, padx=(5, 0))
-    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0)
+    sub_remove_btn = tk.Button(sub_header, text=CONTEXT_MENU_REMOVE, font='Arial 8 bold', command=lambda: remove_selected_item(listbox_right, sub_file_paths), padx=4, pady=0, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activeforeground=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, relief=tk.RIDGE, borderwidth=1, cursor="hand2",highlightthickness=0,takefocus=0,state='normal')
     sub_remove_btn.grid(row=0, column=2, padx=(5, 0))
     ref_header.pack_forget()
     sub_header.pack_forget()
@@ -2821,9 +3017,9 @@ def reference_subtitle_subtitle_pairs():
             log_message_reference(NO_VALID_SUBTITLE_PAIRS_TO_PROCESS, "error")
     def cancel():
         window.destroy()
-    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2",highlightthickness=0)
+    cancel_btn = tk.Button(frame_bottom, text=CANCEL_TEXT, command=cancel, padx=30, pady=10, fg=COLOR_WB, bg=DEFAULT_BUTTON_COLOR, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2",highlightthickness=0,takefocus=0,state='normal')
     cancel_btn.pack(side="left", padx=(0, 5))
-    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg=COLOR_WB, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2",highlightthickness=0)
+    process_btn = tk.Button(frame_bottom, text=PROCESS_PAIRS, command=process_pairs, padx=10, pady=10, fg=COLOR_WB, bg=BUTTON_COLOR_BATCH, activebackground=BUTTON_COLOR_BATCH_ACTIVE, activeforeground=COLOR_WB, relief=tk.RAISED, borderwidth=2, cursor="hand2",highlightthickness=0,takefocus=0,state='normal')
     process_btn.pack(side="left", fill="x", expand=True)
     ref_input.bind("<Button-1>", lambda e: load_files(listbox_left, ref_file_paths, type="reference"))
     ref_input.bind("<Enter>", on_enter)
@@ -3105,7 +3301,9 @@ button_change_item = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 button_remove_item = tk.Button(
     tree_frame,
@@ -3121,7 +3319,9 @@ button_remove_item = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 style = ttk.Style()
 style.configure("Treeview", rowheight=25, background=COLOR_ZERO, fieldbackground=COLOR_WB, foreground=COLOR_BW)
@@ -3300,6 +3500,24 @@ def on_subtitle_drop(event):
 
 process = None
 
+def shorten_progress_bar(line):
+    """Shorten the progress bar to 30 characters"""
+    start = line.find('[')
+    end = line.find(']', start)
+    if start != -1 and end != -1:
+        progress_bar = line[start:end+1]
+        percent_start = line.find(' ', end) + 1
+        percent_end = line.find('%', percent_start)
+        percent = float(line[percent_start:percent_end])
+        width = 30  # New shorter width
+        filled = int(width * percent / 100)
+        if filled < width:
+            new_progress_bar = '[' + '=' * (filled-1) + '>' + '-' * (width - filled) + ']'
+        else:
+            new_progress_bar = '[' + '=' * width + ']'
+        return line[:start] + new_progress_bar + line[end+1:]
+    return line
+
 def start_automatic_sync():
     global process, subtitle_file, video_file, output_subtitle_file, cancel_flag
     cancel_flag = False  # Add a flag to check if the process is cancelled
@@ -3379,29 +3597,18 @@ def start_automatic_sync():
             suffix += 1
 
     def cancel_automatic_sync():
-            global process, cancel_flag
-            cancel_flag = True
-            if process:
-                try:
-                    if platform.system() == "Windows":
-                        subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], 
-                                        stdout=subprocess.DEVNULL, 
-                                        stderr=subprocess.DEVNULL,
-                                        creationflags=subprocess.CREATE_NO_WINDOW)
-                    else:
-                        # Try graceful termination first
-                        process.terminate()
-                        try:
-                            process.wait(timeout=5)  # Wait up to 5 seconds
-                        except subprocess.TimeoutExpired:
-                            process.kill()  # Force kill if timeout
-                    process = None
-                    log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
-                except Exception as e:
-                    log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
-            else:
-                log_message(NO_SYNC_PROCESS, "error", tab='auto')
-            restore_window()
+        global process, cancel_flag
+        cancel_flag = True
+        if process:
+            try:
+                kill_process_tree(process.pid)
+                process = None
+                log_message(AUTO_SYNC_CANCELLED, "error", tab='auto')
+            except Exception as e:
+                log_message(ERROR_PROCESS_TERMINATION.format(error_message=str(e)), "error", tab='auto')
+        else:
+            log_message(NO_SYNC_PROCESS, "error", tab='auto')
+        restore_window()
         
     def cancel_process_on_window_close():
         if process:
@@ -3548,22 +3755,38 @@ def start_automatic_sync():
         log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
         progress_line_number = log_window.index(tk.END).split(".")[0]
         decoding_error_occurred = False
+        previous_line_had_percentage = False
         for output in process.stdout:
             if cancel_flag:  # Check if the process is cancelled
                 break
             if sync_tool == SYNC_TOOL_FFSUBSYNC:
+                # Remove timestamps
+                output = re.sub(r'\[\d{2}:\d{2}:\d{2}\]\s*', '', output)
+                # Strip leading spaces
+                output = output.lstrip()
+                # If no "INFO|WARNING|CRITICAL|ERROR" in output, add 9 spaces
+                if not re.search(r'\b(INFO|WARNING|CRITICAL|ERROR)\b', output):
+                    output = '         ' + output
+                output = ' ' + output
                 match_percentage = re.search(r'\b(\d+(\.\d+)?)%\|', output)
             elif sync_tool == SYNC_TOOL_ALASS:
+                # Modify ALASS output to show shorter progress bar
+                if '[' in output and ']' in output:
+                    output = shorten_progress_bar(output)
                 match_percentage = re.search(r'\[\s*=\s*\]\s*(\d+\.\d+)\s*%', output)
                 if not match_percentage:
                     match_percentage = re.search(r'\d+\s*/\s*\d+\s*\[.*\]\s*(\d+\.\d+)\s*%', output)
             if match_percentage:
                 percentage = float(match_percentage.group(1))
                 root.after(10, update_progress_auto, progress_bar, percentage)
-            if "%" in output:
-                log_window.replace("end-2l", "end-1l", output)
+                if previous_line_had_percentage:
+                    log_window.replace("end-2l", "end-1l", output)
+                else:
+                    log_window.insert(tk.END, output)
+                previous_line_had_percentage = True
             else:
                 log_window.insert(tk.END, output)
+                previous_line_had_percentage = False
             if "error while decoding subtitle from bytes to string" in output and sync_tool == SYNC_TOOL_ALASS:
                 decoding_error_occurred = True
         if process is not None and not cancel_flag:
@@ -3651,7 +3874,8 @@ def start_automatic_sync():
                         os.remove(subtitle_file_converted)
             if cancel_flag:
                 return
-            process.wait()
+            if process:
+                process.wait()
             if returncode == 0:
                 log_window.insert(tk.END, f"\n{SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file)}\n")
                 log_message(SYNC_SUCCESS_MESSAGE.format(output_subtitle_file=output_subtitle_file), "success", output_subtitle_file, tab='auto')
@@ -3670,6 +3894,7 @@ def start_automatic_sync():
                 automatic_tab.rowconfigure(1, weight=1)
                 root.update_idletasks()
                 log_window.see(tk.END)
+                save_log_file(log_window, suffix="_normal")
         root.update_idletasks()
     try:
         subtitle_input.grid_remove()
@@ -3700,7 +3925,9 @@ def start_automatic_sync():
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2",
-            highlightthickness=0
+            highlightthickness=0,
+            takefocus=0,
+            state='normal'
         )
         button_cancel_automatic_sync.grid(row=6, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_generate_again = tk.Button(
@@ -3716,7 +3943,9 @@ def start_automatic_sync():
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2",
-            highlightthickness=0
+            highlightthickness=0,
+            takefocus=0,
+            state='normal'
         )
         button_generate_again.grid(row=11, column=0, padx=10, pady=(00,10), sticky="ew", columnspan=2)
         button_generate_again.grid_remove()
@@ -3733,12 +3962,14 @@ def start_automatic_sync():
             relief=tk.RAISED,
             borderwidth=2,
             cursor="hand2",
-            highlightthickness=0
+            highlightthickness=0,
+            takefocus=0,
+            state='normal'
         )
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
-        log_window.config(font=("Arial", 7), bg=COLOR_WB, fg=COLOR_BW)
+        log_window.config(font=("Consolas", 7, "bold"), bg=COLOR_WB, fg=COLOR_BW)
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         # See the end when the log window is modified
         def on_log_window_modified(event):
@@ -3794,7 +4025,9 @@ button_start_automatic_sync = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 remove_subtitle_button = tk.Button(
     automatic_tab,
@@ -3810,7 +4043,9 @@ remove_subtitle_button = tk.Button(
     relief=tk.RIDGE,
     borderwidth=1,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 remove_subtitle_button.grid_remove()
 remove_video_button = tk.Button(
@@ -3827,7 +4062,9 @@ remove_video_button = tk.Button(
     relief=tk.RIDGE,
     borderwidth=1,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 remove_video_button.grid_remove()
 sync_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
@@ -3850,7 +4087,9 @@ ffsubsync_option_framerate = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 ffsubsync_option_gss = tk.Checkbutton(
     automatic_tab,
@@ -3862,7 +4101,9 @@ ffsubsync_option_gss = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 ffsubsync_option_vad = tk.Checkbutton(
     automatic_tab,text=CHECKBOX_VAD,
@@ -3872,7 +4113,9 @@ ffsubsync_option_vad = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 def select_destination_folder():
     global tooltip_action_menu_auto
@@ -3942,9 +4185,9 @@ sync_tool_menu_auto = ttk.OptionMenu(
     sync_tool_var_auto, 
     sync_tool_var_auto_value, 
     SYNC_TOOL_FFSUBSYNC, 
-    SYNC_TOOL_ALASS
+    SYNC_TOOL_ALASS,
 )
-sync_tool_menu_auto.configure(style='TMenubutton')
+sync_tool_menu_auto.configure(style='TMenubutton', takefocus=0)
 sync_tool_var_auto.trace_add("write", on_sync_tool_change)
 action_var_auto.trace_add("write", on_action_menu_change)
 alass_disable_fps_guessing_var = tk.BooleanVar(value=config.get('alass_disable_fps_guessing', False))
@@ -3960,7 +4203,9 @@ alass_disable_fps_guessing = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 
 alass_speed_optimization = tk.Checkbutton(
@@ -3973,7 +4218,9 @@ alass_speed_optimization = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 alass_split_penalty_slider = tk.Scale(
     automatic_tab, 
@@ -4035,7 +4282,9 @@ batch_mode_button = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 batch_mode_button.grid(row=5, column=0, padx=(10,2.5), pady=10, sticky="w")
 # Ensure button_start_automatic_sync is set to expand horizontally
@@ -4163,6 +4412,12 @@ def clear_label_drop_box():
     del label_drop_box.tooltip_text
     button_clear.grid_remove()
 
+def enter_key_bind(event):
+    if button_start_automatic_sync.winfo_viewable():
+        button_start_automatic_sync.invoke()
+    elif button_sync.winfo_viewable():
+        button_sync.invoke()
+
 label_drop_box = tk.Label(manual_tab, text=LABEL_DROP_BOX, bg=COLOR_ONE, fg=COLOR_BW, relief="ridge", width=40, height=17, cursor="hand2")
 label_separator = ttk.Separator(manual_tab, orient='horizontal')
 label_message_manual = tk.Label(manual_tab, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
@@ -4182,7 +4437,9 @@ button_clear = tk.Button(
     relief=tk.RIDGE,
     borderwidth=1,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 button_minus = tk.Button(
     manual_tab, text="-",
@@ -4196,7 +4453,9 @@ button_minus = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 button_plus = tk.Button(
     manual_tab, text="+",
@@ -4210,7 +4469,9 @@ button_plus = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 button_sync = tk.Button(
     manual_tab,
@@ -4225,7 +4486,9 @@ button_sync = tk.Button(
     relief=tk.RAISED,
     borderwidth=2,
     cursor="hand2",
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 save_to_desktop_var = tk.BooleanVar()
 check_save_to_desktop = tk.Checkbutton(
@@ -4238,7 +4501,9 @@ check_save_to_desktop = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 replace_original_var = tk.BooleanVar()
 check_replace_original = tk.Checkbutton(
@@ -4249,7 +4514,9 @@ check_replace_original = tk.Checkbutton(
     selectcolor=COLOR_WB,  # Change the checkbox square background
     activebackground=COLOR_BACKGROUND,
     activeforeground=COLOR_BW,
-    highlightthickness=0
+    highlightthickness=0,
+    takefocus=0,
+    state='normal'
 )
 label_drop_box.grid(row=0, column=0, padx=10, pady=(10,5), sticky="nsew", columnspan=6)
 button_clear.grid(row=0, column=3, padx=(0,12), pady=(12,5), sticky="ne")
@@ -4283,6 +4550,7 @@ def run_after_startup():
 root.after(2000, run_after_startup)
 # Select subtitle file if specified as argument
 select_subtitle_at_startup()
+root.bind('<Return>', enter_key_bind)
 # Calculate minimum width and height based on elements inside
 min_width = label_drop_box.winfo_reqwidth() + 95 
 min_height_automatic = sum(widget.winfo_reqheight() for widget in (label_drop_box, label_separator, button_sync, check_save_to_desktop)) + 200
@@ -4295,13 +4563,12 @@ dark_title_bar(root)
 place_window_top_right()
 # if icon exists, set it as the window icon
 try:
-    if platform.system() == "Windows":
-        if os.path.exists('icon.ico'):
-            root.iconbitmap('icon.ico')
-    else:  # Linux or macOS
-        if os.path.exists('icon.ico'):
-            icon = PhotoImage(file='icon.ico')
-            root.iconphoto(True, icon)
+    if os.path.exists('icon.ico'):
+        if platform.system() == "Windows":
+                root.iconbitmap('icon.ico')
+        else:  # Linux or macOS
+                icon = PhotoImage(file='icon.ico')
+                root.iconphoto(True, icon)
 except Exception as e:
     pass
 root.deiconify() # Show the window after it's been built

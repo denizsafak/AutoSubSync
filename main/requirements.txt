@@ -2,3 +2,4 @@ chardet
 tkinterdnd2
 requests
 pyinstaller
+psutil
