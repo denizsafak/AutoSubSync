@@ -1,6 +1,7 @@
 {
     "language": "en",
     "theme": "system",
+    "keep_logs": true,
     "notify_about_updates": true,
     "remember_the_changes": true,
     "ffsubsync_option_framerate": false,
