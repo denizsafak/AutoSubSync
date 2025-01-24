@@ -48,8 +48,9 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
    - Click the `Shift Subtitle` button to apply the time shift.
  
 ### Settings (Top Right Corner)
-- Language: `English`, `Español`, `Türkçe`, `中国人`, `Русский`
+- Language: `English`, `Español`, `Türkçe`, `Polski`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`
 - Theme: `System`, `Dark`, `Light`
+- Log records and options: `Keep log records`, `Open logs folder` and `Clear all logs`
 - Additional arguments for ffsubsync: Configure additional arguments for ffsubsync.
 - Additional arguments for alass: Configure additional arguments for alass.
 - Check video for subtitle stream in alass: Toggle for checking the subtitle streams in video for alass.
