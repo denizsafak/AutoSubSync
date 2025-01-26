@@ -12,8 +12,12 @@ TOOLTIP_SAVE_TO_DESKTOP = {
     "uk": "Позначте цей прапорець, якщо хочете зберегти нові субтитри на робочому столі. Якщо не позначено, вони будуть збережені в папці вхідних субтитрів.",
     "ja": "新しい字幕をデスクトップに保存する場合は、このボックスをチェックしてください。チェックしない場合、入力字幕のフォルダに保存されます。",
     "ko": "새 자막을 바탕 화면에 저장하려면 이 상자를 선택하세요. 선택하지 않으면 입력 자막 폴더에 저장됩니다.",
-    "hi": "अगर आप नई उपशीर्षक को डेस्कटॉप पर सहेजना चाहते हैं तो इस बॉक्स को चेक करें। अगर अनचेक है, तो यह इनपुट उपशीर्षक के फ़ोल्डर में सहेजा जाएगा।"
-
+    "hi": "अगर आप नई उपशीर्षक को डेस्कटॉप पर सहेजना चाहते हैं तो इस बॉक्स को चेक करें। अगर अनचेक है, तो यह इनपुट उपशीर्षक के फ़ोल्डर में सहेजा जाएगा।",
+    "bn": "নতুন সাবটাইটেলটি আপনার ডেস্কটপে সংরক্ষণ করতে চাইলে এই বাক্সটি চেক করুন। যদি আনচেক করা থাকে, এটি ইনপুট সাবটাইটেলের ফোল্ডারে সংরক্ষিত হবে।",
+    "it": "Seleziona questa casella se desideri salvare il nuovo sottotitolo sul desktop. Se deselezionato, verrà salvato nella cartella dei sottotitoli di input.",
+    "fr": "Cochez cette case si vous souhaitez enregistrer le nouveau sous-titre sur votre bureau. Si décoché, il sera enregistré dans le dossier des sous-titres d'entrée.",
+    "de": "Markieren Sie dieses Kästchen, wenn Sie die neue Untertiteldatei auf Ihrem Desktop speichern möchten. Wenn nicht markiert, wird sie im Ordner der Eingabe-Untertitel gespeichert.",
+    "pt": "Marque esta caixa se quiser salvar a nova legenda na sua área de trabalho. Se desmarcado, será salvo na pasta da legenda de entrada."
 }
 TOOLTIP_REPLACE_ORIGINAL = {
     "en": "Check this box if you want to replace the input subtitle file with the new one. Please be careful. It will overwrite the current subtitle.",
@@ -25,7 +29,12 @@ TOOLTIP_REPLACE_ORIGINAL = {
     "uk": "Позначте цей прапорець, якщо хочете замінити вхідний файл субтитрів новим. Будьте обережні. Це перезапише поточні субтитри.",
     "ja": "入力字幕ファイルを新しいものに置き換える場合は、このボックスをチェックしてください。ご注意ください。現在の字幕が上書きされます。",
     "ko": "입력 자막 파일을 새 파일로 교체하려면 이 상자를 선택하세요. 주의하세요. 현재 자막을 덮어씁니다.",
-    "hi": "यदि आप इनपुट उपशीर्षक फ़ाइल को नई फ़ाइल से बदलना चाहते हैं तो इस बॉक्स को चेक करें। कृपया सावधान रहें। यह वर्तमान उपशीर्षक को अधिलेखित कर देगा।"
+    "hi": "यदि आप इनपुट उपशीर्षक फ़ाइल को नई फ़ाइल से बदलना चाहते हैं तो इस बॉक्स को चेक करें। कृपया सावधान रहें। यह वर्तमान उपशीर्षक को अधिलेखित कर देगा।",
+    "bn": "ইনপুট সাবটাইটেল ফাইলটি নতুন ফাইল দিয়ে প্রতিস্থাপন করতে চাইলে এই বাক্সটি চেক করুন। দয়া করে সতর্ক থাকুন। এটি বর্তমান সাবটাইটেলটি ওভাররাইট করবে।",
+    "it": "Seleziona questa casella se desideri sostituire il file dei sottotitoli di input con quello nuovo. Si prega di fare attenzione. Sovrascriverà il sottotitolo corrente.",
+    "fr": "Cochez cette case si vous souhaitez remplacer le fichier de sous-titres d'entrée par le nouveau. Veuillez faire attention. Cela écrasera le sous-titre actuel.",
+    "de": "Markieren Sie dieses Kästchen, wenn Sie die Eingabe-Untertiteldatei durch die neue ersetzen möchten. Bitte seien Sie vorsichtig. Es wird den aktuellen Untertitel überschreiben.",
+    "pt": "Marque esta caixa se quiser substituir o arquivo de legenda de entrada pelo novo. Por favor, tenha cuidado. Isso substituirá a legenda atual."
 }
 TOOLTIP_GSS = {
     "en": "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
@@ -37,7 +46,12 @@ TOOLTIP_GSS = {
     "uk": "--gss: Використовуйте пошук золотого перетину для знаходження оптимального співвідношення між частотою кадрів відео та субтитрів (за замовчуванням оцінюються лише кілька поширених співвідношень)",
     "ja": "--gss: 動画と字幕のフレームレートの最適な比率を見つけるために黄金分割探索を使用します（デフォルトでは、一般的な比率のみが評価されます）",
     "ko": "--gss: 비디오와 자막 프레임 속도 간의 최적 비율을 찾기 위해 황금 분할 검색을 사용합니다 (기본적으로 일반적인 비율만 평가됨)",
-    "hi": "--gss: वीडियो और उपशीर्षक फ्रेमरेट के बीच इष्टतम अनुपात खोजने के लिए स्वर्ण-खंड खोज का उपयोग करें (डिफ़ॉल्ट रूप से, केवल कुछ सामान्य अनुपातों का मूल्यांकन किया जाता है)"
+    "hi": "--gss: वीडियो और उपशीर्षक फ्रेमरेट के बीच इष्टतम अनुपात खोजने के लिए स्वर्ण-खंड खोज का उपयोग करें (डिफ़ॉल्ट रूप से, केवल कुछ सामान्य अनुपातों का मूल्यांकन किया जाता है)",
+    "bn": "--gss: ভিডিও এবং সাবটাইটেল ফ্রেমরেটের মধ্যে সর্বোত্তম অনুপাত খুঁজে পেতে গোল্ডেন-সেকশন সার্চ ব্যবহার করুন (ডিফল্টরূপে, শুধুমাত্র কয়েকটি সাধারণ অনুপাত মূল্যায়ন করা হয়)",
+    "it": "--gss: Utilizza la ricerca della sezione aurea per trovare il rapporto ottimale tra i frame rate di video e sottotitoli (per impostazione predefinita, vengono valutati solo alcuni rapporti comuni)",
+    "fr": "--gss: Utilisez la recherche de section dorée pour trouver le rapport optimal entre les fréquences d'images vidéo et sous-titres (par défaut, seuls quelques rapports courants sont évalués)",
+    "de": "--gss: Verwenden Sie die Goldene-Schnitt-Suche, um das optimale Verhältnis zwischen Video- und Untertitelframeraten zu finden (standardmäßig werden nur einige gängige Verhältnisse bewertet)",
+    "pt": "--gss: Use a busca da seção áurea para encontrar a proporção ideal entre as taxas de quadros de vídeo e legenda (por padrão, apenas algumas proporções comuns são avaliadas)"
 }
 TOOLTIP_VAD = {
     "en": "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases.",
@@ -49,7 +63,12 @@ TOOLTIP_VAD = {
     "uk": "--vad=auditok: Auditok іноді може працювати краще у випадку низькоякісного аудіо, ніж VAD WebRTC. Auditok не виявляє конкретно голос, а виявляє все аудіо; ця властивість може призвести до неоптимальної синхронізації, коли правильний VAD може працювати добре, але може бути ефективним у деяких випадках.",
     "ja": "--vad=auditok: 低品質の音声の場合、AuditokはWebRTCのVADよりも効果的に動作することがあります。Auditokは特に音声を検出するのではなく、すべての音声を検出します。この特性は、適切なVADが効果的に機能する場合に最適ではない同期動作をもたらす可能性がありますが、場合によっては効果的な場合があります。",
     "ko": "--vad=auditok: 저품질 오디오의 경우 Auditok이 WebRTC의 VAD보다 더 잘 작동할 수 있습니다. Auditok은 특별히 음성을 감지하지 않고 모든 오디오를 감지합니다. 이 특성은 적절한 VAD가 잘 작동할 수 있는 경우 차선의 동기화 동작을 초래할 수 있지만 일부 경우에는 효과적일 수 있습니다.",
-    "hi": "--vad=auditok: कम गुणवत्ता वाले ऑडियो के मामले में Auditok कभी-कभी WebRTC के VAD से बेहतर काम कर सकता है। Auditok विशेष रूप से आवाज का पता नहीं लगाता है, बल्कि सभी ऑडियो का पता लगाता है; यह गुण उप-इष्टतम सिंक व्यवहार का कारण बन सकता है जब उचित VAD अच्छी तरह से काम कर सकता है, लेकिन कुछ मामलों में प्रभावी हो सकता है।"
+    "hi": "--vad=auditok: कम गुणवत्ता वाले ऑडियो के मामले में Auditok कभी-कभी WebRTC के VAD से बेहतर काम कर सकता है। Auditok विशेष रूप से आवाज का पता नहीं लगाता है, बल्कि सभी ऑडियो का पता लगाता है; यह गुण उप-इष्टतम सिंक व्यवहार का कारण बन सकता है जब उचित VAD अच्छी तरह से काम कर सकता है, लेकिन कुछ मामलों में प्रभावी हो सकता है।",
+    "bn": "--vad=auditok: নিম্নমানের অডিওর ক্ষেত্রে Auditok কখনও কখনও WebRTC এর VAD এর চেয়ে ভাল কাজ করতে পারে। Auditok বিশেষভাবে ভয়েস সনাক্ত করে না, বরং সমস্ত অডিও সনাক্ত করে; এই বৈশিষ্ট্যটি যখন একটি সঠিক VAD ভাল কাজ করতে পারে তখন সাব-অপটিমাল সিঙ্কিং আচরণ করতে পারে, তবে কিছু ক্ষেত্রে কার্যকর হতে পারে।",
+    "it": "--vad=auditok: Auditok a volte può funzionare meglio in caso di audio di bassa qualità rispetto al VAD di WebRTC. Auditok non rileva specificamente la voce, ma rileva tutto l'audio; questa proprietà può comportare un comportamento di sincronizzazione subottimale quando un VAD adeguato può funzionare bene, ma può essere efficace in alcuni casi.",
+    "fr": "--vad=auditok: Auditok peut parfois mieux fonctionner en cas de faible qualité audio que le VAD de WebRTC. Auditok ne détecte pas spécifiquement la voix, mais détecte tout l'audio; cette propriété peut entraîner un comportement de synchronisation sous-optimal lorsqu'un VAD approprié peut bien fonctionner, mais peut être efficace dans certains cas.",
+    "de": "--vad=auditok: Auditok kann bei minderwertigem Audio manchmal besser funktionieren als WebRTC's VAD. Auditok erkennt nicht speziell die Stimme, sondern erkennt alle Audiosignale; diese Eigenschaft kann zu suboptimalem Synchronisationsverhalten führen, wenn ein richtiges VAD gut funktionieren kann, aber in einigen Fällen effektiv sein kann.",
+    "pt": "--vad=auditok: Auditok pode funcionar melhor em caso de áudio de baixa qualidade do que o VAD do WebRTC. Auditok não detecta especificamente a voz, mas detecta todo o áudio; essa propriedade pode resultar em comportamento de sincronização subótimo quando um VAD adequado pode funcionar bem, mas pode ser eficaz em alguns casos."
 }
 TOOLTIP_FRAMERATE = {
     "en": "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync.",
@@ -61,7 +80,12 @@ TOOLTIP_FRAMERATE = {
     "uk": "--no-fix-framerate: Якщо вказано, ffsubsync не намагатиметься виправити невідповідність частоти кадрів між довідковим відео та субтитрами. Це може бути корисно, коли ви знаєте, що частота кадрів відео та субтитрів однакова, лише субтитри не синхронізовані.",
     "ja": "--no-fix-framerate: 指定された場合、ffsubsyncは参照とサブタイトル間のフレームレートの不一致を修正しようとしません。これは、動画とサブタイトルのフレームレートが同じで、サブタイトルだけが同期していないことがわかっている場合に便利です。",
     "ko": "--no-fix-framerate: 지정된 경우, ffsubsync는 참조와 자막 간의 프레임 속도 불일치를 수정하지 않습니다. 비디오와 자막의 프레임 속도가 동일하고 자막만 동기화되지 않은 경우에 유용할 수 있습니다.",
-    "hi": "--no-fix-framerate: यदि निर्दिष्ट है, तो ffsubsync संदर्भ और उपशीर्षक के बीच फ्रेमरेट बेमेल को सुधारने का प्रयास नहीं करेगा। यह तब उपयोगी हो सकता है जब आप जानते हैं कि वीडियो और उपशीर्षक फ्रेमरेट समान हैं, केवल उपशीर्षक असिंक हैं।"
+    "hi": "--no-fix-framerate: यदि निर्दिष्ट है, तो ffsubsync संदर्भ और उपशीर्षक के बीच फ्रेमरेट बेमेल को सुधारने का प्रयास नहीं करेगा। यह तब उपयोगी हो सकता है जब आप जानते हैं कि वीडियो और उपशीर्षक फ्रेमरेट समान हैं, केवल उपशीर्षक असिंक हैं।",
+    "bn": "--no-fix-framerate: যদি নির্দিষ্ট করা হয়, ffsubsync রেফারেন্স এবং সাবটাইটেলের মধ্যে ফ্রেমরেট মিসম্যাচ সংশোধন করার চেষ্টা করবে না। যখন আপনি জানেন যে ভিডিও এবং সাবটাইটেল ফ্রেমরেট একই, শুধুমাত্র সাবটাইটেলগুলি সিঙ্কের বাইরে থাকে তখন এটি কার্যকর হতে পারে।",
+    "it": "--no-fix-framerate: Se specificato, ffsubsync non tenterà di correggere una discrepanza di frame rate tra riferimento e sottotitoli. Questo può essere utile quando sai che i frame rate di video e sottotitoli sono gli stessi, solo i sottotitoli sono fuori sync.",
+    "fr": "--no-fix-framerate: Si spécifié, ffsubsync n'essaiera pas de corriger un décalage de fréquence d'images entre la référence et les sous-titres. Cela peut être utile lorsque vous savez que les fréquences d'images vidéo et sous-titres sont les mêmes, seuls les sous-titres sont désynchronisés.",
+    "de": "--no-fix-framerate: Wenn angegeben, wird ffsubsync nicht versuchen, eine Framerate-Diskrepanz zwischen Referenz und Untertiteln zu korrigieren. Dies kann nützlich sein, wenn Sie wissen, dass die Video- und Untertitelframeraten gleich sind, nur die Untertitel sind nicht synchron.",
+    "pt": "--no-fix-framerate: Se especificado, o ffsubsync não tentará corrigir uma incompatibilidade de taxa de quadros entre a referência e as legendas. Isso pode ser útil quando você sabe que as taxas de quadros de vídeo e legenda são as mesmas, apenas as legendas estão fora de sincronia."
 }
 TOOLTIP_ALASS_SPEED_OPTIMIZATION = {
     "en": "--speed optimization 0: Disable speed optimization for better accuracy. This will increase the processing time.",
@@ -73,7 +97,12 @@ TOOLTIP_ALASS_SPEED_OPTIMIZATION = {
     "uk": "--speed optimization 0: Вимкніть оптимізацію швидкості для кращої точності. Це збільшить час обробки.",
     "ja": "--speed optimization 0: より良い精度のために速度最適化を無効にします。処理時間が増加します。",
     "ko": "--speed optimization 0: 더 나은 정확도를 위해 속도 최적화를 비활성화합니다. 처리 시간이 증가합니다.",
-    "hi": "--speed optimization 0: बेहतर सटीकता के लिए गति अनुकूलन को अक्षम करें। यह प्रसंस्करण समय बढ़ा देगा।"
+    "hi": "--speed optimization 0: बेहतर सटीकता के लिए गति अनुकूलन को अक्षम करें। यह प्रसंस्करण समय बढ़ा देगा।",
+    "bn": "--speed optimization 0: ভাল নির্ভুলতার জন্য গতি অপ্টিমাইজেশন অক্ষম করুন। এটি প্রক্রিয়াকরণের সময় বাড়িয়ে দেবে।",
+    "it": "--speed optimization 0: Disabilita l'ottimizzazione della velocità per una migliore precisione. Questo aumenterà il tempo di elaborazione.",
+    "fr": "--speed optimization 0: Désactivez l'optimisation de la vitesse pour une meilleure précision. Cela augmentera le temps de traitement.",
+    "de": "--speed optimization 0: Deaktivieren Sie die Geschwindigkeitsoptimierung für eine bessere Genauigkeit. Dies wird die Verarbeitungszeit erhöhen.",
+    "pt": "--speed optimization 0: Desative a otimização de velocidade para melhor precisão. Isso aumentará o tempo de processamento."
 }
 TOOLTIP_ALASS_DISABLE_FPS_GUESSING = {
     "en": "--disable-fps-guessing: Disables guessing and correcting of framerate differences between reference file and input file.",
@@ -85,7 +114,12 @@ TOOLTIP_ALASS_DISABLE_FPS_GUESSING = {
     "uk": "--disable-fps-guessing: Вимикає вгадування та виправлення різниці частоти кадрів між довідковим файлом та вхідним файлом.",
     "ja": "--disable-fps-guessing: 参照ファイルと入力ファイル間のフレームレートの違いの推測と修正を無効にします。",
     "ko": "--disable-fps-guessing: 참조 파일과 입력 파일 간의 프레임 속도 차이 추측 및 수정을 비활성화합니다.",
-    "hi": "--disable-fps-guessing: संदर्भ फ़ाइल और इनपुट फ़ाइल के बीच फ्रेमरेट अंतर का अनुमान लगाने और सुधार को अक्षम करता है।"
+    "hi": "--disable-fps-guessing: संदर्भ फ़ाइल और इनपुट फ़ाइल के बीच फ्रेमरेट अंतर का अनुमान लगाने और सुधार को अक्षम करता है।",
+    "bn": "--disable-fps-guessing: রেফারেন্স ফাইল এবং ইনপুট ফাইলের মধ্যে ফ্রেমরেট পার্থক্য অনুমান এবং সংশোধন নিষ্ক্রিয় করে।",
+    "it": "--disable-fps-guessing: Disabilita la stima e la correzione delle differenze di frame rate tra il file di riferimento e il file di input.",
+    "fr": "--disable-fps-guessing: Désactive la supposition et la correction des différences de fréquence d'images entre le fichier de référence et le fichier d'entrée.",
+    "de": "--disable-fps-guessing: Deaktiviert das Schätzen und Korrigieren von Frameratenunterschieden zwischen Referenzdatei und Eingabedatei.",
+    "pt": "--disable-fps-guessing: Desativa a adivinhação e correção das diferenças de taxa de quadros entre o arquivo de referência e o arquivo de entrada."
 }
 TOOLTIP_TEXT_ACTION_MENU_AUTO = {
     "en": "Choose what to do with the synchronized subtitle file(s). (Existing subtitle files will be backed up in the same folder, if they need to be replaced.)",
@@ -97,7 +131,12 @@ TOOLTIP_TEXT_ACTION_MENU_AUTO = {
     "uk": "Виберіть, що робити з синхронізованим(и) файлом(ами) субтитрів. (Наявні файли субтитрів будуть збережені в тій же папці, якщо їх потрібно замінити.)",
     "ja": "同期した字幕ファイルの処理方法を選択してください。（既存の字幕ファイルは、置き換える必要がある場合、同じフォルダにバックアップされます。）",
     "ko": "동기화된 자막 파일을 어떻게 처리할지 선택하세요. (기존 자막 파일을 교체해야 하는 경우 같은 폴더에 백업됩니다.)",
-    "hi": "सिंक्रनाइज़ की गई उपशीर्षक फ़ाइल(ों) के साथ क्या करना है, चुनें। (मौजूदा उपशीर्षक फ़ाइलें उसी फ़ोल्डर में बैकअप की जाएंगी, यदि उन्हें बदलने की आवश्यकता है।)"
+    "hi": "सिंक्रनाइज़ की गई उपशीर्षक फ़ाइल(ों) के साथ क्या करना है, चुनें। (मौजूदा उपशीर्षक फ़ाइलें उसी फ़ोल्डर में बैकअप की जाएंगी, यदि उन्हें बदलने की आवश्यकता है।)",
+    "bn": "সিঙ্ক্রোনাইজড সাবটাইটেল ফাইল(গুলি) দিয়ে কী করতে হবে তা চয়ন করুন। (প্রয়োজন হলে বিদ্যমান সাবটাইটেল ফাইলগুলি একই ফোল্ডারে ব্যাকআপ করা হবে।)",
+    "it": "Scegli cosa fare con il/i file dei sottotitoli sincronizzati. (I file dei sottotitoli esistenti verranno salvati nella stessa cartella, se devono essere sostituiti.)",
+    "fr": "Choisissez quoi faire avec le(s) fichier(s) de sous-titres synchronisés. (Les fichiers de sous-titres existants seront sauvegardés dans le même dossier, s'ils doivent être remplacés.)",
+    "de": "Wählen Sie, was mit der/die synchronisierte(n) Untertiteldatei(en) geschehen soll. (Vorhandene Untertiteldateien werden im selben Ordner gesichert, wenn sie ersetzt werden müssen.)",
+    "pt": "Escolha o que fazer com o(s) arquivo(s) de legenda sincronizado(s). (Os arquivos de legenda existentes serão salvos na mesma pasta, se precisarem ser substituídos.)"
 }
 TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = {
     "en": "Select the tool to use for synchronization.",
@@ -109,7 +148,12 @@ TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = {
     "uk": "Виберіть інструмент для синхронізації.",
     "ja": "同期に使用するツールを選択してください。",
     "ko": "동기화에 사용할 도구를 선택하세요.",
-    "hi": "सिंक्रनाइज़ेशन के लिए उपकरण चुनें।"
+    "hi": "सिंक्रनाइज़ेशन के लिए उपकरण चुनें।",
+    "bn": "সিঙ্ক্রোনাইজেশনের জন্য ব্যবহৃত টুলটি নির্বাচন করুন।",
+    "it": "Seleziona lo strumento da utilizzare per la sincronizzazione.",
+    "fr": "Sélectionnez l'outil à utiliser pour la synchronisation.",
+    "de": "Wählen Sie das Werkzeug zur Synchronisierung aus.",
+    "pt": "Selecione a ferramenta a ser usada para sincronização."
 }
 UPDATE_AVAILABLE_TITLE = {
     "en": "Update Available",
@@ -121,7 +165,12 @@ UPDATE_AVAILABLE_TITLE = {
     "uk": "Доступне Оновлення",
     "ja": "アップデートが利用可能",
     "ko": "업데이트 가능",
-    "hi": "अपडेट उपलब्ध"
+    "hi": "अपडेट उपलब्ध",
+    "bn": "আপডেট উপলব্ধ",
+    "it": "Aggiornamento Disponibile",
+    "fr": "Mise à jour disponible",
+    "de": "Update verfügbar",
+    "pt": "Atualização Disponível"
 }
 UPDATE_AVAILABLE_TEXT = {
     "en": "A new version ({latest_version}) is available. Do you want to update?",
@@ -133,7 +182,12 @@ UPDATE_AVAILABLE_TEXT = {
     "uk": "Доступна нова версія ({latest_version}). Бажаєте оновити?",
     "ja": "新しいバージョン({latest_version})が利用可能です。アップデートしますか？",
     "ko": "새 버전({latest_version})이 있습니다. 업데이트하시겠습니까?",
-    "hi": "एक नया संस्करण ({latest_version}) उपलब्ध है। क्या आप अपडेट करना चाहते हैं?"
+    "hi": "एक नया संस्करण ({latest_version}) उपलब्ध है। क्या आप अपडेट करना चाहते हैं?",
+    "bn": "একটি নতুন সংস্করণ ({latest_version}) উপলব্ধ। আপনি কি আপডেট করতে চান?",
+    "it": "È disponibile una nuova versione ({latest_version}). Vuoi aggiornare?",
+    "fr": "Une nouvelle version ({latest_version}) est disponible. Voulez-vous mettre à jour?",
+    "de": "Eine neue Version ({latest_version}) ist verfügbar. Möchten Sie aktualisieren?",
+    "pt": "Uma nova versão ({latest_version}) está disponível. Você quer atualizar?"
 }
 NOTIFY_ABOUT_UPDATES_TEXT = {
     "en": "Check for updates",
@@ -145,7 +199,12 @@ NOTIFY_ABOUT_UPDATES_TEXT = {
     "uk": "Перевірити оновлення",
     "ja": "アップデートを確認",
     "ko": "업데이트 확인",
-    "hi": "अपडेट के लिए जाँच करें"
+    "hi": "अपडेट के लिए जाँच करें",
+    "bn": "আপডেটের জন্য চেক করুন",
+    "it": "Controlla aggiornamenti",
+    "fr": "Vérifier les mises à jour",
+    "de": "Nach Updates suchen",
+    "pt": "Verificar atualizações"
 }
 LANGUAGE_LABEL_TEXT = {
     "en": "Language",
@@ -157,7 +216,12 @@ LANGUAGE_LABEL_TEXT = {
     "uk": "Мова",
     "ja": "言語",
     "ko": "언어",
-    "hi": "भाषा"
+    "hi": "भाषा",
+    "bn": "ভাষা",
+    "it": "Lingua",
+    "fr": "Langue",
+    "de": "Sprache",
+    "pt": "Idioma"
 }
 # TEXT SHOULD BE SHORT
 TAB_AUTOMATIC_SYNC = {
@@ -170,7 +234,12 @@ TAB_AUTOMATIC_SYNC = {
     "uk": "Автом. Синхр.",
     "ja": "自動同期",
     "ko": "자동 동기화",
-    "hi": "स्वचालित सिंक"
+    "hi": "स्वचालित सिंक",
+    "bn": "স্বয়ংক্রিয় সিঙ্ক",
+    "it": "Sincr. Autom.",
+    "fr": "Sync. Auto.",
+    "de": "Autom. Sync.",
+    "pt": "Sincr. Autom."
 }
 # TEXT SHOULD BE SHORT
 TAB_MANUAL_SYNC = {
@@ -183,7 +252,12 @@ TAB_MANUAL_SYNC = {
     "uk": "Ручна Синхр.",
     "ja": "手動同期",
     "ko": "수동 동기화",
-    "hi": "मैनुअल सिंक"
+    "hi": "मैनुअल सिंक",
+    "bn": "ম্যানুয়াল সিঙ্ক",
+    "it": "Sincr. Manuale",
+    "fr": "Sync. Manuelle",
+    "de": "Manuelle Sync.",
+    "pt": "Sincr. Manual"
 }
 CANCEL_TEXT = {
     "en": 'Cancel',
@@ -195,7 +269,12 @@ CANCEL_TEXT = {
     "uk": "Скасувати",
     "ja": "キャンセル",
     "ko": "취소",
-    "hi": "रद्द करें"
+    "hi": "रद्द करें",
+    "bn": "বাতিল করুন",
+    "it": "Annulla",
+    "fr": "Annuler",
+    "de": "Abbrechen",
+    "pt": "Cancelar"
 }
 GENERATE_AGAIN_TEXT = {
     "en": 'Generate Again',
@@ -207,7 +286,12 @@ GENERATE_AGAIN_TEXT = {
     "uk": "Згенерувати Знову",
     "ja": "再生成",
     "ko": "다시 생성",
-    "hi": "फिर से जनरेट करें"
+    "hi": "फिर से जनरेट करें",
+    "bn": "আবার তৈরি করুন",
+    "it": "Genera di nuovo",
+    "fr": "Générer à nouveau",
+    "de": "Erneut generieren",
+    "pt": "Gerar novamente"
 }
 GO_BACK = {
     "en": 'Go Back',
@@ -219,8 +303,12 @@ GO_BACK = {
     "uk": "Назад",
     "ja": "戻る",
     "ko": "돌아가기",
-    "hi": "वापस जाएं"
-
+    "hi": "वापस जाएं",
+    "bn": "ফিরে যান",
+    "it": "Torna indietro",
+    "fr": "Retourner",
+    "de": "Zurück",
+    "pt": "Voltar"
 }
 BATCH_MODE_TEXT = {
     "en": 'Batch Mode',
@@ -232,7 +320,12 @@ BATCH_MODE_TEXT = {
     "uk": "Пакетний Режим",
     "ja": "バッチモード",
     "ko": "일괄 처리 모드",
-    "hi": "बैच मोड"
+    "hi": "बैच मोड",
+    "bn": "ব্যাচ মোড",
+    "it": "Modalità Batch",
+    "fr": "Mode Batch",
+    "de": "Stapelmodus",
+    "pt": "Modo Batch"
 }
 NORMAL_MODE_TEXT = {
     "en": 'Normal Mode',
@@ -244,7 +337,12 @@ NORMAL_MODE_TEXT = {
     "uk": "Звичайний Режим",
     "ja": "通常モード",
     "ko": "일반 모드",
-    "hi": "सामान्य मोड"
+    "hi": "सामान्य मोड",
+    "bn": "স্বাভাবিক মোড",
+    "it": "Modalità Normale",
+    "fr": "Mode Normal",
+    "de": "Normalmodus",
+    "pt": "Modo Normal"
 }
 # TEXT SHOULD BE SHORT
 START_AUTOMATIC_SYNC_TEXT = {
@@ -257,8 +355,14 @@ START_AUTOMATIC_SYNC_TEXT = {
     "uk": "Почати Автом. Синхр.",
     "ja": "自動同期開始",
     "ko": "자동 동기화 시작",
-    "hi": "स्वचालित सिंक शुरू करें"
+    "hi": "स्वचालित सिंक शुरू करें",
+    "bn": "স্বয়ংক্রিয় সিঙ্ক শুরু করুন",
+    "it": "Avvia Sincr. Autom.",
+    "fr": "Démarrer Sync. Auto.",
+    "de": "Autom. Sync starten",
+    "pt": "Iniciar Sincr. Autom."
 }
+
 # TEXT SHOULD BE SHORT
 START_BATCH_SYNC_TEXT = {
     "en": 'Start Batch Sync',
@@ -270,7 +374,12 @@ START_BATCH_SYNC_TEXT = {
     "uk": "Почати Пакетну Синхр.",
     "ja": "バッチ同期開始",
     "ko": "일괄 동기화 시작",
-    "hi": "बैच सिंक शुरू करें"
+    "hi": "बैच सिंक शुरू करें",
+    "bn": "ব্যাচ সিঙ্ক শুরু করুন",
+    "it": "Avvia Sincr. Batch",
+    "fr": "Démarrer Sync. Batch",
+    "de": "Batch-Sync starten",
+    "pt": "Iniciar Sincr. Batch"
 }
 BATCH_INPUT_TEXT = {
     "en": "Drag and drop multiple files/folders here or click to browse.\n\n(Videos and subtitles that have the same filenames will be paired automatically. You need to pair others manually.)",
@@ -282,7 +391,12 @@ BATCH_INPUT_TEXT = {
     "uk": "Перетягніть декілька файлів/папок сюди або натисніть для вибору.\n\n(Відео та субтитри з однаковими іменами файлів будуть автоматично поєднані. Інші потрібно поєднати вручну.)",
     "ja": "複数のファイル/フォルダをここにドラッグ＆ドロップするか、クリックして参照してください。\n\n(同じファイル名を持つ動画と字幕は自動的にペアになります。他のものは手動でペアにする必要があります。)",
     "ko": "여러 파일/폴더를 여기에 끌어다 놓거나 클릭하여 찾아보세요.\n\n(동일한 파일 이름을 가진 비디오와 자막은 자동으로 짝지어집니다. 다른 파일들은 수동으로 짝지어야 합니다.)",
-    "hi": "कई फ़ाइलों/फ़ोल्डरों को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।\n\n(समान फ़ाइल नामों वाले वीडियो और उपशीर्षक स्वचालित रूप से जोड़े जाएंगे। अन्य को मैन्युअल रूप से जोड़ना होगा।)"
+    "hi": "कई फ़ाइलों/फ़ोल्डरों को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।\n\n(समान फ़ाइल नामों वाले वीडियो और उपशीर्षक स्वचालित रूप से जोड़े जाएंगे। अन्य को मैन्युअल रूप से जोड़ना होगा।)",
+    "bn": "একাধিক ফাইল/ফোল্ডার এখানে টেনে আনুন বা ব্রাউজ করতে ক্লিক করুন।\n\n(একই ফাইল নাম সহ ভিডিও এবং সাবটাইটেলগুলি স্বয়ংক্রিয়ভাবে জোড়া হবে। অন্যগুলিকে ম্যানুয়ালি জোড়া করতে হবে।)",
+    "it": "Trascina e rilascia più file/cartelle qui o fai clic per sfogliare.\n\n(I video e i sottotitoli con gli stessi nomi di file verranno accoppiati automaticamente. Gli altri devono essere accoppiati manualmente.)",
+    "fr": "Faites glisser et déposez plusieurs fichiers/dossiers ici ou cliquez pour parcourir.\n\n(Les vidéos et sous-titres ayant les mêmes noms de fichiers seront appariés automatiquement. Vous devez apparier les autres manuellement.)",
+    "de": "Ziehen Sie mehrere Dateien/Ordner hierher oder klicken Sie, um zu durchsuchen.\n\n(Videos und Untertitel mit denselben Dateinamen werden automatisch gepaart. Andere müssen manuell gepaart werden.)",
+    "pt": "Arraste e solte vários arquivos/pastas aqui ou clique para navegar.\n\n(Vídeos e legendas com os mesmos nomes de arquivos serão emparelhados automaticamente. Você precisa emparelhar os outros manualmente.)"
 }
 BATCH_INPUT_LABEL_TEXT = {
     "en": "Batch Processing Mode",
@@ -294,7 +408,12 @@ BATCH_INPUT_LABEL_TEXT = {
     "uk": "Режим Пакетної Обробки",
     "ja": "バッチ処理モード",
     "ko": "일괄 처리 모드",
-    "hi": "बैच प्रोसेसिंग मोड"
+    "hi": "बैच प्रोसेसिंग मोड",
+    "bn": "ব্যাচ প্রসেসিং মোড",
+    "it": "Modalità di Elaborazione Batch",
+    "fr": "Mode de Traitement par Lots",
+    "de": "Stapelverarbeitungsmodus",
+    "pt": "Modo de Processamento em Lote"
 }
 SHIFT_SUBTITLE_TEXT = {
     "en": 'Shift Subtitle',
@@ -306,7 +425,12 @@ SHIFT_SUBTITLE_TEXT = {
     "uk": "Зсунути Субтитри",
     "ja": "字幕をシフト",
     "ko": "자막 이동",
-    "hi": "उपशीर्षक शिफ्ट करें"
+    "hi": "उपशीर्षक शिफ्ट करें",
+    "bn": "সাবটাইটেল স্থানান্তর করুন",
+    "it": "Sposta Sottotitolo",
+    "fr": "Déplacer le Sous-titre",
+    "de": "Untertitel verschieben",
+    "pt": "Deslocar Legenda"
 }
 LABEL_SHIFT_SUBTITLE = {
     "en": "Shift subtitle by (ms):",
@@ -318,7 +442,12 @@ LABEL_SHIFT_SUBTITLE = {
     "uk": "Зсунути субтитри на (мс):",
     "ja": "字幕をシフト (ミリ秒):",
     "ko": "자막 이동 (밀리초):",
-    "hi": "उपशीर्षक को शिफ्ट करें (मिली सेकंड):"
+    "hi": "उपशीर्षक को शिफ्ट करें (मिली सेकंड):",
+    "bn": "সাবটাইটেল স্থানান্তর করুন (মিলিসেকেন্ড):",
+    "it": "Sposta sottotitolo di (ms):",
+    "fr": "Déplacer le sous-titre de (ms) :",
+    "de": "Untertitel verschieben um (ms):",
+    "pt": "Deslocar legenda por (ms):"
 }
 REPLACE_ORIGINAL_TITLE = {
     "en": "Subtitle Change Confirmation",
@@ -330,7 +459,12 @@ REPLACE_ORIGINAL_TITLE = {
     "uk": "Підтвердження Зміни Субтитрів",
     "ja": "字幕変更の確認",
     "ko": "자막 변경 확인",
-    "hi": "उपशीर्षक परिवर्तन पुष्टि"
+    "hi": "उपशीर्षक परिवर्तन पुष्टि",
+    "bn": "সাবটাইটেল পরিবর্তন নিশ্চিতকরণ",
+    "it": "Conferma Modifica Sottotitolo",
+    "fr": "Confirmation de Changement de Sous-titre",
+    "de": "Untertiteländerung bestätigen",
+    "pt": "Confirmação de Alteração de Legenda"
 }
 REPLACE_ORIGINAL_TEXT = {
     "en": "Adjusting again by {milliseconds}ms, will make a total difference of {total_shifted}ms. Proceed?",
@@ -342,7 +476,12 @@ REPLACE_ORIGINAL_TEXT = {
     "uk": "Повторне налаштування на {milliseconds}мс створить загальну різницю в {total_shifted}мс. Продовжити?",
     "ja": "さらに{milliseconds}ミリ秒調整すると、合計{total_shifted}ミリ秒の差になります。続行しますか？",
     "ko": "다시 {milliseconds}ms 조정하면 총 {total_shifted}ms의 차이가 생깁니다. 계속하시겠습니까?",
-    "hi": "{milliseconds}ms से पुनः समायोजन करने से कुल {total_shifted}ms का अंतर होगा। आगे बढ़ें?"
+    "hi": "{milliseconds}ms से पुनः समायोजन करने से कुल {total_shifted}ms का अंतर होगा। आगे बढ़ें?",
+    "bn": "{milliseconds} মিলিসেকেন্ড দ্বারা আবার সামঞ্জস্য করা, মোট {total_shifted} মিলিসেকেন্ড পার্থক্য তৈরি করবে। এগিয়ে যান?",
+    "it": "Regolando di nuovo di {milliseconds}ms, si otterrà una differenza totale di {total_shifted}ms. Procedere?",
+    "fr": "Ajuster à nouveau de {milliseconds}ms, fera une différence totale de {total_shifted}ms. Procéder?",
+    "de": "Durch erneutes Anpassen um {milliseconds}ms ergibt sich eine Gesamtdifferenz von {total_shifted}ms. Fortfahren?",
+    "pt": "Ajustar novamente por {milliseconds}ms, fará uma diferença total de {total_shifted}ms. Prosseguir?"
 }
 FILE_EXISTS_TITLE = {
     "en": "File Exists",
@@ -354,7 +493,12 @@ FILE_EXISTS_TITLE = {
     "uk": "Файл Існує",
     "ja": "ファイルが存在します",
     "ko": "파일이 존재함",
-    "hi": "फ़ाइल मौजूद है"
+    "hi": "फ़ाइल मौजूद है",
+    "bn": "ফাইল বিদ্যমান",
+    "it": "File Esistente",
+    "fr": "Fichier Existant",
+    "de": "Datei Existiert",
+    "pt": "Arquivo Existente"
 }
 FILE_EXISTS_TEXT = {
     "en": "A file with the name '{filename}' already exists. Do you want to replace it?",
@@ -366,7 +510,12 @@ FILE_EXISTS_TEXT = {
     "uk": "Файл з іменем '{filename}' вже існує. Бажаєте замінити його?",
     "ja": "'{filename}'という名前のファイルは既に存在します。置き換えますか？",
     "ko": "'{filename}' 이름의 파일이 이미 존재합니다. 교체하시겠습니까?",
-    "hi": "'{filename}' नाम की फ़ाइल पहले से मौजूद है। क्या आप इसे बदलना चाहते हैं?"
+    "hi": "'{filename}' नाम की फ़ाइल पहले से मौजूद है। क्या आप इसे बदलना चाहते हैं?",
+    "bn": "'{filename}' নামে একটি ফাইল ইতিমধ্যে বিদ্যমান। আপনি কি এটি প্রতিস্থাপন করতে চান?",
+    "it": "Un file con il nome '{filename}' esiste già. Vuoi sostituirlo?",
+    "fr": "Un fichier nommé '{filename}' existe déjà. Voulez-vous le remplacer?",
+    "de": "Eine Datei mit dem Namen '{filename}' existiert bereits. Möchten Sie sie ersetzen?",
+    "pt": "Um arquivo com o nome '{filename}' já existe. Deseja substituí-lo?"
 }
 ALREADY_SYNCED_FILES_TITLE = {
     "en": "Already Synced Files Detected",
@@ -378,7 +527,12 @@ ALREADY_SYNCED_FILES_TITLE = {
     "uk": "Виявлено Вже Синхронізовані Файли",
     "ja": "既に同期されたファイルが検出されました",
     "ko": "이미 동기화된 파일 감지됨",
-    "hi": "पहले से सिंक की गई फ़ाइलें मिलीं"
+    "hi": "पहले से सिंक की गई फ़ाइलें मिलीं",
+    "bn": "ইতিমধ্যে সিঙ্ক করা ফাইলগুলি সনাক্ত করা হয়েছে",
+    "it": "File Già Sincronizzati Rilevati",
+    "fr": "Fichiers Déjà Synchronisés Détectés",
+    "de": "Bereits Synchronisierte Dateien Erkannt",
+    "pt": "Arquivos Já Sincronizados Detectados"
 }
 ALREADY_SYNCED_FILES_MESSAGE = {
     "en": "Detected {count} subtitle(s) already synced, because there are subtitles that have 'autosync_' prefix in the same folder with same filenames. Do you want to skip processing them?",
@@ -390,7 +544,12 @@ ALREADY_SYNCED_FILES_MESSAGE = {
     "uk": "Виявлено {count} субтитрів вже синхронізовано, тому що є субтитри з префіксом 'autosync_' у тій же папці з тими ж іменами файлів. Бажаєте пропустити їх обробку?",
     "ja": "同じフォルダ内に'autosync_'プレフィックスを持つ同じファイル名の字幕があるため、{count}個の字幕が既に同期されていることが検出されました。これらの処理をスキップしますか？",
     "ko": "동일한 폴더에 'autosync_' 접두사가 있는 동일한 파일 이름의 자막이 있어서 {count}개의 자막이 이미 동기화된 것으로 감지되었습니다. 이들의 처리를 건너뛰시겠습니까?",
-    "hi": "{count} उपशीर्षक पहले से सिंक किए गए पाए गए, क्योंकि समान फ़ोल्डर में 'autosync_' उपसर्ग वाले समान फ़ाइल नामों के उपशीर्षक हैं। क्या आप उनके प्रसंस्करण को छोड़ना चाहते हैं?"
+    "hi": "{count} उपशीर्षक पहले से सिंक किए गए पाए गए, क्योंकि समान फ़ोल्डर में 'autosync_' उपसर्ग वाले समान फ़ाइल नामों के उपशीर्षक हैं। क्या आप उनके प्रसंस्करण को छोड़ना चाहते हैं?",
+    "bn": "একই ফোল্ডারে একই ফাইলনাম সহ 'autosync_' প্রিফিক্স যুক্ত সাবটাইটেল থাকার কারণে {count}টি সাবটাইটেল ইতিমধ্যে সিঙ্ক করা হয়েছে। আপনি কি এগুলি প্রক্রিয়াকরণ বাদ দিতে চান?",
+    "it": "Rilevati {count} sottotitoli già sincronizzati, perché ci sono sottotitoli con prefisso 'autosync_' nella stessa cartella con gli stessi nomi file. Vuoi saltare la loro elaborazione?",
+    "fr": "Détection de {count} sous-titre(s) déjà synchronisé(s), car il existe des sous-titres avec le préfixe 'autosync_' dans le même dossier avec les mêmes noms de fichiers. Voulez-vous ignorer leur traitement ?",
+    "de": "Es wurden {count} bereits synchronisierte Untertitel erkannt, da sich Untertitel mit dem Präfix 'autosync_' im selben Ordner mit denselben Dateinamen befinden. Möchten Sie deren Verarbeitung überspringen?",
+    "pt": "Detectada(s) {count} legenda(s) já sincronizada(s), pois existem legendas com prefixo 'autosync_' na mesma pasta com os mesmos nomes de arquivo. Deseja pular o processamento delas?"
 }
 SUBTITLE_INPUT_TEXT = {
     "en": "Drag and drop the unsynchronized subtitle file here or click to browse.",
@@ -402,7 +561,12 @@ SUBTITLE_INPUT_TEXT = {
     "uk": "Перетягніть несинхронізований файл субтитрів сюди або натисніть для вибору.",
     "ja": "未同期の字幕ファイルをここにドラッグ＆ドロップするか、クリックして参照してください。",
     "ko": "동기화되지 않은 자막 파일을 여기에 끌어다 놓거나 클릭하여 찾아보세요.",
-    "hi": "असिंक्रनाइज़्ड उपशीर्षक फ़ाइल को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।"
+    "hi": "असिंक्रनाइज़्ड उपशीर्षक फ़ाइल को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।",
+    "bn": "অসিঙ্ক্রোনাইজড সাবটাইটেল ফাইলটি এখানে টেনে আনুন বা ব্রাউজ করতে ক্লিক করুন।",
+    "it": "Trascina e rilascia il file dei sottotitoli non sincronizzati qui o fai clic per sfogliare.",
+    "fr": "Faites glisser et déposez le fichier de sous-titres non synchronisé ici ou cliquez pour parcourir.",
+    "de": "Ziehen Sie die unsynchronisierte Untertiteldatei hierher oder klicken Sie zum Durchsuchen.",
+    "pt": "Arraste e solte o arquivo de legenda não sincronizada aqui ou clique para navegar."
 }
 VIDEO_INPUT_TEXT = {
     "en": "Drag and drop video or reference subtitle file here or click to browse.",
@@ -414,7 +578,12 @@ VIDEO_INPUT_TEXT = {
     "uk": "Перетягніть відео або файл довідкових субтитрів сюди або натисніть для вибору.",
     "ja": "動画または参照字幕ファイルをここにドラッグ＆ドロップするか、クリックして参照してください。",
     "ko": "비디오 또는 참조 자막 파일을 여기에 끌어다 놓거나 클릭하여 찾아보세요.",
-    "hi": "वीडियो या संदर्भ उपशीर्षक फ़ाइल को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।"
+    "hi": "वीडियो या संदर्भ उपशीर्षक फ़ाइल को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।",
+    "bn": "ভিডিও বা রেফারেন্স সাবটাইটেল ফাইল এখানে টেনে আনুন বা ব্রাউজ করতে ক্লিক করুন।",
+    "it": "Trascina e rilascia il video o il file dei sottotitoli di riferimento qui o fai clic per sfogliare.",
+    "fr": "Faites glisser et déposez la vidéo ou le fichier de sous-titres de référence ici ou cliquez pour parcourir.",
+    "de": "Ziehen Sie das Video oder die Referenz-Untertiteldatei hierher oder klicken Sie zum Durchsuchen.",
+    "pt": "Arraste e solte o vídeo ou arquivo de legenda de referência aqui ou clique para navegar."
 }
 LABEL_DROP_BOX = {
     "en": "Drag and drop subtitle file here or click to browse.",
@@ -426,7 +595,12 @@ LABEL_DROP_BOX = {
     "uk": "Перетягніть файл субтитрів сюди або натисніть для вибору.",
     "ja": "字幕ファイルをここにドラッグ＆ドロップするか、クリックして参照してください。",
     "ko": "자막 파일을 여기에 끌어다 놓거나 클릭하여 찾아보세요.",
-    "hi": "उपशीर्षक फ़ाइल को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।"
+    "hi": "उपशीर्षक फ़ाइल को यहाँ खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।",
+    "bn": "সাবটাইটেল ফাইল এখানে টেনে আনুন বা ব্রাউজ করতে ক্লিক করুন।",
+    "it": "Trascina e rilascia il file dei sottotitoli qui o fai clic per sfogliare.",
+    "fr": "Faites glisser et déposez le fichier de sous-titres ici ou cliquez pour parcourir.",
+    "de": "Ziehen Sie die Untertiteldatei hierher oder klicken Sie zum Durchsuchen.",
+    "pt": "Arraste e solte o arquivo de legenda aqui ou clique para navegar."
 }
 WARNING = {
     "en": "Warning",
@@ -438,7 +612,12 @@ WARNING = {
     "uk": "Попередження",
     "ja": "警告",
     "ko": "경고",
-    "hi": "चेतावनी"
+    "hi": "चेतावनी",
+    "bn": "সতর্কতা",
+    "it": "Avviso",
+    "fr": "Avertissement",
+    "de": "Warnung",
+    "pt": "Aviso"
 }
 CONFIRM_RESET_MESSAGE = {
     "en": "Are you sure you want to reset settings to default values?",
@@ -450,7 +629,12 @@ CONFIRM_RESET_MESSAGE = {
     "uk": "Ви впевнені, що хочете скинути налаштування до значень за замовчуванням?",
     "ja": "設定をデフォルト値にリセットしてもよろしいですか？",
     "ko": "설정을 기본값으로 재설정하시겠습니까?",
-    "hi": "क्या आप वाकई सेटिंग्स को डिफ़ॉल्ट मान पर रीसेट करना चाहते हैं?"
+    "hi": "क्या आप वाकई सेटिंग्स को डिफ़ॉल्ट मान पर रीसेट करना चाहते हैं?",
+    "bn": "আপনি কি নিশ্চিত যে আপনি সেটিংস ডিফল্ট মানে রিসেট করতে চান?",
+    "it": "Sei sicuro di voler ripristinare le impostazioni ai valori predefiniti?",
+    "fr": "Êtes-vous sûr de vouloir réinitialiser les paramètres aux valeurs par défaut ?",
+    "de": "Sind Sie sicher, dass Sie die Einstellungen auf die Standardwerte zurücksetzen möchten?",
+    "pt": "Tem certeza que deseja redefinir as configurações para os valores padrão?"
 }
 TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = {
     "en": 'Subtitles with "converted_subtitlefilename" in the output folder will be deleted automatically. Do you want to continue?',
@@ -462,7 +646,12 @@ TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = {
     "uk": 'Субтитри з "converted_subtitlefilename" у вихідній папці будуть автоматично видалені. Бажаєте продовжити?',
     "ja": '出力フォルダ内の "converted_subtitlefilename" を含む字幕は自動的に削除されます。続行しますか？',
     "ko": '출력 폴더의 "converted_subtitlefilename"이 포함된 자막이 자동으로 삭제됩니다. 계속하시겠습니까?',
-    "hi": 'आउटपुट फ़ोल्डर में "converted_subtitlefilename" वाले उपशीर्षक स्वचालित रूप से हटा दिए जाएंगे। क्या आप जारी रखना चाहते हैं?'
+    "hi": 'आउटपुट फ़ोल्डर में "converted_subtitlefilename" वाले उपशीर्षक स्वचालित रूप से हटा दिए जाएंगे। क्या आप जारी रखना चाहते हैं?',
+    "bn": 'আউটপুট ফোল্ডারে "converted_subtitlefilename" সহ সাবটাইটেলগুলি স্বয়ংক্রিয়ভাবে মুছে ফেলা হবে। আপনি কি চালিয়ে যেতে চান?',
+    "it": 'I sottotitoli con "converted_subtitlefilename" nella cartella di output verranno eliminati automaticamente. Vuoi continuare?',
+    "fr": 'Les sous-titres avec "converted_subtitlefilename" dans le dossier de sortie seront supprimés automatiquement. Voulez-vous continuer ?',
+    "de": 'Untertitel mit "converted_subtitlefilename" im Ausgabeordner werden automatisch gelöscht. Möchten Sie fortfahren?',
+    "pt": 'As legendas com "converted_subtitlefilename" na pasta de saída serão excluídas automaticamente. Deseja continuar?'
 }
 TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = {
     "en": 'Folders with "extracted_subtitles_videofilename" in the output folder will be deleted automatically. Do you want to continue?',
@@ -474,7 +663,12 @@ TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = {
     "uk": 'Папки з "extracted_subtitles_videofilename" у вихідній папці будуть автоматично видалені. Бажаєте продовжити?',
     "ja": '出力フォルダ内の "extracted_subtitles_videofilename" を含むフォルダは自動的に削除されます。続行しますか？',
     "ko": '출력 폴더의 "extracted_subtitles_videofilename"이 포함된 폴더가 자동으로 삭제됩니다. 계속하시겠습니까?',
-    "hi": 'आउटपुट फ़ोल्डर में "extracted_subtitles_videofilename" वाले फ़ोल्डर स्वचालित रूप से हटा दिए जाएंगे। क्या आप जारी रखना चाहते हैं?'
+    "hi": 'आउटपुट फ़ोल्डर में "extracted_subtitles_videofilename" वाले फ़ोल्डर स्वचालित रूप से हटा दिए जाएंगे। क्या आप जारी रखना चाहते हैं?',
+    "bn": 'আউটপুট ফোল্ডারে "extracted_subtitles_videofilename" সহ ফোল্ডারগুলি স্বয়ংক্রিয়ভাবে মুছে ফেলা হবে। আপনি কি চালিয়ে যেতে চান?',
+    "it": 'Le cartelle con "extracted_subtitles_videofilename" nella cartella di output verranno eliminate automaticamente. Vuoi continuare?',
+    "fr": 'Les dossiers avec "extracted_subtitles_videofilename" dans le dossier de sortie seront supprimés automatiquement. Voulez-vous continuer ?',
+    "de": 'Ordner mit "extracted_subtitles_videofilename" im Ausgabeordner werden automatisch gelöscht. Möchten Sie fortfahren?',
+    "pt": 'As pastas com "extracted_subtitles_videofilename" na pasta de saída serão excluídas automaticamente. Deseja continuar?'
 }
 BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = {
     "en": "Existing subtitle files will not be backed up before overwriting. Do you want to continue?",
@@ -486,7 +680,12 @@ BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = {
     "uk": "Наявні файли субтитрів не будуть збережені перед перезаписом. Бажаєте продовжити?",
     "ja": "既存の字幕ファイルは上書き前にバックアップされません。続行しますか？",
     "ko": "기존 자막 파일이 덮어쓰기 전에 백업되지 않습니다. 계속하시겠습니까?",
-    "hi": "मौजूदा उपशीर्षक फ़ाइलों का अधिलेखन से पहले बैकअप नहीं किया जाएगा। क्या आप जारी रखना चाहते हैं?"
+    "hi": "मौजूदा उपशीर्षक फ़ाइलों का अधिलेखन से पहले बैकअप नहीं किया जाएगा। क्या आप जारी रखना चाहते हैं?",
+    "bn": "বিদ্যমান সাবটাইটেল ফাইলগুলি ওভাররাইট করার আগে ব্যাকআপ করা হবে না। আপনি কি চালিয়ে যেতে চান?",
+    "it": "I file dei sottotitoli esistenti non verranno backup prima della sovrascrittura. Vuoi continuare?",
+    "fr": "Les fichiers de sous-titres existants ne seront pas sauvegardés avant l'écrasement. Voulez-vous continuer ?",
+    "de": "Vorhandene Untertiteldateien werden vor dem Überschreiben nicht gesichert. Möchten Sie fortfahren?",
+    "pt": "Os arquivos de legenda existentes não serão backup antes de serem sobrescritos. Deseja continuar?"
 }
 PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = {
     "en": "Enter additional arguments for ffsubsync:",
@@ -498,7 +697,12 @@ PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = {
     "uk": "Введіть додаткові аргументи для ffsubsync:",
     "ja": "ffsubsyncの追加引数を入力してください:",
     "ko": "ffsubsync의 추가 인수를 입력하세요:",
-    "hi": "ffsubsync के लिए अतिरिक्त तर्क दर्ज करें:"
+    "hi": "ffsubsync के लिए अतिरिक्त तर्क दर्ज करें:",
+    "bn": "ffsubsync এর জন্য অতিরিক্ত আর্গুমেন্ট লিখুন:",
+    "it": "Inserisci argomenti aggiuntivi per ffsubsync:",
+    "fr": "Entrez des arguments supplémentaires pour ffsubsync :",
+    "de": "Geben Sie zusätzliche Argumente für ffsubsync ein:",
+    "pt": "Digite argumentos adicionais para ffsubsync:"
 }
 PROMPT_ADDITIONAL_ALASS_ARGS = {
     "en": "Enter additional arguments for alass:",
@@ -510,7 +714,12 @@ PROMPT_ADDITIONAL_ALASS_ARGS = {
     "uk": "Введіть додаткові аргументи для alass:",
     "ja": "alassの追加引数を入力してください:",
     "ko": "alass의 추가 인수를 입력하세요:",
-    "hi": "alass के लिए अतिरिक्त तर्क दर्ज करें:"
+    "hi": "alass के लिए अतिरिक्त तर्क दर्ज करें:",
+    "bn": "alass এর জন্য অতিরিক্ত আর্গুমেন্ট লিখুন:",
+    "it": "Inserisci argomenti aggiuntivi per alass:",
+    "fr": "Entrez des arguments supplémentaires pour alass:",
+    "de": "Geben Sie zusätzliche Argumente für alass ein:",
+    "pt": "Digite argumentos adicionais para alass:"
 }
 LABEL_ADDITIONAL_FFSUBSYNC_ARGS = {
     "en": "Additional arguments for ffsubsync",
@@ -522,7 +731,12 @@ LABEL_ADDITIONAL_FFSUBSYNC_ARGS = {
     "uk": "Додаткові аргументи для ffsubsync",
     "ja": "ffsubsyncの追加引数",
     "ko": "ffsubsync의 추가 인수",
-    "hi": "ffsubsync के लिए अतिरिक्त तर्क"
+    "hi": "ffsubsync के लिए अतिरिक्त तर्क",
+    "bn": "ffsubsync এর জন্য অতিরিক্ত আর্গুমেন্ট",
+    "it": "Argomenti aggiuntivi per ffsubsync",
+    "fr": "Arguments supplémentaires pour ffsubsync",
+    "de": "Zusätzliche Argumente für ffsubsync",
+    "pt": "Argumentos adicionais para ffsubsync"
 }
 LABEL_ADDITIONAL_ALASS_ARGS = {
     "en": "Additional arguments for alass",
@@ -534,7 +748,12 @@ LABEL_ADDITIONAL_ALASS_ARGS = {
     "uk": "Додаткові аргументи для alass",
     "ja": "alassの追加引数",
     "ko": "alass의 추가 인수",
-    "hi": "alass के लिए अतिरिक्त तर्क"
+    "hi": "alass के लिए अतिरिक्त तर्क",
+    "bn": "alass এর জন্য অতিরিক্ত আর্গুমেন্ট",
+    "it": "Argomenti aggiuntivi per alass",
+    "fr": "Arguments supplémentaires pour alass",
+    "de": "Zusätzliche Argumente für alass",
+    "pt": "Argumentos adicionais para alass"
 }
 LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "en": "Check video for subtitle streams in alass",
@@ -546,7 +765,12 @@ LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "uk": "Перевірити відео на наявність потоків субтитрів в alass",
     "ja": "alassで字幕ストリームのビデオをチェック",
     "ko": "alass에서 자막 스트림 비디오 확인",
-    "hi": "alass में उपशीर्षक स्ट्रीम के लिए वीडियो जांचें"
+    "hi": "alass में उपशीर्षक स्ट्रीम के लिए वीडियो जांचें",
+    "bn": "alass এ সাবটাইটেল স্ট্রিমের জন্য ভিডিও চেক করুন",
+    "it": "Controlla il video per i flussi di sottotitoli in alass",
+    "fr": "Vérifier la vidéo pour les flux de sous-titres dans alass",
+    "de": "Video auf Untertitelströme in alass prüfen",
+    "pt": "Verificar vídeo para fluxos de legendas no alass"
 }
 LABEL_BACKUP_SUBTITLES = {
     "en": "Backup subtitles before overwriting",
@@ -558,7 +782,12 @@ LABEL_BACKUP_SUBTITLES = {
     "uk": "Створити резервну копію субтитрів перед перезаписом",
     "ja": "上書き前に字幕をバックアップ",
     "ko": "덮어쓰기 전에 자막 백업",
-    "hi": "अधिलेखन से पहले उपशीर्षक का बैकअप लें"
+    "hi": "अधिलेखन से पहले उपशीर्षक का बैकअप लें",
+    "bn": "ওভাররাইট করার আগে সাবটাইটেল ব্যাকআপ করুন",
+    "it": "Backup dei sottotitoli prima della sovrascrittura",
+    "fr": "Sauvegarder les sous-titres avant écrasement",
+    "de": "Untertitel vor dem Überschreiben sichern",
+    "pt": "Fazer backup das legendas antes de sobrescrever"
 }
 LABEL_KEEP_CONVERTED_SUBTITLES = {
     "en": "Keep converted subtitles",
@@ -570,7 +799,12 @@ LABEL_KEEP_CONVERTED_SUBTITLES = {
     "uk": "Зберегти конвертовані субтитри",
     "ja": "変換した字幕を保持",
     "ko": "변환된 자막 유지",
-    "hi": "परिवर्तित उपशीर्षक रखें"
+    "hi": "परिवर्तित उपशीर्षक रखें",
+    "bn": "রূপান্তরিত সাবটাইটেল রাখুন",
+    "it": "Mantieni i sottotitoli convertiti",
+    "fr": "Conserver les sous-titres convertis",
+    "de": "Konvertierte Untertitel behalten",
+    "pt": "Manter legendas convertidas"
 }
 LABEL_KEEP_EXTRACTED_SUBTITLES = {
     "en": "Keep extracted subtitles",
@@ -582,7 +816,12 @@ LABEL_KEEP_EXTRACTED_SUBTITLES = {
     "uk": "Зберегти витягнуті субтитри",
     "ja": "抽出した字幕を保持",
     "ko": "추출된 자막 유지",
-    "hi": "निकाले गए उपशीर्षक रखें"
+    "hi": "निकाले गए उपशीर्षक रखें",
+    "bn": "নিষ্কাশিত সাবটাইটেল রাখুন",
+    "it": "Mantieni i sottotitoli estratti",
+    "fr": "Conserver les sous-titres extraits",
+    "de": "Extrahierte Untertitel behalten",
+    "pt": "Manter legendas extraídas"
 }
 LABEL_REMEMBER_THE_CHANGES = {
     "en": "Remember the changes",
@@ -594,7 +833,12 @@ LABEL_REMEMBER_THE_CHANGES = {
     "uk": "Запам'ятати зміни",
     "ja": "変更を記憶",
     "ko": "변경 사항 기억",
-    "hi": "परिवर्तन याद रखें"
+    "hi": "परिवर्तन याद रखें",
+    "bn": "পরিবর্তনগুলি মনে রাখুন",
+    "it": "Ricorda le modifiche",
+    "fr": "Se souvenir des modifications",
+    "de": "Änderungen merken",
+    "pt": "Lembrar as alterações"
 }
 LABEL_RESET_TO_DEFAULT_SETTINGS = {
     "en": "Reset to default settings",
@@ -606,7 +850,12 @@ LABEL_RESET_TO_DEFAULT_SETTINGS = {
     "uk": "Скинути до налаштувань за замовчуванням",
     "ja": "デフォルト設定にリセット",
     "ko": "기본 설정으로 재설정",
-    "hi": "डिफ़ॉल्ट सेटिंग्स पर रीसेट करें"
+    "hi": "डिफ़ॉल्ट सेटिंग्स पर रीसेट करें",
+    "bn": "ডিফল্ট সেটিংস-এ রিসেট করুন",
+    "it": "Ripristina impostazioni predefinite",
+    "fr": "Réinitialiser aux paramètres par défaut",
+    "de": "Auf Standardeinstellungen zurücksetzen",
+    "pt": "Redefinir para configurações padrão"
 }
 LABEL_KEEP_LOG_RECORDS = {
     "en": "Keep log records",
@@ -618,7 +867,12 @@ LABEL_KEEP_LOG_RECORDS = {
     "uk": "Зберігати журнали",
     "ja": "ログを保持",
     "ko": "로그 기록 유지",
-    "hi": "लॉग रिकॉर्ड रखें"
+    "hi": "लॉग रिकॉर्ड रखें",
+    "bn": "লগ রেকর্ড রাখুন",
+    "it": "Mantieni registri log",
+    "fr": "Conserver les journaux",
+    "de": "Protokolle behalten",
+    "pt": "Manter registros de log"
 }
 LABEL_OPEN_LOGS_FOLDER = {
     "en": "Open logs folder",
@@ -630,7 +884,12 @@ LABEL_OPEN_LOGS_FOLDER = {
     "uk": "Відкрити папку журналів",
     "ja": "ログフォルダを開く",
     "ko": "로그 폴더 열기",
-    "hi": "लॉग फ़ोल्डर खोलें"
+    "hi": "लॉग फ़ोल्डर खोलें",
+    "bn": "লগ ফোল্ডার খুলুন",
+    "it": "Apri cartella dei log",
+    "fr": "Ouvrir le dossier des journaux",
+    "de": "Protokollordner öffnen",
+    "pt": "Abrir pasta de logs"
 }
 LABEL_CLEAR_ALL_LOGS = {
     "en": "Clear all logs",
@@ -642,7 +901,12 @@ LABEL_CLEAR_ALL_LOGS = {
     "uk": "Очистити всі журнали",
     "ja": "すべてのログをクリア",
     "ko": "모든 로그 지우기",
-    "hi": "सभी लॉग साफ़ करें"
+    "hi": "सभी लॉग साफ़ करें",
+    "bn": "সমস্ত লগ মুছে ফেলুন",
+    "it": "Cancella tutti i log",
+    "fr": "Effacer tous les journaux",
+    "de": "Alle Protokolle löschen",
+    "pt": "Limpar todos os logs"
 }
 LOG_FILES_DELETE_WARNING = {
     "en": "There are {count} log files. Do you want to delete them?",
@@ -654,7 +918,12 @@ LOG_FILES_DELETE_WARNING = {
     "uk": "Є {count} файлів журналу. Ви хочете їх видалити?",
     "ja": "{count} 個のログファイルがあります。削除しますか？",
     "ko": "{count}개의 로그 파일이 있습니다. 삭제하시겠습니까?",
-    "hi": "{count} लॉग फ़ाइलें हैं। क्या आप उन्हें हटाना चाहते हैं?"
+    "hi": "{count} लॉग फ़ाइलें हैं। क्या आप उन्हें हटाना चाहते हैं?",
+    "bn": "{count}টি লগ ফাইল আছে। আপনি কি এগুলি মুছে ফেলতে চান?",
+    "it": "Ci sono {count} file di log. Vuoi eliminarli?",
+    "fr": "Il y a {count} fichiers journaux. Voulez-vous les supprimer ?",
+    "de": "Es gibt {count} Protokolldateien. Möchten Sie diese löschen?",
+    "pt": "Existem {count} arquivos de log. Deseja excluí-los?"
 }
 SYNC_TOOL_FFSUBSYNC = {
     "en": "ffsubsync",
@@ -666,7 +935,12 @@ SYNC_TOOL_FFSUBSYNC = {
     "uk": "ffsubsync",
     "ja": "ffsubsync",
     "ko": "ffsubsync",
-    "hi": "ffsubsync"
+    "hi": "ffsubsync",
+    "bn": "ffsubsync",
+    "it": "ffsubsync",
+    "fr": "ffsubsync",
+    "de": "ffsubsync",
+    "pt": "ffsubsync"
 }
 SYNC_TOOL_ALASS = {
     "en": "alass",
@@ -678,7 +952,12 @@ SYNC_TOOL_ALASS = {
     "uk": "alass",
     "ja": "alass",
     "ko": "alass",
-    "hi": "alass"
+    "hi": "alass",
+    "bn": "alass",
+    "it": "alass",
+    "fr": "alass",
+    "de": "alass",
+    "pt": "alass"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_SUBTITLE = {
@@ -691,7 +970,12 @@ OPTION_SAVE_NEXT_TO_SUBTITLE = {
     "uk": "Зберегти поруч з вхідними субтитрами",
     "ja": "入力字幕の横に保存",
     "ko": "입력 자막 옆에 저장",
-    "hi": "इनपुट उपशीर्षक के पास सहेजें"
+    "hi": "इनपुट उपशीर्षक के पास सहेजें",
+    "bn": "ইনপুট সাবটাইটেলের পাশে সংরক্ষণ করুন",
+    "it": "Salva accanto al sottotitolo di input",
+    "fr": "Enregistrer à côté du sous-titre d'entrée",
+    "de": "Neben Eingabe-Untertitel speichern",
+    "pt": "Salvar junto à legenda de entrada"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO = {
@@ -704,7 +988,12 @@ OPTION_SAVE_NEXT_TO_VIDEO = {
     "uk": "Зберегти поруч з відео",
     "ja": "動画の横に保存",
     "ko": "비디오 옆에 저장",
-    "hi": "वीडियो के पास सहेजें"
+    "hi": "वीडियो के पास सहेजें",
+    "bn": "ভিডিওর পাশে সংরক্ষণ করুন",
+    "it": "Salva accanto al video",
+    "fr": "Enregistrer à côté de la vidéo",
+    "de": "Neben Video speichern",
+    "pt": "Salvar junto ao vídeo"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = {
@@ -717,7 +1006,12 @@ OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = {
     "uk": "Зберегти поруч з відео з тим же ім'ям",
     "ja": "同じファイル名で動画の横に保存",
     "ko": "동일한 파일명으로 비디오 옆에 저장",
-    "hi": "समान फ़ाइल नाम के साथ वीडियो के पास सहेजें"
+    "hi": "समान फ़ाइल नाम के साथ वीडियो के पास सहेजें",
+    "bn": "একই ফাইলনামে ভিডিওর পাশে সংরক্ষণ করুন",
+    "it": "Salva accanto al video con stesso nome",
+    "fr": "Enregistrer à côté avec même nom",
+    "de": "Neben Video mit gleichem Namen speichern",
+    "pt": "Salvar junto ao vídeo com mesmo nome"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_TO_DESKTOP = {
@@ -730,7 +1024,12 @@ OPTION_SAVE_TO_DESKTOP = {
     "uk": "Зберегти на робочому столі",
     "ja": "デスクトップに保存",
     "ko": "바탕 화면에 저장",
-    "hi": "डेस्कटॉप पर सहेजें"
+    "hi": "डेस्कटॉप पर सहेजें",
+    "bn": "ডেস্কটপে সংরক্ষণ করুন",
+    "it": "Salva sul Desktop",
+    "fr": "Enregistrer sur le Bureau",
+    "de": "Auf Desktop speichern",
+    "pt": "Salvar na Área de Trabalho"
 }
 # TEXT SHOULD BE SHORT
 OPTION_REPLACE_ORIGINAL_SUBTITLE = {
@@ -743,7 +1042,12 @@ OPTION_REPLACE_ORIGINAL_SUBTITLE = {
     "uk": "Перезаписати вхідні субтитри",
     "ja": "入力字幕を上書き",
     "ko": "입력 자막 덮어쓰기",
-    "hi": "इनपुट उपशीर्षक अधिलेखित करें"
+    "hi": "इनपुट उपशीर्षक अधिलेखित करें",
+    "bn": "ইনপুট সাবটাইটেল ওভাররাইট করুন",
+    "it": "Sovrascrivi sottotitolo input",
+    "fr": "Écraser sous-titre d'entrée",
+    "de": "Eingabe-Untertitel überschreiben",
+    "pt": "Sobrescrever legenda de entrada"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SELECT_DESTINATION_FOLDER = {
@@ -756,7 +1060,12 @@ OPTION_SELECT_DESTINATION_FOLDER = {
     "uk": "Виберіть папку призначення",
     "ja": "保存先フォルダを選択",
     "ko": "대상 폴더 선택",
-    "hi": "गंतव्य फ़ोल्डर चुनें"
+    "hi": "गंतव्य फ़ोल्डर चुनें",
+    "bn": "গন্তব্য ফোল্ডার নির্বাচন করুন",
+    "it": "Seleziona cartella destinazione",
+    "fr": "Sélectionner dossier destination",
+    "de": "Zielordner auswählen",
+    "pt": "Selecionar pasta destino"
 }
 CHECKBOX_NO_FIX_FRAMERATE = {
     "en": "Don't fix framerate",
@@ -768,7 +1077,12 @@ CHECKBOX_NO_FIX_FRAMERATE = {
     "uk": "Не виправляти частоту кадрів",
     "ja": "フレームレートを修正しない",
     "ko": "프레임 속도 수정 안 함",
-    "hi": "फ्रेमरेट ठीक न करें"
+    "hi": "फ्रेमरेट ठीक न करें",
+    "bn": "ফ্রেমরেট ঠিক করবেন না",
+    "it": "Non correggere framerate",
+    "fr": "Ne pas corriger le framerate",
+    "de": "Framerate nicht korrigieren",
+    "pt": "Não corrigir taxa de quadros"
 }
 CHECKBOX_GSS = {
     "en": "Use golden-section search",
@@ -780,7 +1094,12 @@ CHECKBOX_GSS = {
     "uk": "Використовувати пошук золотого перетину",
     "ja": "黄金分割探索を使用",
     "ko": "황금 분할 검색 사용",
-    "hi": "स्वर्ण-खंड खोज का उपयोग करें"
+    "hi": "स्वर्ण-खंड खोज का उपयोग करें",
+    "bn": "গোল্ডেন-সেকশন সার্চ ব্যবহার করুন",
+    "it": "Usa ricerca sezione aurea",
+    "fr": "Utiliser recherche section dorée",
+    "de": "Goldener-Schnitt-Suche verwenden",
+    "pt": "Usar busca seção áurea"
 }
 CHECKBOX_VAD = {
     "en": "Use auditok instead of WebRTC's VAD",
@@ -792,7 +1111,12 @@ CHECKBOX_VAD = {
     "uk": "Використовувати auditok замість VAD WebRTC",
     "ja": "WebRTCのVADの代わりにauditokを使用",
     "ko": "WebRTC의 VAD 대신 auditok 사용",
-    "hi": "WebRTC के VAD के बजाय auditok का उपयोग करें"
+    "hi": "WebRTC के VAD के बजाय auditok का उपयोग करें",
+    "bn": "WebRTC এর VAD এর পরিবর্তে auditok ব্যবহার করুন",
+    "it": "Usa auditok invece di VAD WebRTC",
+    "fr": "Utiliser auditok au lieu du VAD WebRTC",
+    "de": "Auditok statt WebRTC VAD verwenden",
+    "pt": "Usar auditok em vez do VAD do WebRTC"
 }
 # TEXT SHOULD BE SHORT
 LABEL_SPLIT_PENALTY = {
@@ -805,7 +1129,12 @@ LABEL_SPLIT_PENALTY = {
     "uk": "Штраф (За замовч.: 7, Рекоменд.: 5-20, Без: 0)",
     "ja": "分割ペナルティ (既定: 7, 推奨: 5-20, 分割なし: 0)",
     "ko": "분할 페널티 (기본값: 7, 권장: 5-20, 분할 없음: 0)",
-    "hi": "विभाजन पेनल्टी (डिफ़ॉल्ट: 7, अनुशंसित: 5-20, कोई नहीं: 0)"
+    "hi": "विभाजन पेनल्टी (डिफ़ॉल्ट: 7, अनुशंसित: 5-20, कोई नहीं: 0)",
+    "bn": "স্প্লিট পেনাল্টি (ডিফল্ট: 7, প্রস্তাবিত: 5-20, স্প্লিট নেই: 0)",
+    "it": "Penalità (Predef: 7, Consig: 5-20, No split: 0)",
+    "fr": "Pénalité (Défaut: 7, Recomm: 5-20, Pas: 0)",
+    "de": "Teilungsstrafe (Standard: 7, Empf: 5-20, Keine: 0)",
+    "pt": "Penalidade (Padrão: 7, Recom: 5-20, Sem: 0)"
 }
 PAIR_FILES_TITLE = {
     "en": "Pair Files",
@@ -817,7 +1146,12 @@ PAIR_FILES_TITLE = {
     "uk": "З'єднати Файли",
     "ja": "ファイルをペアにする",
     "ko": "파일 페어링",
-    "hi": "फ़ाइलें जोड़ें"
+    "hi": "फ़ाइलें जोड़ें",
+    "bn": "ফাইল জোড়া লাগান",
+    "it": "Abbina File",
+    "fr": "Apparier Fichiers",
+    "de": "Dateien Paaren",
+    "pt": "Parear Arquivos"
 }
 PAIR_FILES_MESSAGE = {
     "en": "The subtitle and video have different filenames. Do you want to pair them?",
@@ -829,7 +1163,12 @@ PAIR_FILES_MESSAGE = {
     "uk": "Субтитри та відео мають різні імена файлів. Бажаєте їх з'єднати?",
     "ja": "字幕と動画のファイル名が異なります。ペアにしますか？",
     "ko": "자막과 비디오의 파일 이름이 다릅니다. 페어링하시겠습니까?",
-    "hi": "उपशीर्षक और वीडियो के फ़ाइल नाम अलग हैं। क्या आप उन्हें जोड़ना चाहते हैं?"
+    "hi": "उपशीर्षक और वीडियो के फ़ाइल नाम अलग हैं। क्या आप उन्हें जोड़ना चाहते हैं?",
+    "bn": "সাবটাইটেল এবং ভিডিওর ফাইলনাম আলাদা। আপনি কি এদের জোড়া লাগাতে চান?",
+    "it": "Il sottotitolo e il video hanno nomi diversi. Vuoi abbinarli?",
+    "fr": "Le sous-titre et la vidéo ont des noms différents. Voulez-vous les apparier ?",
+    "de": "Die Untertitel und das Video haben unterschiedliche Dateinamen. Möchten Sie sie paaren?",
+    "pt": "A legenda e o vídeo têm nomes diferentes. Deseja pareá-los?"
 }
 UNPAIRED_SUBTITLES_TITLE = {
     "en": "Unpaired Subtitles",
@@ -841,7 +1180,12 @@ UNPAIRED_SUBTITLES_TITLE = {
     "uk": "Непоєднані Субтитри",
     "ja": "未ペアの字幕",
     "ko": "페어링되지 않은 자막",
-    "hi": "अजुड़े उपशीर्षक"
+    "hi": "अजुड़े उपशीर्षक",
+    "bn": "অজোড়া সাবটাইটেল",
+    "it": "Sottotitoli non Abbinati",
+    "fr": "Sous-titres non Appariés",
+    "de": "Ungepaarte Untertitel",
+    "pt": "Legendas não Pareadas"
 }
 UNPAIRED_SUBTITLES_MESSAGE = {
     "en": "There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video/reference subtitle] tag?",
@@ -853,7 +1197,12 @@ UNPAIRED_SUBTITLES_MESSAGE = {
     "uk": "Є {unpaired_count} непоєднаних субтитрів. Бажаєте додати їх як субтитри з тегом [без відео/довідкових субтитрів]?",
     "ja": "{unpaired_count}個の未ペアの字幕があります。[動画/参照字幕なし]タグ付きで追加しますか？",
     "ko": "페어링되지 않은 자막이 {unpaired_count}개 있습니다. [비디오/참조 자막 없음] 태그로 추가하시겠습니까?",
-    "hi": "{unpaired_count} अजुड़े उपशीर्षक हैं। क्या आप उन्हें [कोई वीडियो/संदर्भ उपशीर्षक नहीं] टैग के साथ जोड़ना चाहते हैं?"
+    "hi": "{unpaired_count} अजुड़े उपशीर्षक हैं। क्या आप उन्हें [कोई वीडियो/संदर्भ उपशीर्षक नहीं] टैग के साथ जोड़ना चाहते हैं?",
+    "bn": "{unpaired_count}টি অজোড়া সাবটাইটেল আছে। আপনি কি এগুলিকে [কোনো ভিডিও/রেফারেন্স সাবটাইটেল নেই] ট্যাগ সহ যোগ করতে চান?",
+    "it": "Ci sono {unpaired_count} sottotitoli non abbinati. Vuoi aggiungerli come sottotitoli con tag [nessun video/sottotitolo di riferimento]?",
+    "fr": "Il y a {unpaired_count} sous-titre(s) non apparié(s). Voulez-vous les ajouter comme sous-titres avec l'étiquette [pas de vidéo/sous-titre de référence] ?",
+    "de": "Es gibt {unpaired_count} ungepaarte Untertitel. Möchten Sie sie als Untertitel mit dem Tag [kein Video/Referenzuntertitel] hinzufügen?",
+    "pt": "Existem {unpaired_count} legenda(s) não pareada(s). Deseja adicioná-las como legendas com a tag [sem vídeo/legenda de referência]?"
 }
 NO_VIDEO = {
     "en": "[no video/reference subtitle]",
@@ -865,7 +1214,12 @@ NO_VIDEO = {
     "uk": "[без відео/довідкових субтитрів]",
     "ja": "[動画/参照字幕なし]",
     "ko": "[비디오/참조 자막 없음]",
-    "hi": "[कोई वीडियो/संदर्भ उपशीर्षक नहीं]"
+    "hi": "[कोई वीडियो/संदर्भ उपशीर्षक नहीं]",
+    "bn": "[কোনো ভিডিও/রেফারেন্স সাবটাইটেল নেই]",
+    "it": "[nessun video/sottotitolo di riferimento]",
+    "fr": "[pas de vidéo/sous-titre de référence]",
+    "de": "[kein Video/Referenzuntertitel]",
+    "pt": "[sem vídeo/legenda de referência]"
 }
 NO_SUBTITLE = {
     "en": "[no subtitle]",
@@ -877,7 +1231,12 @@ NO_SUBTITLE = {
     "uk": "[без субтитрів]",
     "ja": "[字幕なし]",
     "ko": "[자막 없음]",
-    "hi": "[कोई उपशीर्षक नहीं]"
+    "hi": "[कोई उपशीर्षक नहीं]",
+    "bn": "[কোনো সাবটাইটেল নেই]",
+    "it": "[nessun sottotitolo]",
+    "fr": "[pas de sous-titre]",
+    "de": "[keine Untertitel]",
+    "pt": "[sem legenda]"
 }
 VIDEO_OR_SUBTITLE_TEXT = {
     "en": "Video or subtitle",
@@ -889,7 +1248,12 @@ VIDEO_OR_SUBTITLE_TEXT = {
     "uk": "Відео або субтитри",
     "ja": "動画または字幕",
     "ko": "비디오 또는 자막",
-    "hi": "वीडियो या उपशीर्षक"
+    "hi": "वीडियो या उपशीर्षक",
+    "bn": "ভিডিও বা সাবটাইটেল",
+    "it": "Video o sottotitolo",
+    "fr": "Vidéo ou sous-titre",
+    "de": "Video oder Untertitel",
+    "pt": "Vídeo ou legenda"
 }
 VIDEO_INPUT_LABEL = {
     "en": "Video/Reference subtitle",
@@ -901,7 +1265,12 @@ VIDEO_INPUT_LABEL = {
     "uk": "Відео/Довідкові субтитри",
     "ja": "動画/参照字幕",
     "ko": "비디오/참조 자막",
-    "hi": "वीडियो/संदर्भ उपशीर्षक"
+    "hi": "वीडियो/संदर्भ उपशीर्षक",
+    "bn": "ভিডিও/রেফারেন্স সাবটাইটেল",
+    "it": "Video/Sottotitolo di riferimento",
+    "fr": "Vidéo/Sous-titre de référence",
+    "de": "Video/Referenzuntertitel",
+    "pt": "Vídeo/Legenda de referência"
 }
 SUBTITLE_INPUT_LABEL = {
     "en": "Input Subtitle",
@@ -913,7 +1282,12 @@ SUBTITLE_INPUT_LABEL = {
     "uk": "Вхідні субтитри",
     "ja": "入力字幕",
     "ko": "입력 자막",
-    "hi": "इनपुट उपशीर्षक"
+    "hi": "इनपुट उपशीर्षक",
+    "bn": "ইনপুট সাবটাইটেল",
+    "it": "Sottotitolo di input",
+    "fr": "Sous-titre d'entrée",
+    "de": "Eingabe-Untertitel",
+    "pt": "Legenda de entrada"
 }
 SUBTITLE_FILES_TEXT = {
     "en": "Subtitle files",
@@ -925,7 +1299,12 @@ SUBTITLE_FILES_TEXT = {
     "uk": "Файли субтитрів",
     "ja": "字幕ファイル",
     "ko": "자막 파일",
-    "hi": "उपशीर्षक फ़ाइलें"
+    "hi": "उपशीर्षक फ़ाइलें",
+    "bn": "সাবটাইটেল ফাইল",
+    "it": "File dei sottotitoli",
+    "fr": "Fichiers de sous-titres",
+    "de": "Untertiteldateien",
+    "pt": "Arquivos de legenda"
 }
 CONTEXT_MENU_REMOVE = {
     "en": "Remove",
@@ -937,7 +1316,12 @@ CONTEXT_MENU_REMOVE = {
     "uk": "Видалити",
     "ja": "削除",
     "ko": "제거",
-    "hi": "हटाएं"
+    "hi": "हटाएं",
+    "bn": "সরান",
+    "it": "Rimuovi",
+    "fr": "Supprimer",
+    "de": "Entfernen",
+    "pt": "Remover"
 }
 CONTEXT_MENU_CHANGE = {
     "en": "Change",
@@ -949,7 +1333,12 @@ CONTEXT_MENU_CHANGE = {
     "uk": "Змінити",
     "ja": "変更",
     "ko": "변경",
-    "hi": "बदलें"
+    "hi": "बदलें",
+    "bn": "পরিবর্তন",
+    "it": "Modifica",
+    "fr": "Modifier",
+    "de": "Ändern",
+    "pt": "Alterar"
 }
 CONTEXT_MENU_ADD_PAIR = {
     "en": "Add Pair",
@@ -961,7 +1350,12 @@ CONTEXT_MENU_ADD_PAIR = {
     "uk": "Додати Пару",
     "ja": "ペアを追加",
     "ko": "페어 추가",
-    "hi": "जोड़ा जोड़ें"
+    "hi": "जोड़ा जोड़ें",
+    "bn": "জোড়া যোগ করুন",
+    "it": "Aggiungi Coppia",
+    "fr": "Ajouter Paire",
+    "de": "Paar Hinzufügen",
+    "pt": "Adicionar Par"
 }
 CONTEXT_MENU_CLEAR_ALL = {
     "en": "Clear All",
@@ -973,7 +1367,12 @@ CONTEXT_MENU_CLEAR_ALL = {
     "uk": "Очистити Все",
     "ja": "すべてクリア",
     "ko": "모두 지우기",
-    "hi": "सभी साफ करें"
+    "hi": "सभी साफ करें",
+    "bn": "সব মুছুন",
+    "it": "Cancella Tutto",
+    "fr": "Tout Effacer",
+    "de": "Alles Löschen",
+    "pt": "Limpar Tudo"
 }
 CONTEXT_MENU_SHOW_PATH = {
     "en": "Show path",
@@ -985,7 +1384,12 @@ CONTEXT_MENU_SHOW_PATH = {
     "uk": "Показати шлях",
     "ja": "パスを表示",
     "ko": "경로 표시",
-    "hi": "पथ दिखाएं"
+    "hi": "पथ दिखाएं",
+    "bn": "পাথ দেখান",
+    "it": "Mostra percorso",
+    "fr": "Afficher le chemin",
+    "de": "Pfad anzeigen",
+    "pt": "Mostrar caminho"
 }
 BUTTON_ADD_FILES = {
     "en": "Add files",
@@ -997,7 +1401,12 @@ BUTTON_ADD_FILES = {
     "uk": "Додати файли",
     "ja": "ファイルを追加",
     "ko": "파일 추가",
-    "hi": "फ़ाइलें जोड़ें"
+    "hi": "फ़ाइलें जोड़ें",
+    "bn": "ফাইল যোগ করুন",
+    "it": "Aggiungi file",
+    "fr": "Ajouter fichiers",
+    "de": "Dateien hinzufügen",
+    "pt": "Adicionar arquivos"
 }
 MENU_ADD_FOLDER = {
     "en": "Add Folder",
@@ -1009,7 +1418,12 @@ MENU_ADD_FOLDER = {
     "uk": "Додати Папку",
     "ja": "フォルダを追加",
     "ko": "폴더 추가",
-    "hi": "फ़ोल्डर जोड़ें"
+    "hi": "फ़ोल्डर जोड़ें",
+    "bn": "ফোল্ডার যোগ করুন",
+    "it": "Aggiungi Cartella",
+    "fr": "Ajouter Dossier",
+    "de": "Ordner Hinzufügen",
+    "pt": "Adicionar Pasta"
 }
 MENU_ADD_MULTIPLE_FILES = {
     "en": "Add Multiple Files",
@@ -1021,7 +1435,12 @@ MENU_ADD_MULTIPLE_FILES = {
     "uk": "Додати Кілька Файлів",
     "ja": "複数のファイルを追加",
     "ko": "여러 파일 추가",
-    "hi": "कई फ़ाइलें जोड़ें"
+    "hi": "कई फ़ाइलें जोड़ें",
+    "bn": "একাধিক ফাইল যোগ করুন",
+    "it": "Aggiungi File Multipli",
+    "fr": "Ajouter Plusieurs Fichiers",
+    "de": "Mehrere Dateien Hinzufügen",
+    "pt": "Adicionar Múltiplos Arquivos"
 }
 MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "en": "Auto-Pairing with Season/Episode",
@@ -1033,7 +1452,12 @@ MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "uk": "Автоматичне з'єднання за Сезоном/Епізодом",
     "ja": "シーズン/エピソードによる自動ペアリング",
     "ko": "시즌/에피소드로 자동 페어링",
-    "hi": "सीजन/एपिसोड के साथ स्वचालित-जोड़ी"
+    "hi": "सीजन/एपिसोड के साथ स्वचालित-जोड़ी",
+    "bn": "সিজন/এপিসোড দিয়ে স্বয়ংক্রিয়-জোড়া",
+    "it": "Auto-Abbinamento per Stagione/Episodio",
+    "fr": "Auto-Appariement par Saison/Épisode",
+    "de": "Auto-Paarung nach Staffel/Episode",
+    "pt": "Auto-Pareamento por Temporada/Episódio"
 }
 ALASS_SPEED_OPTIMIZATION_TEXT = {
     "en": "Disable speed optimization",
@@ -1045,7 +1469,12 @@ ALASS_SPEED_OPTIMIZATION_TEXT = {
     "uk": "Вимкнути оптимізацію швидкості",
     "ja": "速度最適化を無効化",
     "ko": "속도 최적화 비활성화",
-    "hi": "गति अनुकूलन अक्षम करें"
+    "hi": "गति अनुकूलन अक्षम करें",
+    "bn": "গতি অপ্টিমাইজেশন নিষ্ক্রিয় করুন",
+    "it": "Disabilita ottimizzazione velocità",
+    "fr": "Désactiver l'optimisation de vitesse",
+    "de": "Geschwindigkeitsoptimierung deaktivieren",
+    "pt": "Desativar otimização de velocidade"
 }
 ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "en": "Disable FPS guessing",
@@ -1057,7 +1486,12 @@ ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "uk": "Вимкнути визначення FPS",
     "ja": "FPS推測を無効化",
     "ko": "FPS 추측 비활성화",
-    "hi": "FPS अनुमान अक्षम करें"
+    "hi": "FPS अनुमान अक्षम करें",
+    "bn": "FPS অনুমান নিষ্ক্রিয় করুন",
+    "it": "Disabilita stima FPS",
+    "fr": "Désactiver estimation FPS",
+    "de": "FPS-Schätzung deaktivieren",
+    "pt": "Desativar estimativa de FPS"
 }
 REF_DROP_TEXT = {
     "en": "Drop videos or reference subtitles here\nor click to browse.",
@@ -1069,7 +1503,12 @@ REF_DROP_TEXT = {
     "uk": "Перетягніть відео або довідкові субтитри сюди\nабо натисніть для вибору.",
     "ja": "動画または参照字幕をここにドロップ\nまたはクリックして参照。",
     "ko": "비디오나 참조 자막을 여기에 끌어다 놓거나\n클릭하여 찾아보세요.",
-    "hi": "वीडियो या संदर्भ उपशीर्षक यहाँ खींचें\nया ब्राउज़ करने के लिए क्लिक करें।"
+    "hi": "वीडियो या संदर्भ उपशीर्षक यहाँ खींचें\nया ब्राउज़ करने के लिए क्लिक करें।",
+    "bn": "ভিডিও বা রেফারেন্স সাবটাইটেল এখানে টেনে আনুন\nঅথবা ব্রাউজ করতে ক্লিক করুন।",
+    "it": "Trascina qui video o sottotitoli di riferimento\no clicca per sfogliare.",
+    "fr": "Déposez les vidéos ou sous-titres de référence ici\nou cliquez pour parcourir.",
+    "de": "Videos oder Referenz-Untertitel hier ablegen\noder zum Durchsuchen klicken.",
+    "pt": "Solte vídeos ou legendas de referência aqui\nou clique para navegar."
 }
 SUB_DROP_TEXT = {
     "en": "Drag and drop subtitles here\nor click to browse.",
@@ -1081,7 +1520,12 @@ SUB_DROP_TEXT = {
     "uk": "Перетягніть субтитри сюди\nабо натисніть для вибору.",
     "ja": "字幕をここにドロップ\nまたはクリックして参照。",
     "ko": "자막을 여기에 끌어다 놓거나\n클릭하여 찾아보세요.",
-    "hi": "उपशीर्षक यहाँ खींचें\nया ब्राउज़ करने के लिए क्लिक करें।"
+    "hi": "उपशीर्षक यहाँ खींचें\nया ब्राउज़ करने के लिए क्लिक करें।",
+    "bn": "সাবটাইটেল এখানে টেনে আনুন\nঅথবা ব্রাউজ করতে ক্লিক করুন।",
+    "it": "Trascina qui i sottotitoli\no clicca per sfogliare.",
+    "fr": "Déposez les sous-titres ici\nou cliquez pour parcourir.",
+    "de": "Untertitel hier ablegen\noder zum Durchsuchen klicken.",
+    "pt": "Arraste e solte legendas aqui\nou clique para navegar."
 }
 REF_LABEL_TEXT = {
     "en": "Videos/Reference Subtitles",
@@ -1093,7 +1537,12 @@ REF_LABEL_TEXT = {
     "uk": "Відео/Довідкові субтитри",
     "ja": "動画/参照字幕",
     "ko": "비디오/참조 자막",
-    "hi": "वीडियो/संदर्भ उपशीर्षक"
+    "hi": "वीडियो/संदर्भ उपशीर्षक",
+    "bn": "ভিডিও/রেফারেন্স সাবটাইটেল",
+    "it": "Video/Sottotitoli di riferimento",
+    "fr": "Vidéos/Sous-titres de référence",
+    "de": "Videos/Referenz-Untertitel",
+    "pt": "Vídeos/Legendas de referência"
 }
 SUB_LABEL_TEXT = {
     "en": "Input Subtitles",
@@ -1105,7 +1554,12 @@ SUB_LABEL_TEXT = {
     "uk": "Вхідні субтитри",
     "ja": "入力字幕",
     "ko": "입력 자막",
-    "hi": "इनपुट उपशीर्षक"
+    "hi": "इनपुट उपशीर्षक",
+    "bn": "ইনপুট সাবটাইটেল",
+    "it": "Sottotitoli di input",
+    "fr": "Sous-titres d'entrée",
+    "de": "Eingabe-Untertitel",
+    "pt": "Legendas de entrada"
 }
 PROCESS_PAIRS = {
     "en": "Add Pairs",
@@ -1117,7 +1571,12 @@ PROCESS_PAIRS = {
     "uk": "Додати Пари",
     "ja": "ペアを追加",
     "ko": "페어 추가",
-    "hi": "जोड़ियाँ जोड़ें"
+    "hi": "जोड़ियाँ जोड़ें",
+    "bn": "জোড়া যোগ করুন",
+    "it": "Aggiungi coppie",
+    "fr": "Ajouter paires",
+    "de": "Paare hinzufügen",
+    "pt": "Adicionar pares"
 }
 # TEXT SHOULD BE SHORT
 SYNC_TOOL_LABEL_TEXT = {
@@ -1130,7 +1589,12 @@ SYNC_TOOL_LABEL_TEXT = {
     "uk": "Синх. через",
     "ja": "同期ツール",
     "ko": "동기화 도구",
-    "hi": "सिंक टूल"
+    "hi": "सिंक टूल",
+    "bn": "সিঙ্ক টুল",
+    "it": "Sincr. con",
+    "fr": "Sync. avec",
+    "de": "Sync. mit",
+    "pt": "Sincr. com"
 }
 EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "en": """How the Pairing Works?
@@ -1172,7 +1636,27 @@ EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "hi": """जोड़ी कैसे काम करती है?
     """+PROGRAM_NAME+""" समान नामों का उपयोग करके वीडियो या संदर्भ उपशीर्षक को उपशीर्षक फ़ाइलों के साथ स्वचालित रूप से मिलान करेगा।
     उदाहरण: "S01E01.srt/mkv" को "1x01.srt" के साथ जोड़ा जाएगा
-    समर्थित संयोजन: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
+    समर्थित संयोजन: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "bn": """জোড়া কীভাবে কাজ করে?
+    """+PROGRAM_NAME+""" স্বয়ংক্রিয়ভাবে অনুরূপ নাম ব্যবহার করে ভিডিও বা রেফারেন্স সাবটাইটেলগুলিকে সাবটাইটেল ফাইলের সাথে মিলাবে।
+    উদাহরণ: "S01E01.srt/mkv" কে "1x01.srt" এর সাথে জোড়া লাগানো হবে
+    সমর্থিত সংমিশ্রণ: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "it": """Come funziona l'abbinamento?
+    """+PROGRAM_NAME+""" abbinerà automaticamente video o sottotitoli di riferimento con i file dei sottotitoli usando nomi simili.
+    Esempio: "S01E01.srt/mkv" sarà abbinato con "1x01.srt"
+    Combinazioni supportate: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "fr": """Comment fonctionne l'appariement ?
+    """+PROGRAM_NAME+""" associera automatiquement les vidéos ou sous-titres de référence avec les fichiers de sous-titres en utilisant des noms similaires.
+    Exemple : "S01E01.srt/mkv" sera apparié avec "1x01.srt"
+    Combinaisons supportées : S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "de": """Wie funktioniert die Paarung?
+    """+PROGRAM_NAME+""" wird automatisch Videos oder Referenz-Untertitel mit Untertiteldateien anhand ähnlicher Namen abgleichen.
+    Beispiel: "S01E01.srt/mkv" wird mit "1x01.srt" gepaart
+    Unterstützte Kombinationen: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "pt": """Como funciona o pareamento?
+    """+PROGRAM_NAME+""" combinará automaticamente vídeos ou legendas de referência com arquivos de legenda usando nomes similares.
+    Exemplo: "S01E01.srt/mkv" será pareado com "1x01.srt"
+    Combinações suportadas: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 THEME_TEXT = {
     "en": "Theme",
@@ -1184,7 +1668,12 @@ THEME_TEXT = {
     "uk": "Тема",
     "ja": "テーマ",
     "ko": "테마",
-    "hi": "थीम"
+    "hi": "थीम",
+    "bn": "থিম",
+    "it": "Tema",
+    "fr": "Thème",
+    "de": "Theme",
+    "pt": "Tema"
 }
 THEME_SYSTEM_TEXT = {
     "en": "System",
@@ -1196,7 +1685,12 @@ THEME_SYSTEM_TEXT = {
     "uk": "Системна",
     "ja": "システム",
     "ko": "시스템",
-    "hi": "सिस्टम"
+    "hi": "सिस्टम",
+    "bn": "সিস্টেম",
+    "it": "Sistema",
+    "fr": "Système",
+    "de": "System",
+    "pt": "Sistema"
 }
 THEME_DARK_TEXT = {
     "en": "Dark",
@@ -1208,7 +1702,12 @@ THEME_DARK_TEXT = {
     "uk": "Темна",
     "ja": "ダーク",
     "ko": "다크",
-    "hi": "डार्क"
+    "hi": "डार्क",
+    "bn": "ডার্ক",
+    "it": "Scuro",
+    "fr": "Sombre",
+    "de": "Dunkel",
+    "pt": "Escuro"
 }
 THEME_LIGHT_TEXT = {
     "en": "Light",
@@ -1220,7 +1719,12 @@ THEME_LIGHT_TEXT = {
     "uk": "Світла",
     "ja": "ライト",
     "ko": "라이트",
-    "hi": "लाइट"
+    "hi": "लाइट",
+    "bn": "লাইট",
+    "it": "Chiaro",
+    "fr": "Clair",
+    "de": "Hell",
+    "pt": "Claro"
 }
 SUCCESS_LOG_TEXT = {
     "en": "Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}",
@@ -1232,7 +1736,12 @@ SUCCESS_LOG_TEXT = {
     "uk": "Успіх! Субтитри зсунуто на {milliseconds} мілісекунд і збережено до: {new_subtitle_file}",
     "ja": "成功！字幕を{milliseconds}ミリ秒シフトし、保存先：{new_subtitle_file}",
     "ko": "성공! 자막이 {milliseconds}밀리초 이동되어 저장됨: {new_subtitle_file}",
-    "hi": "सफल! उपशीर्षक {milliseconds} मिलीसेकंड शिफ्ट किया गया और यहाँ सहेजा गया: {new_subtitle_file}"
+    "hi": "सफल! उपशीर्षक {milliseconds} मिलीसेकंड शिफ्ट किया गया और यहाँ सहेजा गया: {new_subtitle_file}",
+    "bn": "সফল! সাবটাইটেল {milliseconds} মিলিসেকেন্ড স্থানান্তরিত করা হয়েছে এবং সংরক্ষিত হয়েছে: {new_subtitle_file}",
+    "it": "Successo! Sottotitolo spostato di {milliseconds} millisecondi e salvato in: {new_subtitle_file}",
+    "fr": "Succès ! Sous-titre décalé de {milliseconds} millisecondes et enregistré dans : {new_subtitle_file}",
+    "de": "Erfolg! Untertitel um {milliseconds} Millisekunden verschoben und gespeichert in: {new_subtitle_file}",
+    "pt": "Sucesso! Legenda deslocada em {milliseconds} milissegundos e salva em: {new_subtitle_file}"
 }
 SYNC_SUCCESS_MESSAGE = {
     "en": "Success! Synchronized subtitle saved to: {output_subtitle_file}",
@@ -1244,7 +1753,12 @@ SYNC_SUCCESS_MESSAGE = {
     "uk": "Успіх! Синхронізовані субтитри збережено до: {output_subtitle_file}",
     "ja": "成功！同期した字幕の保存先：{output_subtitle_file}",
     "ko": "성공! 동기화된 자막 저장됨: {output_subtitle_file}",
-    "hi": "सफल! सिंक्रनाइज़ किया गया उपशीर्षक यहाँ सहेजा गया: {output_subtitle_file}"
+    "hi": "सफल! सिंक्रनाइज़ किया गया उपशीर्षक यहाँ सहेजा गया: {output_subtitle_file}",
+    "bn": "সফল! সিঙ্ক্রোনাইজড সাবটাইটেল সংরক্ষিত হয়েছে: {output_subtitle_file}",
+    "it": "Successo! Sottotitolo sincronizzato salvato in: {output_subtitle_file}",
+    "fr": "Succès ! Sous-titre synchronisé enregistré dans : {output_subtitle_file}",
+    "de": "Erfolg! Synchronisierte Untertitel gespeichert in: {output_subtitle_file}",
+    "pt": "Sucesso! Legenda sincronizada salva em: {output_subtitle_file}"
 }
 ERROR_SAVING_SUBTITLE = {
     "en": "Error saving subtitle file: {error_message}",
@@ -1256,7 +1770,12 @@ ERROR_SAVING_SUBTITLE = {
     "uk": "Помилка збереження файлу субтитрів: {error_message}",
     "ja": "字幕ファイルの保存エラー：{error_message}",
     "ko": "자막 파일 저장 오류: {error_message}",
-    "hi": "उपशीर्षक फ़ाइल सहेजने में त्रुटि: {error_message}"
+    "hi": "उपशीर्षक फ़ाइल सहेजने में त्रुटि: {error_message}",
+    "bn": "সাবটাইটেল ফাইল সংরক্ষণে ত্রুটি: {error_message}",
+    "it": "Errore nel salvare il file dei sottotitoli: {error_message}",
+    "fr": "Erreur lors de l'enregistrement du fichier de sous-titres : {error_message}",
+    "de": "Fehler beim Speichern der Untertiteldatei: {error_message}",
+    "pt": "Erro ao salvar arquivo de legenda: {error_message}"
 }
 NON_ZERO_MILLISECONDS = {
     "en": "Please enter a non-zero value for milliseconds.",
@@ -1268,7 +1787,12 @@ NON_ZERO_MILLISECONDS = {
     "uk": "Будь ласка, введіть ненульове значення мілісекунд.",
     "ja": "ミリ秒にゼロ以外の値を入力してください。",
     "ko": "0이 아닌 밀리초 값을 입력하세요.",
-    "hi": "कृपया मिलीसेकंड के लिए शून्य से अलग मान दर्ज करें।"
+    "hi": "कृपया मिलीसेकंड के लिए शून्य से अलग मान दर्ज करें।",
+    "bn": "অনুগ্রহ করে মিলিসেকেন্ডের জন্য শূন্য ছাড়া একটি মান প্রবেশ করান।",
+    "it": "Inserire un valore diverso da zero per i millisecondi.",
+    "fr": "Veuillez entrer une valeur non nulle pour les millisecondes.",
+    "de": "Bitte geben Sie einen Wert ungleich Null für die Millisekunden ein.",
+    "pt": "Por favor, insira um valor diferente de zero para milissegundos."
 }
 SELECT_ONLY_ONE_OPTION = {
     "en": "Please select only one option: Save to Desktop or Replace Input Subtitle.",
@@ -1280,7 +1804,12 @@ SELECT_ONLY_ONE_OPTION = {
     "uk": "Будь ласка, виберіть лише один варіант: Зберегти на робочий стіл або Замінити вхідні субтитри.",
     "ja": "デスクトップに保存か入力字幕を置き換えるか、どちらか一つを選択してください。",
     "ko": "바탕 화면에 저장 또는 입력 자막 교체 중 하나만 선택하세요.",
-    "hi": "कृपया एक ही विकल्प चुनें: डेस्कटॉप पर सहेजें या इनपुट उपशीर्षक बदलें।"
+    "hi": "कृपया एक ही विकल्प चुनें: डेस्कटॉप पर सहेजें या इनपुट उपशीर्षक बदलें।",
+    "bn": "অনুগ্রহ করে শুধুমাত্র একটি বিকল্প নির্বাচন করুন: ডেস্কটপে সংরক্ষণ করুন অথবা ইনপুট সাবটাইটেল প্রতিস্থাপন করুন।",
+    "it": "Seleziona una sola opzione: Salva sul Desktop o Sostituisci Sottotitolo di Input.",
+    "fr": "Veuillez sélectionner une seule option : Enregistrer sur le Bureau ou Remplacer le Sous-titre d'Entrée.",
+    "de": "Bitte wählen Sie nur eine Option: Auf Desktop speichern oder Eingabe-Untertitel ersetzen.",
+    "pt": "Por favor, selecione apenas uma opção: Salvar na Área de Trabalho ou Substituir Legenda de Entrada."
 }
 VALID_NUMBER_MILLISECONDS = {
     "en": "Please enter a valid number of milliseconds.",
@@ -1292,7 +1821,167 @@ VALID_NUMBER_MILLISECONDS = {
     "uk": "Будь ласка, введіть дійсну кількість мілісекунд.",
     "ja": "有効なミリ秒数を入力してください。",
     "ko": "유효한 밀리초 수를 입력하세요.",
-    "hi": "कृपया मिलीसेकंड की एक मान्य संख्या दर्ज करें।"
+    "hi": "कृपया मिलीसेकंड की एक मान्य संख्या दर्ज करें।",
+    "bn": "অনুগ্রহ করে মিলিসেকেন্ডের একটি বৈধ সংখ্যা প্রবেশ করান।",
+    "it": "Inserisci un numero valido di millisecondi.",
+    "fr": "Veuillez entrer un nombre valide de millisecondes.",
+    "de": "Bitte geben Sie eine gültige Anzahl von Millisekunden ein.",
+    "pt": "Por favor, insira um número válido de milissegundos."
+}
+DIALOG_TITLE_TEXT = {
+    "en": "Change log window font",
+    "es": "Cambiar la fuente de la ventana de registros",
+    "tr": "Log penceresi yazı tipini değiştir",
+    "zh": "更改日志窗口字体",
+    "ru": "Изменить шрифт окна журналов",
+    "pl": "Zmień czcionkę okna logów",
+    "uk": "Змінити шрифт вікна журналів",
+    "ja": "ログウィンドウのフォントを変更",
+    "ko": "로그 창 글꼴 변경",
+    "hi": "लॉग विंडो फ़ॉन्ट बदलें",
+    "bn": "লগ উইন্ডোর ফন্ট পরিবর্তন করুন",
+    "it": "Cambia font finestra log",
+    "fr": "Changer la police de la fenêtre de journal",
+    "de": "Schriftart des Protokollfensters ändern",
+    "pt": "Alterar fonte da janela de log"
+}
+FONT_FAMILY_LABEL_TEXT = {
+    "en": "Select font family:",
+    "es": "Seleccione la familia de fuentes:",
+    "tr": "Yazı tipi ailesini seçin:",
+    "zh": "选择字体系列：",
+    "ru": "Выберите семейство шрифтов:",
+    "pl": "Wybierz rodzinę czcionek:",
+    "uk": "Виберіть сімейство шрифтів:",
+    "ja": "フォントファミリーを選択してください：",
+    "ko": "글꼴 패밀리를 선택하세요:",
+    "hi": "फ़ॉन्ट परिवार चुनें:",
+    "bn": "ফন্ট ফ্যামিলি নির্বাচন করুন:",
+    "it": "Seleziona famiglia font:",
+    "fr": "Sélectionner la famille de police :",
+    "de": "Schriftfamilie auswählen:",
+    "pt": "Selecionar família da fonte:"
+}
+FONT_SIZE_LABEL_TEXT = {
+    "en": "Select font size:",
+    "es": "Seleccione el tamaño de fuente:",
+    "tr": "Yazı tipi boyutunu seçin:",
+    "zh": "选择字体大小：",
+    "ru": "Выберите размер шрифта:",
+    "pl": "Wybierz rozmiar czcionki:",
+    "uk": "Виберіть розмір шрифту:",
+    "ja": "フォントサイズを選択してください：",
+    "ko": "글꼴 크기를 선택하세요:",
+    "hi": "फ़ॉन्ट आकार चुनें:",
+    "bn": "ফন্টের আকার নির্বাচন করুন:",
+    "it": "Seleziona dimensione font:",
+    "fr": "Sélectionner la taille de police :",
+    "de": "Schriftgröße auswählen:",
+    "pt": "Selecionar tamanho da fonte:"
+}
+FONT_STYLE_LABEL_TEXT = {
+    "en": "Select font style:",
+    "es": "Seleccione el estilo de fuente:",
+    "tr": "Yazı tipi stilini seçin:",
+    "zh": "选择字体样式：",
+    "ru": "Выберите стиль шрифта:",
+    "pl": "Wybierz styl czcionki:",
+    "uk": "Виберіть стиль шрифту:",
+    "ja": "フォントスタイルを選択してください：",
+    "ko": "글꼴 스타일을 선택하세요:",
+    "hi": "फ़ॉन्ट शैली चुनें:",
+    "bn": "ফন্টের স্টাইল নির্বাচন করুন:",
+    "it": "Seleziona stile font:",
+    "fr": "Sélectionner le style de police :",
+    "de": "Schriftstil auswählen:",
+    "pt": "Selecionar estilo da fonte:"
+}
+BOLD_TEXT = {
+    "en": "Bold",
+    "es": "Negrita",
+    "tr": "Kalın",
+    "zh": "加粗",
+    "ru": "Жирный",
+    "pl": "Pogrubiony",
+    "uk": "Жирний",
+    "ja": "太字",
+    "ko": "굵게",
+    "hi": "बोल्ड",
+    "bn": "বোল্ড",
+    "it": "Grassetto",
+    "fr": "Gras",
+    "de": "Fett",
+    "pt": "Negrito"
+}
+ITALIC_TEXT = {
+    "en": "Italic",
+    "es": "Cursiva",
+    "tr": "İtalik",
+    "zh": "斜体",
+    "ru": "Курсив",
+    "pl": "Kursywa",
+    "uk": "Курсив",
+    "ja": "イタリック",
+    "ko": "기울임꼴",
+    "hi": "इटैलिक",
+    "bn": "ইটালিক",
+    "it": "Corsivo",
+    "fr": "Italique",
+    "de": "Kursiv",
+    "pt": "Itálico"
+}
+
+UNDERLINE_TEXT = {
+    "en": "Underline",
+    "es": "Subrayado",
+    "tr": "Altı Çizili",
+    "zh": "下划线",
+    "ru": "Подчеркнутый",
+    "pl": "Podkreślenie",
+    "uk": "Підкреслений",
+    "ja": "下線",
+    "ko": "밑줄",
+    "hi": "रेखांकित",
+    "bn": "আন্ডারলাইন",
+    "it": "Sottolineato",
+    "fr": "Souligné",
+    "de": "Unterstrichen",
+    "pt": "Sublinhado"
+}
+
+STRIKETHROUGH_TEXT = {
+    "en": "Strikethrough",
+    "es": "Tachado",
+    "tr": "Üstü Çizili",
+    "zh": "删除线",
+    "ru": "Зачеркнутый",
+    "pl": "Przekreślenie",
+    "uk": "Закреслений",
+    "ja": "取り消し線",
+    "ko": "취소선",
+    "hi": "स्ट्राइकथ्रू",
+    "bn": "স্ট্রাইকথ্রু",
+    "it": "Barrato",
+    "fr": "Barré",
+    "de": "Durchgestrichen",
+    "pt": "Tachado"
+}
+APPLY_TEXT = {
+    "en": "Apply",
+    "es": "Aplicar",
+    "tr": "Uygula",
+    "zh": "应用",
+    "ru": "Применить",
+    "pl": "Zastosuj",
+    "uk": "Застосувати",
+    "ja": "適用",
+    "ko": "적용",
+    "hi": "लागू करें",
+    "bn": "প্রয়োগ করুন",
+    "it": "Applica",
+    "fr": "Appliquer",
+    "de": "Anwenden",
+    "pt": "Aplicar"
 }
 SELECT_SUBTITLE = {
     "en": "Please select a subtitle file.",
@@ -1304,7 +1993,12 @@ SELECT_SUBTITLE = {
     "uk": "Будь ласка, виберіть файл субтитрів.",
     "ja": "字幕ファイルを選択してください。",
     "ko": "자막 파일을 선택하세요.",
-    "hi": "कृपया एक उपशीर्षक फ़ाइल चुनें।"
+    "hi": "कृपया एक उपशीर्षक फ़ाइल चुनें।",
+    "bn": "অনুগ্রহ করে একটি সাবটাইটেল ফাইল নির্বাচন করুন।",
+    "it": "Seleziona un file dei sottotitoli.",
+    "fr": "Veuillez sélectionner un fichier de sous-titres.",
+    "de": "Bitte wählen Sie eine Untertiteldatei aus.",
+    "pt": "Por favor, selecione um arquivo de legenda."
 }
 SELECT_VIDEO = {
     "en": "Please select a video file.",
@@ -1316,7 +2010,12 @@ SELECT_VIDEO = {
     "uk": "Будь ласка, виберіть файл відео.",
     "ja": "動画ファイルを選択してください。",
     "ko": "비디오 파일을 선택하세요.",
-    "hi": "कृपया एक वीडियो फ़ाइल चुनें।"
+    "hi": "कृपया एक वीडियो फ़ाइल चुनें।",
+    "bn": "অনুগ্রহ করে একটি ভিডিও ফাইল নির্বাচন করুন।",
+    "it": "Seleziona un file video.",
+    "fr": "Veuillez sélectionner un fichier vidéo.",
+    "de": "Bitte wählen Sie eine Videodatei aus.",
+    "pt": "Por favor, selecione um arquivo de vídeo."
 }
 SELECT_VIDEO_OR_SUBTITLE = {
     "en": "Please select a video or reference subtitle.",
@@ -1328,7 +2027,12 @@ SELECT_VIDEO_OR_SUBTITLE = {
     "uk": "Будь ласка, виберіть відео або довідкові субтитри.",
     "ja": "動画または参照字幕を選択してください。",
     "ko": "비디오 또는 참조 자막을 선택하세요.",
-    "hi": "कृपया एक वीडियो या संदर्भ उपशीर्षक चुनें।"
+    "hi": "कृपया एक वीडियो या संदर्भ उपशीर्षक चुनें।",
+    "bn": "অনুগ্রহ করে একটি ভিডিও বা রেফারেন্স সাবটাইটেল নির্বাচন করুন।",
+    "it": "Seleziona un video o sottotitolo di riferimento.",
+    "fr": "Veuillez sélectionner une vidéo ou un sous-titre de référence.",
+    "de": "Bitte wählen Sie ein Video oder einen Referenz-Untertitel.",
+    "pt": "Por favor, selecione um vídeo ou legenda de referência."
 }
 DROP_VIDEO_SUBTITLE_PAIR = {
     "en": "Please drop a video, subtitle or pair.",
@@ -1340,7 +2044,12 @@ DROP_VIDEO_SUBTITLE_PAIR = {
     "uk": "Будь ласка, перетягніть відео, субтитри або пару.",
     "ja": "動画、字幕、またはペアをドロップしてください。",
     "ko": "비디오, 자막 또는 페어를 드롭하세요.",
-    "hi": "कृपया एक वीडियो, उपशीर्षक या जोड़ी छोड़ें।"
+    "hi": "कृपया एक वीडियो, उपशीर्षक या जोड़ी छोड़ें।",
+    "bn": "অনুগ্রহ করে একটি ভিডিও, সাবটাইটেল বা জোড়া টেনে আনুন।",
+    "it": "Trascina un video, sottotitolo o coppia.",
+    "fr": "Veuillez déposer une vidéo, un sous-titre ou une paire.",
+    "de": "Bitte legen Sie ein Video, Untertitel oder Paar ab.",
+    "pt": "Por favor, solte um vídeo, legenda ou par."
 }
 DROP_VIDEO_OR_SUBTITLE = {
     "en": "Please drop a video or reference subtitle file.",
@@ -1352,7 +2061,12 @@ DROP_VIDEO_OR_SUBTITLE = {
     "uk": "Будь ласка, перетягніть відео або файл довідкових субтитрів.",
     "ja": "動画または参照字幕ファイルをドロップしてください。",
     "ko": "비디오 또는 참조 자막 파일을 드롭하세요.",
-    "hi": "कृपया एक वीडियो या संदर्भ उपशीर्षक फ़ाइल छोड़ें।"
+    "hi": "कृपया एक वीडियो या संदर्भ उपशीर्षक फ़ाइल छोड़ें।",
+    "bn": "অনুগ্রহ করে একটি ভিডিও বা রেফারেন্স সাবটাইটেল ফাইল টেনে আনুন।",
+    "it": "Trascina un file video o sottotitolo di riferimento.",
+    "fr": "Veuillez déposer un fichier vidéo ou sous-titre de référence.",
+    "de": "Bitte legen Sie eine Video- oder Referenz-Untertiteldatei ab.",
+    "pt": "Por favor, solte um arquivo de vídeo ou legenda de referência."
 }
 DROP_SUBTITLE_FILE = {
     "en": "Please drop a subtitle file.",
@@ -1364,7 +2078,12 @@ DROP_SUBTITLE_FILE = {
     "uk": "Будь ласка, перетягніть файл субтитрів.",
     "ja": "字幕ファイルをドロップしてください。",
     "ko": "자막 파일을 드롭하세요.",
-    "hi": "कृपया एक उपशीर्षक फ़ाइल छोड़ें।"
+    "hi": "कृपया एक उपशीर्षक फ़ाइल छोड़ें।",
+    "bn": "অনুগ্রহ করে একটি সাবটাইটেল ফাইল টেনে আনুন।",
+    "it": "Trascina un file di sottotitoli.",
+    "fr": "Veuillez déposer un fichier de sous-titres.",
+    "de": "Bitte legen Sie eine Untertiteldatei ab.",
+    "pt": "Por favor, solte um arquivo de legenda."
 }
 DROP_SINGLE_SUBTITLE_FILE = {
     "en": "Please drop a single subtitle file.",
@@ -1376,7 +2095,12 @@ DROP_SINGLE_SUBTITLE_FILE = {
     "uk": "Будь ласка, перетягніть один файл субтитрів.",
     "ja": "単一の字幕ファイルをドロップしてください。",
     "ko": "단일 자막 파일을 드롭하세요.",
-    "hi": "कृपया एकल उपशीर्षक फ़ाइल छोड़ें।"
+    "hi": "कृपया एकल उपशीर्षक फ़ाइल छोड़ें।",
+    "bn": "অনুগ্রহ করে একটি একক সাবটাইটেল ফাইল টেনে আনুন।",
+    "it": "Trascina un singolo file di sottotitoli.",
+    "fr": "Veuillez déposer un seul fichier de sous-titres.",
+    "de": "Bitte legen Sie eine einzelne Untertiteldatei ab.",
+    "pt": "Por favor, solte um único arquivo de legenda."
 }
 DROP_SINGLE_SUBTITLE_PAIR = {
     "en": "Please drop a single subtitle or pair.",
@@ -1388,7 +2112,12 @@ DROP_SINGLE_SUBTITLE_PAIR = {
     "uk": "Будь ласка, перетягніть один субтитр або пару.",
     "ja": "単一の字幕またはペアをドロップしてください。",
     "ko": "단일 자막 또는 페어를 드롭하세요.",
-    "hi": "कृपया एकल उपशीर्षक या जोड़ी छोड़ें।"
+    "hi": "कृपया एकल उपशीर्षक या जोड़ी छोड़ें।",
+    "bn": "অনুগ্রহ করে একটি একক সাবটাইটেল বা জোড়া টেনে আনুন।",
+    "it": "Trascina un singolo sottotitolo o coppia.",
+    "fr": "Veuillez déposer un seul sous-titre ou une paire.",
+    "de": "Bitte legen Sie einen einzelnen Untertitel oder ein Paar ab.",
+    "pt": "Por favor, solte uma única legenda ou par."
 }
 SELECT_BOTH_FILES = {
     "en": "Please select both video/reference subtitle and subtitle file.",
@@ -1400,7 +2129,12 @@ SELECT_BOTH_FILES = {
     "uk": "Будь ласка, виберіть як відео/довідкові субтитри, так і файл субтитрів.",
     "ja": "動画/参照字幕と字幕ファイルの両方を選択してください。",
     "ko": "비디오/참조 자막 및 자막 파일을 모두 선택하세요.",
-    "hi": "कृपया वीडियो/संदर्भ उपशीर्षक और उपशीर्षक फ़ाइल दोनों चुनें।"
+    "hi": "कृपया वीडियो/संदर्भ उपशीर्षक और उपशीर्षक फ़ाइल दोनों चुनें।",
+    "bn": "অনুগ্রহ করে ভিডিও/রেফারেন্স সাবটাইটেল এবং সাবটাইটেল ফাইল উভয়ই নির্বাচন করুন।",
+    "it": "Seleziona sia il video/sottotitolo di riferimento che il file dei sottotitoli.",
+    "fr": "Veuillez sélectionner à la fois la vidéo/sous-titre de référence et le fichier de sous-titres.",
+    "de": "Bitte wählen Sie sowohl Video/Referenz-Untertitel als auch Untertiteldatei aus.",
+    "pt": "Por favor, selecione tanto o vídeo/legenda de referência quanto o arquivo de legenda."
 }
 SELECT_DIFFERENT_FILES = {
     "en": "Please select different subtitle files.",
@@ -1412,7 +2146,12 @@ SELECT_DIFFERENT_FILES = {
     "uk": "Будь ласка, виберіть різні файли субтитрів.",
     "ja": "異なる字幕ファイルを選択してください。",
     "ko": "다른 자막 파일을 선택하세요.",
-    "hi": "कृपया विभिन्न उपशीर्षक फ़ाइलें चुनें।"
+    "hi": "कृपया विभिन्न उपशीर्षक फ़ाइलें चुनें।",
+    "bn": "অনুগ্রহ করে ভিন্ন সাবটাইটেল ফাইল নির্বাচন করুন।",
+    "it": "Seleziona file di sottotitoli diversi.",
+    "fr": "Veuillez sélectionner des fichiers de sous-titres différents.",
+    "de": "Bitte wählen Sie verschiedene Untertiteldateien.",
+    "pt": "Por favor, selecione arquivos de legenda diferentes."
 }
 SUBTITLE_FILE_NOT_EXIST = {
     "en": "Subtitle file does not exist.",
@@ -1424,7 +2163,12 @@ SUBTITLE_FILE_NOT_EXIST = {
     "uk": "Файл субтитрів не існує.",
     "ja": "字幕ファイルが存在しません。",
     "ko": "자막 파일이 존재하지 않습니다.",
-    "hi": "उपशीर्षक फ़ाइल मौजूद नहीं है।"
+    "hi": "उपशीर्षक फ़ाइल मौजूद नहीं है।",
+    "bn": "সাবটাইটেল ফাইল বিদ্যমান নেই।",
+    "it": "Il file dei sottotitoli non esiste.",
+    "fr": "Le fichier de sous-titres n'existe pas.",
+    "de": "Die Untertiteldatei existiert nicht.",
+    "pt": "O arquivo de legenda não existe."
 }
 VIDEO_FILE_NOT_EXIST = {
     "en": "Video file does not exist.",
@@ -1436,7 +2180,12 @@ VIDEO_FILE_NOT_EXIST = {
     "uk": "Файл відео не існує.",
     "ja": "動画ファイルが存在しません。",
     "ko": "비디오 파일이 존재하지 않습니다.",
-    "hi": "वीडियो फ़ाइल मौजूद नहीं है।"
+    "hi": "वीडियो फ़ाइल मौजूद नहीं है।",
+    "bn": "ভিডিও ফাইল বিদ্যমান নেই।",
+    "it": "Il file video non esiste.",
+    "fr": "Le fichier vidéo n'existe pas.",
+    "de": "Die Videodatei existiert nicht.",
+    "pt": "O arquivo de vídeo não existe."
 }
 ERROR_LOADING_SUBTITLE = {
     "en": "Error loading subtitle file: {error_message}",
@@ -1448,7 +2197,12 @@ ERROR_LOADING_SUBTITLE = {
     "uk": "Помилка завантаження файлу субтитрів: {error_message}",
     "ja": "字幕ファイルの読み込みエラー：{error_message}",
     "ko": "자막 파일 로드 오류: {error_message}",
-    "hi": "उपशीर्षक फ़ाइल लोड करने में त्रुटि: {error_message}"
+    "hi": "उपशीर्षक फ़ाइल लोड करने में त्रुटि: {error_message}",
+    "bn": "সাবটাইটেল ফাইল লোড করতে সমস্যা: {error_message}",
+    "it": "Errore nel caricamento del file dei sottotitoli: {error_message}",
+    "fr": "Erreur lors du chargement du fichier de sous-titres: {error_message}",
+    "de": "Fehler beim Laden der Untertiteldatei: {error_message}",
+    "pt": "Erro ao carregar arquivo de legenda: {error_message}"
 }
 ERROR_CONVERT_TIMESTAMP = {
     "en": "Failed to convert timestamp '{timestamp}' for format '{format_type}'",
@@ -1460,7 +2214,12 @@ ERROR_CONVERT_TIMESTAMP = {
     "uk": "Не вдалося перетворити мітку часу '{timestamp}' на формат '{format_type}'",
     "ja": "タイムスタンプ '{timestamp}' をフォーマット '{format_type}' に変換できませんでした",
     "ko": "타임스탬프 '{timestamp}'를 형식 '{format_type}'으로 변환하지 못했습니다",
-    "hi": "टाइमस्टैम्प '{timestamp}' को प्रारूप '{format_type}' में परिवर्तित करने में विफल"
+    "hi": "टाइमस्टैम्प '{timestamp}' को प्रारूप '{format_type}' में परिवर्तित करने में विफल",
+    "bn": "টাইমস্ট্যাম্প '{timestamp}' ফরম্যাট '{format_type}'-এ রূপান্তর করতে ব্যর্থ",
+    "it": "Impossibile convertire il timestamp '{timestamp}' nel formato '{format_type}'",
+    "fr": "Échec de la conversion du timestamp '{timestamp}' au format '{format_type}'",
+    "de": "Konvertierung des Zeitstempels '{timestamp}' in Format '{format_type}' fehlgeschlagen",
+    "pt": "Falha ao converter timestamp '{timestamp}' para o formato '{format_type}'"
 }
 ERROR_PARSING_TIME_STRING = {
     "en": "Error parsing time string '{time_str}'",
@@ -1472,7 +2231,12 @@ ERROR_PARSING_TIME_STRING = {
     "uk": "Помилка розбору рядка часу '{time_str}'",
     "ja": "時間文字列 '{time_str}' の解析エラー",
     "ko": "시간 문자열 '{time_str}' 구문 분석 오류",
-    "hi": "समय स्ट्रिंग '{time_str}' को पार्स करने में त्रुटि"
+    "hi": "समय स्ट्रिंग '{time_str}' को पार्स करने में त्रुटि",
+    "bn": "সময় স্ট্রিং '{time_str}' পার্স করতে সমস্যা",
+    "it": "Errore nell'analisi della stringa temporale '{time_str}'",
+    "fr": "Erreur d'analyse de la chaîne temporelle '{time_str}'",
+    "de": "Fehler beim Parsen der Zeitzeichenfolge '{time_str}'",
+    "pt": "Erro ao analisar string de tempo '{time_str}'"
 }
 ERROR_PARSING_TIME_STRING_DETAILED = {
     "en": "Error parsing time string '{time_str}' for format '{format_type}': {error_message}",
@@ -1484,7 +2248,12 @@ ERROR_PARSING_TIME_STRING_DETAILED = {
     "uk": "Помилка розбору рядка часу '{time_str}' для формату '{format_type}': {error_message}",
     "ja": "フォーマット '{format_type}' の時間文字列 '{time_str}' の解析エラー：{error_message}",
     "ko": "형식 '{format_type}'의 시간 문자열 '{time_str}' 구문 분석 오류: {error_message}",
-    "hi": "प्रारूप '{format_type}' के लिए समय स्ट्रिंग '{time_str}' को पार्स करने में त्रुटि: {error_message}"
+    "hi": "प्रारूप '{format_type}' के लिए समय स्ट्रिंग '{time_str}' को पार्स करने में त्रुटि: {error_message}",
+    "bn": "ফরম্যাট '{format_type}'-এর জন্য সময় স্ট্রিং '{time_str}' পার্স করতে সমস্যা: {error_message}",
+    "it": "Errore nell'analisi della stringa temporale '{time_str}' per il formato '{format_type}': {error_message}",
+    "fr": "Erreur d'analyse de la chaîne temporelle '{time_str}' pour le format '{format_type}': {error_message}",
+    "de": "Fehler beim Parsen der Zeitzeichenfolge '{time_str}' für Format '{format_type}': {error_message}",
+    "pt": "Erro ao analisar string de tempo '{time_str}' para o formato '{format_type}': {error_message}"
 }
 NO_FILES_TO_SYNC = {
     "en": "No files to sync. Please add files to the batch list.",
@@ -1496,7 +2265,12 @@ NO_FILES_TO_SYNC = {
     "uk": "Немає файлів для синхронізації. Будь ласка, додайте файли до списку пакетів.",
     "ja": "同期するファイルがありません。バッチリストにファイルを追加してください。",
     "ko": "동기화할 파일이 없습니다. 배치 목록에 파일을 추가하세요.",
-    "hi": "सिंक करने के लिए कोई फ़ाइल नहीं है। कृपया बैच सूची में फ़ाइलें जोड़ें।"
+    "hi": "सिंक करने के लिए कोई फ़ाइल नहीं है। कृपया बैच सूची में फ़ाइलें जोड़ें।",
+    "bn": "সিঙ্ক করার জন্য কোনো ফাইল নেই। অনুগ্রহ করে ব্যাচ তালিকায় ফাইল যোগ করুন।",
+    "it": "Nessun file da sincronizzare. Aggiungi file alla lista batch.",
+    "fr": "Aucun fichier à synchroniser. Veuillez ajouter des fichiers à la liste de lot.",
+    "de": "Keine Dateien zum Synchronisieren. Bitte fügen Sie Dateien zur Stapelliste hinzu.",
+    "pt": "Nenhum arquivo para sincronizar. Por favor, adicione arquivos à lista de lote."
 }
 NO_VALID_FILE_PAIRS = {
     "en": "No valid file pairs to sync.",
@@ -1508,7 +2282,12 @@ NO_VALID_FILE_PAIRS = {
     "uk": "Немає дійсних пар файлів для синхронізації.",
     "ja": "同期する有効なファイルペアがありません。",
     "ko": "동기화할 유효한 파일 쌍이 없습니다.",
-    "hi": "सिंक करने के लिए कोई मान्य फ़ाइल जोड़ी नहीं है।"
+    "hi": "सिंक करने के लिए कोई मान्य फ़ाइल जोड़ी नहीं है।",
+    "bn": "সিঙ্ক করার জন্য কোনো বৈধ ফাইল জোড়া নেই।",
+    "it": "Nessuna coppia di file valida da sincronizzare.",
+    "fr": "Aucune paire de fichiers valide à synchroniser.",
+    "de": "Keine gültigen Dateipaare zum Synchronisieren.",
+    "pt": "Nenhum par de arquivos válido para sincronizar."
 }
 ERROR_PROCESS_TERMINATION = {
     "en": "Error occurred during process termination: {error_message}",
@@ -1520,7 +2299,12 @@ ERROR_PROCESS_TERMINATION = {
     "uk": "Помилка під час завершення процесу: {error_message}",
     "ja": "プロセス終了中にエラーが発生しました：{error_message}",
     "ko": "프로세스 종료 중 오류 발생: {error_message}",
-    "hi": "प्रक्रिया समाप्ति के दौरान त्रुटि: {error_message}"
+    "hi": "प्रक्रिया समाप्ति के दौरान त्रुटि: {error_message}",
+    "bn": "প্রক্রিয়া বন্ধ করার সময় ত্রুটি: {error_message}",
+    "it": "Errore durante la terminazione del processo: {error_message}",
+    "fr": "Erreur lors de la terminaison du processus: {error_message}",
+    "de": "Fehler bei der Prozessbeendigung: {error_message}",
+    "pt": "Erro durante o encerramento do processo: {error_message}"
 }
 AUTO_SYNC_CANCELLED = {
     "en": "Automatic synchronization cancelled.",
@@ -1532,7 +2316,12 @@ AUTO_SYNC_CANCELLED = {
     "uk": "Автоматична синхронізація скасована.",
     "ja": "自動同期がキャンセルされました。",
     "ko": "자동 동기화가 취소되었습니다.",
-    "hi": "स्वचालित सिंक्रनाइज़ेशन रद्द कर दिया गया।"
+    "hi": "स्वचालित सिंक्रनाइज़ेशन रद्द कर दिया गया।",
+    "bn": "স্বয়ংক্রিয় সিঙ্ক্রোনাইজেশন বাতিল করা হয়েছে।",
+    "it": "Sincronizzazione automatica annullata.",
+    "fr": "Synchronisation automatique annulée.",
+    "de": "Automatische Synchronisierung abgebrochen.",
+    "pt": "Sincronização automática cancelada."
 }
 BATCH_SYNC_CANCELLED = {
     "en": "Batch synchronization cancelled.",
@@ -1544,7 +2333,12 @@ BATCH_SYNC_CANCELLED = {
     "uk": "Пакетна синхронізація скасована.",
     "ja": "バッチ同期がキャンセルされました。",
     "ko": "배치 동기화가 취소되었습니다.",
-    "hi": "बैच सिंक्रनाइज़ेशन रद्द कर दिया गया।"
+    "hi": "बैच सिंक्रनाइज़ेशन रद्द कर दिया गया।",
+    "bn": "ব্যাচ সিঙ্ক্রোনাইজেশন বাতিল করা হয়েছে।",
+    "it": "Sincronizzazione batch annullata.",
+    "fr": "Synchronisation par lot annulée.",
+    "de": "Stapel-Synchronisierung abgebrochen.",
+    "pt": "Sincronização em lote cancelada."
 }
 NO_SYNC_PROCESS = {
     "en": "No synchronization process to cancel.",
@@ -1556,7 +2350,12 @@ NO_SYNC_PROCESS = {
     "uk": "Немає процесу синхронізації для скасування.",
     "ja": "キャンセルする同期プロセスがありません。",
     "ko": "취소할 동기화 프로세스가 없습니다.",
-    "hi": "रद्द करने के लिए कोई सिंक्रनाइज़ेशन प्रक्रिया नहीं है।"
+    "hi": "रद्द करने के लिए कोई सिंक्रनाइज़ेशन प्रक्रिया नहीं है।",
+    "bn": "বাতিল করার জন্য কোনো সিঙ্ক্রোনাইজেশন প্রক্রিয়া নেই।",
+    "it": "Nessun processo di sincronizzazione da annullare.",
+    "fr": "Aucun processus de synchronisation à annuler.",
+    "de": "Kein Synchronisierungsprozess zum Abbrechen.",
+    "pt": "Nenhum processo de sincronização para cancelar."
 }
 INVALID_SYNC_TOOL = {
     "en": "Invalid sync tool selected.",
@@ -1568,7 +2367,12 @@ INVALID_SYNC_TOOL = {
     "uk": "Вибрано недійсний інструмент синхронізації.",
     "ja": "無効な同期ツールが選択されました。",
     "ko": "잘못된 동기화 도구가 선택되었습니다.",
-    "hi": "अमान्य सिंक टूल चुना गया।"
+    "hi": "अमान्य सिंक टूल चुना गया।",
+    "bn": "অবৈধ সিঙ্ক টুল নির্বাচিত।",
+    "it": "Strumento di sincronizzazione non valido selezionato.",
+    "fr": "Outil de synchronisation invalide sélectionné.",
+    "de": "Ungültiges Synchronisierungswerkzeug ausgewählt.",
+    "pt": "Ferramenta de sincronização inválida selecionada."
 }
 FAILED_START_PROCESS = {
     "en": "Failed to start process: {error_message}",
@@ -1580,7 +2384,12 @@ FAILED_START_PROCESS = {
     "uk": "Не вдалося запустити процес: {error_message}",
     "ja": "プロセスの開始に失敗しました：{error_message}",
     "ko": "프로세스를 시작하지 못했습니다: {error_message}",
-    "hi": "प्रक्रिया प्रारंभ करने में विफल: {error_message}"
+    "hi": "प्रक्रिया प्रारंभ करने में विफल: {error_message}",
+    "bn": "প্রক্রিয়া শুরু করতে ব্যর্থ: {error_message}",
+    "it": "Impossibile avviare il processo: {error_message}",
+    "fr": "Échec du démarrage du processus: {error_message}",
+    "de": "Prozessstart fehlgeschlagen: {error_message}",
+    "pt": "Falha ao iniciar processo: {error_message}"
 }
 ERROR_OCCURRED = {
     "en": "Error occurred: {error_message}",
@@ -1592,7 +2401,12 @@ ERROR_OCCURRED = {
     "uk": "Виникла помилка: {error_message}",
     "ja": "エラーが発生しました：{error_message}",
     "ko": "오류 발생: {error_message}",
-    "hi": "त्रुटि हुई: {error_message}"
+    "hi": "त्रुटि हुई: {error_message}",
+    "bn": "ত্রুটি ঘটেছে: {error_message}",
+    "it": "Si è verificato un errore: {error_message}",
+    "fr": "Une erreur s'est produite: {error_message}",
+    "de": "Fehler aufgetreten: {error_message}",
+    "pt": "Ocorreu um erro: {error_message}"
 }
 ERROR_EXECUTING_COMMAND = {
     "en": "Error executing command: ",
@@ -1604,7 +2418,12 @@ ERROR_EXECUTING_COMMAND = {
     "uk": "Помилка виконання команди: ",
     "ja": "コマンドの実行エラー：",
     "ko": "명령 실행 오류: ",
-    "hi": "कमांड निष्पादित करने में त्रुटि: "
+    "hi": "कमांड निष्पादित करने में त्रुटि: ",
+    "bn": "কমান্ড চালানোর সময় ত্রুটি: ",
+    "it": "Errore nell'esecuzione del comando: ",
+    "fr": "Erreur lors de l'exécution de la commande: ",
+    "de": "Fehler bei der Ausführung des Befehls: ",
+    "pt": "Erro ao executar comando: "
 }
 DROP_VALID_FILES = {
     "en": "Please drop valid subtitle and video files.",
@@ -1616,7 +2435,12 @@ DROP_VALID_FILES = {
     "uk": "Будь ласка, перетягніть дійсні файли субтитрів та відео.",
     "ja": "有効な字幕ファイルと動画ファイルをドロップしてください。",
     "ko": "유효한 자막 및 비디오 파일을 드롭하세요.",
-    "hi": "कृपया मान्य उपशीर्षक और वीडियो फ़ाइलें छोड़ें।"
+    "hi": "कृपया मान्य उपशीर्षक और वीडियो फ़ाइलें छोड़ें।",
+    "bn": "অনুগ্রহ করে বৈধ সাবটাইটেল এবং ভিডিও ফাইল টেনে আনুন।",
+    "it": "Trascina file di sottotitoli e video validi.",
+    "fr": "Veuillez déposer des fichiers de sous-titres et vidéo valides.",
+    "de": "Bitte legen Sie gültige Untertitel- und Videodateien ab.",
+    "pt": "Por favor, solte arquivos válidos de legenda e vídeo."
 }
 PAIRS_ADDED = {
     "en": "Added {count} pair(s)",
@@ -1628,7 +2452,12 @@ PAIRS_ADDED = {
     "uk": "Додано {count} пар(и)",
     "ja": "{count} ペア追加されました",
     "ko": "{count} 쌍이 추가되었습니다",
-    "hi": "{count} जोड़ी जोड़ी गई"
+    "hi": "{count} जोड़ी जोड़ी गई",
+    "bn": "{count}টি জোড়া যোগ করা হয়েছে",
+    "it": "Aggiunta {count} coppia/e",
+    "fr": "{count} paire(s) ajoutée(s)",
+    "de": "{count} Paar(e) hinzugefügt",
+    "pt": "{count} par(es) adicionado(s)"
 }
 UNPAIRED_FILES_ADDED = {
     "en": "Added {count} unpaired file(s)",
@@ -1640,7 +2469,12 @@ UNPAIRED_FILES_ADDED = {
     "uk": "Додано {count} непоєднаних файлів",
     "ja": "{count} 個の未ペアファイルが追加されました",
     "ko": "{count}개의 페어링되지 않은 파일이 추가되었습니다",
-    "hi": "{count} अजुड़ी फ़ाइलें जोड़ी गईं"
+    "hi": "{count} अजुड़ी फ़ाइलें जोड़ी गईं",
+    "bn": "{count}টি অজোড়া ফাইল যোগ করা হয়েছে",
+    "it": "Aggiunti {count} file non abbinati",
+    "fr": "{count} fichier(s) non apparié(s) ajouté(s)",
+    "de": "{count} ungepaarte Datei(en) hinzugefügt",
+    "pt": "{count} arquivo(s) não pareado(s) adicionado(s)"
 }
 UNPAIRED_FILES = {
     "en": "{count} unpaired file(s)",
@@ -1652,7 +2486,12 @@ UNPAIRED_FILES = {
     "uk": "{count} непоєднаний(і) файл(и)",
     "ja": "{count} 個の未ペアファイル",
     "ko": "{count}개의 페어링되지 않은 파일",
-    "hi": "{count} अजुड़ी फ़ाइलें"
+    "hi": "{count} अजुड़ी फ़ाइलें",
+    "bn": "{count}টি অজোড়া ফাইল",
+    "it": "{count} file non abbinati",
+    "fr": "{count} fichier(s) non apparié(s)",
+    "de": "{count} ungepaarte Datei(en)",
+    "pt": "{count} arquivo(s) não pareado(s)"
 }
 DUPLICATE_PAIRS_SKIPPED = {
     "en": "{count} duplicate pair(s) skipped",
@@ -1664,7 +2503,12 @@ DUPLICATE_PAIRS_SKIPPED = {
     "uk": "Пропущено {count} дубльовану(і) пару(и)",
     "ja": "{count} 重複ペアがスキップされました",
     "ko": "{count}개의 중복 쌍이 건너뛰어졌습니다",
-    "hi": "{count} डुप्लिकेट जोड़ी(याँ) छोड़ी गईं"
+    "hi": "{count} डुप्लिकेट जोड़ी(याँ) छोड़ी गईं",
+    "bn": "{count}টি ডুপ্লিকেট জোড়া বাদ দেওয়া হয়েছে",
+    "it": "{count} coppia/e duplicata/e saltata/e",
+    "fr": "{count} paire(s) en double ignorée(s)",
+    "de": "{count} doppelte(s) Paar(e) übersprungen",
+    "pt": "{count} par(es) duplicado(s) ignorado(s)"
 }
 PAIR_ADDED = {
     "en": "Added 1 pair.",
@@ -1676,7 +2520,12 @@ PAIR_ADDED = {
     "uk": "Додано 1 пару.",
     "ja": "1 ペア追加されました。",
     "ko": "1 쌍이 추가되었습니다.",
-    "hi": "1 जोड़ी जोड़ी गई।"
+    "hi": "1 जोड़ी जोड़ी गई।",
+    "bn": "১টি জোড়া যোগ করা হয়েছে।",
+    "it": "Aggiunta 1 coppia.",
+    "fr": "1 paire ajoutée.",
+    "de": "1 Paar hinzugefügt.",
+    "pt": "1 par adicionado."
 }
 SAME_FILE_ERROR = {
     "en": "Cannot use the same file for both inputs.",
@@ -1688,7 +2537,12 @@ SAME_FILE_ERROR = {
     "uk": "Не можна використовувати один і той самий файл для обох входів.",
     "ja": "両方の入力に同じファイルを使用することはできません。",
     "ko": "두 입력 모두에 동일한 파일을 사용할 수 없습니다.",
-    "hi": "दोनों इनपुट के लिए एक ही फ़ाइल का उपयोग नहीं किया जा सकता।"
+    "hi": "दोनों इनपुट के लिए एक ही फ़ाइल का उपयोग नहीं किया जा सकता।",
+    "bn": "উভয় ইনপুটের জন্য একই ফাইল ব্যবহার করা যাবে না।",
+    "it": "Impossibile utilizzare lo stesso file per entrambi gli input.",
+    "fr": "Impossible d'utiliser le même fichier pour les deux entrées.",
+    "de": "Die gleiche Datei kann nicht für beide Eingaben verwendet werden.",
+    "pt": "Não é possível usar o mesmo arquivo para ambas as entradas."
 }
 PAIR_ALREADY_EXISTS = {
     "en": "This pair already exists. Please select a different file.",
@@ -1700,7 +2554,12 @@ PAIR_ALREADY_EXISTS = {
     "uk": "Ця пара вже існує. Будь ласка, виберіть інший файл.",
     "ja": "このペアは既に存在します。別のファイルを選択してください。",
     "ko": "이 쌍은 이미 존재합니다. 다른 파일을 선택하세요.",
-    "hi": "यह जोड़ी पहले से मौजूद है। कृपया एक अलग फ़ाइल चुनें।"
+    "hi": "यह जोड़ी पहले से मौजूद है। कृपया एक अलग फ़ाइल चुनें।",
+    "bn": "এই জোড়াটি ইতিমধ্যে বিদ্যমান। অনুগ্রহ করে একটি ভিন্ন ফাইল নির্বাচন করুন।",
+    "it": "Questa coppia esiste già. Seleziona un file diverso.",
+    "fr": "Cette paire existe déjà. Veuillez sélectionner un fichier différent.",
+    "de": "Dieses Paar existiert bereits. Bitte wählen Sie eine andere Datei.",
+    "pt": "Este par já existe. Por favor, selecione um arquivo diferente."
 }
 SUBTITLE_ADDED = {
     "en": "Subtitle added.",
@@ -1712,7 +2571,12 @@ SUBTITLE_ADDED = {
     "uk": "Субтитри додано.",
     "ja": "字幕が追加されました。",
     "ko": "자막이 추가되었습니다.",
-    "hi": "उपशीर्षक जोड़ा गया।"
+    "hi": "उपशीर्षक जोड़ा गया।",
+    "bn": "সাবটাইটেল যোগ করা হয়েছে।",
+    "it": "Sottotitolo aggiunto.",
+    "fr": "Sous-titre ajouté.",
+    "de": "Untertitel hinzugefügt.",
+    "pt": "Legenda adicionada."
 }
 VIDEO_ADDED = {
     "en": "Video/reference subtitle added.",
@@ -1724,7 +2588,12 @@ VIDEO_ADDED = {
     "uk": "Додано відео/довідкові субтитри.",
     "ja": "動画/参照字幕が追加されました。",
     "ko": "비디오/참조 자막이 추가되었습니다.",
-    "hi": "वीडियो/संदर्भ उपशीर्षक जोड़ा गया।"
+    "hi": "वीडियो/संदर्भ उपशीर्षक जोड़ा गया।",
+    "bn": "ভিডিও/রেফারেন্স সাবটাইটেল যোগ করা হয়েছে।",
+    "it": "Video/sottotitolo di riferimento aggiunto.",
+    "fr": "Vidéo/sous-titre de référence ajouté.",
+    "de": "Video/Referenz-Untertitel hinzugefügt.",
+    "pt": "Vídeo/legenda de referência adicionado."
 }
 FILE_CHANGED = {
     "en": "File changed.",
@@ -1736,7 +2605,12 @@ FILE_CHANGED = {
     "uk": "Файл змінено.",
     "ja": "ファイルが変更されました。",
     "ko": "파일이 변경되었습니다.",
-    "hi": "फ़ाइल बदली गई।"
+    "hi": "फ़ाइल बदली गई।",
+    "bn": "ফাইল পরিবর্তিত হয়েছে।",
+    "it": "File modificato.",
+    "fr": "Fichier modifié.",
+    "de": "Datei geändert.",
+    "pt": "Arquivo alterado."
 }
 SELECT_ITEM_TO_CHANGE = {
     "en": "Please select an item to change.",
@@ -1748,7 +2622,12 @@ SELECT_ITEM_TO_CHANGE = {
     "uk": "Будь ласка, виберіть елемент для зміни.",
     "ja": "変更する項目を選択してください。",
     "ko": "변경할 항목을 선택하세요.",
-    "hi": "कृपया बदलने के लिए एक आइटम चुनें।"
+    "hi": "कृपया बदलने के लिए एक आइटम चुनें।",
+    "bn": "অনুগ্রহ করে পরিবর্তন করার জন্য একটি আইটেম নির্বাচন করুন।",
+    "it": "Seleziona un elemento da modificare.",
+    "fr": "Veuillez sélectionner un élément à modifier.",
+    "de": "Bitte wählen Sie ein Element zum Ändern.",
+    "pt": "Por favor, selecione um item para alterar."
 }
 SELECT_ITEM_TO_REMOVE = {
     "en": "Please select an item to remove.",
@@ -1760,7 +2639,12 @@ SELECT_ITEM_TO_REMOVE = {
     "uk": "Будь ласка, виберіть елемент для видалення.",
     "ja": "削除する項目を選択してください。",
     "ko": "제거할 항목을 선택하세요.",
-    "hi": "कृपया हटाने के लिए एक आइटम चुनें।"
+    "hi": "कृपया हटाने के लिए एक आइटम चुनें।",
+    "bn": "অনুগ্রহ করে সরানোর জন্য একটি আইটেম নির্বাচন করুন।",
+    "it": "Seleziona un elemento da rimuovere.",
+    "fr": "Veuillez sélectionner un élément à supprimer.",
+    "de": "Bitte wählen Sie ein Element zum Entfernen.",
+    "pt": "Por favor, selecione um item para remover."
 }
 FILE_NOT_EXIST = {
     "en": "File specified in the argument does not exist.",
@@ -1772,7 +2656,12 @@ FILE_NOT_EXIST = {
     "uk": "Файл, вказаний в аргументі, не існує.",
     "ja": "引数で指定されたファイルが存在しません。",
     "ko": "인수에 지정된 파일이 존재하지 않습니다.",
-    "hi": "तर्क में निर्दिष्ट फ़ाइल मौजूद नहीं है।"
+    "hi": "तर्क में निर्दिष्ट फ़ाइल मौजूद नहीं है।",
+    "bn": "আর্গুমেন্টে উল্লেখিত ফাইল বিদ্যমান নেই।",
+    "it": "Il file specificato nell'argomento non esiste.",
+    "fr": "Le fichier spécifié dans l'argument n'existe pas.",
+    "de": "Die im Argument angegebene Datei existiert nicht.",
+    "pt": "O arquivo especificado no argumento não existe."
 }
 MULTIPLE_ARGUMENTS = {
     "en": "Multiple arguments provided. Please provide only one subtitle file path.",
@@ -1784,7 +2673,12 @@ MULTIPLE_ARGUMENTS = {
     "uk": "Надано кілька аргументів. Будь ласка, вкажіть лише один шлях до файлу субтитрів.",
     "ja": "複数の引数が提供されました。字幕ファイルのパスを1つだけ指定してください。",
     "ko": "여러 인수가 제공되었습니다. 자막 파일 경로를 하나만 제공하세요.",
-    "hi": "कई तर्क प्रदान किए गए हैं। कृपया केवल एक उपशीर्षक फ़ाइल पथ प्रदान करें।"
+    "hi": "कई तर्क प्रदान किए गए हैं। कृपया केवल एक उपशीर्षक फ़ाइल पथ प्रदान करें।",
+    "bn": "একাধিক আর্গুমেন্ট প্রদান করা হয়েছে। অনুগ্রহ করে শুধুমাত্র একটি সাবটাইটেল ফাইল পাথ প্রদান করুন।",
+    "it": "Forniti più argomenti. Fornire solo un percorso file dei sottotitoli.",
+    "fr": "Plusieurs arguments fournis. Veuillez fournir un seul chemin de fichier de sous-titres.",
+    "de": "Mehrere Argumente angegeben. Bitte geben Sie nur einen Untertitel-Dateipfad an.",
+    "pt": "Múltiplos argumentos fornecidos. Por favor, forneça apenas um caminho de arquivo de legenda."
 }
 INVALID_FILE_FORMAT = {
     "en": "Invalid file format. Please provide a subtitle file.",
@@ -1796,7 +2690,12 @@ INVALID_FILE_FORMAT = {
     "uk": "Недійсний формат файлу. Будь ласка, вкажіть файл субтитрів.",
     "ja": "無効なファイル形式です。字幕ファイルを指定してください。",
     "ko": "잘못된 파일 형식입니다. 자막 파일을 제공하세요.",
-    "hi": "अमान्य फ़ाइल प्रारूप। कृपया एक उपशीर्षक फ़ाइल प्रदान करें।"
+    "hi": "अमान्य फ़ाइल प्रारूप। कृपया एक उपशीर्षक फ़ाइल प्रदान करें।",
+    "bn": "অবৈধ ফাইল ফরম্যাট। অনুগ্রহ করে একটি সাবটাইটেল ফাইল প্রদান করুন।",
+    "it": "Formato file non valido. Fornire un file di sottotitoli.",
+    "fr": "Format de fichier invalide. Veuillez fournir un fichier de sous-titres.",
+    "de": "Ungültiges Dateiformat. Bitte geben Sie eine Untertiteldatei an.",
+    "pt": "Formato de arquivo inválido. Por favor, forneça um arquivo de legenda."
 }
 INVALID_SYNC_TOOL_SELECTED = {
     "en": "Invalid sync tool selected.",
@@ -1808,7 +2707,12 @@ INVALID_SYNC_TOOL_SELECTED = {
     "uk": "Вибрано недійсний інструмент синхронізації.",
     "ja": "無効な同期ツールが選択されました。",
     "ko": "잘못된 동기화 도구가 선택되었습니다.",
-    "hi": "अमान्य सिंक टूल चुना गया।"
+    "hi": "अमान्य सिंक टूल चुना गया।",
+    "bn": "অবৈধ সিঙ্ক টুল নির্বাচিত।",
+    "it": "Strumento di sincronizzazione non valido selezionato.",
+    "fr": "Outil de synchronisation invalide sélectionné.",
+    "de": "Ungültiges Synchronisierungswerkzeug ausgewählt.",
+    "pt": "Ferramenta de sincronização inválida selecionada."
 }
 TEXT_SELECTED_FOLDER = {
     "en": "Selected folder: {}",
@@ -1820,7 +2724,12 @@ TEXT_SELECTED_FOLDER = {
     "uk": "Вибрана папка: {}",
     "ja": "選択されたフォルダ：{}",
     "ko": "선택된 폴더: {}",
-    "hi": "चयनित फ़ोल्डर: {}"
+    "hi": "चयनित फ़ोल्डर: {}",
+    "bn": "নির্বাচিত ফোল্ডার: {}",
+    "it": "Cartella selezionata: {}",
+    "fr": "Dossier sélectionné : {}",
+    "de": "Ausgewählter Ordner: {}",
+    "pt": "Pasta selecionada: {}"
 }
 TEXT_NO_FOLDER_SELECTED = {
     "en": "No folder selected.",
@@ -1832,7 +2741,12 @@ TEXT_NO_FOLDER_SELECTED = {
     "uk": "Папку не вибрано.",
     "ja": "フォルダが選択されていません。",
     "ko": "폴더가 선택되지 않았습니다.",
-    "hi": "कोई फ़ोल्डर चयनित नहीं है।"
+    "hi": "कोई फ़ोल्डर चयनित नहीं है।",
+    "bn": "কোন ফোল্ডার নির্বাচিত হয়নি।",
+    "it": "Nessuna cartella selezionata.",
+    "fr": "Aucun dossier sélectionné.",
+    "de": "Kein Ordner ausgewählt.",
+    "pt": "Nenhuma pasta selecionada."
 }
 TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "en": "The selected destination folder does not exist.",
@@ -1844,7 +2758,12 @@ TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "uk": "Вибрана папка призначення не існує.",
     "ja": "選択した宛先フォルダが存在しません。",
     "ko": "선택한 대상 폴더가 존재하지 않습니다.",
-    "hi": "चयनित गंतव्य फ़ोल्डर मौजूद नहीं है।"
+    "hi": "चयनित गंतव्य फ़ोल्डर मौजूद नहीं है।",
+    "bn": "নির্বাচিত গন্তব্য ফোল্ডার বিদ্যমান নেই।",
+    "it": "La cartella di destinazione selezionata non esiste.",
+    "fr": "Le dossier de destination sélectionné n'existe pas.",
+    "de": "Der ausgewählte Zielordner existiert nicht.",
+    "pt": "A pasta de destino selecionada não existe."
 }
 ADDED_PAIRS_MSG = {
     "en": "{} pairs automatically matched",
@@ -1856,7 +2775,12 @@ ADDED_PAIRS_MSG = {
     "uk": "{} пар автоматично зіставлено",
     "ja": "{} ペアが自動的に一致しました",
     "ko": "{} 쌍이 자동으로 일치되었습니다",
-    "hi": "{} जोड़ी स्वचालित रूप से मिलाई गई"
+    "hi": "{} जोड़ी स्वचालित रूप से मिलाई गई",
+    "bn": "{} জোড়া স্বয়ংক্রিয়ভাবে মিলেছে",
+    "it": "{} coppie abbinate automaticamente",
+    "fr": "{} paires appariées automatiquement",
+    "de": "{} Paare automatisch zugeordnet",
+    "pt": "{} pares combinados automaticamente"
 }
 SKIPPED_DUPLICATES_MSG = {
     "en": "Skipped {} duplicate pair{}",
@@ -1868,7 +2792,12 @@ SKIPPED_DUPLICATES_MSG = {
     "uk": "Пропущено {} дубльовану(і) пару(и)",
     "ja": "{} 重複ペアがスキップされました",
     "ko": "{}개의 중복 쌍이 건너뛰어졌습니다",
-    "hi": "{} डुप्लिकेट जोड़ी(याँ) छोड़ी गईं"
+    "hi": "{} डुप्लिकेट जोड़ी(याँ) छोड़ी गईं",
+    "bn": "{} ডুপ্লিকেট জোড়া বাদ দেওয়া হয়েছে",
+    "it": "Saltate {} coppie duplicate",
+    "fr": "Ignoré {} paire(s) en double",
+    "de": "{} doppelte(s) Paar(e) übersprungen",
+    "pt": "Ignorado {} par(es) duplicado(s)"
 }
 INVALID_PARENT_ITEM = {
     "en": "Invalid parent item with no values.",
@@ -1880,7 +2809,12 @@ INVALID_PARENT_ITEM = {
     "uk": "Недійсний батьківський елемент без значень.",
     "ja": "値のない無効な親アイテム。",
     "ko": "값이 없는 잘못된 상위 항목.",
-    "hi": "कोई मान नहीं वाला अमान्य पैरेंट आइटम।"
+    "hi": "कोई मान नहीं वाला अमान्य पैरेंट आइटम।",
+    "bn": "কোনো মান নেই এমন অবৈধ প্যারেন্ট আইটেম।",
+    "it": "Elemento padre non valido senza valori.",
+    "fr": "Élément parent invalide sans valeurs.",
+    "de": "Ungültiges übergeordnetes Element ohne Werte.",
+    "pt": "Item pai inválido sem valores."
 }
 SKIP_NO_VIDEO_NO_SUBTITLE = {
     "en": "Skipping entry with no video and no subtitle.",
@@ -1892,7 +2826,12 @@ SKIP_NO_VIDEO_NO_SUBTITLE = {
     "uk": "Пропуск запису без відео та субтитрів.",
     "ja": "ビデオと字幕のないエントリをスキップしています。",
     "ko": "비디오와 자막이 없는 항목 건너뛰기.",
-    "hi": "कोई वीडियो और कोई उपशीर्षक नहीं वाली प्रविष्टि छोड़ना।"
+    "hi": "कोई वीडियो और कोई उपशीर्षक नहीं वाली प्रविष्टि छोड़ना।",
+    "bn": "কোনো ভিডিও এবং সাবটাইটেল নেই এমন এন্ট্রি বাদ দেওয়া হচ্ছে।",
+    "it": "Saltando voce senza video e sottotitoli.",
+    "fr": "Ignorer l'entrée sans vidéo ni sous-titre.",
+    "de": "Überspringe Eintrag ohne Video und Untertitel.",
+    "pt": "Ignorando entrada sem vídeo e sem legenda."
 }
 SKIP_NO_SUBTITLE = {
     "en": "Skipping '{video_file}': No subtitle file.",
@@ -1904,7 +2843,12 @@ SKIP_NO_SUBTITLE = {
     "uk": "Пропуск '{video_file}': Немає файлу субтитрів.",
     "ja": "'{video_file}' をスキップしています：字幕ファイルがありません。",
     "ko": "'{video_file}' 건너뛰기: 자막 파일이 없습니다.",
-    "hi": "'{video_file}' छोड़ना: कोई उपशीर्षक फ़ाइल नहीं।"
+    "hi": "'{video_file}' छोड़ना: कोई उपशीर्षक फ़ाइल नहीं।",
+    "bn": "'{video_file}' বাদ দেওয়া হচ্ছে: কোনো সাবটাইটেল ফাইল নেই।",
+    "it": "Saltando '{video_file}': Nessun file di sottotitoli.",
+    "fr": "Ignorer '{video_file}' : Pas de fichier de sous-titres.",
+    "de": "Überspringe '{video_file}': Keine Untertiteldatei.",
+    "pt": "Ignorando '{video_file}': Sem arquivo de legenda."
 }
 SKIP_NO_VIDEO = {
     "en": "Skipping '{subtitle_file}': No video/reference file.",
@@ -1916,7 +2860,12 @@ SKIP_NO_VIDEO = {
     "uk": "Пропуск '{subtitle_file}': Немає відео/довідкового файлу.",
     "ja": "'{subtitle_file}' をスキップしています：ビデオ/参照ファイルがありません。",
     "ko": "'{subtitle_file}' 건너뛰기: 비디오/참조 파일이 없습니다.",
-    "hi": "'{subtitle_file}' छोड़ना: कोई वीडियो/संदर्भ फ़ाइल नहीं।"
+    "hi": "'{subtitle_file}' छोड़ना: कोई वीडियो/संदर्भ फ़ाइल नहीं।",
+    "bn": "'{subtitle_file}' বাদ দেওয়া হচ্ছে: কোনো ভিডিও/রেফারেন্স ফাইল নেই।",
+    "it": "Saltando '{subtitle_file}': Nessun file video/riferimento.",
+    "fr": "Ignorer '{subtitle_file}' : Pas de fichier vidéo/référence.",
+    "de": "Überspringe '{subtitle_file}': Keine Video-/Referenzdatei.",
+    "pt": "Ignorando '{subtitle_file}': Sem arquivo de vídeo/referência."
 }
 SKIP_UNPAIRED_ITEM = {
     "en": "Unpaired item skipped.",
@@ -1928,7 +2877,12 @@ SKIP_UNPAIRED_ITEM = {
     "uk": "Пропущено непоєднаний елемент.",
     "ja": "未ペアのアイテムをスキップしました。",
     "ko": "페어링되지 않은 항목 건너뛰기.",
-    "hi": "अजुड़ा आइटम छोड़ा गया।"
+    "hi": "अजुड़ा आइटम छोड़ा गया।",
+    "bn": "অজোড়া আইটেম বাদ দেওয়া হয়েছে।",
+    "it": "Elemento non abbinato saltato.",
+    "fr": "Élément non apparié ignoré.",
+    "de": "Ungepaartes Element übersprungen.",
+    "pt": "Item não pareado ignorado."
 }
 SKIPPING_ALREADY_SYNCED = {
     "en": "Skipping {filename}: Already synced.",
@@ -1940,7 +2894,12 @@ SKIPPING_ALREADY_SYNCED = {
     "uk": "Пропуск {filename}: Вже синхронізовано.",
     "ja": "{filename} をスキップしています：既に同期されています。",
     "ko": "{filename} 건너뛰기: 이미 동기화됨.",
-    "hi": "{filename} छोड़ना: पहले से सिंक किया गया।"
+    "hi": "{filename} छोड़ना: पहले से सिंक किया गया।",
+    "bn": "{filename} বাদ দেওয়া হচ্ছে: ইতিমধ্যে সিঙ্ক করা হয়েছে।",
+    "it": "Saltando {filename}: Già sincronizzato.",
+    "fr": "Ignorer {filename} : Déjà synchronisé.",
+    "de": "Überspringe {filename}: Bereits synchronisiert.",
+    "pt": "Ignorando {filename}: Já sincronizado."
 }
 CONVERTING_SUBTITLE = {
     "en": "Converting {file_extension} to SRT...",
@@ -1952,7 +2911,12 @@ CONVERTING_SUBTITLE = {
     "uk": "Перетворення {file_extension} на SRT...",
     "ja": "{file_extension} を SRT に変換しています...",
     "ko": "{file_extension}를 SRT로 변환 중...",
-    "hi": "{file_extension} को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "{file_extension} को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "{file_extension} কে SRT-তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di {file_extension} in SRT...",
+    "fr": "Conversion de {file_extension} en SRT...",
+    "de": "Konvertiere {file_extension} zu SRT...",
+    "pt": "Convertendo {file_extension} para SRT..."
 }
 SYNCING_LOG_TEXT = {
     "en": "[{}/{}] Syncing {} with {}...\n",
@@ -1964,7 +2928,12 @@ SYNCING_LOG_TEXT = {
     "uk": "[{}/{}] Синхронізація {} з {}...\n",
     "ja": "[{}/{}] {} と {} を同期しています...\n",
     "ko": "[{}/{}] {}와 {} 동기화 중...\n",
-    "hi": "[{}/{}] {} को {} के साथ सिंक कर रहा है...\n"
+    "hi": "[{}/{}] {} को {} के साथ सिंक कर रहा है...\n",
+    "bn": "[{}/{}] {} এর সাথে {} সিঙ্ক করা হচ্ছে...\n",
+    "it": "[{}/{}] Sincronizzazione di {} con {}...\n",
+    "fr": "[{}/{}] Synchronisation de {} avec {}...\n",
+    "de": "[{}/{}] Synchronisiere {} mit {}...\n",
+    "pt": "[{}/{}] Sincronizando {} com {}...\n"
 }
 ERROR_CONVERTING_SUBTITLE = {
     "en": "Error converting subtitle: {error_message}",
@@ -1976,7 +2945,12 @@ ERROR_CONVERTING_SUBTITLE = {
     "uk": "Помилка перетворення субтитрів: {error_message}",
     "ja": "字幕の変換エラー：{error_message}",
     "ko": "자막 변환 오류: {error_message}",
-    "hi": "उपशीर्षक परिवर्तित करने में त्रुटि: {error_message}"
+    "hi": "उपशीर्षक परिवर्तित करने में त्रुटि: {error_message}",
+    "bn": "সাবটাইটেল রূপান্তরে ত্রুটি: {error_message}",
+    "it": "Errore durante la conversione del sottotitolo: {error_message}",
+    "fr": "Erreur lors de la conversion du sous-titre: {error_message}",
+    "de": "Fehler bei der Untertitel-Konvertierung: {error_message}",
+    "pt": "Erro ao converter legenda: {error_message}"
 }
 SUBTITLE_CONVERTED = {
     "en": "Subtitle successfully converted and saved to: {srt_file}.",
@@ -1988,7 +2962,12 @@ SUBTITLE_CONVERTED = {
     "uk": "Субтитри успішно перетворено та збережено до: {srt_file}.",
     "ja": "字幕が正常に変換され、保存先：{srt_file}。",
     "ko": "자막이 성공적으로 변환되어 저장됨: {srt_file}.",
-    "hi": "उपशीर्षक सफलतापूर्वक परिवर्तित और यहाँ सहेजा गया: {srt_file}।"
+    "hi": "उपशीर्षक सफलतापूर्वक परिवर्तित और यहाँ सहेजा गया: {srt_file}।",
+    "bn": "সাবটাইটেল সফলভাবে রূপান্তরিত এবং সংরক্ষিত হয়েছে: {srt_file}।",
+    "it": "Sottotitolo convertito con successo e salvato in: {srt_file}.",
+    "fr": "Sous-titre converti avec succès et enregistré dans : {srt_file}.",
+    "de": "Untertitel erfolgreich konvertiert und gespeichert in: {srt_file}.",
+    "pt": "Legenda convertida com sucesso e salva em: {srt_file}."
 }
 ERROR_UNSUPPORTED_CONVERSION = {
     "en": "Error: Conversion for {file_extension} is not supported.",
@@ -2000,7 +2979,12 @@ ERROR_UNSUPPORTED_CONVERSION = {
     "uk": "Помилка: Перетворення для {file_extension} не підтримується.",
     "ja": "エラー：{file_extension} の変換はサポートされていません。",
     "ko": "오류: {file_extension} 변환이 지원되지 않습니다.",
-    "hi": "त्रुटि: {file_extension} के लिए रूपांतरण समर्थित नहीं है।"
+    "hi": "त्रुटि: {file_extension} के लिए रूपांतरण समर्थित नहीं है।",
+    "bn": "ত্রুটি: {file_extension} এর জন্য রূপান্তর সমর্থিত নয়।",
+    "it": "Errore: La conversione per {file_extension} non è supportata.",
+    "fr": "Erreur : La conversion pour {file_extension} n'est pas prise en charge.",
+    "de": "Fehler: Konvertierung für {file_extension} wird nicht unterstützt.",
+    "pt": "Erro: Conversão para {file_extension} não é suportada."
 }
 FAILED_CONVERT_SUBTITLE = {
     "en": "Failed to convert subtitle file: {subtitle_file}",
@@ -2012,7 +2996,12 @@ FAILED_CONVERT_SUBTITLE = {
     "uk": "Не вдалося перетворити файл субтитрів: {subtitle_file}",
     "ja": "字幕ファイルの変換に失敗しました：{subtitle_file}",
     "ko": "자막 파일을 변환하지 못했습니다: {subtitle_file}",
-    "hi": "उपशीर्षक फ़ाइल परिवर्तित करने में विफल: {subtitle_file}"
+    "hi": "उपशीर्षक फ़ाइल परिवर्तित करने में विफल: {subtitle_file}",
+    "bn": "সাবটাইটেল ফাইল রূপান্তর করতে ব্যর্থ: {subtitle_file}",
+    "it": "Conversione del file dei sottotitoli fallita: {subtitle_file}",
+    "fr": "Échec de la conversion du fichier de sous-titres : {subtitle_file}",
+    "de": "Konvertierung der Untertiteldatei fehlgeschlagen: {subtitle_file}",
+    "pt": "Falha ao converter arquivo de legenda: {subtitle_file}"
 }
 FAILED_CONVERT_VIDEO = {
     "en": "Failed to convert video/reference file: {video_file}",
@@ -2024,7 +3013,12 @@ FAILED_CONVERT_VIDEO = {
     "uk": "Не вдалося перетворити відео/довідковий файл: {video_file}",
     "ja": "ビデオ/参照ファイルの変換に失敗しました：{video_file}",
     "ko": "비디오/참조 파일을 변환하지 못했습니다: {video_file}",
-    "hi": "वीडियो/संदर्भ फ़ाइल परिवर्तित करने में विफल: {video_file}"
+    "hi": "वीडियो/संदर्भ फ़ाइल परिवर्तित करने में विफल: {video_file}",
+    "bn": "ভিডিও/রেফারেন্স ফাইল রূপান্তর করতে ব্যর্থ: {video_file}",
+    "it": "Conversione del file video/riferimento fallita: {video_file}",
+    "fr": "Échec de la conversion du fichier vidéo/référence : {video_file}",
+    "de": "Konvertierung der Video/Referenz-Datei fehlgeschlagen: {video_file}",
+    "pt": "Falha ao converter arquivo de vídeo/referência: {video_file}"
 }
 SPLIT_PENALTY_ZERO = {
     "en": "Split penalty is set to 0. Using --no-split argument...",
@@ -2036,7 +3030,12 @@ SPLIT_PENALTY_ZERO = {
     "uk": "Штраф за розділення встановлено на 0. Використання аргументу --no-split...",
     "ja": "分割ペナルティが0に設定されています。--no-split 引数を使用しています...",
     "ko": "분할 페널티가 0으로 설정되었습니다. --no-split 인수 사용 중...",
-    "hi": "विभाजन पेनल्टी 0 पर सेट है। --no-split तर्क का उपयोग कर रहा है..."
+    "hi": "विभाजन पेनल्टी 0 पर सेट है। --no-split तर्क का उपयोग कर रहा है...",
+    "bn": "স্প্লিট পেনাল্টি 0-তে সেট করা হয়েছে। --no-split আর্গুমেন্ট ব্যবহার করা হচ্ছে...",
+    "it": "Penalità di divisione impostata a 0. Utilizzo dell'argomento --no-split...",
+    "fr": "Pénalité de division définie à 0. Utilisation de l'argument --no-split...",
+    "de": "Teilungsstrafe auf 0 gesetzt. Verwende --no-split Argument...",
+    "pt": "Penalidade de divisão definida como 0. Usando argumento --no-split..."
 }
 SPLIT_PENALTY_SET = {
     "en": "Split penalty is set to {split_penalty}...",
@@ -2048,7 +3047,12 @@ SPLIT_PENALTY_SET = {
     "uk": "Штраф за розділення встановлено на {split_penalty}...",
     "ja": "分割ペナルティが {split_penalty} に設定されています...",
     "ko": "분할 페널티가 {split_penalty}으로 설정되었습니다...",
-    "hi": "विभाजन पेनल्टी {split_penalty} पर सेट है..."
+    "hi": "विभाजन पेनल्टी {split_penalty} पर सेट है...",
+    "bn": "স্প্লিট পেনাল্টি {split_penalty} এ সেট করা হয়েছে...",
+    "it": "La penalità di divisione è impostata su {split_penalty}...",
+    "fr": "La pénalité de division est réglée sur {split_penalty}...",
+    "de": "Teilungsstrafe ist auf {split_penalty} gesetzt...",
+    "pt": "A penalidade de divisão está definida para {split_penalty}..."
 }
 USING_REFERENCE_SUBTITLE = {
     "en": "Using reference subtitle for syncing...",
@@ -2060,7 +3064,12 @@ USING_REFERENCE_SUBTITLE = {
     "uk": "Використання довідкових субтитрів для синхронізації...",
     "ja": "同期に参照字幕を使用しています...",
     "ko": "동기화에 참조 자막 사용 중...",
-    "hi": "सिंकिंग के लिए संदर्भ उपशीर्षक का उपयोग कर रहा है..."
+    "hi": "सिंकिंग के लिए संदर्भ उपशीर्षक का उपयोग कर रहा है...",
+    "bn": "সিঙ্ক করার জন্য রেফারেন্স সাবটাইটেল ব্যবহার করা হচ্ছে...",
+    "it": "Utilizzo del sottotitolo di riferimento per la sincronizzazione...",
+    "fr": "Utilisation du sous-titre de référence pour la synchronisation...",
+    "de": "Verwendung des Referenz-Untertitels zur Synchronisierung...",
+    "pt": "Usando legenda de referência para sincronizar..."
 }
 USING_VIDEO_FOR_SYNC = {
     "en": "Using video for syncing...",
@@ -2072,7 +3081,12 @@ USING_VIDEO_FOR_SYNC = {
     "uk": "Використання відео для синхронізації...",
     "ja": "同期にビデオを使用しています...",
     "ko": "동기화에 비디오 사용 중...",
-    "hi": "सिंकिंग के लिए वीडियो का उपयोग कर रहा है..."
+    "hi": "सिंकिंग के लिए वीडियो का उपयोग कर रहा है...",
+    "bn": "সিঙ্ক করার জন্য ভিডিও ব্যবহার করা হচ্ছে...",
+    "it": "Utilizzo del video per la sincronizzazione...",
+    "fr": "Utilisation de la vidéo pour la synchronisation...",
+    "de": "Verwendung des Videos zur Synchronisierung...",
+    "pt": "Usando vídeo para sincronizar..."
 }
 ENABLED_NO_FIX_FRAMERATE = {
     "en": "Enabled: Don't fix framerate.",
@@ -2084,7 +3098,12 @@ ENABLED_NO_FIX_FRAMERATE = {
     "uk": "Увімкнено: Не виправляти частоту кадрів.",
     "ja": "有効化：フレームレートを修正しない。",
     "ko": "활성화됨: 프레임 속도 수정 안 함.",
-    "hi": "सक्षम: फ्रेम दर को ठीक न करें।"
+    "hi": "सक्षम: फ्रेम दर को ठीक न करें।",
+    "bn": "সক্ষম: ফ্রেমরেট ঠিক করবেন না।",
+    "it": "Abilitato: Non correggere il framerate.",
+    "fr": "Activé : Ne pas corriger le framerate.",
+    "de": "Aktiviert: Framerate nicht korrigieren.",
+    "pt": "Ativado: Não corrigir a taxa de quadros."
 }
 ENABLED_GSS = {
     "en": "Enabled: Golden-section search.",
@@ -2096,7 +3115,12 @@ ENABLED_GSS = {
     "uk": "Увімкнено: Пошук золотого перетину.",
     "ja": "有効化：黄金分割探索。",
     "ko": "활성화됨: 황금 분할 검색.",
-    "hi": "सक्षम: स्वर्ण-खंड खोज।"
+    "hi": "सक्षम: स्वर्ण-खंड खोज।",
+    "bn": "সক্ষম: গোল্ডেন-সেকশন সার্চ।",
+    "it": "Abilitato: Ricerca della sezione aurea.",
+    "fr": "Activé : Recherche de la section dorée.",
+    "de": "Aktiviert: Goldener-Schnitt-Suche.",
+    "pt": "Ativado: Busca da seção áurea."
 }
 ENABLED_AUDITOK_VAD = {
     "en": "Enabled: Using auditok instead of WebRTC's VAD.",
@@ -2108,7 +3132,12 @@ ENABLED_AUDITOK_VAD = {
     "uk": "Увімкнено: Використання auditok замість VAD WebRTC.",
     "ja": "有効化：WebRTCのVADの代わりにauditokを使用。",
     "ko": "활성화됨: WebRTC의 VAD 대신 auditok 사용.",
-    "hi": "सक्षम: WebRTC के VAD के बजाय auditok का उपयोग।"
+    "hi": "सक्षम: WebRTC के VAD के बजाय auditok का उपयोग।",
+    "bn": "সক্ষম: WebRTC এর VAD এর পরিবর্তে auditok ব্যবহার করা হচ্ছে।",
+    "it": "Abilitato: Utilizzo di auditok invece del VAD di WebRTC.",
+    "fr": "Activé : Utilisation d'auditok au lieu du VAD de WebRTC.",
+    "de": "Aktiviert: Verwendung von auditok anstelle von WebRTC's VAD.",
+    "pt": "Ativado: Usando auditok em vez do VAD do WebRTC."
 }
 ADDITIONAL_ARGS_ADDED = {
     "en": "Additional arguments: {additional_args}",
@@ -2120,7 +3149,12 @@ ADDITIONAL_ARGS_ADDED = {
     "uk": "Додаткові аргументи: {additional_args}",
     "ja": "追加引数：{additional_args}",
     "ko": "추가 인수: {additional_args}",
-    "hi": "अतिरिक्त तर्क: {additional_args}"
+    "hi": "अतिरिक्त तर्क: {additional_args}",
+    "bn": "অতিরিক্ত আর্গুমেন্ট: {additional_args}",
+    "it": "Argomenti aggiuntivi: {additional_args}",
+    "fr": "Arguments supplémentaires : {additional_args}",
+    "de": "Zusätzliche Argumente: {additional_args}",
+    "pt": "Argumentos adicionais: {additional_args}"
 }
 SYNCING_STARTED = {
     "en": "Syncing started:",
@@ -2132,7 +3166,12 @@ SYNCING_STARTED = {
     "uk": "Синхронізація розпочата:",
     "ja": "同期開始：",
     "ko": "동기화 시작:",
-    "hi": "सिंकिंग शुरू:"
+    "hi": "सिंकिंग शुरू:",
+    "bn": "সিঙ্কিং শুরু হয়েছে:",
+    "it": "Sincronizzazione avviata:",
+    "fr": "Synchronisation commencée :",
+    "de": "Synchronisierung gestartet:",
+    "pt": "Sincronização iniciada:"
 }
 SYNCING_ENDED = {
     "en": "Syncing ended.",
@@ -2144,7 +3183,12 @@ SYNCING_ENDED = {
     "uk": "Синхронізація завершена.",
     "ja": "同期終了。",
     "ko": "동기화 종료.",
-    "hi": "सिंकिंग समाप्त।"
+    "hi": "सिंकिंग समाप्त।",
+    "bn": "সিঙ্কিং শেষ হয়েছে।",
+    "it": "Sincronizzazione terminata.",
+    "fr": "Synchronisation terminée.",
+    "de": "Synchronisierung beendet.",
+    "pt": "Sincronização concluída."
 }
 SYNC_SUCCESS = {
     "en": "Success! Synchronized subtitle saved to: {output_subtitle_file}\n\n",
@@ -2156,7 +3200,12 @@ SYNC_SUCCESS = {
     "uk": "Успіх! Синхронізовані субтитри збережено до: {output_subtitle_file}\n\n",
     "ja": "成功！同期した字幕の保存先：{output_subtitle_file}\n\n",
     "ko": "성공! 동기화된 자막 저장됨: {output_subtitle_file}\n\n",
-    "hi": "सफल! सिंक्रनाइज़ किया गया उपशीर्षक यहाँ सहेजा गया: {output_subtitle_file}\n\n"
+    "hi": "सफल! सिंक्रनाइज़ किया गया उपशीर्षक यहाँ सहेजा गया: {output_subtitle_file}\n\n",
+    "bn": "সফল! সিঙ্ক্রোনাইজড সাবটাইটেল এখানে সংরক্ষিত হয়েছে: {output_subtitle_file}\n\n",
+    "it": "Successo! Sottotitolo sincronizzato salvato in: {output_subtitle_file}\n\n",
+    "fr": "Succès ! Sous-titre synchronisé enregistré dans : {output_subtitle_file}\n\n",
+    "de": "Erfolg! Synchronisierte Untertitel gespeichert unter: {output_subtitle_file}\n\n",
+    "pt": "Sucesso! Legenda sincronizada salva em: {output_subtitle_file}\n\n"
 }
 SYNC_ERROR = {
     "en": "Error occurred during synchronization of {filename}",
@@ -2168,7 +3217,12 @@ SYNC_ERROR = {
     "uk": "Помилка під час синхронізації {filename}",
     "ja": "{filename} の同期中にエラーが発生しました",
     "ko": "{filename} 동기화 중 오류 발생",
-    "hi": "{filename} की सिंक्रनाइज़ेशन के दौरान त्रुटि हुई"
+    "hi": "{filename} की सिंक्रनाइज़ेशन के दौरान त्रुटि हुई",
+    "bn": "{filename} এর সিঙ্ক্রোনাইজেশনের সময় ত্রুটি ঘটেছে",
+    "it": "Errore durante la sincronizzazione di {filename}",
+    "fr": "Erreur survenue lors de la synchronisation de {filename}",
+    "de": "Fehler bei der Synchronisierung von {filename}",
+    "pt": "Erro durante a sincronização de {filename}"
 }
 SYNC_ERROR_OCCURRED = {
     "en": "Error occurred during synchronization. Please check the log messages.",
@@ -2180,7 +3234,12 @@ SYNC_ERROR_OCCURRED = {
     "uk": "Під час синхронізації сталася помилка. Будь ласка, перевірте повідомлення журналу.",
     "ja": "同期中にエラーが発生しました。ログメッセージを確認してください。",
     "ko": "동기화 중 오류가 발생했습니다. 로그 메시지를 확인하세요.",
-    "hi": "सिंक्रनाइज़ेशन के दौरान त्रुटि हुई। कृपया लॉग संदेशों की जाँच करें।"
+    "hi": "सिंक्रनाइज़ेशन के दौरान त्रुटि हुई। कृपया लॉग संदेशों की जाँच करें।",
+    "bn": "সিঙ্ক্রোনাইজেশনের সময় ত্রুটি ঘটেছে। অনুগ্রহ করে লগ বার্তাগুলি পরীক্ষা করুন।",
+    "it": "Errore durante la sincronizzazione. Si prega di controllare i messaggi di log.",
+    "fr": "Erreur survenue lors de la synchronisation. Veuillez vérifier les messages de journal.",
+    "de": "Fehler bei der Synchronisierung. Bitte überprüfen Sie die Protokollmeldungen.",
+    "pt": "Erro durante a sincronização. Por favor, verifique as mensagens de log."
 }
 BATCH_SYNC_COMPLETED = {
     "en": "Batch syncing completed.",
@@ -2192,7 +3251,12 @@ BATCH_SYNC_COMPLETED = {
     "uk": "Пакетну синхронізацію завершено.",
     "ja": "バッチ同期が完了しました。",
     "ko": "배치 동기화 완료.",
-    "hi": "बैच सिंक्रनाइज़ेशन पूरा हुआ।"
+    "hi": "बैच सिंक्रनाइज़ेशन पूरा हुआ।",
+    "bn": "ব্যাচ সিঙ্কিং সম্পন্ন হয়েছে।",
+    "it": "Sincronizzazione batch completata.",
+    "fr": "Synchronisation par lot terminée.",
+    "de": "Stapel-Synchronisierung abgeschlossen.",
+    "pt": "Sincronização em lote concluída."
 }
 PREPARING_SYNC = {
     "en": "Preparing {base_name}{file_extension} for automatic sync...",
@@ -2204,7 +3268,12 @@ PREPARING_SYNC = {
     "uk": "Підготовка {base_name}{file_extension} до автоматичної синхронізації...",
     "ja": "自動同期のために {base_name}{file_extension} を準備しています...",
     "ko": "자동 동기화를 위해 {base_name}{file_extension} 준비 중...",
-    "hi": "स्वचालित सिंक्रनाइज़ेशन के लिए {base_name}{file_extension} तैयार कर रहा है..."
+    "hi": "स्वचालित सिंक्रनाइज़ेशन के लिए {base_name}{file_extension} तैयार कर रहा है...",
+    "bn": "স্বয়ংক্রিয় সিঙ্কের জন্য {base_name}{file_extension} প্রস্তুত করা হচ্ছে...",
+    "it": "Preparazione di {base_name}{file_extension} per la sincronizzazione automatica...",
+    "fr": "Préparation de {base_name}{file_extension} pour la synchronisation automatique...",
+    "de": "Vorbereitung von {base_name}{file_extension} für die automatische Synchronisierung...",
+    "pt": "Preparando {base_name}{file_extension} para sincronização automática..."
 }
 CONVERTING_TTML = {
     "en": "Converting TTML/DFXP/ITT to SRT...",
@@ -2216,7 +3285,12 @@ CONVERTING_TTML = {
     "uk": "Перетворення TTML/DFXP/ITT на SRT...",
     "ja": "TTML/DFXP/ITT を SRT に変換しています...",
     "ko": "TTML/DFXP/ITT를 SRT로 변환 중...",
-    "hi": "TTML/DFXP/ITT को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "TTML/DFXP/ITT को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "TTML/DFXP/ITT কে SRT তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di TTML/DFXP/ITT in SRT...",
+    "fr": "Conversion de TTML/DFXP/ITT en SRT...",
+    "de": "Konvertierung von TTML/DFXP/ITT in SRT...",
+    "pt": "Convertendo TTML/DFXP/ITT para SRT..."
 }
 CONVERTING_VTT = {
     "en": "Converting VTT to SRT...",
@@ -2228,7 +3302,12 @@ CONVERTING_VTT = {
     "uk": "Перетворення VTT на SRT...",
     "ja": "VTT を SRT に変換しています...",
     "ko": "VTT를 SRT로 변환 중...",
-    "hi": "VTT को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "VTT को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "VTT কে SRT তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di VTT in SRT...",
+    "fr": "Conversion de VTT en SRT...",
+    "de": "Konvertierung von VTT in SRT...",
+    "pt": "Convertendo VTT para SRT..."
 }
 CONVERTING_SBV = {
     "en": "Converting SBV to SRT...",
@@ -2240,7 +3319,12 @@ CONVERTING_SBV = {
     "uk": "Перетворення SBV на SRT...",
     "ja": "SBV を SRT に変換しています...",
     "ko": "SBV를 SRT로 변환 중...",
-    "hi": "SBV को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "SBV को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "SBV কে SRT তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di SBV in SRT...",
+    "fr": "Conversion de SBV en SRT...",
+    "de": "Konvertierung von SBV in SRT...",
+    "pt": "Convertendo SBV para SRT..."
 }
 CONVERTING_SUB = {
     "en": "Converting SUB to SRT...",
@@ -2252,7 +3336,12 @@ CONVERTING_SUB = {
     "uk": "Перетворення SUB на SRT...",
     "ja": "SUB を SRT に変換しています...",
     "ko": "SUB를 SRT로 변환 중...",
-    "hi": "SUB को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "SUB को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "SUB কে SRT তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di SUB in SRT...",
+    "fr": "Conversion de SUB en SRT...",
+    "de": "Konvertierung von SUB in SRT...",
+    "pt": "Convertendo SUB para SRT..."
 }
 CONVERTING_ASS = {
     "en": "Converting ASS/SSA to SRT...",
@@ -2264,7 +3353,12 @@ CONVERTING_ASS = {
     "uk": "Перетворення ASS/SSA на SRT...",
     "ja": "ASS/SSA を SRT に変換しています...",
     "ko": "ASS/SSA를 SRT로 변환 중...",
-    "hi": "ASS/SSA को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "ASS/SSA को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "ASS/SSA কে SRT তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di ASS/SSA in SRT...",
+    "fr": "Conversion de ASS/SSA en SRT...",
+    "de": "Konvertierung von ASS/SSA in SRT...",
+    "pt": "Convertendo ASS/SSA para SRT..."
 }
 CONVERTING_STL = {
     "en": "Converting STL to SRT...",
@@ -2276,7 +3370,12 @@ CONVERTING_STL = {
     "uk": "Перетворення STL на SRT...",
     "ja": "STL を SRT に変換しています...",
     "ko": "STL을 SRT로 변환 중...",
-    "hi": "STL को SRT में परिवर्तित किया जा रहा है..."
+    "hi": "STL को SRT में परिवर्तित किया जा रहा है...",
+    "bn": "STL কে SRT তে রূপান্তর করা হচ্ছে...",
+    "it": "Conversione di STL in SRT...",
+    "fr": "Conversion de STL en SRT...",
+    "de": "Konvertierung von STL in SRT...",
+    "pt": "Convertendo STL para SRT..."
 }
 CONVERSION_NOT_SUPPORTED = {
     "en": "Error: Conversion for {file_extension} is not supported.",
@@ -2288,7 +3387,12 @@ CONVERSION_NOT_SUPPORTED = {
     "uk": "Помилка: Перетворення для {file_extension} не підтримується.",
     "ja": "エラー：{file_extension} の変換はサポートされていません。",
     "ko": "오류: {file_extension} 변환이 지원되지 않습니다.",
-    "hi": "त्रुटि: {file_extension} के लिए रूपांतरण समर्थित नहीं है।"
+    "hi": "त्रुटि: {file_extension} के लिए रूपांतरण समर्थित नहीं है।",
+    "bn": "ত্রুটি: {file_extension} এর জন্য রূপান্তর সমর্থিত নয়।",
+    "it": "Errore: La conversione per {file_extension} non è supportata.",
+    "fr": "Erreur : La conversion pour {file_extension} n'est pas supportée.",
+    "de": "Fehler: Konvertierung für {file_extension} wird nicht unterstützt.",
+    "pt": "Erro: Conversão para {file_extension} não é suportada."
 }
 RETRY_ENCODING_MSG = {
     "en": "Previous sync failed. Retrying with pre-detected encodings...",
@@ -2300,7 +3404,12 @@ RETRY_ENCODING_MSG = {
     "uk": "Попередня синхронізація не вдалася. Повторна спроба з попередньо виявленими кодуваннями...",
     "ja": "前回の同期に失敗しました。事前に検出されたエンコーディングで再試行しています...",
     "ko": "이전 동기화에 실패했습니다. 사전 감지된 인코딩으로 다시 시도 중...",
-    "hi": "पिछला सिंक विफल रहा। पूर्व-निर्धारित एन्कोडिंग के साथ पुनः प्रयास कर रहा है..."
+    "hi": "पिछला सिंक विफल रहा। पूर्व-निर्धारित एन्कोडिंग के साथ पुनः प्रयास कर रहा है...",
+    "bn": "পূর্ববর্তী সিঙ্ক ব্যর্থ হয়েছে। পূর্ব-নির্ধারিত এনকোডিং সহ পুনরায় চেষ্টা করা হচ্ছে...",
+    "it": "La sincronizzazione precedente è fallita. Riprovo con codifiche pre-rilevate...",
+    "fr": "La synchronisation précédente a échoué. Nouvelle tentative avec des encodages pré-détectés...",
+    "de": "Vorherige Synchronisierung fehlgeschlagen. Erneuter Versuch mit vorerkannten Kodierungen...",
+    "pt": "A sincronização anterior falhou. Tentando novamente com codificações pré-detectadas..."
 }
 ALASS_SPEED_OPTIMIZATION_LOG = {
     "en": "Disabled: Speed optimization...",
@@ -2312,7 +3421,12 @@ ALASS_SPEED_OPTIMIZATION_LOG = {
     "uk": "Вимкнено: Оптимізація швидкості...",
     "ja": "無効化：速度最適化...",
     "ko": "비활성화됨: 속도 최적화...",
-    "hi": "अक्षम: गति अनुकूलन..."
+    "hi": "अक्षम: गति अनुकूलन...",
+    "bn": "নিষ্ক্রিয়: গতি অপ্টিমাইজেশন...",
+    "it": "Disabilitato: Ottimizzazione della velocità...",
+    "fr": "Désactivé : Optimisation de la vitesse...",
+    "de": "Deaktiviert: Geschwindigkeitsoptimierung...",
+    "pt": "Desativado: Otimização de velocidade..."
 }
 ALASS_DISABLE_FPS_GUESSING_LOG = {
     "en": "Disabled: FPS guessing...",
@@ -2324,7 +3438,12 @@ ALASS_DISABLE_FPS_GUESSING_LOG = {
     "uk": "Вимкнено: Визначення FPS...",
     "ja": "無効化：FPS推測...",
     "ko": "비활성화됨: FPS 추측...",
-    "hi": "अक्षम: FPS अनुमान..."
+    "hi": "अक्षम: FPS अनुमान...",
+    "bn": "নিষ্ক্রিয়: FPS অনুমান...",
+    "it": "Disabilitato: Stima FPS...",
+    "fr": "Désactivé : Estimation FPS...",
+    "de": "Deaktiviert: FPS-Schätzung...",
+    "pt": "Desativado: Estimativa de FPS..."
 }
 CHANGING_ENCODING_MSG = {
     "en": "The synchronized subtitle's encoding does not match the input subtitle's encoding. Changing from {synced_subtitle_encoding} encoding to {encoding_inc} encoding...",
@@ -2336,7 +3455,12 @@ CHANGING_ENCODING_MSG = {
     "uk": "Кодування синхронізованих субтитрів не збігається з кодуванням вхідних субтитрів. Зміна кодування з {synced_subtitle_encoding} на {encoding_inc}...",
     "ja": "同期した字幕のエンコーディングが入力字幕のエンコーディングと一致しません。エンコーディングを {synced_subtitle_encoding} から {encoding_inc} に変更しています...",
     "ko": "동기화된 자막의 인코딩이 입력 자막의 인코딩과 일치하지 않습니다. 인코딩을 {synced_subtitle_encoding}에서 {encoding_inc}로 변경 중...",
-    "hi": "सिंक्रनाइज़ किए गए उपशीर्षक का एन्कोडिंग इनपुट उपशीर्षक के एन्कोडिंग से मेल नहीं खाता। एन्कोडिंग को {synced_subtitle_encoding} से {encoding_inc} में बदल रहा है..."
+    "hi": "सिंक्रनाइज़ किए गए उपशीर्षक का एन्कोडिंग इनपुट उपशीर्षक के एन्कोडिंग से मेल नहीं खाता। एन्कोडिंग को {synced_subtitle_encoding} से {encoding_inc} में बदल रहा है...",
+    "bn": "সিঙ্ক্রোনাইজড সাবটাইটেলের এনকোডিং ইনপুট সাবটাইটেলের এনকোডিং এর সাথে মেলে না। {synced_subtitle_encoding} এনকোডিং থেকে {encoding_inc} এনকোডিং এ পরিবর্তন করা হচ্ছে...",
+    "it": "La codifica del sottotitolo sincronizzato non corrisponde alla codifica del sottotitolo di input. Cambio da codifica {synced_subtitle_encoding} a codifica {encoding_inc}...",
+    "fr": "L'encodage du sous-titre synchronisé ne correspond pas à l'encodage du sous-titre d'entrée. Changement de l'encodage {synced_subtitle_encoding} à l'encodage {encoding_inc}...",
+    "de": "Die Kodierung des synchronisierten Untertitels stimmt nicht mit der Kodierung des Eingabeuntertitels überein. Änderung der Kodierung von {synced_subtitle_encoding} zu {encoding_inc}...",
+    "pt": "A codificação da legenda sincronizada não corresponde à codificação da legenda de entrada. Mudando de codificação {synced_subtitle_encoding} para codificação {encoding_inc}..."
 }
 ENCODING_CHANGED_MSG = {
     "en": "Encoding changed successfully.",
@@ -2348,7 +3472,12 @@ ENCODING_CHANGED_MSG = {
     "uk": "Кодування успішно змінено.",
     "ja": "エンコーディングが正常に変更されました。",
     "ko": "인코딩이 성공적으로 변경되었습니다.",
-    "hi": "एन्कोडिंग सफलतापूर्वक बदल गया।"
+    "hi": "एन्कोडिंग सफलतापूर्वक बदल गया।",
+    "bn": "এনকোডিং সফলভাবে পরিবর্তিত হয়েছে।",
+    "it": "Codifica cambiata con successo.",
+    "fr": "Encodage changé avec succès.",
+    "de": "Kodierung erfolgreich geändert.",
+    "pt": "Codificação alterada com sucesso."
 }
 SYNC_SUCCESS_COUNT = {
     "en": "Successfully synced {success_count} subtitle file(s).",
@@ -2360,7 +3489,12 @@ SYNC_SUCCESS_COUNT = {
     "uk": "Успішно синхронізовано {success_count} файл(ів) субтитрів.",
     "ja": "正常に同期された字幕ファイル数：{success_count}",
     "ko": "성공적으로 동기화된 자막 파일 수: {success_count}",
-    "hi": "सफलतापूर्वक सिंक्रनाइज़ किए गए उपशीर्षक फ़ाइल(एँ): {success_count}"
+    "hi": "सफलतापूर्वक सिंक्रनाइज़ किए गए उपशीर्षक फ़ाइल(एँ): {success_count}",
+    "bn": "সফলভাবে {success_count}টি সাবটাইটেল ফাইল সিঙ্ক করা হয়েছে।",
+    "it": "{success_count} file di sottotitoli sincronizzati con successo.",
+    "fr": "{success_count} fichier(s) de sous-titres synchronisé(s) avec succès.",
+    "de": "{success_count} Untertiteldatei(en) erfolgreich synchronisiert.",
+    "pt": "{success_count} arquivo(s) de legenda sincronizado(s) com sucesso."
 }
 SYNC_FAILURE_COUNT = {
     "en": "Failed to sync {failure_count} subtitle file(s).",
@@ -2372,7 +3506,12 @@ SYNC_FAILURE_COUNT = {
     "uk": "Не вдалося синхронізувати {failure_count} файл(ів) субтитрів.",
     "ja": "同期に失敗した字幕ファイル数：{failure_count}",
     "ko": "동기화에 실패한 자막 파일 수: {failure_count}",
-    "hi": "सिंक्रनाइज़ करने में विफल उपशीर्षक फ़ाइल(एँ): {failure_count}"
+    "hi": "सिंक्रनाइज़ करने में विफल उपशीर्षक फ़ाइल(एँ): {failure_count}",
+    "bn": "{failure_count}টি সাবটাইটেল ফাইল সিঙ্ক করতে ব্যর্থ হয়েছে।",
+    "it": "Impossibile sincronizzare {failure_count} file di sottotitoli.",
+    "fr": "Échec de la synchronisation de {failure_count} fichier(s) de sous-titres.",
+    "de": "{failure_count} Untertiteldatei(en) konnten nicht synchronisiert werden.",
+    "pt": "Falha ao sincronizar {failure_count} arquivo(s) de legenda."
 }
 SYNC_FAILURE_COUNT_BATCH = {
     "en": "Failed to sync {failure_count} pair(s):",
@@ -2384,7 +3523,12 @@ SYNC_FAILURE_COUNT_BATCH = {
     "uk": "Не вдалося синхронізувати {failure_count} пар(и):",
     "ja": "同期に失敗したペア数：{failure_count}",
     "ko": "동기화에 실패한 쌍 수: {failure_count}",
-    "hi": "सिंक्रनाइज़ करने में विफल जोड़ी(याँ): {failure_count}"
+    "hi": "सिंक्रनाइज़ करने में विफल जोड़ी(याँ): {failure_count}",
+    "bn": "{failure_count}টি জোড়া সিঙ্ক করতে ব্যর্থ হয়েছে:",
+    "it": "Impossibile sincronizzare {failure_count} coppia/e:",
+    "fr": "Échec de la synchronisation de {failure_count} paire(s) :",
+    "de": "Fehler beim Synchronisieren von {failure_count} Paar(en):",
+    "pt": "Falha ao sincronizar {failure_count} par(es):"
 }
 ERROR_CHANGING_ENCODING_MSG = {
     "en": "Error changing encoding: {error_message}\n",
@@ -2396,7 +3540,13 @@ ERROR_CHANGING_ENCODING_MSG = {
     "uk": "Помилка під час зміни кодування: {error_message}\n",
     "ja": "エンコーディングの変更エラー：{error_message}\n",
     "ko": "인코딩 변경 오류: {error_message}\n",
-    "hi": "एन्कोडिंग बदलने में त्रुटि: {error_message}\n"
+    "hi": "एन्कोडिंग बदलने में त्रुटि: {error_message}\n",
+    "bn": "এনকোডিং পরিবর্তন করতে ত্রুটি: {error_message}\n",
+    "it": "Errore durante il cambio di codifica: {error_message}\n",
+    "fr": "Erreur lors du changement d'encodage : {error_message}\n",
+    "de": "Fehler beim Ändern der Kodierung: {error_message}\n",
+    "pt": "Erro ao alterar a codificação: {error_message}\n"
+
 }
 BACKUP_CREATED = {
     "en": "A backup of the existing subtitle file has been saved to: {output_subtitle_file}.",
@@ -2408,7 +3558,12 @@ BACKUP_CREATED = {
     "uk": "Резервну копію існуючого файлу субтитрів збережено до: {output_subtitle_file}.",
     "ja": "既存の字幕ファイルのバックアップが保存されました：{output_subtitle_file}。",
     "ko": "기존 자막 파일의 백업이 저장되었습니다: {output_subtitle_file}.",
-    "hi": "मौजूदा उपशीर्षक फ़ाइल का बैकअप यहाँ सहेजा गया है: {output_subtitle_file}।"
+    "hi": "मौजूदा उपशीर्षक फ़ाइल का बैकअप यहाँ सहेजा गया है: {output_subtitle_file}।",
+    "bn": "বিদ্যমান সাবটাইটেল ফাইলের একটি ব্যাকআপ এখানে সংরক্ষিত হয়েছে: {output_subtitle_file}.",
+    "it": "Un backup del file di sottotitoli esistente è stato salvato in: {output_subtitle_file}.",
+    "fr": "Une sauvegarde du fichier de sous-titres existant a été enregistrée dans : {output_subtitle_file}.",
+    "de": "Eine Sicherung der vorhandenen Untertiteldatei wurde gespeichert unter: {output_subtitle_file}.",
+    "pt": "Um backup do arquivo de legenda existente foi salvo em: {output_subtitle_file}."
 }
 CHECKING_SUBTITLE_STREAMS = {
     "en": "Checking the video for subtitle streams...",
@@ -2420,7 +3575,12 @@ CHECKING_SUBTITLE_STREAMS = {
     "uk": "Перевірка відео на наявність потоків субтитрів...",
     "ja": "ビデオの字幕ストリームを確認しています...",
     "ko": "비디오의 자막 스트림 확인 중...",
-    "hi": "वीडियो के उपशीर्षक स्ट्रीम की जाँच कर रहा है..."
+    "hi": "वीडियो के उपशीर्षक स्ट्रीम की जाँच कर रहा है...",
+    "bn": "ভিডিওর জন্য সাবটাইটেল স্ট্রিমগুলি পরীক্ষা করা হচ্ছে...",
+    "it": "Controllo dei flussi di sottotitoli nel video...",
+    "fr": "Vérification des flux de sous-titres dans la vidéo...",
+    "de": "Überprüfung der Untertitelströme im Video...",
+    "pt": "Verificando os fluxos de legendas no vídeo..."
 }
 FOUND_COMPATIBLE_SUBTITLES = {
     "en": "Found {count} compatible subtitles to extract.\nExtracting subtitles to folder: {output_folder}...",
@@ -2432,7 +3592,12 @@ FOUND_COMPATIBLE_SUBTITLES = {
     "uk": "Знайдено {count} сумісних субтитрів для вилучення.\nВилучення субтитрів до папки: {output_folder}...",
     "ja": "抽出する互換性のある字幕が {count} 個見つかりました。\n字幕をフォルダに抽出しています：{output_folder}...",
     "ko": "추출할 호환 가능한 자막 {count}개를 찾았습니다.\n자막을 폴더로 추출 중: {output_folder}...",
-    "hi": "निकालने के लिए {count} संगत उपशीर्षक मिले।\nउपशीर्षक को फ़ोल्डर में निकाल रहा है: {output_folder}..."
+    "hi": "निकालने के लिए {count} संगत उपशीर्षक मिले।\nउपशीर्षक को फ़ोल्डर में निकाल रहा है: {output_folder}...",
+    "bn": "উদ্ধারের জন্য {count}টি সামঞ্জস্যপূর্ণ সাবটাইটেল পাওয়া গেছে।\nসাবটাইটেলগুলি ফোল্ডারে বের করা হচ্ছে: {output_folder}...",
+    "it": "Trovati {count} sottotitoli compatibili da estrarre.\nEstrazione dei sottotitoli nella cartella: {output_folder}...",
+    "fr": "Trouvé {count} sous-titres compatibles à extraire.\nExtraction des sous-titres dans le dossier : {output_folder}...",
+    "de": "{count} kompatible Untertitel zum Extrahieren gefunden.\nExtrahieren der Untertitel in Ordner: {output_folder}...",
+    "pt": "Encontrado {count} legendas compatíveis para extrair.\nExtraindo legendas para a pasta: {output_folder}..."
 }
 NO_COMPATIBLE_SUBTITLES = {
     "en": "No compatible subtitles found to extract.",
@@ -2444,7 +3609,12 @@ NO_COMPATIBLE_SUBTITLES = {
     "uk": "Не знайдено сумісних субтитрів для вилучення.",
     "ja": "抽出する互換性のある字幕が見つかりませんでした。",
     "ko": "추출할 호환 가능한 자막을 찾을 수 없습니다.",
-    "hi": "निकालने के लिए कोई संगत उपशीर्षक नहीं मिला।"
+    "hi": "निकालने के लिए कोई संगत उपशीर्षक नहीं मिला।",
+    "bn": "উদ্ধারের জন্য কোনো সামঞ্জস্যপূর্ণ সাবটাইটেল পাওয়া যায়নি।",
+    "it": "Nessun sottotitolo compatibile trovato da estrarre.",
+    "fr": "Aucun sous-titre compatible trouvé à extraire.",
+    "de": "Keine kompatiblen Untertitel zum Extrahieren gefunden.",
+    "pt": "Nenhuma legenda compatível encontrada para extrair."
 }
 SUCCESSFULLY_EXTRACTED = {
     "en": "Successfully extracted: {filename}.",
@@ -2456,7 +3626,12 @@ SUCCESSFULLY_EXTRACTED = {
     "uk": "Успішно вилучено: {filename}.",
     "ja": "正常に抽出されました：{filename}。",
     "ko": "성공적으로 추출됨: {filename}.",
-    "hi": "सफलतापूर्वक निकाला गया: {filename}।"
+    "hi": "सफलतापूर्वक निकाला गया: {filename}।",
+    "bn": "সফলভাবে বের করা হয়েছে: {filename}.",
+    "it": "Estratto con successo: {filename}.",
+    "fr": "Extrait avec succès : {filename}.",
+    "de": "Erfolgreich extrahiert: {filename}.",
+    "pt": "Extraído com sucesso: {filename}."
 }
 CHOOSING_BEST_SUBTITLE = {
     "en": "Selecting the best subtitle for syncing...",
@@ -2468,7 +3643,12 @@ CHOOSING_BEST_SUBTITLE = {
     "uk": "Вибір найкращого субтитру для синхронізації...",
     "ja": "同期に最適な字幕を選択しています...",
     "ko": "동기화에 가장 적합한 자막 선택 중...",
-    "hi": "सिंकिंग के लिए सर्वश्रेष्ठ उपशीर्षक का चयन कर रहा है..."
+    "hi": "सिंकिंग के लिए सर्वश्रेष्ठ उपशीर्षक का चयन कर रहा है...",
+    "bn": "সিঙ্ক করার জন্য সেরা সাবটাইটেল নির্বাচন করা হচ্ছে...",
+    "it": "Selezione del miglior sottotitolo per la sincronizzazione...",
+    "fr": "Sélection du meilleur sous-titre pour la synchronisation...",
+    "de": "Auswahl des besten Untertitels zur Synchronisierung...",
+    "pt": "Selecionando a melhor legenda para sincronizar..."
 }
 CHOSEN_SUBTITLE = {
     "en": "Selected: {filename} with timestamp difference: {score}",
@@ -2480,7 +3660,12 @@ CHOSEN_SUBTITLE = {
     "uk": "Вибрано: {filename} з різницею у часі: {score}",
     "ja": "選択されました：{filename}、タイムスタンプの差：{score}",
     "ko": "선택됨: {filename}, 타임스탬프 차이: {score}",
-    "hi": "चयनित: {filename} समय अंतर के साथ: {score}"
+    "hi": "चयनित: {filename} समय अंतर के साथ: {score}",
+    "bn": "নির্বাচিত: {filename} টাইমস্ট্যাম্প পার্থক্য সহ: {score}",
+    "it": "Selezionato: {filename} con differenza di timestamp: {score}",
+    "fr": "Sélectionné : {filename} avec différence de timestamp : {score}",
+    "de": "Ausgewählt: {filename} mit Zeitstempelunterschied: {score}",
+    "pt": "Selecionado: {filename} com diferença de timestamp: {score}"
 }
 FAILED_TO_EXTRACT_SUBTITLES = {
     "en": "Failed to extract subtitles. Error: {error}",
@@ -2492,7 +3677,12 @@ FAILED_TO_EXTRACT_SUBTITLES = {
     "uk": "Не вдалося вилучити субтитри. Помилка: {error}",
     "ja": "字幕の抽出に失敗しました。エラー：{error}",
     "ko": "자막을 추출하지 못했습니다. 오류: {error}",
-    "hi": "उपशीर्षक निकालने में विफल। त्रुटि: {error}"
+    "hi": "उपशीर्षक निकालने में विफल। त्रुटि: {error}",
+    "bn": "সাবটাইটেল বের করতে ব্যর্থ হয়েছে। ত্রুটি: {error}",
+    "it": "Impossibile estrarre i sottotitoli. Errore: {error}",
+    "fr": "Échec de l'extraction des sous-titres. Erreur : {error}",
+    "de": "Untertitel konnten nicht extrahiert werden. Fehler: {error}",
+    "pt": "Falha ao extrair legendas. Erro: {error}"
 }
 USED_THE_LONGEST_SUBTITLE = {
     "en": "Used the longest subtitle file because parse_timestamps failed.",
@@ -2504,7 +3694,12 @@ USED_THE_LONGEST_SUBTITLE = {
     "uk": "Використано найдовший файл субтитрів, оскільки parse_timestamps не вдалося.",
     "ja": "parse_timestamps が失敗したため、最も長い字幕ファイルを使用しました。",
     "ko": "parse_timestamps가 실패했기 때문에 가장 긴 자막 파일을 사용했습니다.",
-    "hi": "parse_timestamps विफल होने के कारण सबसे लंबे उपशीर्षक फ़ाइल का उपयोग किया गया।"
+    "hi": "parse_timestamps विफल होने के कारण सबसे लंबे उपशीर्षक फ़ाइल का उपयोग किया गया।",
+    "bn": "parse_timestamps ব্যর্থ হওয়ার কারণে দীর্ঘতম সাবটাইটেল ফাইলটি ব্যবহার করা হয়েছে।",
+    "it": "Utilizzato il file di sottotitoli più lungo perché parse_timestamps non è riuscito.",
+    "fr": "Utilisé le fichier de sous-titres le plus long car parse_timestamps a échoué.",
+    "de": "Das längste Untertiteldatei verwendet, da parse_timestamps fehlgeschlagen ist.",
+    "pt": "Usado o arquivo de legenda mais longo porque parse_timestamps falhou."
 }
 DELETING_EXTRACTED_SUBTITLE_FOLDER = {
     "en": "Deleting the extracted subtitles folder...",
@@ -2516,7 +3711,12 @@ DELETING_EXTRACTED_SUBTITLE_FOLDER = {
     "uk": "Видалення папки вилучених субтитрів...",
     "ja": "抽出された字幕フォルダを削除しています...",
     "ko": "추출된 자막 폴더 삭제 중...",
-    "hi": "निकाले गए उपशीर्षक फ़ोल्डर को हटा रहा है..."
+    "hi": "निकाले गए उपशीर्षक फ़ोल्डर को हटा रहा है...",
+    "bn": "উদ্ধার করা সাবটাইটেল ফোল্ডার মুছে ফেলা হচ্ছে...",
+    "it": "Eliminazione della cartella dei sottotitoli estratti...",
+    "fr": "Suppression du dossier des sous-titres extraits...",
+    "de": "Löschen des extrahierten Untertitelordners...",
+    "pt": "Excluindo a pasta de legendas extraídas..."
 }
 DELETING_CONVERTED_SUBTITLE = {
     "en": "Deleting the converted subtitle file...",
@@ -2528,7 +3728,12 @@ DELETING_CONVERTED_SUBTITLE = {
     "uk": "Видалення перетвореного файлу субтитрів...",
     "ja": "変換された字幕ファイルを削除しています...",
     "ko": "변환된 자막 파일 삭제 중...",
-    "hi": "परिवर्तित उपशीर्षक फ़ाइल को हटा रहा है..."
+    "hi": "परिवर्तित उपशीर्षक फ़ाइल को हटा रहा है...",
+    "bn": "রূপান্তরিত সাবটাইটেল ফাইল মুছে ফেলা হচ্ছে...",
+    "it": "Eliminazione del file di sottotitoli convertito...",
+    "fr": "Suppression du fichier de sous-titres converti...",
+    "de": "Löschen der konvertierten Untertiteldatei...",
+    "pt": "Excluindo o arquivo de legenda convertido..."
 }
 ADDED_FILES_TEXT = {
     "en": "Added {added_files} files",
@@ -2540,7 +3745,12 @@ ADDED_FILES_TEXT = {
     "uk": "Додано {added_files} файлів",
     "ja": "{added_files} 個のファイルが追加されました",
     "ko": "{added_files}개의 파일이 추가되었습니다",
-    "hi": "{added_files} फ़ाइलें जोड़ी गईं"
+    "hi": "{added_files} फ़ाइलें जोड़ी गईं",
+    "bn": "{added_files}টি ফাইল যোগ করা হয়েছে",
+    "it": "Aggiunti {added_files} file",
+    "fr": "Ajouté {added_files} fichiers",
+    "de": "{added_files} Dateien hinzugefügt",
+    "pt": "Adicionado {added_files} arquivos"
 }
 SKIPPED_DUPLICATE_FILES_TEXT = {
     "en": "Skipped {skipped_files} duplicate files",
@@ -2552,7 +3762,12 @@ SKIPPED_DUPLICATE_FILES_TEXT = {
     "uk": "Пропущено {skipped_files} дубльованих файлів",
     "ja": "{skipped_files} 個の重複ファイルがスキップされました",
     "ko": "{skipped_files}개의 중복 파일이 건너뛰어졌습니다",
-    "hi": "{skipped_files} डुप्लिकेट फ़ाइलें छोड़ी गईं"
+    "hi": "{skipped_files} डुप्लिकेट फ़ाइलें छोड़ी गईं",
+    "bn": "{skipped_files}টি ডুপ্লিকেট ফাইল বাদ দেওয়া হয়েছে",
+    "it": "Saltati {skipped_files} file duplicati",
+    "fr": "Ignoré {skipped_files} fichiers en double",
+    "de": "{skipped_files} doppelte Dateien übersprungen",
+    "pt": "Ignorado {skipped_files} arquivos duplicados"
 }
 SKIPPED_OTHER_LIST_FILES_TEXT = {
     "en": "Skipped {duplicate_in_other} files already in other list",
@@ -2564,7 +3779,12 @@ SKIPPED_OTHER_LIST_FILES_TEXT = {
     "uk": "Пропущено {duplicate_in_other} файлів, які вже є в іншому списку",
     "ja": "他のリストに既にある {duplicate_in_other} 個のファイルがスキップされました",
     "ko": "다른 목록에 이미 있는 {duplicate_in_other}개의 파일이 건너뛰어졌습니다",
-    "hi": "अन्य सूची में पहले से मौजूद {duplicate_in_other} फ़ाइलें छोड़ी गईं"
+    "hi": "अन्य सूची में पहले से मौजूद {duplicate_in_other} फ़ाइलें छोड़ी गईं",
+    "bn": "অন্যান্য তালিকায় ইতিমধ্যে থাকা {duplicate_in_other}টি ফাইল বাদ দেওয়া হয়েছে",
+    "it": "Saltati {duplicate_in_other} file già presenti in un'altra lista",
+    "fr": "Ignoré {duplicate_in_other} fichiers déjà présents dans une autre liste",
+    "de": "{duplicate_in_other} Dateien, die bereits in einer anderen Liste vorhanden sind, übersprungen",
+    "pt": "Ignorado {duplicate_in_other} arquivos já na outra lista"
 }
 SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = {
     "en": "Skipped {len} files with duplicate season/episode numbers",
@@ -2576,7 +3796,12 @@ SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = {
     "uk": "Пропущено {len} файлів з дубльованими номерами сезону/епізоду",
     "ja": "シーズン/エピソード番号が重複している {len} 個のファイルがスキップされました",
     "ko": "중복된 시즌/에피소드 번호가 있는 {len}개의 파일이 건너뛰어졌습니다",
-    "hi": "डुप्लिकेट सीजन/एपिसोड नंबर वाली {len} फ़ाइलें छोड़ी गईं"
+    "hi": "डुप्लिकेट सीजन/एपिसोड नंबर वाली {len} फ़ाइलें छोड़ी गईं",
+    "bn": "ডুপ্লিকেট সিজন/এপিসোড নম্বর সহ {len}টি ফাইল বাদ দেওয়া হয়েছে",
+    "it": "Saltati {len} file con numeri di stagione/episodio duplicati",
+    "fr": "Ignoré {len} fichiers avec des numéros de saison/épisode en double",
+    "de": "{len} Dateien mit doppelten Staffel-/Episodennummern übersprungen",
+    "pt": "Ignorado {len} arquivos com números de temporada/episódio duplicados"
 }
 SKIPPED_INVALID_FORMAT_FILES_TEXT = {
     "en": "Skipped {len} files without valid episode format",
@@ -2588,7 +3813,12 @@ SKIPPED_INVALID_FORMAT_FILES_TEXT = {
     "uk": "Пропущено {len} файлів без дійсного формату епізоду",
     "ja": "有効なエピソード形式がない {len} 個のファイルがスキップされました",
     "ko": "유효한 에피소드 형식이 없는 {len}개의 파일이 건너뛰어졌습니다",
-    "hi": "मान्य एपिसोड प्रारूप के बिना {len} फ़ाइलें छोड़ी गईं"
+    "hi": "मान्य एपिसोड प्रारूप के बिना {len} फ़ाइलें छोड़ी गईं",
+    "bn": "বৈধ এপিসোড ফরম্যাট ছাড়া {len}টি ফাইল বাদ দেওয়া হয়েছে",
+    "it": "Saltati {len} file senza formato episodio valido",
+    "fr": "Ignoré {len} fichiers sans format d'épisode valide",
+    "de": "{len} Dateien ohne gültiges Episodenformat übersprungen",
+    "pt": "Ignorado {len} arquivos sem formato de episódio válido"
 }
 NO_FILES_SELECTED = {
     "en": "No files selected.",
@@ -2600,7 +3830,12 @@ NO_FILES_SELECTED = {
     "uk": "Файли не вибрано.",
     "ja": "ファイルが選択されていません。",
     "ko": "파일이 선택되지 않았습니다.",
-    "hi": "कोई फ़ाइल चयनित नहीं है।"
+    "hi": "कोई फ़ाइल चयनित नहीं है।",
+    "bn": "কোনো ফাইল নির্বাচিত হয়নি।",
+    "it": "Nessun file selezionato.",
+    "fr": "Aucun fichier sélectionné.",
+    "de": "Keine Dateien ausgewählt.",
+    "pt": "Nenhum arquivo selecionado."
 }
 NO_ITEM_SELECTED_TO_REMOVE = {
     "en": "No item selected to remove.",
@@ -2612,7 +3847,12 @@ NO_ITEM_SELECTED_TO_REMOVE = {
     "uk": "Не вибрано елемент для видалення.",
     "ja": "削除する項目が選択されていません。",
     "ko": "제거할 항목이 선택되지 않았습니다.",
-    "hi": "हटाने के लिए कोई आइटम चयनित नहीं है।"
+    "hi": "हटाने के लिए कोई आइटम चयनित नहीं है।",
+    "bn": "সরানোর জন্য কোনো আইটেম নির্বাচিত হয়নি।",
+    "it": "Nessun elemento selezionato da rimuovere.",
+    "fr": "Aucun élément sélectionné à supprimer.",
+    "de": "Kein Element zum Entfernen ausgewählt.",
+    "pt": "Nenhum item selecionado para remover."
 }
 NO_FILES_SELECTED_TO_SHOW_PATH = {
     "en": "No file selected to show path.",
@@ -2624,7 +3864,12 @@ NO_FILES_SELECTED_TO_SHOW_PATH = {
     "uk": "Файл не вибрано для відображення шляху.",
     "ja": "パスを表示するファイルが選択されていません。",
     "ko": "경로를 표시할 파일이 선택되지 않았습니다.",
-    "hi": "पथ दिखाने के लिए कोई फ़ाइल चयनित नहीं है।"
+    "hi": "पथ दिखाने के लिए कोई फ़ाइल चयनित नहीं है।",
+    "bn": "পাথ দেখানোর জন্য কোনো ফাইল নির্বাচিত হয়নি।",
+    "it": "Nessun file selezionato per mostrare il percorso.",
+    "fr": "Aucun fichier sélectionné pour afficher le chemin.",
+    "de": "Keine Datei zum Anzeigen des Pfads ausgewählt.",
+    "pt": "Nenhum arquivo selecionado para mostrar o caminho."
 }
 REMOVED_ITEM = {
     "en": "Removed item.",
@@ -2636,7 +3881,12 @@ REMOVED_ITEM = {
     "uk": "Елемент видалено.",
     "ja": "項目が削除されました。",
     "ko": "항목이 제거되었습니다.",
-    "hi": "आइटम हटा दिया गया।"
+    "hi": "आइटम हटा दिया गया।",
+    "bn": "আইটেম সরানো হয়েছে।",
+    "it": "Elemento rimosso.",
+    "fr": "Élément supprimé.",
+    "de": "Element entfernt.",
+    "pt": "Item removido."
 }
 FILES_MUST_CONTAIN_PATTERNS = {
     "en": "Files must contain patterns like S01E01, 1x01 etc.",
@@ -2648,7 +3898,12 @@ FILES_MUST_CONTAIN_PATTERNS = {
     "uk": "Файли повинні містити шаблони, такі як S01E01, 1x01 тощо.",
     "ja": "ファイルには S01E01、1x01 などのパターンが含まれている必要があります。",
     "ko": "파일에는 S01E01, 1x01 등의 패턴이 포함되어야 합니다.",
-    "hi": "फ़ाइलों में S01E01, 1x01 आदि जैसे पैटर्न होने चाहिए।"
+    "hi": "फ़ाइलों में S01E01, 1x01 आदि जैसे पैटर्न होने चाहिए।",
+    "bn": "ফাইলগুলিতে S01E01, 1x01 ইত্যাদির মতো প্যাটার্ন থাকতে হবে।",
+    "it": "I file devono contenere modelli come S01E01, 1x01 ecc.",
+    "fr": "Les fichiers doivent contenir des modèles comme S01E01, 1x01, etc.",
+    "de": "Dateien müssen Muster wie S01E01, 1x01 usw. enthalten.",
+    "pt": "Os arquivos devem conter padrões como S01E01, 1x01, etc."
 }
 NO_VALID_SUBTITLE_FILES = {
     "en": "No valid files found.",
@@ -2660,7 +3915,12 @@ NO_VALID_SUBTITLE_FILES = {
     "uk": "Не знайдено дійсних файлів субтитрів.",
     "ja": "有効な字幕ファイルが見つかりませんでした。",
     "ko": "유효한 자막 파일을 찾을 수 없습니다.",
-    "hi": "कोई मान्य उपशीर्षक फ़ाइल नहीं मिली।"
+    "hi": "कोई मान्य उपशीर्षक फ़ाइल नहीं मिली।",
+    "bn": "কোনো বৈধ ফাইল পাওয়া যায়নি।",
+    "it": "Nessun file valido trovato.",
+    "fr": "Aucun fichier valide trouvé.",
+    "de": "Keine gültigen Dateien gefunden.",
+    "pt": "Nenhum arquivo válido encontrado."
 }
 NO_SUBTITLE_PAIRS_TO_PROCESS = {
     "en": "No pairs to process.",
@@ -2672,7 +3932,12 @@ NO_SUBTITLE_PAIRS_TO_PROCESS = {
     "uk": "Немає пар для обробки.",
     "ja": "処理するペアがありません。",
     "ko": "처리할 쌍이 없습니다.",
-    "hi": "प्रक्रिया करने के लिए कोई जोड़ी नहीं है।"
+    "hi": "प्रक्रिया करने के लिए कोई जोड़ी नहीं है।",
+    "bn": "প্রক্রিয়া করার জন্য কোনো জোড়া নেই।",
+    "it": "Nessuna coppia da elaborare.",
+    "fr": "Aucune paire à traiter.",
+    "de": "Keine Paare zu verarbeiten.",
+    "pt": "Nenhum par para processar."
 }
 NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
     "en": "No matching pairs found.",
@@ -2684,7 +3949,12 @@ NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
     "uk": "Не знайдено відповідних пар.",
     "ja": "一致するペアが見つかりませんでした。",
     "ko": "일치하는 쌍을 찾을 수 없습니다.",
-    "hi": "कोई मेल खाने वाली जोड़ी नहीं मिली।"
+    "hi": "कोई मेल खाने वाली जोड़ी नहीं मिली।",
+    "bn": "কোনো মিলিত জোড়া পাওয়া যায়নি।",
+    "it": "Nessuna coppia corrispondente trovata.",
+    "fr": "Aucune paire correspondante trouvée.",
+    "de": "Keine passenden Paare gefunden.",
+    "pt": "Nenhum par correspondente encontrado."
 }
 NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
     "en": "No valid pairs to process.",
@@ -2696,7 +3966,12 @@ NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
     "uk": "Немає дійсних пар для обробки.",
     "ja": "処理する有効なペアがありません。",
     "ko": "처리할 유효한 쌍이 없습니다.",
-    "hi": "प्रक्रिया करने के लिए कोई मान्य जोड़ी नहीं है।"
+    "hi": "प्रक्रिया करने के लिए कोई मान्य जोड़ी नहीं है।",
+    "bn": "প্রক্রিয়া করার জন্য কোনো বৈধ জোড়া নেই।",
+    "it": "Nessuna coppia valida da elaborare.",
+    "fr": "Aucune paire valide à traiter.",
+    "de": "Keine gültigen Paare zum Verarbeiten.",
+    "pt": "Nenhum par válido para processar."
 }
 for name, obj in list(globals().items()):
     if isinstance(obj, dict) and name != "TranslationDict":

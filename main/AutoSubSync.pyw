@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import threading
 import tkinter as tk
+import tkinter.font as tkFont
 from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
@@ -182,14 +183,19 @@ LANGUAGE = config.get("language", "en")
 LANGUAGES = { 
     "English": "en",
     "Español": "es", 
-    "Türkçe": "tr",
+    "Deutsch": "de",
+    "Français": "fr",
+    "Italiano": "it",
     "Polski": "pl",
+    "Português": "pt",
+    "Türkçe": "tr",
     "Українська": "uk",
     "Русский": "ru",
     "中国人": "zh",
     "日本語": "ja",
     "한국어": "ko",
-    "हिन्दी": "hi"
+    "हिन्दी": "hi",
+    "বাংলা": "bn"
 }
 # Tooltip texts for checkboxes
 TOOLTIP_SAVE_TO_DESKTOP = texts.TOOLTIP_SAVE_TO_DESKTOP[LANGUAGE]
@@ -299,6 +305,15 @@ ERROR_SAVING_SUBTITLE = texts.ERROR_SAVING_SUBTITLE[LANGUAGE]
 NON_ZERO_MILLISECONDS = texts.NON_ZERO_MILLISECONDS[LANGUAGE]
 SELECT_ONLY_ONE_OPTION = texts.SELECT_ONLY_ONE_OPTION[LANGUAGE]
 VALID_NUMBER_MILLISECONDS = texts.VALID_NUMBER_MILLISECONDS[LANGUAGE]
+DIALOG_TITLE_TEXT = texts.DIALOG_TITLE_TEXT[LANGUAGE]
+FONT_FAMILY_LABEL_TEXT = texts.FONT_FAMILY_LABEL_TEXT[LANGUAGE]
+FONT_SIZE_LABEL_TEXT = texts.FONT_SIZE_LABEL_TEXT[LANGUAGE]
+FONT_STYLE_LABEL_TEXT = texts.FONT_STYLE_LABEL_TEXT[LANGUAGE]
+BOLD_TEXT = texts.BOLD_TEXT[LANGUAGE]
+ITALIC_TEXT = texts.ITALIC_TEXT[LANGUAGE]
+UNDERLINE_TEXT = texts.UNDERLINE_TEXT[LANGUAGE]
+STRIKETHROUGH_TEXT = texts.STRIKETHROUGH_TEXT[LANGUAGE]
+APPLY_TEXT = texts.APPLY_TEXT[LANGUAGE]
 SELECT_SUBTITLE = texts.SELECT_SUBTITLE[LANGUAGE]
 SELECT_VIDEO = texts.SELECT_VIDEO[LANGUAGE]
 SELECT_VIDEO_OR_SUBTITLE = texts.SELECT_VIDEO_OR_SUBTITLE[LANGUAGE]
@@ -959,6 +974,9 @@ github_label.grid(row=0, column=0, sticky="ne", padx=0, pady=(10,0))
 # Settings
 default_settings = {
     "theme": "system",
+    "log_window_font": "Cascadia Code",
+    "log_window_font_size": 7,
+    "log_window_font_style": "normal",
     "keep_logs": True,
     "remember_the_changes": True,
     "notify_about_updates": True,
@@ -977,6 +995,278 @@ default_settings = {
     "additional_ffsubsync_args": "",
     "additional_alass_args": ""
 }
+
+def change_log_window_font():
+    initial_config = {
+        "log_window_font": config["log_window_font"],
+        "log_window_font_size": config["log_window_font_size"],
+        "log_window_font_style": config["log_window_font_style"]
+    }
+    def validate_size_entry(input):
+        if input.isdigit():
+            return True
+        elif input == "":
+            return True
+        else:
+            return False
+    def apply_changes(preview=False):
+        selected_font_index = font_listbox.curselection()
+        if selected_font_index:
+            selected_font = font_listbox.get(selected_font_index[0])
+            selected_size = custom_size_var.get()
+            try:
+                selected_font_size = int(selected_size)
+            except ValueError:
+                selected_font_size = 7
+            font_styles = []
+            if bold_var.get():
+                font_styles.append("bold")
+            if italic_var.get():
+                font_styles.append("italic")
+            if underline_var.get():
+                font_styles.append("underline")
+            if strikethrough_var.get():
+                font_styles.append("overstrike")
+            font_style = " ".join(font_styles)
+            selected_font_style = "normal" if not font_style else font_style
+            if 'log_window' in globals():
+                log_window.config(font=(selected_font, selected_font_size, selected_font_style))
+            if not preview:
+                with open("config.json", "w") as f:
+                    config["log_window_font"] = selected_font
+                    config["log_window_font_size"] = selected_font_size
+                    config["log_window_font_style"] = selected_font_style
+                    json.dump(config, f, indent=4)
+    def update_label(*args):
+        apply_changes(preview=True)
+    def update_font_size_entry(event):
+        selection = font_size_listbox.curselection()
+        if selection:
+            custom_size_var.set(sizes[selection[0]])
+    def cancel_changes():
+        config.update(initial_config)
+        if 'log_window' in globals():
+            log_window.config(font=(config["log_window_font"], config["log_window_font_size"], config["log_window_font_style"]))
+        with open("config.json", "w") as f:
+            json.dump(config, f, indent=4)
+        font_dialog.destroy()
+    def close_window():
+        apply_changes()
+        font_dialog.destroy()
+    def move_selection(event):
+        if font_listbox == root.focus_get():
+            current_selection = font_listbox.curselection()
+            if current_selection:
+                if event.keysym == "Up":
+                    font_listbox.select_clear(0, tk.END)
+                    current_index = max(current_selection[0] - 1, 0)
+                    font_listbox.selection_set(current_index)
+                    font_listbox.see(current_index)
+                elif event.keysym == "Down":
+                    font_listbox.select_clear(0, tk.END)
+                    current_index = min(current_selection[0] + 1, len(fonts) - 1)
+                    font_listbox.selection_set(current_index)
+                    font_listbox.see(current_index)
+                update_label()
+        elif font_size_listbox == root.focus_get():
+            current_selection = font_size_listbox.curselection()
+            if current_selection:
+                if event.keysym == "Up":
+                    font_size_listbox.select_clear(0, tk.END)
+                    current_index = max(current_selection[0] - 1, 0)
+                    font_size_listbox.selection_set(current_index)
+                    font_size_listbox.see(current_index)
+                elif event.keysym == "Down":
+                    font_size_listbox.select_clear(0, tk.END)
+                    current_index = min(current_selection[0] + 1, len(sizes) - 1)
+                    font_size_listbox.selection_set(current_index)
+                    font_size_listbox.see(current_index)
+                update_font_size_entry(event)  # Update font size entry after moving selection
+        else:
+            current_selection = None
+    font_dialog = tk.Toplevel(root)
+    dark_title_bar(font_dialog)
+    font_dialog.configure(background=COLOR_BACKGROUND)
+    font_dialog.title(DIALOG_TITLE_TEXT)
+    font_dialog.geometry("500x400")  # Increased width for font styles
+    font_dialog.minsize(500, 400)  # Minimum width and height
+    # Center the window on screen
+    screen_width = font_dialog.winfo_screenwidth()
+    screen_height = font_dialog.winfo_screenheight()
+    x = (screen_width - 500) // 2
+    y = (screen_height - 400) // 2
+    font_dialog.geometry(f"+{x}+{y}")
+    font_dialog.protocol("WM_DELETE_WINDOW", cancel_changes)
+    current_font = config["log_window_font"]
+    current_size = str(config["log_window_font_size"])
+    current_style = config["log_window_font_style"]
+    font_label = tk.Label(font_dialog, text=FONT_FAMILY_LABEL_TEXT, background=COLOR_BACKGROUND, foreground=COLOR_BW)
+    font_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+    fonts = tkFont.families()
+    font_listbox = tk.Listbox(font_dialog, selectmode=tk.SINGLE, exportselection=0, borderwidth=2, background=COLOR_WB, fg=COLOR_BW)
+    for font in fonts:
+        font_listbox.insert(tk.END, font)
+    font_listbox.grid(row=1, column=0, padx=(10,2.5), pady=(0, 5), sticky="nsew", rowspan=2)
+    font_listbox_scrollbar = ttk.Scrollbar(font_listbox, orient="vertical", command=font_listbox.yview, style='Vertical.TScrollbar')
+    font_listbox.config(yscrollcommand=font_listbox_scrollbar.set)
+    font_listbox_scrollbar.pack(side="right", fill="y")
+    font_listbox.bind("<<ListboxSelect>>", update_label)
+    font_listbox.bind("<Up>", move_selection)
+    font_listbox.bind("<Down>", move_selection)
+    try:
+        font_index = fonts.index(current_font)
+        font_listbox.selection_set(font_index)
+        font_listbox.see(font_index - 8)
+    except ValueError:
+        pass
+    font_size_label = tk.Label(font_dialog, text=FONT_SIZE_LABEL_TEXT, background=COLOR_BACKGROUND, foreground=COLOR_BW)
+    font_size_label.grid(row=0, column=1, padx=(2.5,10), pady=5, sticky="w")
+    custom_size_var = tk.StringVar(value=current_size)
+    custom_size_entry = tk.Entry(font_dialog, cursor="xterm", textvariable=custom_size_var, justify="center", borderwidth=2, bg=COLOR_WB, fg=COLOR_BW, insertbackground=COLOR_BW)
+    custom_size_entry.grid(row=1, column=1, padx=(2.5,10), pady=(0, 5), sticky="ew")
+    custom_size_entry.config(validate="key", validatecommand=(custom_size_entry.register(validate_size_entry), "%P"))
+    sizes = [str(size) for size in range(3, 43)]
+    font_size_listbox = tk.Listbox(font_dialog, selectmode=tk.SINGLE, exportselection=0, borderwidth=2, background=COLOR_WB, fg=COLOR_BW)
+    for size in sizes:
+        font_size_listbox.insert(tk.END, size)
+    font_size_listbox.grid(row=2, column=1, padx=(2.5,10), pady=(0, 5), sticky="nsew")
+    font_size_listbox_scrollbar = ttk.Scrollbar(font_size_listbox, orient="vertical", command=font_size_listbox.yview, style='Vertical.TScrollbar')
+    font_size_listbox.config(yscrollcommand=font_size_listbox_scrollbar.set)
+    font_size_listbox_scrollbar.pack(side="right", fill="y")
+    font_size_listbox.bind("<<ListboxSelect>>", update_label)
+    font_size_listbox.bind("<ButtonRelease-1>", update_font_size_entry)
+    custom_size_var.trace_add("write", update_label)
+    font_size_listbox.bind("<Up>", move_selection)
+    font_size_listbox.bind("<Down>", move_selection)
+    font_style_frame = tk.Frame(font_dialog, background=COLOR_BACKGROUND)
+    font_style_frame.grid(row=3, column=0, pady=(0,5), columnspan=2, sticky="nw")
+    font_style_label = tk.Label(font_style_frame, text=FONT_STYLE_LABEL_TEXT, background=COLOR_BACKGROUND, foreground=COLOR_BW)
+    font_style_label.grid(row=0, column=0, padx=10, pady=(0,5), sticky="w", columnspan=4)
+    # Font Style Checkboxes
+    bold_var = tk.BooleanVar()
+    bold_checkbox = tk.Checkbutton(
+        font_style_frame,
+        text=BOLD_TEXT,
+        background=COLOR_BACKGROUND,
+        foreground=COLOR_BW,
+        variable=bold_var,
+        command=update_label,
+        selectcolor=COLOR_WB,  # Change the checkbox square background
+        activebackground=COLOR_BACKGROUND,
+        activeforeground=COLOR_BW,
+        highlightthickness=0,
+        takefocus=0,
+        state='normal'
+    )
+    italic_var = tk.BooleanVar()
+    italic_checkbox = tk.Checkbutton(
+        font_style_frame,
+        text=ITALIC_TEXT,
+        background=COLOR_BACKGROUND,
+        foreground=COLOR_BW,
+        variable=italic_var,
+        command=update_label,
+        selectcolor=COLOR_WB,  # Change the checkbox square background
+        activebackground=COLOR_BACKGROUND,
+        activeforeground=COLOR_BW,
+        highlightthickness=0,
+        takefocus=0,
+        state='normal'
+    )
+    underline_var = tk.BooleanVar()
+    underline_checkbox = tk.Checkbutton(
+        font_style_frame,
+        text=UNDERLINE_TEXT,
+        background=COLOR_BACKGROUND,
+        foreground=COLOR_BW,
+        variable=underline_var,
+        command=update_label,
+        selectcolor=COLOR_WB,  # Change the checkbox square background
+        activebackground=COLOR_BACKGROUND,
+        activeforeground=COLOR_BW,
+        highlightthickness=0,
+        takefocus=0,
+        state='normal'
+    )
+    strikethrough_var = tk.BooleanVar()
+    strikethrough_checkbox = tk.Checkbutton(
+        font_style_frame,
+        text=STRIKETHROUGH_TEXT,
+        background=COLOR_BACKGROUND,
+        foreground=COLOR_BW,
+        variable=strikethrough_var,
+        command=update_label,
+        selectcolor=COLOR_WB,  # Change the checkbox square background
+        activebackground=COLOR_BACKGROUND,
+        activeforeground=COLOR_BW,
+        highlightthickness=0,
+        takefocus=0,
+        state='normal'
+    )
+    bold_checkbox.grid(row=1, column=0, padx=(10, 5), pady=(0, 5), sticky="w")
+    italic_checkbox.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="w")
+    underline_checkbox.grid(row=1, column=2, padx=5, pady=(0, 5), sticky="w")
+    strikethrough_checkbox.grid(row=1, column=3, padx=5, pady=(0, 5), sticky="w")
+    # Apply and Cancel Buttons
+    button_frame = tk.Frame(font_dialog, background=COLOR_BACKGROUND)
+    button_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=(0,10), sticky="ew")
+    button_frame.grid_columnconfigure(1, weight=1)  # Add space between buttons
+    # Apply button on right
+    apply_button = tk.Button(
+        button_frame,
+        text=APPLY_TEXT,
+        command=close_window,
+        padx=10,
+        pady=10,
+        fg=COLOR_WB,
+        bg=BUTTON_COLOR_AUTO,
+        activebackground=BUTTON_COLOR_AUTO_ACTIVE,
+        activeforeground=COLOR_WB,
+        relief=tk.RAISED,
+        borderwidth=2,
+        cursor="hand2",
+        highlightthickness=0,
+        takefocus=0,
+        state='normal'
+    )
+    apply_button.grid(row=0, column=1, sticky="ew", padx=(2.5,0), columnspan=2)
+    # Cancel button on left 
+    cancel_button = tk.Button(
+        button_frame,
+        text=CANCEL_TEXT,
+        command=cancel_changes,
+        padx=50,
+        pady=10,
+        fg=COLOR_WB,
+        bg=DEFAULT_BUTTON_COLOR,
+        activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+        activeforeground=COLOR_WB,
+        relief=tk.RAISED,
+        borderwidth=2,
+        cursor="hand2",
+        highlightthickness=0,
+        takefocus=0,
+        state='normal'
+    )
+    cancel_button.grid(row=0, column=0, sticky="e", padx=(0,2.5))
+    font_dialog.grid_rowconfigure(2, weight=1)
+    font_dialog.grid_columnconfigure(0, weight=3)
+    font_dialog.grid_columnconfigure(1, weight=0)
+    # Select currently applied font style
+    if "bold" in current_style:
+        bold_var.set(True)
+    if "italic" in current_style:
+        italic_var.set(True)
+    if "underline" in current_style:
+        underline_var.set(True)
+    if "overstrike" in current_style:
+        strikethrough_var.set(True)
+    try:
+        font_size_index = sizes.index(current_size)
+        font_size_listbox.selection_set(font_size_index)
+        font_size_listbox.see(font_size_index - 6)
+    except ValueError:
+        pass
 
 def restart_program():
     python = sys.executable
@@ -1153,6 +1443,7 @@ themes = {"system": THEME_SYSTEM_TEXT, "dark": THEME_DARK_TEXT, "light": THEME_L
 for key, display in themes.items():
     theme_menu.add_radiobutton(label=display, variable=theme_var, value=key, command=lambda t=key: set_theme(t))
 settings_menu.add_cascade(label=THEME_TEXT, menu=theme_menu)
+settings_menu.add_command(label=DIALOG_TITLE_TEXT, command=change_log_window_font)
 settings_menu.add_separator()
 # Add other settings to the settings menu
 keep_logs_var = tk.BooleanVar(value=keep_logs)
@@ -1696,50 +1987,6 @@ def convert_to_srt(subtitle_file, output_dir, log_window):
     else:
         log_window.insert(tk.END, f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n")
         return None
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Define paths to the executables
-ffmpeg_bin = os.path.join(os.curdir, 'resources', 'ffmpeg-bin')
-alass_bin = os.path.join(os.curdir, 'resources', 'alass-bin')
-ffsubsync_bin = os.path.join(os.curdir, 'resources', 'ffsubsync-bin')
-# Add the paths to the system PATH environment variable
-os.environ["PATH"] += os.pathsep + ffmpeg_bin + os.pathsep + alass_bin + os.pathsep + ffsubsync_bin
-
-# Determine correct alass executable based on platform
-if platform.system() == 'Windows':
-    call_alass = "alass-cli"
-elif platform.system() == 'Linux' and platform.machine().endswith('64'):
-    call_alass = "alass-linux64"
-else:
-    call_alass = "alass"  # fallback
-
-# Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
-if platform.system() == 'Windows':
-    call_ffmpeg = os.path.join(ffmpeg_bin, "ffmpeg.exe")
-    call_ffprobe = os.path.join(ffmpeg_bin, "ffprobe.exe")
-    call_ffsubsync = os.path.join(ffsubsync_bin, "ffsubsync.exe")
-else:
-    call_ffmpeg = "ffmpeg"
-    call_ffprobe = "ffprobe"
-    call_ffsubsync = "ffsubsync"
 
 def create_process(cmd):
     kwargs = {
@@ -1794,7 +2041,7 @@ def kill_process_tree(pid):
 
 # Convert subtitles to SRT End
 def start_batch_sync():
-    global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch
+    global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch, log_window
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
@@ -2115,12 +2362,12 @@ def start_batch_sync():
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                        if ffsubsync_option_framerate_var.get():
-                            cmd += " --no-fix-framerate"
-                        if ffsubsync_option_gss_var.get():
-                            cmd += " --gss"
                         if ffsubsync_option_vad_var.get():
                             cmd += " --vad=auditok"
+                    if ffsubsync_option_framerate_var.get():
+                            cmd += " --no-fix-framerate"
+                    if ffsubsync_option_gss_var.get():
+                        cmd += " --gss"
                 elif sync_tool == SYNC_TOOL_ALASS:
                     split_penalty = alass_split_penalty_var.get()
                     if split_penalty == 0:
@@ -2143,14 +2390,14 @@ def start_batch_sync():
                             log_window.insert(tk.END, f"{USING_REFERENCE_SUBTITLE}\n")
                         else:
                             log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
-                            if ffsubsync_option_framerate_var.get():
-                                log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
-                            if ffsubsync_option_gss_var.get():
-                                log_window.insert(tk.END, f"{ENABLED_GSS}\n")
                             if ffsubsync_option_vad_var.get():
                                 log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
-                            if additional_ffsubsync_args:
-                                log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n")
+                        if ffsubsync_option_framerate_var.get():
+                                log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
+                        if ffsubsync_option_gss_var.get():
+                            log_window.insert(tk.END, f"{ENABLED_GSS}\n")
+                        if additional_ffsubsync_args:
+                            log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n")
                     elif sync_tool == SYNC_TOOL_ALASS:
                         if split_penalty == 0:
                             log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
@@ -2243,25 +2490,6 @@ def start_batch_sync():
             root.after(50, lambda: log_window.see(tk.END))
             save_log_file(log_window, suffix='_batch')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     try:
         batch_input.grid_remove()
         tree_frame.grid_remove()
@@ -2333,7 +2561,7 @@ def start_batch_sync():
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
-        log_window.config(font=("Consolas", 7, "bold"), bg=COLOR_WB, fg=COLOR_BW)
+        log_window.config(font=(config["log_window_font"], config["log_window_font_size"], config["log_window_font_style"]), bg=COLOR_WB, fg=COLOR_BW)
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         # See the end when the log window is modified
         def on_log_window_modified(event):
@@ -2373,7 +2601,8 @@ def toggle_batch_mode():
             automatic_tab.rowconfigure(1, weight=1)
             root.update_idletasks()
             # Restore options state
-            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+            #for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+            for option in [ffsubsync_option_vad]:
                 if options_states.get(option) == 'disabled':
                     option.config(state='disabled')
             options_states = {}
@@ -2389,7 +2618,7 @@ def toggle_batch_mode():
             tree_frame.grid()
             # Enable options if disabled
             options_states = {}
-            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+            for option in [ffsubsync_option_vad]:
                 if option.cget('state') == 'disabled':
                     options_states[option] = 'disabled'
                     option.config(state='normal')
@@ -2410,7 +2639,7 @@ def toggle_batch_mode():
             automatic_tab.rowconfigure(1, weight=1)
             root.update_idletasks()
             # Restore options state
-            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+            for option in [ffsubsync_option_vad]:
                 if options_states.get(option) == 'disabled':
                     option.config(state='disabled')
             options_states = {}
@@ -2426,7 +2655,7 @@ def toggle_batch_mode():
             tree_frame.grid_remove()
             # Enable options if disabled
             options_states = {}
-            for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
+            for option in [ffsubsync_option_vad]:
                 if option.cget('state') == 'disabled':
                     options_states[option] = 'disabled'
                     option.config(state='normal')
@@ -3356,7 +3585,6 @@ style.configure('Vertical.TScrollbar',
                 background=COLOR_BACKGROUND, 
                 troughcolor=COLOR_ONE, 
                 arrowcolor=COLOR_BW)
-
 # Create a vertical scrollbar for the Treeview
 treeview_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=treeview.yview, style='Vertical.TScrollbar')
 treeview_scrollbar.grid(row=1, column=2, sticky="nes", pady=(5,0))
@@ -3404,13 +3632,9 @@ def browse_video(event=None):
         log_message("", "info", tab='auto')
         if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
             # If the video file is a subtitle, disable parameters
-            ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
-            ffsubsync_option_framerate.config(state=tk.DISABLED)
         else:
-            ffsubsync_option_gss.config(state=tk.NORMAL)
             ffsubsync_option_vad.config(state=tk.NORMAL)
-            ffsubsync_option_framerate.config(state=tk.NORMAL)
     else:
         if video_file != '':
             log_message(SELECT_VIDEO_OR_SUBTITLE, "error", tab='auto')
@@ -3451,13 +3675,9 @@ def on_video_drop(event):
         remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
         log_message("", "info", tab='auto')
         if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-            ffsubsync_option_gss.config(state=tk.DISABLED)
             ffsubsync_option_vad.config(state=tk.DISABLED)
-            ffsubsync_option_framerate.config(state=tk.DISABLED)
         else:
-            ffsubsync_option_gss.config(state=tk.NORMAL)
             ffsubsync_option_vad.config(state=tk.NORMAL)
-            ffsubsync_option_framerate.config(state=tk.NORMAL)
     else:
         log_message(DROP_VIDEO_OR_SUBTITLE, "error", tab='auto')
 
@@ -3481,9 +3701,7 @@ def on_subtitle_drop(event):
             remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
             remove_subtitle_button.grid(row=1, column=1, padx=(0, 12), pady=(2,0), sticky="ne")
             log_message("", "info", tab='auto')
-            ffsubsync_option_gss.config(state=tk.NORMAL)
             ffsubsync_option_vad.config(state=tk.NORMAL)
-            ffsubsync_option_framerate.config(state=tk.NORMAL)
             return
     elif len(files) != 1:
         log_message(DROP_SINGLE_SUBTITLE_PAIR, "error", tab='auto')
@@ -3519,7 +3737,7 @@ def shorten_progress_bar(line):
     return line
 
 def start_automatic_sync():
-    global process, subtitle_file, video_file, output_subtitle_file, cancel_flag
+    global process, subtitle_file, video_file, output_subtitle_file, cancel_flag, log_window
     cancel_flag = False  # Add a flag to check if the process is cancelled
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
@@ -3699,12 +3917,12 @@ def start_automatic_sync():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
             cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                if ffsubsync_option_framerate_var.get():
-                    cmd += " --no-fix-framerate"
-                if ffsubsync_option_gss_var.get():
-                    cmd += (" --gss")
                 if ffsubsync_option_vad_var.get():
                     cmd += (" --vad=auditok")
+            if ffsubsync_option_framerate_var.get():
+                cmd += " --no-fix-framerate"
+            if ffsubsync_option_gss_var.get():
+                cmd += (" --gss")
             if additional_ffsubsync_args:
                 cmd += f" {additional_ffsubsync_args}"
         elif sync_tool == SYNC_TOOL_ALASS:
@@ -3733,14 +3951,14 @@ def start_automatic_sync():
                 log_window.insert(tk.END, f"{USING_REFERENCE_SUBTITLE}\n")
             else:
                 log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
-                if ffsubsync_option_framerate_var.get():
-                    log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
-                if ffsubsync_option_gss_var.get():
-                    log_window.insert(tk.END, f"{ENABLED_GSS}\n")
                 if ffsubsync_option_vad_var.get():
                     log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
-                if additional_ffsubsync_args:
-                    log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n")
+            if ffsubsync_option_framerate_var.get():
+                    log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
+            if ffsubsync_option_gss_var.get():
+                log_window.insert(tk.END, f"{ENABLED_GSS}\n")
+            if additional_ffsubsync_args:
+                log_window.insert(tk.END, f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n")
         elif sync_tool == SYNC_TOOL_ALASS:
             if split_penalty == 0:
                 log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
@@ -3969,7 +4187,7 @@ def start_automatic_sync():
         button_go_back.grid(row=12, column=0, padx=10, pady=(0,10), sticky="ew", columnspan=2)
         button_go_back.grid_remove()
         log_window = tk.Text(automatic_tab, wrap="word")
-        log_window.config(font=("Consolas", 7, "bold"), bg=COLOR_WB, fg=COLOR_BW)
+        log_window.config(font=(config["log_window_font"], config["log_window_font_size"], config["log_window_font_style"]), bg=COLOR_WB, fg=COLOR_BW)
         log_window.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2)
         # See the end when the log window is modified
         def on_log_window_modified(event):
@@ -3986,6 +4204,7 @@ def start_automatic_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
+
 # Start automatic sync end
 label_message_auto = tk.Label(automatic_tab, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
 subtitle_input = tk.Label(
@@ -4422,7 +4641,7 @@ label_drop_box = tk.Label(manual_tab, text=LABEL_DROP_BOX, bg=COLOR_ONE, fg=COLO
 label_separator = ttk.Separator(manual_tab, orient='horizontal')
 label_message_manual = tk.Label(manual_tab, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
 label_milliseconds = tk.Label(manual_tab, text=LABEL_SHIFT_SUBTITLE, anchor="w", bg=COLOR_BACKGROUND, fg=COLOR_BW)
-entry_milliseconds = tk.Entry(manual_tab, cursor="xterm", width=15, justify="center", borderwidth=2, validate='key', bg=COLOR_WB, fg=COLOR_BW)
+entry_milliseconds = tk.Entry(manual_tab, cursor="xterm", width=15, justify="center", borderwidth=2, validate='key', bg=COLOR_WB, fg=COLOR_BW, insertbackground=COLOR_BW)
 entry_milliseconds.config(validatecommand=(root.register(validate_input), '%P'))
 button_clear = tk.Button(
     manual_tab, text="X",
