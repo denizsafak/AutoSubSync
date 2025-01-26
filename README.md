@@ -50,7 +50,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 ### Settings (Top Right Corner)
 - Language: `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`
 - Theme: `System`, `Dark`, `Light`
-- Change log window font: Trigger log window to preview the changes.
+- Change log window font: Configure the font used in log window. (Trigger log window to preview the changes)
 - Log records and options: `Keep log records`, `Open logs folder` and `Clear all logs`
 - Additional arguments for ffsubsync: Configure additional arguments for ffsubsync.
 - Additional arguments for alass: Configure additional arguments for alass.
