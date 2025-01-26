@@ -48,8 +48,9 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
    - Click the `Shift Subtitle` button to apply the time shift.
  
 ### Settings (Top Right Corner)
-- Language: `English`, `Español`, `Türkçe`, `Polski`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`
+- Language: `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`
 - Theme: `System`, `Dark`, `Light`
+- Change log window font: Trigger log window to preview the changes.
 - Log records and options: `Keep log records`, `Open logs folder` and `Clear all logs`
 - Additional arguments for ffsubsync: Configure additional arguments for ffsubsync.
 - Additional arguments for alass: Configure additional arguments for alass.
