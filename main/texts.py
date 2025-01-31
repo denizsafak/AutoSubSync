@@ -17,7 +17,8 @@ TOOLTIP_SAVE_TO_DESKTOP = {
     "it": "Seleziona questa casella se desideri salvare il nuovo sottotitolo sul desktop. Se deselezionato, verrà salvato nella cartella dei sottotitoli di input.",
     "fr": "Cochez cette case si vous souhaitez enregistrer le nouveau sous-titre sur votre bureau. Si décoché, il sera enregistré dans le dossier des sous-titres d'entrée.",
     "de": "Markieren Sie dieses Kästchen, wenn Sie die neue Untertiteldatei auf Ihrem Desktop speichern möchten. Wenn nicht markiert, wird sie im Ordner der Eingabe-Untertitel gespeichert.",
-    "pt": "Marque esta caixa se quiser salvar a nova legenda na sua área de trabalho. Se desmarcado, será salvo na pasta da legenda de entrada."
+    "pt": "Marque esta caixa se quiser salvar a nova legenda na sua área de trabalho. Se desmarcado, será salvo na pasta da legenda de entrada.",
+    "ar": "حدد هذا المربع إذا كنت تريد حفظ العنوان الفرعي الجديد على سطح المكتب. إذا لم يتم تحديدها، فسيتم حفظها في مجلد الترجمة المدخلة."
 }
 TOOLTIP_REPLACE_ORIGINAL = {
     "en": "Check this box if you want to replace the input subtitle file with the new one. Please be careful. It will overwrite the current subtitle.",
@@ -34,7 +35,8 @@ TOOLTIP_REPLACE_ORIGINAL = {
     "it": "Seleziona questa casella se desideri sostituire il file dei sottotitoli di input con quello nuovo. Si prega di fare attenzione. Sovrascriverà il sottotitolo corrente.",
     "fr": "Cochez cette case si vous souhaitez remplacer le fichier de sous-titres d'entrée par le nouveau. Veuillez faire attention. Cela écrasera le sous-titre actuel.",
     "de": "Markieren Sie dieses Kästchen, wenn Sie die Eingabe-Untertiteldatei durch die neue ersetzen möchten. Bitte seien Sie vorsichtig. Es wird den aktuellen Untertitel überschreiben.",
-    "pt": "Marque esta caixa se quiser substituir o arquivo de legenda de entrada pelo novo. Por favor, tenha cuidado. Isso substituirá a legenda atual."
+    "pt": "Marque esta caixa se quiser substituir o arquivo de legenda de entrada pelo novo. Por favor, tenha cuidado. Isso substituirá a legenda atual.",
+    "ar": "حدد هذا المربع إذا كنت تريد استبدال ملف الترجمة المدخلة بالملف الجديد. يرجى توخي الحذر، حيث سيؤدي ذلك إلى استبدال الترجمة الحالية."
 }
 TOOLTIP_GSS = {
     "en": "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
@@ -51,7 +53,8 @@ TOOLTIP_GSS = {
     "it": "--gss: Utilizza la ricerca della sezione aurea per trovare il rapporto ottimale tra i frame rate di video e sottotitoli (per impostazione predefinita, vengono valutati solo alcuni rapporti comuni)",
     "fr": "--gss: Utilisez la recherche de section dorée pour trouver le rapport optimal entre les fréquences d'images vidéo et sous-titres (par défaut, seuls quelques rapports courants sont évalués)",
     "de": "--gss: Verwenden Sie die Goldene-Schnitt-Suche, um das optimale Verhältnis zwischen Video- und Untertitelframeraten zu finden (standardmäßig werden nur einige gängige Verhältnisse bewertet)",
-    "pt": "--gss: Use a busca da seção áurea para encontrar a proporção ideal entre as taxas de quadros de vídeo e legenda (por padrão, apenas algumas proporções comuns são avaliadas)"
+    "pt": "--gss: Use a busca da seção áurea para encontrar a proporção ideal entre as taxas de quadros de vídeo e legenda (por padrão, apenas algumas proporções comuns são avaliadas)",
+    "ar": "--gss: استخدم البحث في القسم الذهبي للعثور على النسبة المثلى بين معدلات إطارات الفيديو والترجمة (افتراضيًا، يتم تقييم بعض النسب الشائعة فقط)"
 }
 TOOLTIP_VAD = {
     "en": "--vad=auditok: Auditok can sometimes work better in the case of low-quality audio than WebRTC's VAD. Auditok does not specifically detect voice, but instead detects all audio; this property can yield suboptimal syncing behavior when a proper VAD can work well, but can be effective in some cases.",
@@ -68,7 +71,8 @@ TOOLTIP_VAD = {
     "it": "--vad=auditok: Auditok a volte può funzionare meglio in caso di audio di bassa qualità rispetto al VAD di WebRTC. Auditok non rileva specificamente la voce, ma rileva tutto l'audio; questa proprietà può comportare un comportamento di sincronizzazione subottimale quando un VAD adeguato può funzionare bene, ma può essere efficace in alcuni casi.",
     "fr": "--vad=auditok: Auditok peut parfois mieux fonctionner en cas de faible qualité audio que le VAD de WebRTC. Auditok ne détecte pas spécifiquement la voix, mais détecte tout l'audio; cette propriété peut entraîner un comportement de synchronisation sous-optimal lorsqu'un VAD approprié peut bien fonctionner, mais peut être efficace dans certains cas.",
     "de": "--vad=auditok: Auditok kann bei minderwertigem Audio manchmal besser funktionieren als WebRTC's VAD. Auditok erkennt nicht speziell die Stimme, sondern erkennt alle Audiosignale; diese Eigenschaft kann zu suboptimalem Synchronisationsverhalten führen, wenn ein richtiges VAD gut funktionieren kann, aber in einigen Fällen effektiv sein kann.",
-    "pt": "--vad=auditok: Auditok pode funcionar melhor em caso de áudio de baixa qualidade do que o VAD do WebRTC. Auditok não detecta especificamente a voz, mas detecta todo o áudio; essa propriedade pode resultar em comportamento de sincronização subótimo quando um VAD adequado pode funcionar bem, mas pode ser eficaz em alguns casos."
+    "pt": "--vad=auditok: Auditok pode funcionar melhor em caso de áudio de baixa qualidade do que o VAD do WebRTC. Auditok não detecta especificamente a voz, mas detecta todo o áudio; essa propriedade pode resultar em comportamento de sincronização subótimo quando um VAD adequado pode funcionar bem, mas pode ser eficaz em alguns casos.",
+    "ar": "--vad=auditok: قد يعمل Auditok في بعض الأحيان بشكل أفضل في حالة الصوت منخفض الجودة مقارنة بـ VAD الخاص بـ WebRTC. لا يكتشف Auditok الصوت على وجه التحديد، بل يكتشف بدلاً من ذلك كل الصوت؛ قد تؤدي هذه الخاصية إلى سلوك مزامنة غير مثالي عندما يعمل VAD المناسب بشكل جيد، ولكن قد يكون فعالاً في بعض الحالات."
 }
 TOOLTIP_FRAMERATE = {
     "en": "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync.",
@@ -85,7 +89,8 @@ TOOLTIP_FRAMERATE = {
     "it": "--no-fix-framerate: Se specificato, ffsubsync non tenterà di correggere una discrepanza di frame rate tra riferimento e sottotitoli. Questo può essere utile quando sai che i frame rate di video e sottotitoli sono gli stessi, solo i sottotitoli sono fuori sync.",
     "fr": "--no-fix-framerate: Si spécifié, ffsubsync n'essaiera pas de corriger un décalage de fréquence d'images entre la référence et les sous-titres. Cela peut être utile lorsque vous savez que les fréquences d'images vidéo et sous-titres sont les mêmes, seuls les sous-titres sont désynchronisés.",
     "de": "--no-fix-framerate: Wenn angegeben, wird ffsubsync nicht versuchen, eine Framerate-Diskrepanz zwischen Referenz und Untertiteln zu korrigieren. Dies kann nützlich sein, wenn Sie wissen, dass die Video- und Untertitelframeraten gleich sind, nur die Untertitel sind nicht synchron.",
-    "pt": "--no-fix-framerate: Se especificado, o ffsubsync não tentará corrigir uma incompatibilidade de taxa de quadros entre a referência e as legendas. Isso pode ser útil quando você sabe que as taxas de quadros de vídeo e legenda são as mesmas, apenas as legendas estão fora de sincronia."
+    "pt": "--no-fix-framerate: Se especificado, o ffsubsync não tentará corrigir uma incompatibilidade de taxa de quadros entre a referência e as legendas. Isso pode ser útil quando você sabe que as taxas de quadros de vídeo e legenda são as mesmas, apenas as legendas estão fora de sincronia.",
+    "ar": "--no-fix-framerate: إذا تم تحديد ذلك، فلن يحاول ffsubsync تصحيح عدم تطابق معدل الإطارات بين المرجع والترجمة. قد يكون هذا مفيدًا عندما تعلم أن معدل إطارات الفيديو والترجمة متماثلان، لكن الترجمة فقط غير متزامنة."
 }
 TOOLTIP_ALASS_SPEED_OPTIMIZATION = {
     "en": "--speed optimization 0: Disable speed optimization for better accuracy. This will increase the processing time.",
@@ -102,7 +107,8 @@ TOOLTIP_ALASS_SPEED_OPTIMIZATION = {
     "it": "--speed optimization 0: Disabilita l'ottimizzazione della velocità per una migliore precisione. Questo aumenterà il tempo di elaborazione.",
     "fr": "--speed optimization 0: Désactivez l'optimisation de la vitesse pour une meilleure précision. Cela augmentera le temps de traitement.",
     "de": "--speed optimization 0: Deaktivieren Sie die Geschwindigkeitsoptimierung für eine bessere Genauigkeit. Dies wird die Verarbeitungszeit erhöhen.",
-    "pt": "--speed optimization 0: Desative a otimização de velocidade para melhor precisão. Isso aumentará o tempo de processamento."
+    "pt": "--speed optimization 0: Desative a otimização de velocidade para melhor precisão. Isso aumentará o tempo de processamento.",
+    "ar": "--speed optimization 0: تعطيل تحسين السرعة للحصول على الدقة الأعلى. هذا سيزداد الوقت المعالج."
 }
 TOOLTIP_ALASS_DISABLE_FPS_GUESSING = {
     "en": "--disable-fps-guessing: Disables guessing and correcting of framerate differences between reference file and input file.",
@@ -119,7 +125,8 @@ TOOLTIP_ALASS_DISABLE_FPS_GUESSING = {
     "it": "--disable-fps-guessing: Disabilita la stima e la correzione delle differenze di frame rate tra il file di riferimento e il file di input.",
     "fr": "--disable-fps-guessing: Désactive la supposition et la correction des différences de fréquence d'images entre le fichier de référence et le fichier d'entrée.",
     "de": "--disable-fps-guessing: Deaktiviert das Schätzen und Korrigieren von Frameratenunterschieden zwischen Referenzdatei und Eingabedatei.",
-    "pt": "--disable-fps-guessing: Desativa a adivinhação e correção das diferenças de taxa de quadros entre o arquivo de referência e o arquivo de entrada."
+    "pt": "--disable-fps-guessing: Desativa a adivinhação e correção das diferenças de taxa de quadros entre o arquivo de referência e o arquivo de entrada.",
+    "ar": "--disable-fps-guessing: تعطيل تخمين و تصحيح التفاعلات في معدل الإطارات بين الملف المرجع وملف الإدخال."
 }
 TOOLTIP_TEXT_ACTION_MENU_AUTO = {
     "en": "Choose what to do with the synchronized subtitle file(s). (Existing subtitle files will be backed up in the same folder, if they need to be replaced.)",
@@ -136,7 +143,8 @@ TOOLTIP_TEXT_ACTION_MENU_AUTO = {
     "it": "Scegli cosa fare con il/i file dei sottotitoli sincronizzati. (I file dei sottotitoli esistenti verranno salvati nella stessa cartella, se devono essere sostituiti.)",
     "fr": "Choisissez quoi faire avec le(s) fichier(s) de sous-titres synchronisés. (Les fichiers de sous-titres existants seront sauvegardés dans le même dossier, s'ils doivent être remplacés.)",
     "de": "Wählen Sie, was mit der/die synchronisierte(n) Untertiteldatei(en) geschehen soll. (Vorhandene Untertiteldateien werden im selben Ordner gesichert, wenn sie ersetzt werden müssen.)",
-    "pt": "Escolha o que fazer com o(s) arquivo(s) de legenda sincronizado(s). (Os arquivos de legenda existentes serão salvos na mesma pasta, se precisarem ser substituídos.)"
+    "pt": "Escolha o que fazer com o(s) arquivo(s) de legenda sincronizado(s). (Os arquivos de legenda existentes serão salvos na mesma pasta, se precisarem ser substituídos.)",
+    "ar": "اختر ما يجب فعله بملف (ملفات) الترجمة المتزامنة. (سيتم الاحتفاظ بنسخة احتياطية من ملفات الترجمة الموجودة في نفس المجلد، إذا كانت هناك حاجة إلى استبدالها)."
 }
 TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = {
     "en": "Select the tool to use for synchronization.",
@@ -153,7 +161,8 @@ TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = {
     "it": "Seleziona lo strumento da utilizzare per la sincronizzazione.",
     "fr": "Sélectionnez l'outil à utiliser pour la synchronisation.",
     "de": "Wählen Sie das Werkzeug zur Synchronisierung aus.",
-    "pt": "Selecione a ferramenta a ser usada para sincronização."
+    "pt": "Selecione a ferramenta a ser usada para sincronização.",
+    "ar": "حدد الأداة المراد استخدامها للمزامنة."
 }
 UPDATE_AVAILABLE_TITLE = {
     "en": "Update Available",
@@ -170,7 +179,8 @@ UPDATE_AVAILABLE_TITLE = {
     "it": "Aggiornamento Disponibile",
     "fr": "Mise à jour disponible",
     "de": "Update verfügbar",
-    "pt": "Atualização Disponível"
+    "pt": "Atualização Disponível",
+    "ar": "التحديث متاح"
 }
 UPDATE_AVAILABLE_TEXT = {
     "en": "A new version ({latest_version}) is available. Do you want to update?",
@@ -187,7 +197,8 @@ UPDATE_AVAILABLE_TEXT = {
     "it": "È disponibile una nuova versione ({latest_version}). Vuoi aggiornare?",
     "fr": "Une nouvelle version ({latest_version}) est disponible. Voulez-vous mettre à jour?",
     "de": "Eine neue Version ({latest_version}) ist verfügbar. Möchten Sie aktualisieren?",
-    "pt": "Uma nova versão ({latest_version}) está disponível. Você quer atualizar?"
+    "pt": "Uma nova versão ({latest_version}) está disponível. Você quer atualizar?",
+    "ar": "يتوفر إصدار جديد ({latest_version}). هل تريد التحديث؟"
 }
 NOTIFY_ABOUT_UPDATES_TEXT = {
     "en": "Check for updates",
@@ -204,7 +215,8 @@ NOTIFY_ABOUT_UPDATES_TEXT = {
     "it": "Controlla aggiornamenti",
     "fr": "Vérifier les mises à jour",
     "de": "Nach Updates suchen",
-    "pt": "Verificar atualizações"
+    "pt": "Verificar atualizações",
+    "ar": "تحقق من وجود تحديثات"
 }
 LANGUAGE_LABEL_TEXT = {
     "en": "Language",
@@ -221,7 +233,8 @@ LANGUAGE_LABEL_TEXT = {
     "it": "Lingua",
     "fr": "Langue",
     "de": "Sprache",
-    "pt": "Idioma"
+    "pt": "Idioma",
+    "ar": "اللغة"
 }
 # TEXT SHOULD BE SHORT
 TAB_AUTOMATIC_SYNC = {
@@ -239,7 +252,8 @@ TAB_AUTOMATIC_SYNC = {
     "it": "Sincr. Autom.",
     "fr": "Sync. Auto.",
     "de": "Autom. Sync.",
-    "pt": "Sincr. Autom."
+    "pt": "Sincr. Autom.",
+    "ar": "المزامنة التلقائية"
 }
 # TEXT SHOULD BE SHORT
 TAB_MANUAL_SYNC = {
@@ -257,7 +271,8 @@ TAB_MANUAL_SYNC = {
     "it": "Sincr. Manuale",
     "fr": "Sync. Manuelle",
     "de": "Manuelle Sync.",
-    "pt": "Sincr. Manual"
+    "pt": "Sincr. Manual",
+    "ar": "المزامنة اليدوية"
 }
 CANCEL_TEXT = {
     "en": 'Cancel',
@@ -274,7 +289,8 @@ CANCEL_TEXT = {
     "it": "Annulla",
     "fr": "Annuler",
     "de": "Abbrechen",
-    "pt": "Cancelar"
+    "pt": "Cancelar",
+    "ar": "إلغاء"
 }
 GENERATE_AGAIN_TEXT = {
     "en": 'Generate Again',
@@ -291,7 +307,8 @@ GENERATE_AGAIN_TEXT = {
     "it": "Genera di nuovo",
     "fr": "Générer à nouveau",
     "de": "Erneut generieren",
-    "pt": "Gerar novamente"
+    "pt": "Gerar novamente",
+    "ar": "توليد مرة أخرى"
 }
 GO_BACK = {
     "en": 'Go Back',
@@ -308,7 +325,8 @@ GO_BACK = {
     "it": "Torna indietro",
     "fr": "Retourner",
     "de": "Zurück",
-    "pt": "Voltar"
+    "pt": "Voltar",
+    "ar": "العودة"
 }
 BATCH_MODE_TEXT = {
     "en": 'Batch Mode',
@@ -325,7 +343,8 @@ BATCH_MODE_TEXT = {
     "it": "Modalità Batch",
     "fr": "Mode Batch",
     "de": "Stapelmodus",
-    "pt": "Modo Batch"
+    "pt": "Modo Batch",
+    "ar": "وضع الدُفعات"
 }
 NORMAL_MODE_TEXT = {
     "en": 'Normal Mode',
@@ -342,7 +361,8 @@ NORMAL_MODE_TEXT = {
     "it": "Modalità Normale",
     "fr": "Mode Normal",
     "de": "Normalmodus",
-    "pt": "Modo Normal"
+    "pt": "Modo Normal",
+    "ar": "الوضع العادي"
 }
 # TEXT SHOULD BE SHORT
 START_AUTOMATIC_SYNC_TEXT = {
@@ -360,7 +380,8 @@ START_AUTOMATIC_SYNC_TEXT = {
     "it": "Avvia Sincr. Autom.",
     "fr": "Démarrer Sync. Auto.",
     "de": "Autom. Sync starten",
-    "pt": "Iniciar Sincr. Autom."
+    "pt": "Iniciar Sincr. Autom.",
+    "ar": "بدء المزامنة التلقائية"
 }
 
 # TEXT SHOULD BE SHORT
@@ -379,7 +400,8 @@ START_BATCH_SYNC_TEXT = {
     "it": "Avvia Sincr. Batch",
     "fr": "Démarrer Sync. Batch",
     "de": "Batch-Sync starten",
-    "pt": "Iniciar Sincr. Batch"
+    "pt": "Iniciar Sincr. Batch",
+    "ar": "بدء مزامنة الدُفعات"
 }
 BATCH_INPUT_TEXT = {
     "en": "Drag and drop multiple files/folders here or click to browse.\n\n(Videos and subtitles that have the same filenames will be paired automatically. You need to pair others manually.)",
@@ -396,7 +418,8 @@ BATCH_INPUT_TEXT = {
     "it": "Trascina e rilascia più file/cartelle qui o fai clic per sfogliare.\n\n(I video e i sottotitoli con gli stessi nomi di file verranno accoppiati automaticamente. Gli altri devono essere accoppiati manualmente.)",
     "fr": "Faites glisser et déposez plusieurs fichiers/dossiers ici ou cliquez pour parcourir.\n\n(Les vidéos et sous-titres ayant les mêmes noms de fichiers seront appariés automatiquement. Vous devez apparier les autres manuellement.)",
     "de": "Ziehen Sie mehrere Dateien/Ordner hierher oder klicken Sie, um zu durchsuchen.\n\n(Videos und Untertitel mit denselben Dateinamen werden automatisch gepaart. Andere müssen manuell gepaart werden.)",
-    "pt": "Arraste e solte vários arquivos/pastas aqui ou clique para navegar.\n\n(Vídeos e legendas com os mesmos nomes de arquivos serão emparelhados automaticamente. Você precisa emparelhar os outros manualmente.)"
+    "pt": "Arraste e solte vários arquivos/pastas aqui ou clique para navegar.\n\n(Vídeos e legendas com os mesmos nomes de arquivos serão emparelhados automaticamente. Você precisa emparelhar os outros manualmente.)",
+    "ar": "قم بسحب وإسقاط ملفات/مجلدات متعددة هنا أو انقر للتصفح.\n\n(سيتم إقران مقاطع الفيديو والعناوين الفرعية التي لها نفس أسماء الملفات تلقائيًا. تحتاج إلى إقران الآخرين يدويًا)."
 }
 BATCH_INPUT_LABEL_TEXT = {
     "en": "Batch Processing Mode",
@@ -413,7 +436,8 @@ BATCH_INPUT_LABEL_TEXT = {
     "it": "Modalità di Elaborazione Batch",
     "fr": "Mode de Traitement par Lots",
     "de": "Stapelverarbeitungsmodus",
-    "pt": "Modo de Processamento em Lote"
+    "pt": "Modo de Processamento em Lote",
+    "ar": "وضع المعالجة على دفعات"
 }
 SHIFT_SUBTITLE_TEXT = {
     "en": 'Shift Subtitle',
@@ -430,7 +454,8 @@ SHIFT_SUBTITLE_TEXT = {
     "it": "Sposta Sottotitolo",
     "fr": "Déplacer le Sous-titre",
     "de": "Untertitel verschieben",
-    "pt": "Deslocar Legenda"
+    "pt": "Deslocar Legenda",
+    "ar": "العنوان الفرعي للتبديل"
 }
 LABEL_SHIFT_SUBTITLE = {
     "en": "Shift subtitle by (ms):",
@@ -447,7 +472,8 @@ LABEL_SHIFT_SUBTITLE = {
     "it": "Sposta sottotitolo di (ms):",
     "fr": "Déplacer le sous-titre de (ms) :",
     "de": "Untertitel verschieben um (ms):",
-    "pt": "Deslocar legenda por (ms):"
+    "pt": "Deslocar legenda por (ms):",
+    "ar": "تحويل العنوان الفرعي بمقدار (مللي ثانية):"
 }
 REPLACE_ORIGINAL_TITLE = {
     "en": "Subtitle Change Confirmation",
@@ -464,7 +490,8 @@ REPLACE_ORIGINAL_TITLE = {
     "it": "Conferma Modifica Sottotitolo",
     "fr": "Confirmation de Changement de Sous-titre",
     "de": "Untertiteländerung bestätigen",
-    "pt": "Confirmação de Alteração de Legenda"
+    "pt": "Confirmação de Alteração de Legenda",
+    "ar": "تأكيد تغيير العنوان الفرعي"
 }
 REPLACE_ORIGINAL_TEXT = {
     "en": "Adjusting again by {milliseconds}ms, will make a total difference of {total_shifted}ms. Proceed?",
@@ -481,7 +508,8 @@ REPLACE_ORIGINAL_TEXT = {
     "it": "Regolando di nuovo di {milliseconds}ms, si otterrà una differenza totale di {total_shifted}ms. Procedere?",
     "fr": "Ajuster à nouveau de {milliseconds}ms, fera une différence totale de {total_shifted}ms. Procéder?",
     "de": "Durch erneutes Anpassen um {milliseconds}ms ergibt sich eine Gesamtdifferenz von {total_shifted}ms. Fortfahren?",
-    "pt": "Ajustar novamente por {milliseconds}ms, fará uma diferença total de {total_shifted}ms. Prosseguir?"
+    "pt": "Ajustar novamente por {milliseconds}ms, fará uma diferença total de {total_shifted}ms. Prosseguir?",
+    "ar": "سيؤدي تعديله مرة أخرى بمقدار {milliseconds} مللي ثانية إلى جعل الفرق الإجمالي {total_shifted} مللي ثانية. هل تريد المتابعة؟"
 }
 FILE_EXISTS_TITLE = {
     "en": "File Exists",
@@ -498,7 +526,8 @@ FILE_EXISTS_TITLE = {
     "it": "File Esistente",
     "fr": "Fichier Existant",
     "de": "Datei Existiert",
-    "pt": "Arquivo Existente"
+    "pt": "Arquivo Existente",
+    "ar": "الملف موجود"
 }
 FILE_EXISTS_TEXT = {
     "en": "A file with the name '{filename}' already exists. Do you want to replace it?",
@@ -515,7 +544,8 @@ FILE_EXISTS_TEXT = {
     "it": "Un file con il nome '{filename}' esiste già. Vuoi sostituirlo?",
     "fr": "Un fichier nommé '{filename}' existe déjà. Voulez-vous le remplacer?",
     "de": "Eine Datei mit dem Namen '{filename}' existiert bereits. Möchten Sie sie ersetzen?",
-    "pt": "Um arquivo com o nome '{filename}' já existe. Deseja substituí-lo?"
+    "pt": "Um arquivo com o nome '{filename}' já existe. Deseja substituí-lo?",
+    "ar": "يوجد ملف بالاسم '{filename}' بالفعل. هل تريد استبداله؟"
 }
 ALREADY_SYNCED_FILES_TITLE = {
     "en": "Already Synced Files Detected",
@@ -532,7 +562,8 @@ ALREADY_SYNCED_FILES_TITLE = {
     "it": "File Già Sincronizzati Rilevati",
     "fr": "Fichiers Déjà Synchronisés Détectés",
     "de": "Bereits Synchronisierte Dateien Erkannt",
-    "pt": "Arquivos Já Sincronizados Detectados"
+    "pt": "Arquivos Já Sincronizados Detectados",
+    "ar": "تم اكتشاف ملفات متزامنة بالفعل"
 }
 ALREADY_SYNCED_FILES_MESSAGE = {
     "en": "Detected {count} subtitle(s) already synced, because there are subtitles that have 'autosync_' prefix in the same folder with same filenames. Do you want to skip processing them?",
@@ -549,7 +580,8 @@ ALREADY_SYNCED_FILES_MESSAGE = {
     "it": "Rilevati {count} sottotitoli già sincronizzati, perché ci sono sottotitoli con prefisso 'autosync_' nella stessa cartella con gli stessi nomi file. Vuoi saltare la loro elaborazione?",
     "fr": "Détection de {count} sous-titre(s) déjà synchronisé(s), car il existe des sous-titres avec le préfixe 'autosync_' dans le même dossier avec les mêmes noms de fichiers. Voulez-vous ignorer leur traitement ?",
     "de": "Es wurden {count} bereits synchronisierte Untertitel erkannt, da sich Untertitel mit dem Präfix 'autosync_' im selben Ordner mit denselben Dateinamen befinden. Möchten Sie deren Verarbeitung überspringen?",
-    "pt": "Detectada(s) {count} legenda(s) já sincronizada(s), pois existem legendas com prefixo 'autosync_' na mesma pasta com os mesmos nomes de arquivo. Deseja pular o processamento delas?"
+    "pt": "Detectada(s) {count} legenda(s) já sincronizada(s), pois existem legendas com prefixo 'autosync_' na mesma pasta com os mesmos nomes de arquivo. Deseja pular o processamento delas?",
+    "ar": "تم اكتشاف {count} عنوان فرعي متزامن بالفعل، لأن هناك عناوين فرعية تحتوي على بادئة 'autosync_' في نفس المجلد بنفس أسماء الملفات. هل تريد تخطي معالجتها؟"
 }
 SUBTITLE_INPUT_TEXT = {
     "en": "Drag and drop the unsynchronized subtitle file here or click to browse.",
@@ -566,7 +598,8 @@ SUBTITLE_INPUT_TEXT = {
     "it": "Trascina e rilascia il file dei sottotitoli non sincronizzati qui o fai clic per sfogliare.",
     "fr": "Faites glisser et déposez le fichier de sous-titres non synchronisé ici ou cliquez pour parcourir.",
     "de": "Ziehen Sie die unsynchronisierte Untertiteldatei hierher oder klicken Sie zum Durchsuchen.",
-    "pt": "Arraste e solte o arquivo de legenda não sincronizada aqui ou clique para navegar."
+    "pt": "Arraste e solte o arquivo de legenda não sincronizada aqui ou clique para navegar.",
+    "ar": "اسحب وأسقط ملف العنوان الفرعي غير المتزامن هنا أو انقر للتصفح."
 }
 VIDEO_INPUT_TEXT = {
     "en": "Drag and drop video or reference subtitle file here or click to browse.",
@@ -583,7 +616,8 @@ VIDEO_INPUT_TEXT = {
     "it": "Trascina e rilascia il video o il file dei sottotitoli di riferimento qui o fai clic per sfogliare.",
     "fr": "Faites glisser et déposez la vidéo ou le fichier de sous-titres de référence ici ou cliquez pour parcourir.",
     "de": "Ziehen Sie das Video oder die Referenz-Untertiteldatei hierher oder klicken Sie zum Durchsuchen.",
-    "pt": "Arraste e solte o vídeo ou arquivo de legenda de referência aqui ou clique para navegar."
+    "pt": "Arraste e solte o vídeo ou arquivo de legenda de referência aqui ou clique para navegar.",
+    "ar": "قم بسحب وإسقاط الفيديو أو ملف الترجمة المرجعي هنا أو انقر للتصفح."
 }
 LABEL_DROP_BOX = {
     "en": "Drag and drop subtitle file here or click to browse.",
@@ -600,7 +634,8 @@ LABEL_DROP_BOX = {
     "it": "Trascina e rilascia il file dei sottotitoli qui o fai clic per sfogliare.",
     "fr": "Faites glisser et déposez le fichier de sous-titres ici ou cliquez pour parcourir.",
     "de": "Ziehen Sie die Untertiteldatei hierher oder klicken Sie zum Durchsuchen.",
-    "pt": "Arraste e solte o arquivo de legenda aqui ou clique para navegar."
+    "pt": "Arraste e solte o arquivo de legenda aqui ou clique para navegar.",
+    "ar": "قم بسحب وإسقاط ملف العنوان الفرعي هنا أو انقر للتصفح."
 }
 WARNING = {
     "en": "Warning",
@@ -617,7 +652,8 @@ WARNING = {
     "it": "Avviso",
     "fr": "Avertissement",
     "de": "Warnung",
-    "pt": "Aviso"
+    "pt": "Aviso",
+    "ar": "إنذار"
 }
 CONFIRM_RESET_MESSAGE = {
     "en": "Are you sure you want to reset settings to default values?",
@@ -634,7 +670,8 @@ CONFIRM_RESET_MESSAGE = {
     "it": "Sei sicuro di voler ripristinare le impostazioni ai valori predefiniti?",
     "fr": "Êtes-vous sûr de vouloir réinitialiser les paramètres aux valeurs par défaut ?",
     "de": "Sind Sie sicher, dass Sie die Einstellungen auf die Standardwerte zurücksetzen möchten?",
-    "pt": "Tem certeza que deseja redefinir as configurações para os valores padrão?"
+    "pt": "Tem certeza que deseja redefinir as configurações para os valores padrão?",
+    "ar": "هل تريد بالتأكيد إعادة تعيين الإعدادات إلى القيم الافتراضية؟",
 }
 TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = {
     "en": 'Subtitles with "converted_subtitlefilename" in the output folder will be deleted automatically. Do you want to continue?',
@@ -651,7 +688,8 @@ TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = {
     "it": 'I sottotitoli con "converted_subtitlefilename" nella cartella di output verranno eliminati automaticamente. Vuoi continuare?',
     "fr": 'Les sous-titres avec "converted_subtitlefilename" dans le dossier de sortie seront supprimés automatiquement. Voulez-vous continuer ?',
     "de": 'Untertitel mit "converted_subtitlefilename" im Ausgabeordner werden automatisch gelöscht. Möchten Sie fortfahren?',
-    "pt": 'As legendas com "converted_subtitlefilename" na pasta de saída serão excluídas automaticamente. Deseja continuar?'
+    "pt": 'As legendas com "converted_subtitlefilename" na pasta de saída serão excluídas automaticamente. Deseja continuar?',
+    "ar": 'سيتم حذف العناوين الفرعية التي تحتوي على "converted_subtitlefilename" في مجلد الإخراج تلقائيًا. هل تريد المتابعة؟'
 }
 TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = {
     "en": 'Folders with "extracted_subtitles_videofilename" in the output folder will be deleted automatically. Do you want to continue?',
@@ -668,7 +706,8 @@ TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = {
     "it": 'Le cartelle con "extracted_subtitles_videofilename" nella cartella di output verranno eliminate automaticamente. Vuoi continuare?',
     "fr": 'Les dossiers avec "extracted_subtitles_videofilename" dans le dossier de sortie seront supprimés automatiquement. Voulez-vous continuer ?',
     "de": 'Ordner mit "extracted_subtitles_videofilename" im Ausgabeordner werden automatisch gelöscht. Möchten Sie fortfahren?',
-    "pt": 'As pastas com "extracted_subtitles_videofilename" na pasta de saída serão excluídas automaticamente. Deseja continuar?'
+    "pt": 'As pastas com "extracted_subtitles_videofilename" na pasta de saída serão excluídas automaticamente. Deseja continuar?',
+    "ar": 'سيتم حذف المجلدات التي تحتوي على "extracted_subtitles_videofilename" في مجلد الإخراج تلقائيًا. هل تريد المتابعة؟'
 }
 BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = {
     "en": "Existing subtitle files will not be backed up before overwriting. Do you want to continue?",
@@ -685,7 +724,8 @@ BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = {
     "it": "I file dei sottotitoli esistenti non verranno backup prima della sovrascrittura. Vuoi continuare?",
     "fr": "Les fichiers de sous-titres existants ne seront pas sauvegardés avant l'écrasement. Voulez-vous continuer ?",
     "de": "Vorhandene Untertiteldateien werden vor dem Überschreiben nicht gesichert. Möchten Sie fortfahren?",
-    "pt": "Os arquivos de legenda existentes não serão backup antes de serem sobrescritos. Deseja continuar?"
+    "pt": "Os arquivos de legenda existentes não serão backup antes de serem sobrescritos. Deseja continuar?",
+    "ar": "لن يتم إنشاء نسخة احتياطية من ملفات العناوين الفرعية الموجودة قبل الكتابة فوقها. هل تريد المتابعة؟"
 }
 PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = {
     "en": "Enter additional arguments for ffsubsync:",
@@ -702,7 +742,8 @@ PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = {
     "it": "Inserisci argomenti aggiuntivi per ffsubsync:",
     "fr": "Entrez des arguments supplémentaires pour ffsubsync :",
     "de": "Geben Sie zusätzliche Argumente für ffsubsync ein:",
-    "pt": "Digite argumentos adicionais para ffsubsync:"
+    "pt": "Digite argumentos adicionais para ffsubsync:",
+    "ar": "أدخل وسيطات إضافية لـ ffsubsync:"
 }
 PROMPT_ADDITIONAL_ALASS_ARGS = {
     "en": "Enter additional arguments for alass:",
@@ -719,7 +760,8 @@ PROMPT_ADDITIONAL_ALASS_ARGS = {
     "it": "Inserisci argomenti aggiuntivi per alass:",
     "fr": "Entrez des arguments supplémentaires pour alass:",
     "de": "Geben Sie zusätzliche Argumente für alass ein:",
-    "pt": "Digite argumentos adicionais para alass:"
+    "pt": "Digite argumentos adicionais para alass:",
+    "ar": "أدخل وسيطات إضافية لـ alass:"
 }
 LABEL_ADDITIONAL_FFSUBSYNC_ARGS = {
     "en": "Additional arguments for ffsubsync",
@@ -736,7 +778,8 @@ LABEL_ADDITIONAL_FFSUBSYNC_ARGS = {
     "it": "Argomenti aggiuntivi per ffsubsync",
     "fr": "Arguments supplémentaires pour ffsubsync",
     "de": "Zusätzliche Argumente für ffsubsync",
-    "pt": "Argumentos adicionais para ffsubsync"
+    "pt": "Argumentos adicionais para ffsubsync",
+    "ar": "الوسيطات الإضافية ل ffsubsync"
 }
 LABEL_ADDITIONAL_ALASS_ARGS = {
     "en": "Additional arguments for alass",
@@ -753,7 +796,8 @@ LABEL_ADDITIONAL_ALASS_ARGS = {
     "it": "Argomenti aggiuntivi per alass",
     "fr": "Arguments supplémentaires pour alass",
     "de": "Zusätzliche Argumente für alass",
-    "pt": "Argumentos adicionais para alass"
+    "pt": "Argumentos adicionais para alass",
+    "ar": "الحجج الإضافية لـ alass"
 }
 LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "en": "Check video for subtitle streams in alass",
@@ -770,7 +814,8 @@ LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "it": "Controlla il video per i flussi di sottotitoli in alass",
     "fr": "Vérifier la vidéo pour les flux de sous-titres dans alass",
     "de": "Video auf Untertitelströme in alass prüfen",
-    "pt": "Verificar vídeo para fluxos de legendas no alass"
+    "pt": "Verificar vídeo para fluxos de legendas no alass",
+    "ar": "تحقق من الفيديو بحثًا عن تدفقات الترجمة في alass"
 }
 LABEL_BACKUP_SUBTITLES = {
     "en": "Backup subtitles before overwriting",
@@ -787,7 +832,8 @@ LABEL_BACKUP_SUBTITLES = {
     "it": "Backup dei sottotitoli prima della sovrascrittura",
     "fr": "Sauvegarder les sous-titres avant écrasement",
     "de": "Untertitel vor dem Überschreiben sichern",
-    "pt": "Fazer backup das legendas antes de sobrescrever"
+    "pt": "Fazer backup das legendas antes de sobrescrever",
+    "ar": "نسخ الترجمات احتياطيًا قبل الكتابة فوقها"
 }
 LABEL_KEEP_CONVERTED_SUBTITLES = {
     "en": "Keep converted subtitles",
@@ -804,7 +850,8 @@ LABEL_KEEP_CONVERTED_SUBTITLES = {
     "it": "Mantieni i sottotitoli convertiti",
     "fr": "Conserver les sous-titres convertis",
     "de": "Konvertierte Untertitel behalten",
-    "pt": "Manter legendas convertidas"
+    "pt": "Manter legendas convertidas",
+    "ar": "الاحتفاظ بالترجمات المحولة"
 }
 LABEL_KEEP_EXTRACTED_SUBTITLES = {
     "en": "Keep extracted subtitles",
@@ -821,7 +868,8 @@ LABEL_KEEP_EXTRACTED_SUBTITLES = {
     "it": "Mantieni i sottotitoli estratti",
     "fr": "Conserver les sous-titres extraits",
     "de": "Extrahierte Untertitel behalten",
-    "pt": "Manter legendas extraídas"
+    "pt": "Manter legendas extraídas",
+    "ar": "الاحتفاظ بالترجمات المستخرجة"
 }
 LABEL_REMEMBER_THE_CHANGES = {
     "en": "Remember the changes",
@@ -838,7 +886,8 @@ LABEL_REMEMBER_THE_CHANGES = {
     "it": "Ricorda le modifiche",
     "fr": "Se souvenir des modifications",
     "de": "Änderungen merken",
-    "pt": "Lembrar as alterações"
+    "pt": "Lembrar as alterações",
+    "ar": "تذكّر التغييرات"
 }
 LABEL_RESET_TO_DEFAULT_SETTINGS = {
     "en": "Reset to default settings",
@@ -855,7 +904,8 @@ LABEL_RESET_TO_DEFAULT_SETTINGS = {
     "it": "Ripristina impostazioni predefinite",
     "fr": "Réinitialiser aux paramètres par défaut",
     "de": "Auf Standardeinstellungen zurücksetzen",
-    "pt": "Redefinir para configurações padrão"
+    "pt": "Redefinir para configurações padrão",
+    "ar": "إعادة التعيين إلى الإعدادات الافتراضية"
 }
 LABEL_KEEP_LOG_RECORDS = {
     "en": "Keep log records",
@@ -872,7 +922,8 @@ LABEL_KEEP_LOG_RECORDS = {
     "it": "Mantieni registri log",
     "fr": "Conserver les journaux",
     "de": "Protokolle behalten",
-    "pt": "Manter registros de log"
+    "pt": "Manter registros de log",
+    "ar": "الاحتفاظ بسجلات السجل"
 }
 LABEL_OPEN_LOGS_FOLDER = {
     "en": "Open logs folder",
@@ -889,7 +940,8 @@ LABEL_OPEN_LOGS_FOLDER = {
     "it": "Apri cartella dei log",
     "fr": "Ouvrir le dossier des journaux",
     "de": "Protokollordner öffnen",
-    "pt": "Abrir pasta de logs"
+    "pt": "Abrir pasta de logs",
+    "ar": "فتح مجلد السجلات"
 }
 LABEL_CLEAR_ALL_LOGS = {
     "en": "Clear all logs",
@@ -906,7 +958,8 @@ LABEL_CLEAR_ALL_LOGS = {
     "it": "Cancella tutti i log",
     "fr": "Effacer tous les journaux",
     "de": "Alle Protokolle löschen",
-    "pt": "Limpar todos os logs"
+    "pt": "Limpar todos os logs",
+    "ar": "مسح جميع السجلات"
 }
 LOG_FILES_DELETE_WARNING = {
     "en": "There are {count} log files. Do you want to delete them?",
@@ -923,7 +976,8 @@ LOG_FILES_DELETE_WARNING = {
     "it": "Ci sono {count} file di log. Vuoi eliminarli?",
     "fr": "Il y a {count} fichiers journaux. Voulez-vous les supprimer ?",
     "de": "Es gibt {count} Protokolldateien. Möchten Sie diese löschen?",
-    "pt": "Existem {count} arquivos de log. Deseja excluí-los?"
+    "pt": "Existem {count} arquivos de log. Deseja excluí-los?",
+    "ar": "هناك {count} ملفات سجل. هل تريد حذفها؟"
 }
 SYNC_TOOL_FFSUBSYNC = {
     "en": "ffsubsync",
@@ -940,7 +994,8 @@ SYNC_TOOL_FFSUBSYNC = {
     "it": "ffsubsync",
     "fr": "ffsubsync",
     "de": "ffsubsync",
-    "pt": "ffsubsync"
+    "pt": "ffsubsync",
+    "ar": "ffsubsync"
 }
 SYNC_TOOL_ALASS = {
     "en": "alass",
@@ -957,7 +1012,8 @@ SYNC_TOOL_ALASS = {
     "it": "alass",
     "fr": "alass",
     "de": "alass",
-    "pt": "alass"
+    "pt": "alass",
+    "ar": "alass"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_SUBTITLE = {
@@ -975,7 +1031,8 @@ OPTION_SAVE_NEXT_TO_SUBTITLE = {
     "it": "Salva accanto al sottotitolo di input",
     "fr": "Enregistrer à côté du sous-titre d'entrée",
     "de": "Neben Eingabe-Untertitel speichern",
-    "pt": "Salvar junto à legenda de entrada"
+    "pt": "Salvar junto à legenda de entrada",
+    "ar": "حفظ بجوار العنوان الفرعي المدخل"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO = {
@@ -993,7 +1050,8 @@ OPTION_SAVE_NEXT_TO_VIDEO = {
     "it": "Salva accanto al video",
     "fr": "Enregistrer à côté de la vidéo",
     "de": "Neben Video speichern",
-    "pt": "Salvar junto ao vídeo"
+    "pt": "Salvar junto ao vídeo",
+    "ar": "حفظ بجوار الفيديو"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = {
@@ -1011,7 +1069,8 @@ OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = {
     "it": "Salva accanto al video con stesso nome",
     "fr": "Enregistrer à côté avec même nom",
     "de": "Neben Video mit gleichem Namen speichern",
-    "pt": "Salvar junto ao vídeo com mesmo nome"
+    "pt": "Salvar junto ao vídeo com mesmo nome",
+    "ar": "حفظ بجوار الفيديو بنفس اسم الملف"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_TO_DESKTOP = {
@@ -1029,7 +1088,8 @@ OPTION_SAVE_TO_DESKTOP = {
     "it": "Salva sul Desktop",
     "fr": "Enregistrer sur le Bureau",
     "de": "Auf Desktop speichern",
-    "pt": "Salvar na Área de Trabalho"
+    "pt": "Salvar na Área de Trabalho",
+    "ar": "حفظ على سطح المكتب"
 }
 # TEXT SHOULD BE SHORT
 OPTION_REPLACE_ORIGINAL_SUBTITLE = {
@@ -1047,7 +1107,8 @@ OPTION_REPLACE_ORIGINAL_SUBTITLE = {
     "it": "Sovrascrivi sottotitolo input",
     "fr": "Écraser sous-titre d'entrée",
     "de": "Eingabe-Untertitel überschreiben",
-    "pt": "Sobrescrever legenda de entrada"
+    "pt": "Sobrescrever legenda de entrada",
+    "ar": "الكتابة فوق العنوان الفرعي المدخل"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SELECT_DESTINATION_FOLDER = {
@@ -1065,7 +1126,8 @@ OPTION_SELECT_DESTINATION_FOLDER = {
     "it": "Seleziona cartella destinazione",
     "fr": "Sélectionner dossier destination",
     "de": "Zielordner auswählen",
-    "pt": "Selecionar pasta destino"
+    "pt": "Selecionar pasta destino",
+    "ar": "حدد مجلد الوجهة"
 }
 CHECKBOX_NO_FIX_FRAMERATE = {
     "en": "Don't fix framerate",
@@ -1082,7 +1144,8 @@ CHECKBOX_NO_FIX_FRAMERATE = {
     "it": "Non correggere framerate",
     "fr": "Ne pas corriger le framerate",
     "de": "Framerate nicht korrigieren",
-    "pt": "Não corrigir taxa de quadros"
+    "pt": "Não corrigir taxa de quadros",
+    "ar": "لا تقم بإصلاح معدل الإطارات"
 }
 CHECKBOX_GSS = {
     "en": "Use golden-section search",
@@ -1099,7 +1162,8 @@ CHECKBOX_GSS = {
     "it": "Usa ricerca sezione aurea",
     "fr": "Utiliser recherche section dorée",
     "de": "Goldener-Schnitt-Suche verwenden",
-    "pt": "Usar busca seção áurea"
+    "pt": "Usar busca seção áurea",
+    "ar": "استخدام البحث في القسم الذهبي"
 }
 CHECKBOX_VAD = {
     "en": "Use auditok instead of WebRTC's VAD",
@@ -1116,7 +1180,8 @@ CHECKBOX_VAD = {
     "it": "Usa auditok invece di VAD WebRTC",
     "fr": "Utiliser auditok au lieu du VAD WebRTC",
     "de": "Auditok statt WebRTC VAD verwenden",
-    "pt": "Usar auditok em vez do VAD do WebRTC"
+    "pt": "Usar auditok em vez do VAD do WebRTC",
+    "ar": "استخدام auditok بدلاً من VAD الخاص بـ WebRTC"
 }
 # TEXT SHOULD BE SHORT
 LABEL_SPLIT_PENALTY = {
@@ -1134,7 +1199,8 @@ LABEL_SPLIT_PENALTY = {
     "it": "Penalità (Predef: 7, Consig: 5-20, No split: 0)",
     "fr": "Pénalité (Défaut: 7, Recomm: 5-20, Pas: 0)",
     "de": "Teilungsstrafe (Standard: 7, Empf: 5-20, Keine: 0)",
-    "pt": "Penalidade (Padrão: 7, Recom: 5-20, Sem: 0)"
+    "pt": "Penalidade (Padrão: 7, Recom: 5-20, Sem: 0)",
+    "ar": "عقوبة التقسيم (افتراضيًا: 7، موصى به: 5-20، بدون تقسيم: 0)"
 }
 PAIR_FILES_TITLE = {
     "en": "Pair Files",
@@ -1151,7 +1217,8 @@ PAIR_FILES_TITLE = {
     "it": "Abbina File",
     "fr": "Apparier Fichiers",
     "de": "Dateien Paaren",
-    "pt": "Parear Arquivos"
+    "pt": "Parear Arquivos",
+    "ar": "إقران الملفات"
 }
 PAIR_FILES_MESSAGE = {
     "en": "The subtitle and video have different filenames. Do you want to pair them?",
@@ -1168,7 +1235,8 @@ PAIR_FILES_MESSAGE = {
     "it": "Il sottotitolo e il video hanno nomi diversi. Vuoi abbinarli?",
     "fr": "Le sous-titre et la vidéo ont des noms différents. Voulez-vous les apparier ?",
     "de": "Die Untertitel und das Video haben unterschiedliche Dateinamen. Möchten Sie sie paaren?",
-    "pt": "A legenda e o vídeo têm nomes diferentes. Deseja pareá-los?"
+    "pt": "A legenda e o vídeo têm nomes diferentes. Deseja pareá-los?",
+    "ar": "العنوان الفرعي والفيديو لهما أسماء ملفات مختلفة. هل تريد إقرانهما؟"
 }
 UNPAIRED_SUBTITLES_TITLE = {
     "en": "Unpaired Subtitles",
@@ -1185,7 +1253,8 @@ UNPAIRED_SUBTITLES_TITLE = {
     "it": "Sottotitoli non Abbinati",
     "fr": "Sous-titres non Appariés",
     "de": "Ungepaarte Untertitel",
-    "pt": "Legendas não Pareadas"
+    "pt": "Legendas não Pareadas",
+    "ar": "العناوين الفرعية غير المقرونة"
 }
 UNPAIRED_SUBTITLES_MESSAGE = {
     "en": "There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video/reference subtitle] tag?",
@@ -1202,7 +1271,8 @@ UNPAIRED_SUBTITLES_MESSAGE = {
     "it": "Ci sono {unpaired_count} sottotitoli non abbinati. Vuoi aggiungerli come sottotitoli con tag [nessun video/sottotitolo di riferimento]?",
     "fr": "Il y a {unpaired_count} sous-titre(s) non apparié(s). Voulez-vous les ajouter comme sous-titres avec l'étiquette [pas de vidéo/sous-titre de référence] ?",
     "de": "Es gibt {unpaired_count} ungepaarte Untertitel. Möchten Sie sie als Untertitel mit dem Tag [kein Video/Referenzuntertitel] hinzufügen?",
-    "pt": "Existem {unpaired_count} legenda(s) não pareada(s). Deseja adicioná-las como legendas com a tag [sem vídeo/legenda de referência]?"
+    "pt": "Existem {unpaired_count} legenda(s) não pareada(s). Deseja adicioná-las como legendas com a tag [sem vídeo/legenda de referência]?",
+    "ar": "هناك {unpaired_count} عنوان فرعي غير مقرون. هل تريد إضافتها كعناوين فرعية بعلامة [بدون فيديو/ترجمة مرجعية]؟"
 }
 NO_VIDEO = {
     "en": "[no video/reference subtitle]",
@@ -1219,7 +1289,8 @@ NO_VIDEO = {
     "it": "[nessun video/sottotitolo di riferimento]",
     "fr": "[pas de vidéo/sous-titre de référence]",
     "de": "[kein Video/Referenzuntertitel]",
-    "pt": "[sem vídeo/legenda de referência]"
+    "pt": "[sem vídeo/legenda de referência]",
+    "ar": "[لا يوجد فيديو/مرجع الترجمة]"
 }
 NO_SUBTITLE = {
     "en": "[no subtitle]",
@@ -1236,7 +1307,8 @@ NO_SUBTITLE = {
     "it": "[nessun sottotitolo]",
     "fr": "[pas de sous-titre]",
     "de": "[keine Untertitel]",
-    "pt": "[sem legenda]"
+    "pt": "[sem legenda]",
+    "ar": "[لا يوجد عنوان فرعي]"
 }
 VIDEO_OR_SUBTITLE_TEXT = {
     "en": "Video or subtitle",
@@ -1253,7 +1325,8 @@ VIDEO_OR_SUBTITLE_TEXT = {
     "it": "Video o sottotitolo",
     "fr": "Vidéo ou sous-titre",
     "de": "Video oder Untertitel",
-    "pt": "Vídeo ou legenda"
+    "pt": "Vídeo ou legenda",
+    "ar": "فيديو أو عنوان فرعي"
 }
 VIDEO_INPUT_LABEL = {
     "en": "Video/Reference subtitle",
@@ -1270,7 +1343,8 @@ VIDEO_INPUT_LABEL = {
     "it": "Video/Sottotitolo di riferimento",
     "fr": "Vidéo/Sous-titre de référence",
     "de": "Video/Referenzuntertitel",
-    "pt": "Vídeo/Legenda de referência"
+    "pt": "Vídeo/Legenda de referência",
+    "ar": "فيديو/ترجمة مرجعية"
 }
 SUBTITLE_INPUT_LABEL = {
     "en": "Input Subtitle",
@@ -1287,7 +1361,8 @@ SUBTITLE_INPUT_LABEL = {
     "it": "Sottotitolo di input",
     "fr": "Sous-titre d'entrée",
     "de": "Eingabe-Untertitel",
-    "pt": "Legenda de entrada"
+    "pt": "Legenda de entrada",
+    "ar": "العنوان الفرعي المدخل"
 }
 SUBTITLE_FILES_TEXT = {
     "en": "Subtitle files",
@@ -1304,7 +1379,8 @@ SUBTITLE_FILES_TEXT = {
     "it": "File dei sottotitoli",
     "fr": "Fichiers de sous-titres",
     "de": "Untertiteldateien",
-    "pt": "Arquivos de legenda"
+    "pt": "Arquivos de legenda",
+    "ar": "ملفات العناوين الفرعية"
 }
 CONTEXT_MENU_REMOVE = {
     "en": "Remove",
@@ -1321,7 +1397,8 @@ CONTEXT_MENU_REMOVE = {
     "it": "Rimuovi",
     "fr": "Supprimer",
     "de": "Entfernen",
-    "pt": "Remover"
+    "pt": "Remover",
+    "ar": "أزل"
 }
 CONTEXT_MENU_CHANGE = {
     "en": "Change",
@@ -1338,7 +1415,8 @@ CONTEXT_MENU_CHANGE = {
     "it": "Modifica",
     "fr": "Modifier",
     "de": "Ändern",
-    "pt": "Alterar"
+    "pt": "Alterar",
+    "ar": "تغيير"
 }
 CONTEXT_MENU_ADD_PAIR = {
     "en": "Add Pair",
@@ -1355,7 +1433,8 @@ CONTEXT_MENU_ADD_PAIR = {
     "it": "Aggiungi Coppia",
     "fr": "Ajouter Paire",
     "de": "Paar Hinzufügen",
-    "pt": "Adicionar Par"
+    "pt": "Adicionar Par",
+    "ar": "إضافة زوج"
 }
 CONTEXT_MENU_CLEAR_ALL = {
     "en": "Clear All",
@@ -1372,7 +1451,8 @@ CONTEXT_MENU_CLEAR_ALL = {
     "it": "Cancella Tutto",
     "fr": "Tout Effacer",
     "de": "Alles Löschen",
-    "pt": "Limpar Tudo"
+    "pt": "Limpar Tudo",
+    "ar": "مسح الكل"
 }
 CONTEXT_MENU_SHOW_PATH = {
     "en": "Show path",
@@ -1389,7 +1469,8 @@ CONTEXT_MENU_SHOW_PATH = {
     "it": "Mostra percorso",
     "fr": "Afficher le chemin",
     "de": "Pfad anzeigen",
-    "pt": "Mostrar caminho"
+    "pt": "Mostrar caminho",
+    "ar": "إظهار المسار"
 }
 BUTTON_ADD_FILES = {
     "en": "Add files",
@@ -1406,7 +1487,8 @@ BUTTON_ADD_FILES = {
     "it": "Aggiungi file",
     "fr": "Ajouter fichiers",
     "de": "Dateien hinzufügen",
-    "pt": "Adicionar arquivos"
+    "pt": "Adicionar arquivos",
+    "ar": "إضافة ملفات"
 }
 MENU_ADD_FOLDER = {
     "en": "Add Folder",
@@ -1423,7 +1505,8 @@ MENU_ADD_FOLDER = {
     "it": "Aggiungi Cartella",
     "fr": "Ajouter Dossier",
     "de": "Ordner Hinzufügen",
-    "pt": "Adicionar Pasta"
+    "pt": "Adicionar Pasta",
+    "ar": "إضافة مجلد"
 }
 MENU_ADD_MULTIPLE_FILES = {
     "en": "Add Multiple Files",
@@ -1440,7 +1523,8 @@ MENU_ADD_MULTIPLE_FILES = {
     "it": "Aggiungi File Multipli",
     "fr": "Ajouter Plusieurs Fichiers",
     "de": "Mehrere Dateien Hinzufügen",
-    "pt": "Adicionar Múltiplos Arquivos"
+    "pt": "Adicionar Múltiplos Arquivos",
+    "ar": "إضافة ملفات متعددة"
 }
 MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "en": "Auto-Pairing with Season/Episode",
@@ -1457,7 +1541,8 @@ MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "it": "Auto-Abbinamento per Stagione/Episodio",
     "fr": "Auto-Appariement par Saison/Épisode",
     "de": "Auto-Paarung nach Staffel/Episode",
-    "pt": "Auto-Pareamento por Temporada/Episódio"
+    "pt": "Auto-Pareamento por Temporada/Episódio",
+    "ar": "الإقران التلقائي مع الموسم/الحلقة"
 }
 ALASS_SPEED_OPTIMIZATION_TEXT = {
     "en": "Disable speed optimization",
@@ -1474,7 +1559,8 @@ ALASS_SPEED_OPTIMIZATION_TEXT = {
     "it": "Disabilita ottimizzazione velocità",
     "fr": "Désactiver l'optimisation de vitesse",
     "de": "Geschwindigkeitsoptimierung deaktivieren",
-    "pt": "Desativar otimização de velocidade"
+    "pt": "Desativar otimização de velocidade",
+    "ar": "تعطيل تحسين السرعة"
 }
 ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "en": "Disable FPS guessing",
@@ -1491,7 +1577,8 @@ ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "it": "Disabilita stima FPS",
     "fr": "Désactiver estimation FPS",
     "de": "FPS-Schätzung deaktivieren",
-    "pt": "Desativar estimativa de FPS"
+    "pt": "Desativar estimativa de FPS",
+    "ar": "تعطيل تخمين FPS"
 }
 REF_DROP_TEXT = {
     "en": "Drop videos or reference subtitles here\nor click to browse.",
@@ -1508,7 +1595,8 @@ REF_DROP_TEXT = {
     "it": "Trascina qui video o sottotitoli di riferimento\no clicca per sfogliare.",
     "fr": "Déposez les vidéos ou sous-titres de référence ici\nou cliquez pour parcourir.",
     "de": "Videos oder Referenz-Untertitel hier ablegen\noder zum Durchsuchen klicken.",
-    "pt": "Solte vídeos ou legendas de referência aqui\nou clique para navegar."
+    "pt": "Solte vídeos ou legendas de referência aqui\nou clique para navegar.",
+    "ar": "اسحب الفيديوهات أو الترجمات المرجعية هنا\nأو انقر للتصفح."
 }
 SUB_DROP_TEXT = {
     "en": "Drag and drop subtitles here\nor click to browse.",
@@ -1525,7 +1613,8 @@ SUB_DROP_TEXT = {
     "it": "Trascina qui i sottotitoli\no clicca per sfogliare.",
     "fr": "Déposez les sous-titres ici\nou cliquez pour parcourir.",
     "de": "Untertitel hier ablegen\noder zum Durchsuchen klicken.",
-    "pt": "Arraste e solte legendas aqui\nou clique para navegar."
+    "pt": "Arraste e solte legendas aqui\nou clique para navegar.",
+    "ar": "اسحب العناوين الفرعية هنا\nأو انقر للتصفح."
 }
 REF_LABEL_TEXT = {
     "en": "Videos/Reference Subtitles",
@@ -1542,7 +1631,8 @@ REF_LABEL_TEXT = {
     "it": "Video/Sottotitoli di riferimento",
     "fr": "Vidéos/Sous-titres de référence",
     "de": "Videos/Referenz-Untertitel",
-    "pt": "Vídeos/Legendas de referência"
+    "pt": "Vídeos/Legendas de referência",
+    "ar": "الفيديوهات/الترجمات المرجعية"
 }
 SUB_LABEL_TEXT = {
     "en": "Input Subtitles",
@@ -1559,7 +1649,8 @@ SUB_LABEL_TEXT = {
     "it": "Sottotitoli di input",
     "fr": "Sous-titres d'entrée",
     "de": "Eingabe-Untertitel",
-    "pt": "Legendas de entrada"
+    "pt": "Legendas de entrada",
+    "ar": "العناوين الفرعية المدخلة"
 }
 PROCESS_PAIRS = {
     "en": "Add Pairs",
@@ -1576,7 +1667,8 @@ PROCESS_PAIRS = {
     "it": "Aggiungi coppie",
     "fr": "Ajouter paires",
     "de": "Paare hinzufügen",
-    "pt": "Adicionar pares"
+    "pt": "Adicionar pares",
+    "ar": "إضافة أزواج"
 }
 # TEXT SHOULD BE SHORT
 SYNC_TOOL_LABEL_TEXT = {
@@ -1594,7 +1686,8 @@ SYNC_TOOL_LABEL_TEXT = {
     "it": "Sincr. con",
     "fr": "Sync. avec",
     "de": "Sync. mit",
-    "pt": "Sincr. com"
+    "pt": "Sincr. com",
+    "ar": "المزامنة باستخدام"
 }
 EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "en": """How the Pairing Works?
@@ -1656,7 +1749,11 @@ EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "pt": """Como funciona o pareamento?
     """+PROGRAM_NAME+""" combinará automaticamente vídeos ou legendas de referência com arquivos de legenda usando nomes similares.
     Exemplo: "S01E01.srt/mkv" será pareado com "1x01.srt"
-    Combinações suportadas: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
+    Combinações suportadas: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "ar": """كيفية عمل الإقران؟
+    سيقوم """+PROGRAM_NAME+""" بإقران الفيديوهات أو الترجمات المرجعية تلقائيًا مع ملفات العناوين الفرعية باستخدام أسماء مماثلة.
+    على سبيل المثال: سيتم إقران "S01E01.srt/mkv" مع "1x01.srt"
+    الجمعيات المدعومة: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 THEME_TEXT = {
     "en": "Theme",
@@ -1673,7 +1770,8 @@ THEME_TEXT = {
     "it": "Tema",
     "fr": "Thème",
     "de": "Theme",
-    "pt": "Tema"
+    "pt": "Tema",
+    "ar": "السمة"
 }
 THEME_SYSTEM_TEXT = {
     "en": "System",
@@ -1690,7 +1788,8 @@ THEME_SYSTEM_TEXT = {
     "it": "Sistema",
     "fr": "Système",
     "de": "System",
-    "pt": "Sistema"
+    "pt": "Sistema",
+    "ar": "النظام"
 }
 THEME_DARK_TEXT = {
     "en": "Dark",
@@ -1707,7 +1806,8 @@ THEME_DARK_TEXT = {
     "it": "Scuro",
     "fr": "Sombre",
     "de": "Dunkel",
-    "pt": "Escuro"
+    "pt": "Escuro",
+    "ar": "داكن"
 }
 THEME_LIGHT_TEXT = {
     "en": "Light",
@@ -1724,7 +1824,8 @@ THEME_LIGHT_TEXT = {
     "it": "Chiaro",
     "fr": "Clair",
     "de": "Hell",
-    "pt": "Claro"
+    "pt": "Claro",
+    "ar": "خفيف"
 }
 SUCCESS_LOG_TEXT = {
     "en": "Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}",
@@ -1741,7 +1842,8 @@ SUCCESS_LOG_TEXT = {
     "it": "Successo! Sottotitolo spostato di {milliseconds} millisecondi e salvato in: {new_subtitle_file}",
     "fr": "Succès ! Sous-titre décalé de {milliseconds} millisecondes et enregistré dans : {new_subtitle_file}",
     "de": "Erfolg! Untertitel um {milliseconds} Millisekunden verschoben und gespeichert in: {new_subtitle_file}",
-    "pt": "Sucesso! Legenda deslocada em {milliseconds} milissegundos e salva em: {new_subtitle_file}"
+    "pt": "Sucesso! Legenda deslocada em {milliseconds} milissegundos e salva em: {new_subtitle_file}",
+    "ar": "نجاح! تم تحويل العنوان الفرعي بمقدار {milliseconds} مللي ثانية وحفظه في: {new_subtitle_file}"
 }
 SYNC_SUCCESS_MESSAGE = {
     "en": "Success! Synchronized subtitle saved to: {output_subtitle_file}",
@@ -1758,7 +1860,8 @@ SYNC_SUCCESS_MESSAGE = {
     "it": "Successo! Sottotitolo sincronizzato salvato in: {output_subtitle_file}",
     "fr": "Succès ! Sous-titre synchronisé enregistré dans : {output_subtitle_file}",
     "de": "Erfolg! Synchronisierte Untertitel gespeichert in: {output_subtitle_file}",
-    "pt": "Sucesso! Legenda sincronizada salva em: {output_subtitle_file}"
+    "pt": "Sucesso! Legenda sincronizada salva em: {output_subtitle_file}",
+    "ar": "نجاح! تم حفظ العنوان الفرعي المتزامن في: {output_subtitle_file}"
 }
 ERROR_SAVING_SUBTITLE = {
     "en": "Error saving subtitle file: {error_message}",
@@ -1775,7 +1878,8 @@ ERROR_SAVING_SUBTITLE = {
     "it": "Errore nel salvare il file dei sottotitoli: {error_message}",
     "fr": "Erreur lors de l'enregistrement du fichier de sous-titres : {error_message}",
     "de": "Fehler beim Speichern der Untertiteldatei: {error_message}",
-    "pt": "Erro ao salvar arquivo de legenda: {error_message}"
+    "pt": "Erro ao salvar arquivo de legenda: {error_message}",
+    "ar": "خطأ في حفظ ملف العنوان الفرعي: {error_message}"
 }
 NON_ZERO_MILLISECONDS = {
     "en": "Please enter a non-zero value for milliseconds.",
@@ -1792,7 +1896,8 @@ NON_ZERO_MILLISECONDS = {
     "it": "Inserire un valore diverso da zero per i millisecondi.",
     "fr": "Veuillez entrer une valeur non nulle pour les millisecondes.",
     "de": "Bitte geben Sie einen Wert ungleich Null für die Millisekunden ein.",
-    "pt": "Por favor, insira um valor diferente de zero para milissegundos."
+    "pt": "Por favor, insira um valor diferente de zero para milissegundos.",
+    "ar": "يرجى إدخال قيمة غير صفرية للمللي ثانية."
 }
 SELECT_ONLY_ONE_OPTION = {
     "en": "Please select only one option: Save to Desktop or Replace Input Subtitle.",
@@ -1809,7 +1914,8 @@ SELECT_ONLY_ONE_OPTION = {
     "it": "Seleziona una sola opzione: Salva sul Desktop o Sostituisci Sottotitolo di Input.",
     "fr": "Veuillez sélectionner une seule option : Enregistrer sur le Bureau ou Remplacer le Sous-titre d'Entrée.",
     "de": "Bitte wählen Sie nur eine Option: Auf Desktop speichern oder Eingabe-Untertitel ersetzen.",
-    "pt": "Por favor, selecione apenas uma opção: Salvar na Área de Trabalho ou Substituir Legenda de Entrada."
+    "pt": "Por favor, selecione apenas uma opção: Salvar na Área de Trabalho ou Substituir Legenda de Entrada.",
+    "ar": "يرجى اختيار خيار واحد فقط: حفظ على سطح المكتب أو استبدال العنوان الفرعي المدخل."
 }
 VALID_NUMBER_MILLISECONDS = {
     "en": "Please enter a valid number of milliseconds.",
@@ -1826,7 +1932,8 @@ VALID_NUMBER_MILLISECONDS = {
     "it": "Inserisci un numero valido di millisecondi.",
     "fr": "Veuillez entrer un nombre valide de millisecondes.",
     "de": "Bitte geben Sie eine gültige Anzahl von Millisekunden ein.",
-    "pt": "Por favor, insira um número válido de milissegundos."
+    "pt": "Por favor, insira um número válido de milissegundos.",
+    "ar": "الرجاء إدخال عدد صحيح من المللي ثانية."
 }
 DIALOG_TITLE_TEXT = {
     "en": "Change log window font",
@@ -1843,7 +1950,8 @@ DIALOG_TITLE_TEXT = {
     "it": "Cambia font finestra log",
     "fr": "Changer la police de la fenêtre de journal",
     "de": "Schriftart des Protokollfensters ändern",
-    "pt": "Alterar fonte da janela de log"
+    "pt": "Alterar fonte da janela de log",
+    "ar": "تغيير خط نافذة السجل"
 }
 FONT_FAMILY_LABEL_TEXT = {
     "en": "Select font family:",
@@ -1860,7 +1968,8 @@ FONT_FAMILY_LABEL_TEXT = {
     "it": "Seleziona famiglia font:",
     "fr": "Sélectionner la famille de police :",
     "de": "Schriftfamilie auswählen:",
-    "pt": "Selecionar família da fonte:"
+    "pt": "Selecionar família da fonte:",
+    "ar": "حدد عائلة الخط:"
 }
 FONT_SIZE_LABEL_TEXT = {
     "en": "Select font size:",
@@ -1877,7 +1986,8 @@ FONT_SIZE_LABEL_TEXT = {
     "it": "Seleziona dimensione font:",
     "fr": "Sélectionner la taille de police :",
     "de": "Schriftgröße auswählen:",
-    "pt": "Selecionar tamanho da fonte:"
+    "pt": "Selecionar tamanho da fonte:",
+    "ar": "حدد حجم الخط:"
 }
 FONT_STYLE_LABEL_TEXT = {
     "en": "Select font style:",
@@ -1894,7 +2004,8 @@ FONT_STYLE_LABEL_TEXT = {
     "it": "Seleziona stile font:",
     "fr": "Sélectionner le style de police :",
     "de": "Schriftstil auswählen:",
-    "pt": "Selecionar estilo da fonte:"
+    "pt": "Selecionar estilo da fonte:",
+    "ar": "حدد نمط الخط:"
 }
 BOLD_TEXT = {
     "en": "Bold",
@@ -1911,7 +2022,8 @@ BOLD_TEXT = {
     "it": "Grassetto",
     "fr": "Gras",
     "de": "Fett",
-    "pt": "Negrito"
+    "pt": "Negrito",
+    "ar": "جريئة"
 }
 ITALIC_TEXT = {
     "en": "Italic",
@@ -1928,7 +2040,8 @@ ITALIC_TEXT = {
     "it": "Corsivo",
     "fr": "Italique",
     "de": "Kursiv",
-    "pt": "Itálico"
+    "pt": "Itálico",
+    "ar": "مائل"
 }
 
 UNDERLINE_TEXT = {
@@ -1946,7 +2059,8 @@ UNDERLINE_TEXT = {
     "it": "Sottolineato",
     "fr": "Souligné",
     "de": "Unterstrichen",
-    "pt": "Sublinhado"
+    "pt": "Sublinhado",
+    "ar": "تسطير"
 }
 
 STRIKETHROUGH_TEXT = {
@@ -1964,7 +2078,8 @@ STRIKETHROUGH_TEXT = {
     "it": "Barrato",
     "fr": "Barré",
     "de": "Durchgestrichen",
-    "pt": "Tachado"
+    "pt": "Tachado",
+    "ar": "يتوسطه خط"
 }
 APPLY_TEXT = {
     "en": "Apply",
@@ -1981,7 +2096,8 @@ APPLY_TEXT = {
     "it": "Applica",
     "fr": "Appliquer",
     "de": "Anwenden",
-    "pt": "Aplicar"
+    "pt": "Aplicar",
+    "ar": "قدم طلبك"
 }
 SELECT_SUBTITLE = {
     "en": "Please select a subtitle file.",
@@ -1998,7 +2114,8 @@ SELECT_SUBTITLE = {
     "it": "Seleziona un file dei sottotitoli.",
     "fr": "Veuillez sélectionner un fichier de sous-titres.",
     "de": "Bitte wählen Sie eine Untertiteldatei aus.",
-    "pt": "Por favor, selecione um arquivo de legenda."
+    "pt": "Por favor, selecione um arquivo de legenda.",
+    "ar": "يرجى تحديد ملف عنوان فرعي."
 }
 SELECT_VIDEO = {
     "en": "Please select a video file.",
@@ -2015,7 +2132,8 @@ SELECT_VIDEO = {
     "it": "Seleziona un file video.",
     "fr": "Veuillez sélectionner un fichier vidéo.",
     "de": "Bitte wählen Sie eine Videodatei aus.",
-    "pt": "Por favor, selecione um arquivo de vídeo."
+    "pt": "Por favor, selecione um arquivo de vídeo.",
+    "ar": "يرجى تحديد ملف فيديو."
 }
 SELECT_VIDEO_OR_SUBTITLE = {
     "en": "Please select a video or reference subtitle.",
@@ -2032,7 +2150,8 @@ SELECT_VIDEO_OR_SUBTITLE = {
     "it": "Seleziona un video o sottotitolo di riferimento.",
     "fr": "Veuillez sélectionner une vidéo ou un sous-titre de référence.",
     "de": "Bitte wählen Sie ein Video oder einen Referenz-Untertitel.",
-    "pt": "Por favor, selecione um vídeo ou legenda de referência."
+    "pt": "Por favor, selecione um vídeo ou legenda de referência.",
+    "ar": "الرجاء تحديد فيديو أو عنوان فرعي مرجعي."
 }
 DROP_VIDEO_SUBTITLE_PAIR = {
     "en": "Please drop a video, subtitle or pair.",
@@ -2049,7 +2168,8 @@ DROP_VIDEO_SUBTITLE_PAIR = {
     "it": "Trascina un video, sottotitolo o coppia.",
     "fr": "Veuillez déposer une vidéo, un sous-titre ou une paire.",
     "de": "Bitte legen Sie ein Video, Untertitel oder Paar ab.",
-    "pt": "Por favor, solte um vídeo, legenda ou par."
+    "pt": "Por favor, solte um vídeo, legenda ou par.",
+    "ar": "من فضلك قم بإسقاط مقطع فيديو أو عنوان فرعي أو زوج."
 }
 DROP_VIDEO_OR_SUBTITLE = {
     "en": "Please drop a video or reference subtitle file.",
@@ -2066,7 +2186,8 @@ DROP_VIDEO_OR_SUBTITLE = {
     "it": "Trascina un file video o sottotitolo di riferimento.",
     "fr": "Veuillez déposer un fichier vidéo ou sous-titre de référence.",
     "de": "Bitte legen Sie eine Video- oder Referenz-Untertiteldatei ab.",
-    "pt": "Por favor, solte um arquivo de vídeo ou legenda de referência."
+    "pt": "Por favor, solte um arquivo de vídeo ou legenda de referência.",
+    "ar": "الرجاء إسقاط ملف فيديو أو ترجمة مرجعية."
 }
 DROP_SUBTITLE_FILE = {
     "en": "Please drop a subtitle file.",
@@ -2083,7 +2204,8 @@ DROP_SUBTITLE_FILE = {
     "it": "Trascina un file di sottotitoli.",
     "fr": "Veuillez déposer un fichier de sous-titres.",
     "de": "Bitte legen Sie eine Untertiteldatei ab.",
-    "pt": "Por favor, solte um arquivo de legenda."
+    "pt": "Por favor, solte um arquivo de legenda.",
+    "ar": "الرجاء إسقاط ملف عنوان فرعي."
 }
 DROP_SINGLE_SUBTITLE_FILE = {
     "en": "Please drop a single subtitle file.",
@@ -2100,7 +2222,8 @@ DROP_SINGLE_SUBTITLE_FILE = {
     "it": "Trascina un singolo file di sottotitoli.",
     "fr": "Veuillez déposer un seul fichier de sous-titres.",
     "de": "Bitte legen Sie eine einzelne Untertiteldatei ab.",
-    "pt": "Por favor, solte um único arquivo de legenda."
+    "pt": "Por favor, solte um único arquivo de legenda.",
+    "ar": "الرجاء إسقاط ملف عنوان فرعي واحد."
 }
 DROP_SINGLE_SUBTITLE_PAIR = {
     "en": "Please drop a single subtitle or pair.",
@@ -2117,7 +2240,8 @@ DROP_SINGLE_SUBTITLE_PAIR = {
     "it": "Trascina un singolo sottotitolo o coppia.",
     "fr": "Veuillez déposer un seul sous-titre ou une paire.",
     "de": "Bitte legen Sie einen einzelnen Untertitel oder ein Paar ab.",
-    "pt": "Por favor, solte uma única legenda ou par."
+    "pt": "Por favor, solte uma única legenda ou par.",
+    "ar": "الرجاء إسقاط عنوان فرعي واحد أو زوج."
 }
 SELECT_BOTH_FILES = {
     "en": "Please select both video/reference subtitle and subtitle file.",
@@ -2134,7 +2258,8 @@ SELECT_BOTH_FILES = {
     "it": "Seleziona sia il video/sottotitolo di riferimento che il file dei sottotitoli.",
     "fr": "Veuillez sélectionner à la fois la vidéo/sous-titre de référence et le fichier de sous-titres.",
     "de": "Bitte wählen Sie sowohl Video/Referenz-Untertitel als auch Untertiteldatei aus.",
-    "pt": "Por favor, selecione tanto o vídeo/legenda de referência quanto o arquivo de legenda."
+    "pt": "Por favor, selecione tanto o vídeo/legenda de referência quanto o arquivo de legenda.",
+    "ar": "يرجى تحديد كل من الفيديو/الترجمة المرجعية وملف الترجمة."
 }
 SELECT_DIFFERENT_FILES = {
     "en": "Please select different subtitle files.",
@@ -2151,7 +2276,8 @@ SELECT_DIFFERENT_FILES = {
     "it": "Seleziona file di sottotitoli diversi.",
     "fr": "Veuillez sélectionner des fichiers de sous-titres différents.",
     "de": "Bitte wählen Sie verschiedene Untertiteldateien.",
-    "pt": "Por favor, selecione arquivos de legenda diferentes."
+    "pt": "Por favor, selecione arquivos de legenda diferentes.",
+    "ar": "يُرجى تحديد ملفات ترجمة مختلفة."
 }
 SUBTITLE_FILE_NOT_EXIST = {
     "en": "Subtitle file does not exist.",
@@ -2168,7 +2294,8 @@ SUBTITLE_FILE_NOT_EXIST = {
     "it": "Il file dei sottotitoli non esiste.",
     "fr": "Le fichier de sous-titres n'existe pas.",
     "de": "Die Untertiteldatei existiert nicht.",
-    "pt": "O arquivo de legenda não existe."
+    "pt": "O arquivo de legenda não existe.",
+    "ar": "ملف العنوان الفرعي غير موجود."
 }
 VIDEO_FILE_NOT_EXIST = {
     "en": "Video file does not exist.",
@@ -2185,7 +2312,8 @@ VIDEO_FILE_NOT_EXIST = {
     "it": "Il file video non esiste.",
     "fr": "Le fichier vidéo n'existe pas.",
     "de": "Die Videodatei existiert nicht.",
-    "pt": "O arquivo de vídeo não existe."
+    "pt": "O arquivo de vídeo não existe.",
+    "ar": "ملف الفيديو غير موجود."
 }
 ERROR_LOADING_SUBTITLE = {
     "en": "Error loading subtitle file: {error_message}",
@@ -2202,7 +2330,8 @@ ERROR_LOADING_SUBTITLE = {
     "it": "Errore nel caricamento del file dei sottotitoli: {error_message}",
     "fr": "Erreur lors du chargement du fichier de sous-titres: {error_message}",
     "de": "Fehler beim Laden der Untertiteldatei: {error_message}",
-    "pt": "Erro ao carregar arquivo de legenda: {error_message}"
+    "pt": "Erro ao carregar arquivo de legenda: {error_message}",
+    "ar": "خطأ في تحميل ملف العنوان الفرعي: {error_message}"
 }
 ERROR_CONVERT_TIMESTAMP = {
     "en": "Failed to convert timestamp '{timestamp}' for format '{format_type}'",
@@ -2219,7 +2348,8 @@ ERROR_CONVERT_TIMESTAMP = {
     "it": "Impossibile convertire il timestamp '{timestamp}' nel formato '{format_type}'",
     "fr": "Échec de la conversion du timestamp '{timestamp}' au format '{format_type}'",
     "de": "Konvertierung des Zeitstempels '{timestamp}' in Format '{format_type}' fehlgeschlagen",
-    "pt": "Falha ao converter timestamp '{timestamp}' para o formato '{format_type}'"
+    "pt": "Falha ao converter timestamp '{timestamp}' para o formato '{format_type}'",
+    "ar": "فشل تحويل الطابع الزمني '{timestamp}' لتنسيق '{format_type}'"
 }
 ERROR_PARSING_TIME_STRING = {
     "en": "Error parsing time string '{time_str}'",
@@ -2236,7 +2366,8 @@ ERROR_PARSING_TIME_STRING = {
     "it": "Errore nell'analisi della stringa temporale '{time_str}'",
     "fr": "Erreur d'analyse de la chaîne temporelle '{time_str}'",
     "de": "Fehler beim Parsen der Zeitzeichenfolge '{time_str}'",
-    "pt": "Erro ao analisar string de tempo '{time_str}'"
+    "pt": "Erro ao analisar string de tempo '{time_str}'",
+    "ar": "خطأ في تحليل سلسلة الوقت '{time_str}'"
 }
 ERROR_PARSING_TIME_STRING_DETAILED = {
     "en": "Error parsing time string '{time_str}' for format '{format_type}': {error_message}",
@@ -2253,7 +2384,8 @@ ERROR_PARSING_TIME_STRING_DETAILED = {
     "it": "Errore nell'analisi della stringa temporale '{time_str}' per il formato '{format_type}': {error_message}",
     "fr": "Erreur d'analyse de la chaîne temporelle '{time_str}' pour le format '{format_type}': {error_message}",
     "de": "Fehler beim Parsen der Zeitzeichenfolge '{time_str}' für Format '{format_type}': {error_message}",
-    "pt": "Erro ao analisar string de tempo '{time_str}' para o formato '{format_type}': {error_message}"
+    "pt": "Erro ao analisar string de tempo '{time_str}' para o formato '{format_type}': {error_message}",
+    "ar": "خطأ في تحليل سلسلة الوقت '{time_str}' لتنسيق '{format_type}': {error_message}"
 }
 NO_FILES_TO_SYNC = {
     "en": "No files to sync. Please add files to the batch list.",
@@ -2270,7 +2402,8 @@ NO_FILES_TO_SYNC = {
     "it": "Nessun file da sincronizzare. Aggiungi file alla lista batch.",
     "fr": "Aucun fichier à synchroniser. Veuillez ajouter des fichiers à la liste de lot.",
     "de": "Keine Dateien zum Synchronisieren. Bitte fügen Sie Dateien zur Stapelliste hinzu.",
-    "pt": "Nenhum arquivo para sincronizar. Por favor, adicione arquivos à lista de lote."
+    "pt": "Nenhum arquivo para sincronizar. Por favor, adicione arquivos à lista de lote.",
+    "ar": "لا توجد ملفات لمزامنتها. يرجى إضافة ملفات إلى قائمة الدُفعات."
 }
 NO_VALID_FILE_PAIRS = {
     "en": "No valid file pairs to sync.",
@@ -2287,7 +2420,8 @@ NO_VALID_FILE_PAIRS = {
     "it": "Nessuna coppia di file valida da sincronizzare.",
     "fr": "Aucune paire de fichiers valide à synchroniser.",
     "de": "Keine gültigen Dateipaare zum Synchronisieren.",
-    "pt": "Nenhum par de arquivos válido para sincronizar."
+    "pt": "Nenhum par de arquivos válido para sincronizar.",
+    "ar": "لا توجد أزواج ملفات صالحة للمزامنة."
 }
 ERROR_PROCESS_TERMINATION = {
     "en": "Error occurred during process termination: {error_message}",
@@ -2304,7 +2438,8 @@ ERROR_PROCESS_TERMINATION = {
     "it": "Errore durante la terminazione del processo: {error_message}",
     "fr": "Erreur lors de la terminaison du processus: {error_message}",
     "de": "Fehler bei der Prozessbeendigung: {error_message}",
-    "pt": "Erro durante o encerramento do processo: {error_message}"
+    "pt": "Erro durante o encerramento do processo: {error_message}",
+    "ar": "حدث خطأ أثناء إنهاء العملية: {error_message}"
 }
 AUTO_SYNC_CANCELLED = {
     "en": "Automatic synchronization cancelled.",
@@ -2321,7 +2456,8 @@ AUTO_SYNC_CANCELLED = {
     "it": "Sincronizzazione automatica annullata.",
     "fr": "Synchronisation automatique annulée.",
     "de": "Automatische Synchronisierung abgebrochen.",
-    "pt": "Sincronização automática cancelada."
+    "pt": "Sincronização automática cancelada.",
+    "ar": "تم إلغاء المزامنة التلقائية."
 }
 BATCH_SYNC_CANCELLED = {
     "en": "Batch synchronization cancelled.",
@@ -2338,7 +2474,8 @@ BATCH_SYNC_CANCELLED = {
     "it": "Sincronizzazione batch annullata.",
     "fr": "Synchronisation par lot annulée.",
     "de": "Stapel-Synchronisierung abgebrochen.",
-    "pt": "Sincronização em lote cancelada."
+    "pt": "Sincronização em lote cancelada.",
+    "ar": "تم إلغاء مزامنة الدُفعات."
 }
 NO_SYNC_PROCESS = {
     "en": "No synchronization process to cancel.",
@@ -2355,7 +2492,8 @@ NO_SYNC_PROCESS = {
     "it": "Nessun processo di sincronizzazione da annullare.",
     "fr": "Aucun processus de synchronisation à annuler.",
     "de": "Kein Synchronisierungsprozess zum Abbrechen.",
-    "pt": "Nenhum processo de sincronização para cancelar."
+    "pt": "Nenhum processo de sincronização para cancelar.",
+    "ar": "لا يوجد عملية مزامنة لإلغائها."
 }
 INVALID_SYNC_TOOL = {
     "en": "Invalid sync tool selected.",
@@ -2372,7 +2510,8 @@ INVALID_SYNC_TOOL = {
     "it": "Strumento di sincronizzazione non valido selezionato.",
     "fr": "Outil de synchronisation invalide sélectionné.",
     "de": "Ungültiges Synchronisierungswerkzeug ausgewählt.",
-    "pt": "Ferramenta de sincronização inválida selecionada."
+    "pt": "Ferramenta de sincronização inválida selecionada.",
+    "ar": "تم اختيار أداة مزامنة غير صالحة."
 }
 FAILED_START_PROCESS = {
     "en": "Failed to start process: {error_message}",
@@ -2389,7 +2528,8 @@ FAILED_START_PROCESS = {
     "it": "Impossibile avviare il processo: {error_message}",
     "fr": "Échec du démarrage du processus: {error_message}",
     "de": "Prozessstart fehlgeschlagen: {error_message}",
-    "pt": "Falha ao iniciar processo: {error_message}"
+    "pt": "Falha ao iniciar processo: {error_message}",
+    "ar": "فشل بدء العملية: {error_message}"
 }
 ERROR_OCCURRED = {
     "en": "Error occurred: {error_message}",
@@ -2406,7 +2546,8 @@ ERROR_OCCURRED = {
     "it": "Si è verificato un errore: {error_message}",
     "fr": "Une erreur s'est produite: {error_message}",
     "de": "Fehler aufgetreten: {error_message}",
-    "pt": "Ocorreu um erro: {error_message}"
+    "pt": "Ocorreu um erro: {error_message}",
+    "ar": "حدث خطأ: {error_message}"
 }
 ERROR_EXECUTING_COMMAND = {
     "en": "Error executing command: ",
@@ -2423,7 +2564,8 @@ ERROR_EXECUTING_COMMAND = {
     "it": "Errore nell'esecuzione del comando: ",
     "fr": "Erreur lors de l'exécution de la commande: ",
     "de": "Fehler bei der Ausführung des Befehls: ",
-    "pt": "Erro ao executar comando: "
+    "pt": "Erro ao executar comando: ",
+    "ar": "خطأ في تنفيذ الأمر: "
 }
 DROP_VALID_FILES = {
     "en": "Please drop valid subtitle and video files.",
@@ -2440,7 +2582,8 @@ DROP_VALID_FILES = {
     "it": "Trascina file di sottotitoli e video validi.",
     "fr": "Veuillez déposer des fichiers de sous-titres et vidéo valides.",
     "de": "Bitte legen Sie gültige Untertitel- und Videodateien ab.",
-    "pt": "Por favor, solte arquivos válidos de legenda e vídeo."
+    "pt": "Por favor, solte arquivos válidos de legenda e vídeo.",
+    "ar": "الرجاء إسقاط ملفات ترجمة وفيديو صالحة."
 }
 PAIRS_ADDED = {
     "en": "Added {count} pair(s)",
@@ -2457,7 +2600,8 @@ PAIRS_ADDED = {
     "it": "Aggiunta {count} coppia/e",
     "fr": "{count} paire(s) ajoutée(s)",
     "de": "{count} Paar(e) hinzugefügt",
-    "pt": "{count} par(es) adicionado(s)"
+    "pt": "{count} par(es) adicionado(s)",
+    "ar": "تمت إضافة {count} زوج (أزواج)"
 }
 UNPAIRED_FILES_ADDED = {
     "en": "Added {count} unpaired file(s)",
@@ -2474,7 +2618,8 @@ UNPAIRED_FILES_ADDED = {
     "it": "Aggiunti {count} file non abbinati",
     "fr": "{count} fichier(s) non apparié(s) ajouté(s)",
     "de": "{count} ungepaarte Datei(en) hinzugefügt",
-    "pt": "{count} arquivo(s) não pareado(s) adicionado(s)"
+    "pt": "{count} arquivo(s) não pareado(s) adicionado(s)",
+    "ar": "تمت إضافة {count} ملف (ملفات) غير مقرون"
 }
 UNPAIRED_FILES = {
     "en": "{count} unpaired file(s)",
@@ -2491,7 +2636,8 @@ UNPAIRED_FILES = {
     "it": "{count} file non abbinati",
     "fr": "{count} fichier(s) non apparié(s)",
     "de": "{count} ungepaarte Datei(en)",
-    "pt": "{count} arquivo(s) não pareado(s)"
+    "pt": "{count} arquivo(s) não pareado(s)",
+    "ar": "{count} ملف (ملفات) غير مقرون"
 }
 DUPLICATE_PAIRS_SKIPPED = {
     "en": "{count} duplicate pair(s) skipped",
@@ -2508,7 +2654,8 @@ DUPLICATE_PAIRS_SKIPPED = {
     "it": "{count} coppia/e duplicata/e saltata/e",
     "fr": "{count} paire(s) en double ignorée(s)",
     "de": "{count} doppelte(s) Paar(e) übersprungen",
-    "pt": "{count} par(es) duplicado(s) ignorado(s)"
+    "pt": "{count} par(es) duplicado(s) ignorado(s)",
+    "ar": "{count} زوج (أزواج) مكرر تم تخطيه"
 }
 PAIR_ADDED = {
     "en": "Added 1 pair.",
@@ -2525,7 +2672,8 @@ PAIR_ADDED = {
     "it": "Aggiunta 1 coppia.",
     "fr": "1 paire ajoutée.",
     "de": "1 Paar hinzugefügt.",
-    "pt": "1 par adicionado."
+    "pt": "1 par adicionado.",
+    "ar": "تمت إضافة زوج واحد."
 }
 SAME_FILE_ERROR = {
     "en": "Cannot use the same file for both inputs.",
@@ -2542,7 +2690,8 @@ SAME_FILE_ERROR = {
     "it": "Impossibile utilizzare lo stesso file per entrambi gli input.",
     "fr": "Impossible d'utiliser le même fichier pour les deux entrées.",
     "de": "Die gleiche Datei kann nicht für beide Eingaben verwendet werden.",
-    "pt": "Não é possível usar o mesmo arquivo para ambas as entradas."
+    "pt": "Não é possível usar o mesmo arquivo para ambas as entradas.",
+    "ar": "لا يمكن استخدام نفس الملف لكلا المدخلين."
 }
 PAIR_ALREADY_EXISTS = {
     "en": "This pair already exists. Please select a different file.",
@@ -2559,7 +2708,8 @@ PAIR_ALREADY_EXISTS = {
     "it": "Questa coppia esiste già. Seleziona un file diverso.",
     "fr": "Cette paire existe déjà. Veuillez sélectionner un fichier différent.",
     "de": "Dieses Paar existiert bereits. Bitte wählen Sie eine andere Datei.",
-    "pt": "Este par já existe. Por favor, selecione um arquivo diferente."
+    "pt": "Este par já existe. Por favor, selecione um arquivo diferente.",
+    "ar": "هذا الزوج موجود بالفعل. يرجى تحديد ملف مختلف."
 }
 SUBTITLE_ADDED = {
     "en": "Subtitle added.",
@@ -2576,7 +2726,8 @@ SUBTITLE_ADDED = {
     "it": "Sottotitolo aggiunto.",
     "fr": "Sous-titre ajouté.",
     "de": "Untertitel hinzugefügt.",
-    "pt": "Legenda adicionada."
+    "pt": "Legenda adicionada.",
+    "ar": "تمت إضافة العنوان الفرعي."
 }
 VIDEO_ADDED = {
     "en": "Video/reference subtitle added.",
@@ -2593,7 +2744,8 @@ VIDEO_ADDED = {
     "it": "Video/sottotitolo di riferimento aggiunto.",
     "fr": "Vidéo/sous-titre de référence ajouté.",
     "de": "Video/Referenz-Untertitel hinzugefügt.",
-    "pt": "Vídeo/legenda de referência adicionado."
+    "pt": "Vídeo/legenda de referência adicionado.",
+    "ar": "تمت إضافة الفيديو/الترجمة المرجعية."
 }
 FILE_CHANGED = {
     "en": "File changed.",
@@ -2610,7 +2762,8 @@ FILE_CHANGED = {
     "it": "File modificato.",
     "fr": "Fichier modifié.",
     "de": "Datei geändert.",
-    "pt": "Arquivo alterado."
+    "pt": "Arquivo alterado.",
+    "ar": "تم تغيير الملف."
 }
 SELECT_ITEM_TO_CHANGE = {
     "en": "Please select an item to change.",
@@ -2627,7 +2780,8 @@ SELECT_ITEM_TO_CHANGE = {
     "it": "Seleziona un elemento da modificare.",
     "fr": "Veuillez sélectionner un élément à modifier.",
     "de": "Bitte wählen Sie ein Element zum Ändern.",
-    "pt": "Por favor, selecione um item para alterar."
+    "pt": "Por favor, selecione um item para alterar.",
+    "ar": "يرجى تحديد عنصر للتغيير."
 }
 SELECT_ITEM_TO_REMOVE = {
     "en": "Please select an item to remove.",
@@ -2644,7 +2798,8 @@ SELECT_ITEM_TO_REMOVE = {
     "it": "Seleziona un elemento da rimuovere.",
     "fr": "Veuillez sélectionner un élément à supprimer.",
     "de": "Bitte wählen Sie ein Element zum Entfernen.",
-    "pt": "Por favor, selecione um item para remover."
+    "pt": "Por favor, selecione um item para remover.",
+    "ar": "يرجى تحديد عنصر للإزالة."
 }
 FILE_NOT_EXIST = {
     "en": "File specified in the argument does not exist.",
@@ -2661,7 +2816,8 @@ FILE_NOT_EXIST = {
     "it": "Il file specificato nell'argomento non esiste.",
     "fr": "Le fichier spécifié dans l'argument n'existe pas.",
     "de": "Die im Argument angegebene Datei existiert nicht.",
-    "pt": "O arquivo especificado no argumento não existe."
+    "pt": "O arquivo especificado no argumento não existe.",
+    "ar": "الملف المحدد في الوسيطة غير موجود."
 }
 MULTIPLE_ARGUMENTS = {
     "en": "Multiple arguments provided. Please provide only one subtitle file path.",
@@ -2678,7 +2834,8 @@ MULTIPLE_ARGUMENTS = {
     "it": "Forniti più argomenti. Fornire solo un percorso file dei sottotitoli.",
     "fr": "Plusieurs arguments fournis. Veuillez fournir un seul chemin de fichier de sous-titres.",
     "de": "Mehrere Argumente angegeben. Bitte geben Sie nur einen Untertitel-Dateipfad an.",
-    "pt": "Múltiplos argumentos fornecidos. Por favor, forneça apenas um caminho de arquivo de legenda."
+    "pt": "Múltiplos argumentos fornecidos. Por favor, forneça apenas um caminho de arquivo de legenda.",
+    "ar": "تم توفير وسيطات متعددة. يرجى توفير مسار ملف ترجمة واحد فقط."
 }
 INVALID_FILE_FORMAT = {
     "en": "Invalid file format. Please provide a subtitle file.",
@@ -2695,7 +2852,8 @@ INVALID_FILE_FORMAT = {
     "it": "Formato file non valido. Fornire un file di sottotitoli.",
     "fr": "Format de fichier invalide. Veuillez fournir un fichier de sous-titres.",
     "de": "Ungültiges Dateiformat. Bitte geben Sie eine Untertiteldatei an.",
-    "pt": "Formato de arquivo inválido. Por favor, forneça um arquivo de legenda."
+    "pt": "Formato de arquivo inválido. Por favor, forneça um arquivo de legenda.",
+    "ar": "تنسيق الملف غير صالح. يرجى توفير ملف ترجمة."
 }
 INVALID_SYNC_TOOL_SELECTED = {
     "en": "Invalid sync tool selected.",
@@ -2712,7 +2870,8 @@ INVALID_SYNC_TOOL_SELECTED = {
     "it": "Strumento di sincronizzazione non valido selezionato.",
     "fr": "Outil de synchronisation invalide sélectionné.",
     "de": "Ungültiges Synchronisierungswerkzeug ausgewählt.",
-    "pt": "Ferramenta de sincronização inválida selecionada."
+    "pt": "Ferramenta de sincronização inválida selecionada.",
+    "ar": "تم اختيار أداة مزامنة غير صالحة."
 }
 TEXT_SELECTED_FOLDER = {
     "en": "Selected folder: {}",
@@ -2729,7 +2888,8 @@ TEXT_SELECTED_FOLDER = {
     "it": "Cartella selezionata: {}",
     "fr": "Dossier sélectionné : {}",
     "de": "Ausgewählter Ordner: {}",
-    "pt": "Pasta selecionada: {}"
+    "pt": "Pasta selecionada: {}",
+    "ar": "المجلد المحدد: {}"
 }
 TEXT_NO_FOLDER_SELECTED = {
     "en": "No folder selected.",
@@ -2746,7 +2906,8 @@ TEXT_NO_FOLDER_SELECTED = {
     "it": "Nessuna cartella selezionata.",
     "fr": "Aucun dossier sélectionné.",
     "de": "Kein Ordner ausgewählt.",
-    "pt": "Nenhuma pasta selecionada."
+    "pt": "Nenhuma pasta selecionada.",
+    "ar": "لم يتم تحديد مجلد."
 }
 TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "en": "The selected destination folder does not exist.",
@@ -2763,7 +2924,8 @@ TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "it": "La cartella di destinazione selezionata non esiste.",
     "fr": "Le dossier de destination sélectionné n'existe pas.",
     "de": "Der ausgewählte Zielordner existiert nicht.",
-    "pt": "A pasta de destino selecionada não existe."
+    "pt": "A pasta de destino selecionada não existe.",
+    "ar": "المجلد الوجهة المحدد غير موجود."
 }
 ADDED_PAIRS_MSG = {
     "en": "{} pairs automatically matched",
@@ -2780,7 +2942,8 @@ ADDED_PAIRS_MSG = {
     "it": "{} coppie abbinate automaticamente",
     "fr": "{} paires appariées automatiquement",
     "de": "{} Paare automatisch zugeordnet",
-    "pt": "{} pares combinados automaticamente"
+    "pt": "{} pares combinados automaticamente",
+    "ar": "{} أزواج تم إقرانها تلقائيًا"
 }
 SKIPPED_DUPLICATES_MSG = {
     "en": "Skipped {} duplicate pair{}",
@@ -2797,7 +2960,8 @@ SKIPPED_DUPLICATES_MSG = {
     "it": "Saltate {} coppie duplicate",
     "fr": "Ignoré {} paire(s) en double",
     "de": "{} doppelte(s) Paar(e) übersprungen",
-    "pt": "Ignorado {} par(es) duplicado(s)"
+    "pt": "Ignorado {} par(es) duplicado(s)",
+    "ar": "تم تخطي {} زوج مكرر{}"
 }
 INVALID_PARENT_ITEM = {
     "en": "Invalid parent item with no values.",
@@ -2814,7 +2978,8 @@ INVALID_PARENT_ITEM = {
     "it": "Elemento padre non valido senza valori.",
     "fr": "Élément parent invalide sans valeurs.",
     "de": "Ungültiges übergeordnetes Element ohne Werte.",
-    "pt": "Item pai inválido sem valores."
+    "pt": "Item pai inválido sem valores.",
+    "ar": "عنصر أصلي غير صالح بدون قيم."
 }
 SKIP_NO_VIDEO_NO_SUBTITLE = {
     "en": "Skipping entry with no video and no subtitle.",
@@ -2831,7 +2996,8 @@ SKIP_NO_VIDEO_NO_SUBTITLE = {
     "it": "Saltando voce senza video e sottotitoli.",
     "fr": "Ignorer l'entrée sans vidéo ni sous-titre.",
     "de": "Überspringe Eintrag ohne Video und Untertitel.",
-    "pt": "Ignorando entrada sem vídeo e sem legenda."
+    "pt": "Ignorando entrada sem vídeo e sem legenda.",
+    "ar": "تخطي الإدخال بدون فيديو ولا عنوان فرعي."
 }
 SKIP_NO_SUBTITLE = {
     "en": "Skipping '{video_file}': No subtitle file.",
@@ -2848,7 +3014,8 @@ SKIP_NO_SUBTITLE = {
     "it": "Saltando '{video_file}': Nessun file di sottotitoli.",
     "fr": "Ignorer '{video_file}' : Pas de fichier de sous-titres.",
     "de": "Überspringe '{video_file}': Keine Untertiteldatei.",
-    "pt": "Ignorando '{video_file}': Sem arquivo de legenda."
+    "pt": "Ignorando '{video_file}': Sem arquivo de legenda.",
+    "ar": "تخطي '{video_file}': لا يوجد ملف عنوان فرعي."
 }
 SKIP_NO_VIDEO = {
     "en": "Skipping '{subtitle_file}': No video/reference file.",
@@ -2865,7 +3032,8 @@ SKIP_NO_VIDEO = {
     "it": "Saltando '{subtitle_file}': Nessun file video/riferimento.",
     "fr": "Ignorer '{subtitle_file}' : Pas de fichier vidéo/référence.",
     "de": "Überspringe '{subtitle_file}': Keine Video-/Referenzdatei.",
-    "pt": "Ignorando '{subtitle_file}': Sem arquivo de vídeo/referência."
+    "pt": "Ignorando '{subtitle_file}': Sem arquivo de vídeo/referência.",
+    "ar": "تخطي '{subtitle_file}': لا يوجد ملف فيديو/مرجع."
 }
 SKIP_UNPAIRED_ITEM = {
     "en": "Unpaired item skipped.",
@@ -2882,7 +3050,8 @@ SKIP_UNPAIRED_ITEM = {
     "it": "Elemento non abbinato saltato.",
     "fr": "Élément non apparié ignoré.",
     "de": "Ungepaartes Element übersprungen.",
-    "pt": "Item não pareado ignorado."
+    "pt": "Item não pareado ignorado.",
+    "ar": "تم تخطي العنصر غير المقرون."
 }
 SKIPPING_ALREADY_SYNCED = {
     "en": "Skipping {filename}: Already synced.",
@@ -2899,7 +3068,8 @@ SKIPPING_ALREADY_SYNCED = {
     "it": "Saltando {filename}: Già sincronizzato.",
     "fr": "Ignorer {filename} : Déjà synchronisé.",
     "de": "Überspringe {filename}: Bereits synchronisiert.",
-    "pt": "Ignorando {filename}: Já sincronizado."
+    "pt": "Ignorando {filename}: Já sincronizado.",
+    "ar": "تخطي {filename}: تمت المزامنة بالفعل."
 }
 CONVERTING_SUBTITLE = {
     "en": "Converting {file_extension} to SRT...",
@@ -2916,7 +3086,8 @@ CONVERTING_SUBTITLE = {
     "it": "Conversione di {file_extension} in SRT...",
     "fr": "Conversion de {file_extension} en SRT...",
     "de": "Konvertiere {file_extension} zu SRT...",
-    "pt": "Convertendo {file_extension} para SRT..."
+    "pt": "Convertendo {file_extension} para SRT...",
+    "ar": "تحويل {file_extension} إلى SRT..."
 }
 SYNCING_LOG_TEXT = {
     "en": "[{}/{}] Syncing {} with {}...\n",
@@ -2933,7 +3104,8 @@ SYNCING_LOG_TEXT = {
     "it": "[{}/{}] Sincronizzazione di {} con {}...\n",
     "fr": "[{}/{}] Synchronisation de {} avec {}...\n",
     "de": "[{}/{}] Synchronisiere {} mit {}...\n",
-    "pt": "[{}/{}] Sincronizando {} com {}...\n"
+    "pt": "[{}/{}] Sincronizando {} com {}...\n",
+    "ar": "[{}/{}] جارٍ مزامنة {} مع {}...\n"
 }
 ERROR_CONVERTING_SUBTITLE = {
     "en": "Error converting subtitle: {error_message}",
@@ -2950,7 +3122,8 @@ ERROR_CONVERTING_SUBTITLE = {
     "it": "Errore durante la conversione del sottotitolo: {error_message}",
     "fr": "Erreur lors de la conversion du sous-titre: {error_message}",
     "de": "Fehler bei der Untertitel-Konvertierung: {error_message}",
-    "pt": "Erro ao converter legenda: {error_message}"
+    "pt": "Erro ao converter legenda: {error_message}",
+    "ar": "خطأ في تحويل العنوان الفرعي: {error_message}"
 }
 SUBTITLE_CONVERTED = {
     "en": "Subtitle successfully converted and saved to: {srt_file}.",
@@ -2967,7 +3140,8 @@ SUBTITLE_CONVERTED = {
     "it": "Sottotitolo convertito con successo e salvato in: {srt_file}.",
     "fr": "Sous-titre converti avec succès et enregistré dans : {srt_file}.",
     "de": "Untertitel erfolgreich konvertiert und gespeichert in: {srt_file}.",
-    "pt": "Legenda convertida com sucesso e salva em: {srt_file}."
+    "pt": "Legenda convertida com sucesso e salva em: {srt_file}.",
+    "ar": "تم تحويل العنوان الفرعي بنجاح وحفظه في: {srt_file}."
 }
 ERROR_UNSUPPORTED_CONVERSION = {
     "en": "Error: Conversion for {file_extension} is not supported.",
@@ -2984,7 +3158,8 @@ ERROR_UNSUPPORTED_CONVERSION = {
     "it": "Errore: La conversione per {file_extension} non è supportata.",
     "fr": "Erreur : La conversion pour {file_extension} n'est pas prise en charge.",
     "de": "Fehler: Konvertierung für {file_extension} wird nicht unterstützt.",
-    "pt": "Erro: Conversão para {file_extension} não é suportada."
+    "pt": "Erro: Conversão para {file_extension} não é suportada.",
+    "ar": "خطأ: لا يتم دعم تحويل {file_extension}."
 }
 FAILED_CONVERT_SUBTITLE = {
     "en": "Failed to convert subtitle file: {subtitle_file}",
@@ -3001,7 +3176,8 @@ FAILED_CONVERT_SUBTITLE = {
     "it": "Conversione del file dei sottotitoli fallita: {subtitle_file}",
     "fr": "Échec de la conversion du fichier de sous-titres : {subtitle_file}",
     "de": "Konvertierung der Untertiteldatei fehlgeschlagen: {subtitle_file}",
-    "pt": "Falha ao converter arquivo de legenda: {subtitle_file}"
+    "pt": "Falha ao converter arquivo de legenda: {subtitle_file}",
+    "ar": "فشل تحويل ملف العنوان الفرعي: {subtitle_file}"
 }
 FAILED_CONVERT_VIDEO = {
     "en": "Failed to convert video/reference file: {video_file}",
@@ -3018,7 +3194,8 @@ FAILED_CONVERT_VIDEO = {
     "it": "Conversione del file video/riferimento fallita: {video_file}",
     "fr": "Échec de la conversion du fichier vidéo/référence : {video_file}",
     "de": "Konvertierung der Video/Referenz-Datei fehlgeschlagen: {video_file}",
-    "pt": "Falha ao converter arquivo de vídeo/referência: {video_file}"
+    "pt": "Falha ao converter arquivo de vídeo/referência: {video_file}",
+    "ar": "فشل تحويل ملف الفيديو/المرجع: {video_file}"
 }
 SPLIT_PENALTY_ZERO = {
     "en": "Split penalty is set to 0. Using --no-split argument...",
@@ -3035,7 +3212,8 @@ SPLIT_PENALTY_ZERO = {
     "it": "Penalità di divisione impostata a 0. Utilizzo dell'argomento --no-split...",
     "fr": "Pénalité de division définie à 0. Utilisation de l'argument --no-split...",
     "de": "Teilungsstrafe auf 0 gesetzt. Verwende --no-split Argument...",
-    "pt": "Penalidade de divisão definida como 0. Usando argumento --no-split..."
+    "pt": "Penalidade de divisão definida como 0. Usando argumento --no-split...",
+    "ar": "تم تعيين عقوبة التقسيم على 0. استخدام الوسيطة --no-split..."
 }
 SPLIT_PENALTY_SET = {
     "en": "Split penalty is set to {split_penalty}...",
@@ -3052,7 +3230,8 @@ SPLIT_PENALTY_SET = {
     "it": "La penalità di divisione è impostata su {split_penalty}...",
     "fr": "La pénalité de division est réglée sur {split_penalty}...",
     "de": "Teilungsstrafe ist auf {split_penalty} gesetzt...",
-    "pt": "A penalidade de divisão está definida para {split_penalty}..."
+    "pt": "A penalidade de divisão está definida para {split_penalty}...",
+    "ar": "تم تعيين عقوبة التقسيم على {split_penalty}..."
 }
 USING_REFERENCE_SUBTITLE = {
     "en": "Using reference subtitle for syncing...",
@@ -3069,7 +3248,8 @@ USING_REFERENCE_SUBTITLE = {
     "it": "Utilizzo del sottotitolo di riferimento per la sincronizzazione...",
     "fr": "Utilisation du sous-titre de référence pour la synchronisation...",
     "de": "Verwendung des Referenz-Untertitels zur Synchronisierung...",
-    "pt": "Usando legenda de referência para sincronizar..."
+    "pt": "Usando legenda de referência para sincronizar...",
+    "ar": "استخدام ترجمة المرجع للمزامنة..."
 }
 USING_VIDEO_FOR_SYNC = {
     "en": "Using video for syncing...",
@@ -3086,7 +3266,8 @@ USING_VIDEO_FOR_SYNC = {
     "it": "Utilizzo del video per la sincronizzazione...",
     "fr": "Utilisation de la vidéo pour la synchronisation...",
     "de": "Verwendung des Videos zur Synchronisierung...",
-    "pt": "Usando vídeo para sincronizar..."
+    "pt": "Usando vídeo para sincronizar...",
+    "ar": "استخدام الفيديو للمزامنة..."
 }
 ENABLED_NO_FIX_FRAMERATE = {
     "en": "Enabled: Don't fix framerate.",
@@ -3103,7 +3284,8 @@ ENABLED_NO_FIX_FRAMERATE = {
     "it": "Abilitato: Non correggere il framerate.",
     "fr": "Activé : Ne pas corriger le framerate.",
     "de": "Aktiviert: Framerate nicht korrigieren.",
-    "pt": "Ativado: Não corrigir a taxa de quadros."
+    "pt": "Ativado: Não corrigir a taxa de quadros.",
+    "ar": "تم تمكين: لا تصليح معدل الإطارات."
 }
 ENABLED_GSS = {
     "en": "Enabled: Golden-section search.",
@@ -3120,7 +3302,8 @@ ENABLED_GSS = {
     "it": "Abilitato: Ricerca della sezione aurea.",
     "fr": "Activé : Recherche de la section dorée.",
     "de": "Aktiviert: Goldener-Schnitt-Suche.",
-    "pt": "Ativado: Busca da seção áurea."
+    "pt": "Ativado: Busca da seção áurea.",
+    "ar": "تم تمكين: البحث في القسم الذهبي."
 }
 ENABLED_AUDITOK_VAD = {
     "en": "Enabled: Using auditok instead of WebRTC's VAD.",
@@ -3137,7 +3320,8 @@ ENABLED_AUDITOK_VAD = {
     "it": "Abilitato: Utilizzo di auditok invece del VAD di WebRTC.",
     "fr": "Activé : Utilisation d'auditok au lieu du VAD de WebRTC.",
     "de": "Aktiviert: Verwendung von auditok anstelle von WebRTC's VAD.",
-    "pt": "Ativado: Usando auditok em vez do VAD do WebRTC."
+    "pt": "Ativado: Usando auditok em vez do VAD do WebRTC.",
+    "ar": "تم تمكين: استخدام auditok بدلاً من VAD الخاص بـ WebRTC."
 }
 ADDITIONAL_ARGS_ADDED = {
     "en": "Additional arguments: {additional_args}",
@@ -3154,7 +3338,8 @@ ADDITIONAL_ARGS_ADDED = {
     "it": "Argomenti aggiuntivi: {additional_args}",
     "fr": "Arguments supplémentaires : {additional_args}",
     "de": "Zusätzliche Argumente: {additional_args}",
-    "pt": "Argumentos adicionais: {additional_args}"
+    "pt": "Argumentos adicionais: {additional_args}",
+    "ar": "الوسيطات الإضافية: {additional_args}"
 }
 SYNCING_STARTED = {
     "en": "Syncing started:",
@@ -3171,7 +3356,8 @@ SYNCING_STARTED = {
     "it": "Sincronizzazione avviata:",
     "fr": "Synchronisation commencée :",
     "de": "Synchronisierung gestartet:",
-    "pt": "Sincronização iniciada:"
+    "pt": "Sincronização iniciada:",
+    "ar": "بدأت المزامنة:"
 }
 SYNCING_ENDED = {
     "en": "Syncing ended.",
@@ -3188,7 +3374,8 @@ SYNCING_ENDED = {
     "it": "Sincronizzazione terminata.",
     "fr": "Synchronisation terminée.",
     "de": "Synchronisierung beendet.",
-    "pt": "Sincronização concluída."
+    "pt": "Sincronização concluída.",
+    "ar": "انتهت المزامنة."
 }
 SYNC_SUCCESS = {
     "en": "Success! Synchronized subtitle saved to: {output_subtitle_file}\n\n",
@@ -3205,7 +3392,8 @@ SYNC_SUCCESS = {
     "it": "Successo! Sottotitolo sincronizzato salvato in: {output_subtitle_file}\n\n",
     "fr": "Succès ! Sous-titre synchronisé enregistré dans : {output_subtitle_file}\n\n",
     "de": "Erfolg! Synchronisierte Untertitel gespeichert unter: {output_subtitle_file}\n\n",
-    "pt": "Sucesso! Legenda sincronizada salva em: {output_subtitle_file}\n\n"
+    "pt": "Sucesso! Legenda sincronizada salva em: {output_subtitle_file}\n\n",
+    "ar": "نجاح! تم حفظ العنوان الفرعي المتزامن في: {output_subtitle_file}\n\n"
 }
 SYNC_ERROR = {
     "en": "Error occurred during synchronization of {filename}",
@@ -3222,7 +3410,8 @@ SYNC_ERROR = {
     "it": "Errore durante la sincronizzazione di {filename}",
     "fr": "Erreur survenue lors de la synchronisation de {filename}",
     "de": "Fehler bei der Synchronisierung von {filename}",
-    "pt": "Erro durante a sincronização de {filename}"
+    "pt": "Erro durante a sincronização de {filename}",
+    "ar": "حدث خطأ أثناء مزامنة {filename}"
 }
 SYNC_ERROR_OCCURRED = {
     "en": "Error occurred during synchronization. Please check the log messages.",
@@ -3239,7 +3428,8 @@ SYNC_ERROR_OCCURRED = {
     "it": "Errore durante la sincronizzazione. Si prega di controllare i messaggi di log.",
     "fr": "Erreur survenue lors de la synchronisation. Veuillez vérifier les messages de journal.",
     "de": "Fehler bei der Synchronisierung. Bitte überprüfen Sie die Protokollmeldungen.",
-    "pt": "Erro durante a sincronização. Por favor, verifique as mensagens de log."
+    "pt": "Erro durante a sincronização. Por favor, verifique as mensagens de log.",
+    "ar": "حدث خطأ أثناء المزامنة. يرجى التحقق من رسائل السجل."
 }
 BATCH_SYNC_COMPLETED = {
     "en": "Batch syncing completed.",
@@ -3256,7 +3446,8 @@ BATCH_SYNC_COMPLETED = {
     "it": "Sincronizzazione batch completata.",
     "fr": "Synchronisation par lot terminée.",
     "de": "Stapel-Synchronisierung abgeschlossen.",
-    "pt": "Sincronização em lote concluída."
+    "pt": "Sincronização em lote concluída.",
+    "ar": "اكتملت مزامنة الدُفعات."
 }
 PREPARING_SYNC = {
     "en": "Preparing {base_name}{file_extension} for automatic sync...",
@@ -3273,7 +3464,8 @@ PREPARING_SYNC = {
     "it": "Preparazione di {base_name}{file_extension} per la sincronizzazione automatica...",
     "fr": "Préparation de {base_name}{file_extension} pour la synchronisation automatique...",
     "de": "Vorbereitung von {base_name}{file_extension} für die automatische Synchronisierung...",
-    "pt": "Preparando {base_name}{file_extension} para sincronização automática..."
+    "pt": "Preparando {base_name}{file_extension} para sincronização automática...",
+    "ar": "جارٍ تحضير {base_name}{file_extension} للمزامنة التلقائية..."
 }
 CONVERTING_TTML = {
     "en": "Converting TTML/DFXP/ITT to SRT...",
@@ -3290,7 +3482,8 @@ CONVERTING_TTML = {
     "it": "Conversione di TTML/DFXP/ITT in SRT...",
     "fr": "Conversion de TTML/DFXP/ITT en SRT...",
     "de": "Konvertierung von TTML/DFXP/ITT in SRT...",
-    "pt": "Convertendo TTML/DFXP/ITT para SRT..."
+    "pt": "Convertendo TTML/DFXP/ITT para SRT...",
+    "ar": "تحويل TTML/DFXP/ITT إلى SRT..."
 }
 CONVERTING_VTT = {
     "en": "Converting VTT to SRT...",
@@ -3307,7 +3500,8 @@ CONVERTING_VTT = {
     "it": "Conversione di VTT in SRT...",
     "fr": "Conversion de VTT en SRT...",
     "de": "Konvertierung von VTT in SRT...",
-    "pt": "Convertendo VTT para SRT..."
+    "pt": "Convertendo VTT para SRT...",
+    "ar": "تحويل VTT إلى SRT..."
 }
 CONVERTING_SBV = {
     "en": "Converting SBV to SRT...",
@@ -3324,7 +3518,8 @@ CONVERTING_SBV = {
     "it": "Conversione di SBV in SRT...",
     "fr": "Conversion de SBV en SRT...",
     "de": "Konvertierung von SBV in SRT...",
-    "pt": "Convertendo SBV para SRT..."
+    "pt": "Convertendo SBV para SRT...",
+    "ar": "تحويل SBV إلى SRT..."
 }
 CONVERTING_SUB = {
     "en": "Converting SUB to SRT...",
@@ -3341,7 +3536,8 @@ CONVERTING_SUB = {
     "it": "Conversione di SUB in SRT...",
     "fr": "Conversion de SUB en SRT...",
     "de": "Konvertierung von SUB in SRT...",
-    "pt": "Convertendo SUB para SRT..."
+    "pt": "Convertendo SUB para SRT...",
+    "ar": "تحويل SUB إلى SRT..."
 }
 CONVERTING_ASS = {
     "en": "Converting ASS/SSA to SRT...",
@@ -3358,7 +3554,8 @@ CONVERTING_ASS = {
     "it": "Conversione di ASS/SSA in SRT...",
     "fr": "Conversion de ASS/SSA en SRT...",
     "de": "Konvertierung von ASS/SSA in SRT...",
-    "pt": "Convertendo ASS/SSA para SRT..."
+    "pt": "Convertendo ASS/SSA para SRT...",
+    "ar": "تحويل ASS/SSA إلى SRT..."
 }
 CONVERTING_STL = {
     "en": "Converting STL to SRT...",
@@ -3375,7 +3572,8 @@ CONVERTING_STL = {
     "it": "Conversione di STL in SRT...",
     "fr": "Conversion de STL en SRT...",
     "de": "Konvertierung von STL in SRT...",
-    "pt": "Convertendo STL para SRT..."
+    "pt": "Convertendo STL para SRT...",
+    "ar": "تحويل STL إلى SRT..."
 }
 CONVERSION_NOT_SUPPORTED = {
     "en": "Error: Conversion for {file_extension} is not supported.",
@@ -3392,7 +3590,8 @@ CONVERSION_NOT_SUPPORTED = {
     "it": "Errore: La conversione per {file_extension} non è supportata.",
     "fr": "Erreur : La conversion pour {file_extension} n'est pas supportée.",
     "de": "Fehler: Konvertierung für {file_extension} wird nicht unterstützt.",
-    "pt": "Erro: Conversão para {file_extension} não é suportada."
+    "pt": "Erro: Conversão para {file_extension} não é suportada.",
+    "ar": "التحويل لـ {file_extension} غير مدعوم."
 }
 RETRY_ENCODING_MSG = {
     "en": "Previous sync failed. Retrying with pre-detected encodings...",
@@ -3409,7 +3608,8 @@ RETRY_ENCODING_MSG = {
     "it": "La sincronizzazione precedente è fallita. Riprovo con codifiche pre-rilevate...",
     "fr": "La synchronisation précédente a échoué. Nouvelle tentative avec des encodages pré-détectés...",
     "de": "Vorherige Synchronisierung fehlgeschlagen. Erneuter Versuch mit vorerkannten Kodierungen...",
-    "pt": "A sincronização anterior falhou. Tentando novamente com codificações pré-detectadas..."
+    "pt": "A sincronização anterior falhou. Tentando novamente com codificações pré-detectadas...",
+    "ar": "فشلت المزامنة السابقة. إعادة المحاولة باستخدام الترميزات المكتشفة مسبقاً..."
 }
 ALASS_SPEED_OPTIMIZATION_LOG = {
     "en": "Disabled: Speed optimization...",
@@ -3426,7 +3626,8 @@ ALASS_SPEED_OPTIMIZATION_LOG = {
     "it": "Disabilitato: Ottimizzazione della velocità...",
     "fr": "Désactivé : Optimisation de la vitesse...",
     "de": "Deaktiviert: Geschwindigkeitsoptimierung...",
-    "pt": "Desativado: Otimização de velocidade..."
+    "pt": "Desativado: Otimização de velocidade...",
+    "ar": "معطلة: تحسين السرعة..."
 }
 ALASS_DISABLE_FPS_GUESSING_LOG = {
     "en": "Disabled: FPS guessing...",
@@ -3443,7 +3644,8 @@ ALASS_DISABLE_FPS_GUESSING_LOG = {
     "it": "Disabilitato: Stima FPS...",
     "fr": "Désactivé : Estimation FPS...",
     "de": "Deaktiviert: FPS-Schätzung...",
-    "pt": "Desativado: Estimativa de FPS..."
+    "pt": "Desativado: Estimativa de FPS...",
+    "ar": "معطلة: تخمين FPS..."
 }
 CHANGING_ENCODING_MSG = {
     "en": "The synchronized subtitle's encoding does not match the input subtitle's encoding. Changing from {synced_subtitle_encoding} encoding to {encoding_inc} encoding...",
@@ -3460,7 +3662,8 @@ CHANGING_ENCODING_MSG = {
     "it": "La codifica del sottotitolo sincronizzato non corrisponde alla codifica del sottotitolo di input. Cambio da codifica {synced_subtitle_encoding} a codifica {encoding_inc}...",
     "fr": "L'encodage du sous-titre synchronisé ne correspond pas à l'encodage du sous-titre d'entrée. Changement de l'encodage {synced_subtitle_encoding} à l'encodage {encoding_inc}...",
     "de": "Die Kodierung des synchronisierten Untertitels stimmt nicht mit der Kodierung des Eingabeuntertitels überein. Änderung der Kodierung von {synced_subtitle_encoding} zu {encoding_inc}...",
-    "pt": "A codificação da legenda sincronizada não corresponde à codificação da legenda de entrada. Mudando de codificação {synced_subtitle_encoding} para codificação {encoding_inc}..."
+    "pt": "A codificação da legenda sincronizada não corresponde à codificação da legenda de entrada. Mudando de codificação {synced_subtitle_encoding} para codificação {encoding_inc}...",
+    "ar": "ترميز الترجمة المتزامنة لا يتطابق مع ترميز الترجمة المدخلة. جاري التغيير من ترميز {synced_subtitle_encoding} إلى ترميز {encoding_inc}..."
 }
 ENCODING_CHANGED_MSG = {
     "en": "Encoding changed successfully.",
@@ -3477,7 +3680,8 @@ ENCODING_CHANGED_MSG = {
     "it": "Codifica cambiata con successo.",
     "fr": "Encodage changé avec succès.",
     "de": "Kodierung erfolgreich geändert.",
-    "pt": "Codificação alterada com sucesso."
+    "pt": "Codificação alterada com sucesso.",
+    "ar": "تم تغيير الترميز بنجاح."
 }
 SYNC_SUCCESS_COUNT = {
     "en": "Successfully synced {success_count} subtitle file(s).",
@@ -3494,7 +3698,8 @@ SYNC_SUCCESS_COUNT = {
     "it": "{success_count} file di sottotitoli sincronizzati con successo.",
     "fr": "{success_count} fichier(s) de sous-titres synchronisé(s) avec succès.",
     "de": "{success_count} Untertiteldatei(en) erfolgreich synchronisiert.",
-    "pt": "{success_count} arquivo(s) de legenda sincronizado(s) com sucesso."
+    "pt": "{success_count} arquivo(s) de legenda sincronizado(s) com sucesso.",
+    "ar": "تم مزامنة {success_count} ملف(ملفات) الترجمة بنجاح."
 }
 SYNC_FAILURE_COUNT = {
     "en": "Failed to sync {failure_count} subtitle file(s).",
@@ -3511,7 +3716,8 @@ SYNC_FAILURE_COUNT = {
     "it": "Impossibile sincronizzare {failure_count} file di sottotitoli.",
     "fr": "Échec de la synchronisation de {failure_count} fichier(s) de sous-titres.",
     "de": "{failure_count} Untertiteldatei(en) konnten nicht synchronisiert werden.",
-    "pt": "Falha ao sincronizar {failure_count} arquivo(s) de legenda."
+    "pt": "Falha ao sincronizar {failure_count} arquivo(s) de legenda.",
+    "ar": "فشل في مزامنة {failure_count} ملف(ملفات) الترجمة."
 }
 SYNC_FAILURE_COUNT_BATCH = {
     "en": "Failed to sync {failure_count} pair(s):",
@@ -3528,7 +3734,8 @@ SYNC_FAILURE_COUNT_BATCH = {
     "it": "Impossibile sincronizzare {failure_count} coppia/e:",
     "fr": "Échec de la synchronisation de {failure_count} paire(s) :",
     "de": "Fehler beim Synchronisieren von {failure_count} Paar(en):",
-    "pt": "Falha ao sincronizar {failure_count} par(es):"
+    "pt": "Falha ao sincronizar {failure_count} par(es):",
+    "ar": "فشل في مزامنة {failure_count} زوج (أزواج):"
 }
 ERROR_CHANGING_ENCODING_MSG = {
     "en": "Error changing encoding: {error_message}\n",
@@ -3545,7 +3752,8 @@ ERROR_CHANGING_ENCODING_MSG = {
     "it": "Errore durante il cambio di codifica: {error_message}\n",
     "fr": "Erreur lors du changement d'encodage : {error_message}\n",
     "de": "Fehler beim Ändern der Kodierung: {error_message}\n",
-    "pt": "Erro ao alterar a codificação: {error_message}\n"
+    "pt": "Erro ao alterar a codificação: {error_message}\n",
+    "ar": "خطأ في تغيير الترميز: {error_message}\n"
 
 }
 BACKUP_CREATED = {
@@ -3563,7 +3771,8 @@ BACKUP_CREATED = {
     "it": "Un backup del file di sottotitoli esistente è stato salvato in: {output_subtitle_file}.",
     "fr": "Une sauvegarde du fichier de sous-titres existant a été enregistrée dans : {output_subtitle_file}.",
     "de": "Eine Sicherung der vorhandenen Untertiteldatei wurde gespeichert unter: {output_subtitle_file}.",
-    "pt": "Um backup do arquivo de legenda existente foi salvo em: {output_subtitle_file}."
+    "pt": "Um backup do arquivo de legenda existente foi salvo em: {output_subtitle_file}.",
+    "ar": "تم حفظ نسخة احتياطية من ملف العنوان الفرعي الموجود في: {output_subtitle_file}."
 }
 CHECKING_SUBTITLE_STREAMS = {
     "en": "Checking the video for subtitle streams...",
@@ -3580,7 +3789,8 @@ CHECKING_SUBTITLE_STREAMS = {
     "it": "Controllo dei flussi di sottotitoli nel video...",
     "fr": "Vérification des flux de sous-titres dans la vidéo...",
     "de": "Überprüfung der Untertitelströme im Video...",
-    "pt": "Verificando os fluxos de legendas no vídeo..."
+    "pt": "Verificando os fluxos de legendas no vídeo...",
+    "ar": "جارٍ التحقق من الفيديو بحثًا عن تدفقات الترجمة..."
 }
 FOUND_COMPATIBLE_SUBTITLES = {
     "en": "Found {count} compatible subtitles to extract.\nExtracting subtitles to folder: {output_folder}...",
@@ -3597,7 +3807,8 @@ FOUND_COMPATIBLE_SUBTITLES = {
     "it": "Trovati {count} sottotitoli compatibili da estrarre.\nEstrazione dei sottotitoli nella cartella: {output_folder}...",
     "fr": "Trouvé {count} sous-titres compatibles à extraire.\nExtraction des sous-titres dans le dossier : {output_folder}...",
     "de": "{count} kompatible Untertitel zum Extrahieren gefunden.\nExtrahieren der Untertitel in Ordner: {output_folder}...",
-    "pt": "Encontrado {count} legendas compatíveis para extrair.\nExtraindo legendas para a pasta: {output_folder}..."
+    "pt": "Encontrado {count} legendas compatíveis para extrair.\nExtraindo legendas para a pasta: {output_folder}...",
+    "ar": "تم العثور على {count} ترجمة متوافقة لاستخراجها.\nجارٍ استخراج الترجمات إلى المجلد: {output_folder}..."
 }
 NO_COMPATIBLE_SUBTITLES = {
     "en": "No compatible subtitles found to extract.",
@@ -3614,7 +3825,8 @@ NO_COMPATIBLE_SUBTITLES = {
     "it": "Nessun sottotitolo compatibile trovato da estrarre.",
     "fr": "Aucun sous-titre compatible trouvé à extraire.",
     "de": "Keine kompatiblen Untertitel zum Extrahieren gefunden.",
-    "pt": "Nenhuma legenda compatível encontrada para extrair."
+    "pt": "Nenhuma legenda compatível encontrada para extrair.",
+    "ar": "لم يتم العثور على ترجمات متوافقة لاستخراجها."
 }
 SUCCESSFULLY_EXTRACTED = {
     "en": "Successfully extracted: {filename}.",
@@ -3631,7 +3843,8 @@ SUCCESSFULLY_EXTRACTED = {
     "it": "Estratto con successo: {filename}.",
     "fr": "Extrait avec succès : {filename}.",
     "de": "Erfolgreich extrahiert: {filename}.",
-    "pt": "Extraído com sucesso: {filename}."
+    "pt": "Extraído com sucesso: {filename}.",
+    "ar": "تم استخراج {filename} بنجاح."
 }
 CHOOSING_BEST_SUBTITLE = {
     "en": "Selecting the best subtitle for syncing...",
@@ -3648,7 +3861,8 @@ CHOOSING_BEST_SUBTITLE = {
     "it": "Selezione del miglior sottotitolo per la sincronizzazione...",
     "fr": "Sélection du meilleur sous-titre pour la synchronisation...",
     "de": "Auswahl des besten Untertitels zur Synchronisierung...",
-    "pt": "Selecionando a melhor legenda para sincronizar..."
+    "pt": "Selecionando a melhor legenda para sincronizar...",
+    "ar": "اختيار أفضل ترجمة للمزامنة..."
 }
 CHOSEN_SUBTITLE = {
     "en": "Selected: {filename} with timestamp difference: {score}",
@@ -3665,7 +3879,8 @@ CHOSEN_SUBTITLE = {
     "it": "Selezionato: {filename} con differenza di timestamp: {score}",
     "fr": "Sélectionné : {filename} avec différence de timestamp : {score}",
     "de": "Ausgewählt: {filename} mit Zeitstempelunterschied: {score}",
-    "pt": "Selecionado: {filename} com diferença de timestamp: {score}"
+    "pt": "Selecionado: {filename} com diferença de timestamp: {score}",
+    "ar": "تم اختيار: {filename} بفارق زمني: {score}"
 }
 FAILED_TO_EXTRACT_SUBTITLES = {
     "en": "Failed to extract subtitles. Error: {error}",
@@ -3682,7 +3897,8 @@ FAILED_TO_EXTRACT_SUBTITLES = {
     "it": "Impossibile estrarre i sottotitoli. Errore: {error}",
     "fr": "Échec de l'extraction des sous-titres. Erreur : {error}",
     "de": "Untertitel konnten nicht extrahiert werden. Fehler: {error}",
-    "pt": "Falha ao extrair legendas. Erro: {error}"
+    "pt": "Falha ao extrair legendas. Erro: {error}",
+    "ar": "فشل استخراج الترجمات. الخطأ: {error}"
 }
 USED_THE_LONGEST_SUBTITLE = {
     "en": "Used the longest subtitle file because parse_timestamps failed.",
@@ -3699,7 +3915,8 @@ USED_THE_LONGEST_SUBTITLE = {
     "it": "Utilizzato il file di sottotitoli più lungo perché parse_timestamps non è riuscito.",
     "fr": "Utilisé le fichier de sous-titres le plus long car parse_timestamps a échoué.",
     "de": "Das längste Untertiteldatei verwendet, da parse_timestamps fehlgeschlagen ist.",
-    "pt": "Usado o arquivo de legenda mais longo porque parse_timestamps falhou."
+    "pt": "Usado o arquivo de legenda mais longo porque parse_timestamps falhou.",
+    "ar": "استخدم أطول ملف ترجمة لأن parse_timestamps فشل."
 }
 DELETING_EXTRACTED_SUBTITLE_FOLDER = {
     "en": "Deleting the extracted subtitles folder...",
@@ -3716,7 +3933,8 @@ DELETING_EXTRACTED_SUBTITLE_FOLDER = {
     "it": "Eliminazione della cartella dei sottotitoli estratti...",
     "fr": "Suppression du dossier des sous-titres extraits...",
     "de": "Löschen des extrahierten Untertitelordners...",
-    "pt": "Excluindo a pasta de legendas extraídas..."
+    "pt": "Excluindo a pasta de legendas extraídas...",
+    "ar": "جارٍ حذف مجلد الترجمات المستخرجة..."
 }
 DELETING_CONVERTED_SUBTITLE = {
     "en": "Deleting the converted subtitle file...",
@@ -3733,7 +3951,8 @@ DELETING_CONVERTED_SUBTITLE = {
     "it": "Eliminazione del file di sottotitoli convertito...",
     "fr": "Suppression du fichier de sous-titres converti...",
     "de": "Löschen der konvertierten Untertiteldatei...",
-    "pt": "Excluindo o arquivo de legenda convertido..."
+    "pt": "Excluindo o arquivo de legenda convertido...",
+    "ar": "جارٍ حذف ملف العنوان الفرعي المحول..."
 }
 ADDED_FILES_TEXT = {
     "en": "Added {added_files} files",
@@ -3750,7 +3969,8 @@ ADDED_FILES_TEXT = {
     "it": "Aggiunti {added_files} file",
     "fr": "Ajouté {added_files} fichiers",
     "de": "{added_files} Dateien hinzugefügt",
-    "pt": "Adicionado {added_files} arquivos"
+    "pt": "Adicionado {added_files} arquivos",
+    "ar": "تمت إضافة {added_files} ملف"
 }
 SKIPPED_DUPLICATE_FILES_TEXT = {
     "en": "Skipped {skipped_files} duplicate files",
@@ -3767,7 +3987,8 @@ SKIPPED_DUPLICATE_FILES_TEXT = {
     "it": "Saltati {skipped_files} file duplicati",
     "fr": "Ignoré {skipped_files} fichiers en double",
     "de": "{skipped_files} doppelte Dateien übersprungen",
-    "pt": "Ignorado {skipped_files} arquivos duplicados"
+    "pt": "Ignorado {skipped_files} arquivos duplicados",
+    "ar": "تم تخطي {skipped_files} ملف مكرر"
 }
 SKIPPED_OTHER_LIST_FILES_TEXT = {
     "en": "Skipped {duplicate_in_other} files already in other list",
@@ -3784,7 +4005,8 @@ SKIPPED_OTHER_LIST_FILES_TEXT = {
     "it": "Saltati {duplicate_in_other} file già presenti in un'altra lista",
     "fr": "Ignoré {duplicate_in_other} fichiers déjà présents dans une autre liste",
     "de": "{duplicate_in_other} Dateien, die bereits in einer anderen Liste vorhanden sind, übersprungen",
-    "pt": "Ignorado {duplicate_in_other} arquivos já na outra lista"
+    "pt": "Ignorado {duplicate_in_other} arquivos já na outra lista",
+    "ar": "تم تخطي {duplicate_in_other} ملف بالفعل في قائمة أخرى"
 }
 SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = {
     "en": "Skipped {len} files with duplicate season/episode numbers",
@@ -3801,7 +4023,8 @@ SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = {
     "it": "Saltati {len} file con numeri di stagione/episodio duplicati",
     "fr": "Ignoré {len} fichiers avec des numéros de saison/épisode en double",
     "de": "{len} Dateien mit doppelten Staffel-/Episodennummern übersprungen",
-    "pt": "Ignorado {len} arquivos com números de temporada/episódio duplicados"
+    "pt": "Ignorado {len} arquivos com números de temporada/episódio duplicados",
+    "ar": "تم تخطي {len} ملف بأرقام موسم/حلقة مكررة"
 }
 SKIPPED_INVALID_FORMAT_FILES_TEXT = {
     "en": "Skipped {len} files without valid episode format",
@@ -3818,7 +4041,8 @@ SKIPPED_INVALID_FORMAT_FILES_TEXT = {
     "it": "Saltati {len} file senza formato episodio valido",
     "fr": "Ignoré {len} fichiers sans format d'épisode valide",
     "de": "{len} Dateien ohne gültiges Episodenformat übersprungen",
-    "pt": "Ignorado {len} arquivos sem formato de episódio válido"
+    "pt": "Ignorado {len} arquivos sem formato de episódio válido",
+    "ar": "تم تخطي {len} ملف بدون تنسيق حلقة صالح"
 }
 NO_FILES_SELECTED = {
     "en": "No files selected.",
@@ -3835,7 +4059,8 @@ NO_FILES_SELECTED = {
     "it": "Nessun file selezionato.",
     "fr": "Aucun fichier sélectionné.",
     "de": "Keine Dateien ausgewählt.",
-    "pt": "Nenhum arquivo selecionado."
+    "pt": "Nenhum arquivo selecionado.",
+    "ar": "لم يتم تحديد ملفات."
 }
 NO_ITEM_SELECTED_TO_REMOVE = {
     "en": "No item selected to remove.",
@@ -3852,7 +4077,8 @@ NO_ITEM_SELECTED_TO_REMOVE = {
     "it": "Nessun elemento selezionato da rimuovere.",
     "fr": "Aucun élément sélectionné à supprimer.",
     "de": "Kein Element zum Entfernen ausgewählt.",
-    "pt": "Nenhum item selecionado para remover."
+    "pt": "Nenhum item selecionado para remover.",
+    "ar": "لم يتم تحديد عنصر للإزالة."
 }
 NO_FILES_SELECTED_TO_SHOW_PATH = {
     "en": "No file selected to show path.",
@@ -3869,7 +4095,8 @@ NO_FILES_SELECTED_TO_SHOW_PATH = {
     "it": "Nessun file selezionato per mostrare il percorso.",
     "fr": "Aucun fichier sélectionné pour afficher le chemin.",
     "de": "Keine Datei zum Anzeigen des Pfads ausgewählt.",
-    "pt": "Nenhum arquivo selecionado para mostrar o caminho."
+    "pt": "Nenhum arquivo selecionado para mostrar o caminho.",
+    "ar": "لم يتم تحديد ملف لإظهار المسار."
 }
 REMOVED_ITEM = {
     "en": "Removed item.",
@@ -3886,7 +4113,8 @@ REMOVED_ITEM = {
     "it": "Elemento rimosso.",
     "fr": "Élément supprimé.",
     "de": "Element entfernt.",
-    "pt": "Item removido."
+    "pt": "Item removido.",
+    "ar": "تمت إزالة العنصر."
 }
 FILES_MUST_CONTAIN_PATTERNS = {
     "en": "Files must contain patterns like S01E01, 1x01 etc.",
@@ -3903,7 +4131,8 @@ FILES_MUST_CONTAIN_PATTERNS = {
     "it": "I file devono contenere modelli come S01E01, 1x01 ecc.",
     "fr": "Les fichiers doivent contenir des modèles comme S01E01, 1x01, etc.",
     "de": "Dateien müssen Muster wie S01E01, 1x01 usw. enthalten.",
-    "pt": "Os arquivos devem conter padrões como S01E01, 1x01, etc."
+    "pt": "Os arquivos devem conter padrões como S01E01, 1x01, etc.",
+    "ar": "يجب أن تحتوي الملفات على أنماط مثل S01E01، 1x01 إلخ."
 }
 NO_VALID_SUBTITLE_FILES = {
     "en": "No valid files found.",
@@ -3920,7 +4149,8 @@ NO_VALID_SUBTITLE_FILES = {
     "it": "Nessun file valido trovato.",
     "fr": "Aucun fichier valide trouvé.",
     "de": "Keine gültigen Dateien gefunden.",
-    "pt": "Nenhum arquivo válido encontrado."
+    "pt": "Nenhum arquivo válido encontrado.",
+    "ar": "لم يتم العثور على ملفات صالحة."
 }
 NO_SUBTITLE_PAIRS_TO_PROCESS = {
     "en": "No pairs to process.",
@@ -3937,7 +4167,8 @@ NO_SUBTITLE_PAIRS_TO_PROCESS = {
     "it": "Nessuna coppia da elaborare.",
     "fr": "Aucune paire à traiter.",
     "de": "Keine Paare zu verarbeiten.",
-    "pt": "Nenhum par para processar."
+    "pt": "Nenhum par para processar.",
+    "ar": "لا توجد أزواج لمعالجتها."
 }
 NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
     "en": "No matching pairs found.",
@@ -3954,7 +4185,8 @@ NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
     "it": "Nessuna coppia corrispondente trovata.",
     "fr": "Aucune paire correspondante trouvée.",
     "de": "Keine passenden Paare gefunden.",
-    "pt": "Nenhum par correspondente encontrado."
+    "pt": "Nenhum par correspondente encontrado.",
+    "ar": "لم يتم العثور على أزواج مطابقة."
 }
 NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
     "en": "No valid pairs to process.",
@@ -3971,7 +4203,8 @@ NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
     "it": "Nessuna coppia valida da elaborare.",
     "fr": "Aucune paire valide à traiter.",
     "de": "Keine gültigen Paare zum Verarbeiten.",
-    "pt": "Nenhum par válido para processar."
+    "pt": "Nenhum par válido para processar.",
+    "ar": "لا توجد أزواج صالحة للمعالجة."
 }
 for name, obj in list(globals().items()):
     if isinstance(obj, dict) and name != "TranslationDict":
