@@ -195,7 +195,8 @@ LANGUAGES = {
     "日本語": "ja",
     "한국어": "ko",
     "हिन्दी": "hi",
-    "বাংলা": "bn"
+    "বাংলা": "bn",
+    "العربية": "ar"
 }
 # Tooltip texts for checkboxes
 TOOLTIP_SAVE_TO_DESKTOP = texts.TOOLTIP_SAVE_TO_DESKTOP[LANGUAGE]
