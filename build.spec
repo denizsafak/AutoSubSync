@@ -49,43 +49,63 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
-    name='AutoSubSync',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon=os.path.join(os.curdir, 'main', 'icon.ico'),
-    version=VSVersionInfo,
-)
-
 if platform.system() == 'Darwin':
-    exe.info_plist = {
-        'CFBundleName': 'AutoSubSync',
-        'CFBundleDisplayName': 'AutoSubSync',
-        'CFBundleVersion': version,
-        'CFBundleShortVersionString': version,
-        'CFBundleIdentifier': 'com.denizsafak.AutoSubSync',
-        'CFBundleExecutable': 'AutoSubSync',
-        'CFBundleIconFile': 'icon.icns',
-    }
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        name='AutoSubSync',
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=True,
+        console=False,
+        onefile=True,
+        disable_windowed_traceback=True,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=os.path.join(os.curdir, 'main', 'icon.ico'),
+        info_plist={
+            'CFBundleName': 'AutoSubSync',
+            'CFBundleDisplayName': 'AutoSubSync',
+            'CFBundleVersion': version,
+            'CFBundleShortVersionString': version,
+            'CFBundleIdentifier': 'com.denizsafak.AutoSubSync',
+            'CFBundleExecutable': 'AutoSubSync',
+            'CFBundleIconFile': 'icon.icns',
+        }
+    )
+else:
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name='AutoSubSync',
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=True,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+        icon=os.path.join(os.curdir, 'main', 'icon.ico'),
+        version=VSVersionInfo,
+    )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name=folder_name,
-)
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=True,
+        upx_exclude=[],
+        name=folder_name,
+    )
