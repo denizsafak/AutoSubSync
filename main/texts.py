@@ -3970,7 +3970,8 @@ VIDEO_FILE_NOT_FOUND = {
     "it": "File video non trovato: {error}",
     "fr": "Fichier vidéo non trouvé: {error}",
     "de": "Videodatei nicht gefunden: {error}",
-    "pt": "Arquivo de vídeo não encontrado: {error}"
+    "pt": "Arquivo de vídeo não encontrado: {error}",
+    "ar": "لم يتم العثور على ملف الفيديو: {error}"
 }
 FILE_NOT_FOUND = {
     "en": "File not found",
@@ -4041,7 +4042,8 @@ FFPROBE_FAILED = {
     "it": "FFprobe non è riuscito a rilevare i flussi",
     "fr": "FFprobe n'a pas réussi à détecter les flux",
     "de": "FFprobe konnte Streams nicht erkennen",
-    "pt": "FFprobe falhou em detectar fluxos"
+    "pt": "FFprobe falhou em detectar fluxos",
+    "ar": "فشل FFprobe في اكتشاف التدفقات"
 }
 SUBTITLE_EXTRACTION_FAILED = {
     "en": "Failed to extract subtitles from video: {error}",
@@ -4058,7 +4060,8 @@ SUBTITLE_EXTRACTION_FAILED = {
     "it": "Impossibile estrarre i sottotitoli dal video: {error}",
     "fr": "Échec de l'extraction des sous-titres de la vidéo: {error}",
     "de": "Untertitel konnten nicht aus dem Video extrahiert werden: {error}",
-    "pt": "Falha ao extrair legendas do vídeo: {error}"
+    "pt": "Falha ao extrair legendas do vídeo: {error}",
+    "ar": "فشل استخراج الترجمات من الفيديو: {error}"
 }
 FAILED_TO_EXTRACT_SUBTITLES = {
     "en": "Failed to extract subtitles. Error: {error}",
