@@ -9,6 +9,9 @@ __pycache__/
 **/__pycache__
 *.py[cod]
 *.so
+*.exe
+*.zip
+*.tar.gz
 
 # Virtual environments
 env/
@@ -19,8 +22,12 @@ venv/
 # VS Code settings
 .vscode/
 
-.old/
+# AutoSubSync
 build/
 dist/
+.old/
+main/logs
+main/resources/ffmpeg-bin/
+main/resources/ffsubsync-bin/
 test_subtitles/
-resources/ffmpeg-bin/
+PROMPTS.md
