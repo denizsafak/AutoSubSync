@@ -15,6 +15,8 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - Extract the zip.
 - Run "AutoSubSync" file.
 
+> MacOS users please read [this](#for-macososx-users).
+
 ## `Useage`
 ### Automatic Synchronization
 - **Select Video/Reference subtitle and Subtitle Files:**
@@ -48,7 +50,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
    - Click the `Shift Subtitle` button to apply the time shift.
  
 ### Settings (Top Right Corner)
-- Language: `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`
+- Language: `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`
 - Theme: `System`, `Dark`, `Light`
 - Change log window font: Configure the font used in log window. (Trigger log window to preview the changes)
 - Log records and options: `Keep log records`, `Open logs folder` and `Clear all logs`
@@ -77,13 +79,15 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 ## `For developers and contributors`
 If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding. Also check [here](https://github.com/denizsafak/AutoSubSync/blob/main/main/resources/README.md).
 
+## `For MacOS/OSX users:`
+- You need to give permissions in "System Settings > Security & Privacy" to run the app.<br />
+- You can use `brew install alass` command to make alass work.
+- I haven't tested the `macos-arm64` build. Please open an issue if you face any problems.<br />
+
 ## `Credits`
 Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync and alass. This is just a GUI application that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
 
 Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
-
-> [!NOTE]
-> Added builds for Linux and MacOS. (I haven't tested the MacOS release. If you are able to test it, please let me know if it works.)
 
 > [!IMPORTANT]
 > The automatic sync feature is not always perfect. I recommend you to check the subtitle after syncing.
