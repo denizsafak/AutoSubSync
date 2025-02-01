@@ -30,7 +30,7 @@ else:
 folder_name = f'AutoSubSync-v{version}'
 
 a = Analysis(
-    ['main/AutoSubSync.pyw'],
+    ['main/AutoSubSync.py'],
     pathex=[],
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
@@ -66,8 +66,19 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=os.path.join(os.curdir, 'main', 'icon.ico'),
-    version=VSVersionInfo
+    version=VSVersionInfo,
 )
+
+if platform.system() == 'Darwin':
+    exe.info_plist = {
+        'CFBundleName': 'AutoSubSync',
+        'CFBundleDisplayName': 'AutoSubSync',
+        'CFBundleVersion': version,
+        'CFBundleShortVersionString': version,
+        'CFBundleIdentifier': 'com.denizsafak.AutoSubSync',
+        'CFBundleExecutable': 'AutoSubSync',
+        'CFBundleIconFile': 'icon.icns',
+    }
 
 coll = COLLECT(
     exe,

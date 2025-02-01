@@ -7,6 +7,9 @@ import tarfile
 import importlib.util
 import json
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
 def check_modules():
     required_modules = ['pip', 'tkinter', 'venv']
     for module in required_modules:
@@ -170,10 +173,9 @@ def create_archive():
     dist_dir = 'dist'
     platform_name = platform.system().lower()
     arch = platform.machine().lower()
-    
-    if platform_name == 'linux':
-        if arch == 'x86_64':
+    if arch == 'x86_64':
             arch = 'amd64'
+    if platform_name == 'linux':
         tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
         with tarfile.open(tar_name, 'w:gz') as tar:
             for root, _, files in os.walk(dist_dir):
