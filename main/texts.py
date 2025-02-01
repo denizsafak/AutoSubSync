@@ -1,7 +1,14 @@
+#####################################################################################
+# All translations are made by AI. If you find any errors, feel free to contribute. #
+# You can contribute in GitHub by forking the repository and making a pull request. #
+#####################################################################################
+PROGRAM_NAME = "AutoSubSync"
+GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
+GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
 class TranslationDict(dict):
     def __missing__(self, key):
         return self.get("en", "")
-PROGRAM_NAME = "AutoSubSync"
 TOOLTIP_SAVE_TO_DESKTOP = {
     "en": "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the input subtitle's folder.",
     "es": "Marque esta casilla si desea guardar el nuevo subtítulo en su escritorio. Si no está marcado, se guardará en la carpeta del subtítulo de entrada.",
@@ -1688,6 +1695,72 @@ SYNC_TOOL_LABEL_TEXT = {
     "de": "Sync. mit",
     "pt": "Sincr. com",
     "ar": "المزامنة باستخدام"
+}
+EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING = {
+    "en": """How the Pairing Works?
+    {program_name} will automatically match videos or reference subtitles with subtitle files using similar names.
+    For example: "S01E01.srt/mkv" will be paired with "1x01.srt"
+    Supported combinations: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "es": """¿Cómo funciona el emparejamiento?
+    {program_name} emparejará automáticamente los videos o subtítulos de referencia con los archivos de subtítulos usando nombres similares.
+    Por ejemplo: "S01E01.srt/mkv" se emparejará con "1x01.srt"
+    Combinaciones compatibles: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "tr": """Eşleştirme Nasıl Çalışır?
+    {program_name} benzer isimlere sahip videoları veya referans altyazıları hedef altyazı dosyaları ile otomatik olarak eşleştirecektir.
+    Örneğin: "S01E01.srt/mkv" ile "1x01.srt" eşleştirilecektir.
+    Desteklenen kombinasyonlar: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "zh": """配对如何工作？
+    {program_name} 将自动匹配具有相似名称的视频或参考字幕与字幕文件。
+    例如："S01E01.srt/mkv" 将与 "1x01.srt" 配对
+    支持的组合：S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "ru": """Как работает сопоставление?
+    {program_name} автоматически сопоставит видео или справочные субтитры с файлами субтитров, используя похожие имена.
+    Например: "S01E01.srt/mkv" будет сопоставлен с "1x01.srt"
+    Поддерживаемые комбинации: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "pl": """Jak działa parowanie?
+    {program_name} automatycznie dopasuje filmy lub napisy referencyjne do plików napisów, używając podobnych nazw.
+    Na przykład: "S01E01.srt/mkv" zostanie sparowany z "1x01.srt"
+    Wspierane kombinacje: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "uk": """Як працює з'єднання?
+    {program_name} автоматично зіставить відео або довідкові субтитри з файлами субтитрів, використовуючи схожі імена.
+    Наприклад: "S01E01.srt/mkv" буде з'єднано з "1x01.srt"
+    Підтримувані комбінації: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "ja": """ペアリングの仕組みは？
+    {program_name}は類似した名前を使用して、動画または参照字幕を字幕ファイルと自動的にマッチングします。
+    例：「S01E01.srt/mkv」は「1x01.srt」とペアになります
+    サポートされる組み合わせ：S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "ko": """페어링은 어떻게 작동하나요?
+    {program_name}는 유사한 이름을 사용하여 비디오 또는 참조 자막을 자막 파일과 자동으로 매칭합니다.
+    예: "S01E01.srt/mkv"는 "1x01.srt"와 페어링됩니다
+    지원되는 조합: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "hi": """जोड़ी कैसे काम करती है?
+    {program_name} समान नामों का उपयोग करके वीडियो या संदर्भ उपशीर्षक को उपशीर्षक फ़ाइलों के साथ स्वचालित रूप से मिलान करेगा।
+    उदाहरण: "S01E01.srt/mkv" को "1x01.srt" के साथ जोड़ा जाएगा
+    समर्थित संयोजन: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "bn": """জোড়া কীভাবে কাজ করে?
+    {program_name} স্বয়ংক্রিয়ভাবে অনুরূপ নাম ব্যবহার করে ভিডিও বা রেফারেন্স সাবটাইটেলগুলিকে সাবটাইটেল ফাইলের সাথে মিলাবে।
+    উদাহরণ: "S01E01.srt/mkv" কে "1x01.srt" এর সাথে জোড়া লাগানো হবে
+    সমর্থিত সংমিশ্রণ: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "it": """Come funziona l'abbinamento?
+    {program_name} abbinerà automaticamente video o sottotitoli di riferimento con i file dei sottotitoli usando nomi simili.
+    Esempio: "S01E01.srt/mkv" sarà abbinato con "1x01.srt"
+    Combinazioni supportate: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "fr": """Comment fonctionne l'appariement ?
+    {program_name} associera automatiquement les vidéos ou sous-titres de référence avec les fichiers de sous-titres en utilisant des noms similaires.
+    Exemple : "S01E01.srt/mkv" sera apparié avec "1x01.srt"
+    Combinaisons supportées : S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "de": """Wie funktioniert die Paarung?
+    {program_name} wird automatisch Videos oder Referenz-Untertitel mit Untertiteldateien anhand ähnlicher Namen abgleichen.
+    Beispiel: "S01E01.srt/mkv" wird mit "1x01.srt" gepaart
+    Unterstützte Kombinationen: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "pt": """Como funciona o pareamento?
+    {program_name} combinará automaticamente vídeos ou legendas de referência com arquivos de legenda usando nomes similares.
+    Exemplo: "S01E01.srt/mkv" será pareado com "1x01.srt"
+    Combinações suportadas: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "ar": """كيف يعمل الاقتران؟
+    {program_name} سيقوم تلقائيًا بمطابقة مقاطع الفيديو أو الترجمات المرجعية مع ملفات الترجمة باستخدام أسماء مشابهة.
+    على سبيل المثال: سيتم إقران "S01E01.srt/mkv" مع "1x01.srt"
+    التوليفات المدعومة: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "en": """How the Pairing Works?
@@ -3881,6 +3954,111 @@ CHOSEN_SUBTITLE = {
     "de": "Ausgewählt: {filename} mit Zeitstempelunterschied: {score}",
     "pt": "Selecionado: {filename} com diferença de timestamp: {score}",
     "ar": "تم اختيار: {filename} بفارق زمني: {score}"
+}
+VIDEO_FILE_NOT_FOUND = {
+    "en": "Video file not found: {error}",
+    "es": "Archivo de video no encontrado: {error}",
+    "tr": "Video dosyası bulunamadı: {error}",
+    "zh": "未找到视频文件: {error}",
+    "ru": "Видео файл не найден: {error}",
+    "pl": "Nie znaleziono pliku wideo: {error}",
+    "uk": "Відеофайл не знайдено: {error}",
+    "ja": "ビデオファイルが見つかりません: {error}",
+    "ko": "비디오 파일을 찾을 수 없습니다: {error}",
+    "hi": "वीडियो फ़ाइल नहीं मिली: {error}",
+    "bn": "ভিডিও ফাইল পাওয়া যায়নি: {error}",
+    "it": "File video non trovato: {error}",
+    "fr": "Fichier vidéo non trouvé: {error}",
+    "de": "Videodatei nicht gefunden: {error}",
+    "pt": "Arquivo de vídeo não encontrado: {error}"
+}
+FILE_NOT_FOUND = {
+    "en": "File not found",
+    "es": "Archivo no encontrado",
+    "tr": "Dosya bulunamadı",
+    "zh": "文件未找到",
+    "ru": "Файл не найден",
+    "pl": "Plik nie znaleziony",
+    "uk": "Файл не знайдено",
+    "ja": "ファイルが見つかりません",
+    "ko": "파일을 찾을 수 없습니다",
+    "hi": "फ़ाइल नहीं मिली",
+    "bn": "ফাইল পাওয়া যায়নি",
+    "it": "File non trovato",
+    "fr": "Fichier non trouvé",
+    "de": "Datei nicht gefunden",
+    "pt": "Arquivo não encontrado",
+    "ar": "الملف غير موجود"
+}
+ERROR_OPENING_DIRECTORY = {
+    "en": "Error opening directory: {error}",
+    "es": "Error al abrir el directorio: {error}",
+    "tr": "Dizin açılırken hata: {error}",
+    "zh": "打开目录时出错：{error}",
+    "ru": "Ошибка при открытии каталога: {error}",
+    "pl": "Błąd otwierania katalogu: {error}",
+    "uk": "Помилка відкриття каталогу: {error}",
+    "ja": "ディレクトリを開くときのエラー：{error}",
+    "ko": "디렉토리를 여는 중 오류: {error}",
+    "hi": "निर्देशिका खोलने में त्रुटि: {error}",
+    "bn": "ডিরেক্টরি খোলার সময় ত্রুটি: {error}",
+    "it": "Errore nell'apertura della directory: {error}",
+    "fr": "Erreur lors de l'ouverture du répertoire : {error}",
+    "de": "Fehler beim Öffnen des Verzeichnisses: {error}",
+    "pt": "Erro ao abrir o diretório: {error}",
+    "ar": "خطأ في فتح الدليل: {error}"
+}
+CONFIG_FILE_NOT_FOUND = {
+    "en": "Config file not found.",
+    "es": "Archivo de configuración no encontrado.",
+    "tr": "Yapılandırma dosyası bulunamadı.",
+    "zh": "未找到配置文件。",
+    "ru": "Файл конфигурации не найден.",
+    "pl": "Plik konfiguracyjny nie znaleziony.",
+    "uk": "Файл конфігурації не знайдено.",
+    "ja": "設定ファイルが見つかりません。",
+    "ko": "구성 파일을 찾을 수 없습니다.",
+    "hi": "कॉन्फ़िग फ़ाइल नहीं मिली।",
+    "bn": "কনফিগ ফাইল পাওয়া যায়নি।",
+    "it": "File di configurazione non trovato.",
+    "fr": "Fichier de configuration non trouvé.",
+    "de": "Konfigurationsdatei nicht gefunden.",
+    "pt": "Arquivo de configuração não encontrado.",
+    "ar": "ملف التكوين غير موجود."
+}
+FFPROBE_FAILED = {
+    "en": "FFprobe failed to detect streams",
+    "es": "FFprobe no pudo detectar flujos",
+    "tr": "FFprobe akışları algılayamadı",
+    "zh": "FFprobe 未能检测到流",
+    "ru": "FFprobe не удалось обнаружить потоки",
+    "pl": "FFprobe nie udało się wykryć strumieni",
+    "uk": "FFprobe не вдалося виявити потоки",
+    "ja": "FFprobeはストリームを検出できませんでした",
+    "ko": "FFprobe가 스트림을 감지하지 못했습니다",
+    "hi": "FFprobe स्ट्रीम का पता लगाने में विफल रहा",
+    "bn": "FFprobe স্ট্রিম সনাক্ত করতে ব্যর্থ হয়েছে",
+    "it": "FFprobe non è riuscito a rilevare i flussi",
+    "fr": "FFprobe n'a pas réussi à détecter les flux",
+    "de": "FFprobe konnte Streams nicht erkennen",
+    "pt": "FFprobe falhou em detectar fluxos"
+}
+SUBTITLE_EXTRACTION_FAILED = {
+    "en": "Failed to extract subtitles from video: {error}",
+    "es": "No se pudo extraer los subtítulos del video: {error}",
+    "tr": "Videodan altyazılar çıkarılamadı: {error}",
+    "zh": "无法从视频中提取字幕: {error}",
+    "ru": "Не удалось извлечь субтитры из видео: {error}",
+    "pl": "Nie udało się wyodrębnić napisów z wideo: {error}",
+    "uk": "Не вдалося витягти субтитри з відео: {error}",
+    "ja": "ビデオから字幕を抽出できませんでした: {error}",
+    "ko": "비디오에서 자막을 추출하지 못했습니다: {error}",
+    "hi": "वीडियो से उपशीर्षक निकालने में विफल: {error}",
+    "bn": "ভিডিও থেকে সাবটাইটেল বের করতে ব্যর্থ: {error}",
+    "it": "Impossibile estrarre i sottotitoli dal video: {error}",
+    "fr": "Échec de l'extraction des sous-titres de la vidéo: {error}",
+    "de": "Untertitel konnten nicht aus dem Video extrahiert werden: {error}",
+    "pt": "Falha ao extrair legendas do vídeo: {error}"
 }
 FAILED_TO_EXTRACT_SUBTITLES = {
     "en": "Failed to extract subtitles. Error: {error}",

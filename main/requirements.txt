@@ -1,5 +1,6 @@
 chardet
 tkinterdnd2
+tkmacosx
 requests
 pyinstaller
 psutil
