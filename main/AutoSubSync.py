@@ -215,7 +215,8 @@ LANGUAGES = {
     "한국어": "ko",
     "हिन्दी": "hi",
     "বাংলা": "bn",
-    "العربية": "ar"
+    "العربية": "ar",
+    "Tiếng Việt": "vi"
 }
 # Program information
 PROGRAM_NAME = texts.PROGRAM_NAME
