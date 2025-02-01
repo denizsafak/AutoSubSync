@@ -16,7 +16,7 @@ def get_bin_name(bin_name):
 
     os_arch_map = {
         'windows': {'amd64': f'{bin_name}_win_amd64'},
-        'darwin': {'arm64': f'{bin_name}_macos_arm64'},
+        'darwin': {'arm64': f'{bin_name}_macos_arm64', 'amd64': f'{bin_name}_macos_amd64'},
         'linux': {'amd64': f'{bin_name}_linux_amd64'}
     }
     

@@ -1,0 +1,6 @@
+{
+  "AutoSubSync": "4.3",
+  "ffmpeg": "ffmpeg version 7.1-essentials_build",
+  "ffsubsync": "ffsubsync 0.4.27",
+  "alass": "alass-cli 2.0.0"
+}

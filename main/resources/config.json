@@ -2,7 +2,7 @@
     "language": "en",
     "theme": "system",
     "keep_logs": true,
-    "log_window_font": "Cascadia Code",
+    "log_window_font": "Cascadia Code SemiLight",
     "log_window_font_size": 7,
     "log_window_font_style": "normal",
     "notify_about_updates": true,
