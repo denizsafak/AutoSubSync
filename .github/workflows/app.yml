@@ -115,6 +115,7 @@ jobs:
           body: |
             ${{ env.changelog }}
             > MacOS users please read [this](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#for-macososx-users).
+            
             >Included:
             >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
             >[ffsubsync](https://github.com/smacke/ffsubsync): ${{ needs.build.outputs.ffsubsync_version }}
