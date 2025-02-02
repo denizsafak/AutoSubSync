@@ -24,6 +24,16 @@ if platform == "Darwin":  # macOS
 else:  # Windows or Linux
     from tkinter import Button as TkButton
 
+def get_base_dir():
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller executable
+        return os.path.dirname(sys.executable)
+    else:
+        # Running as Python script
+        return os.path.dirname(os.path.abspath(__file__))
+
+base_dir = get_base_dir()
+
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -1414,10 +1424,10 @@ def set_theme(theme):
     update_config("theme", THEME)
     restart_program()
 
-def open_logs_folder(logs_folder=None):
-    if logs_folder is None:
-        logs_folder = os.path.join(os.path.dirname(__file__), "logs")
-    # Create logs directory if it doesn't exist
+def open_logs_folder():
+    logs_folder = os.path.join(base_dir, "logs")
+    # Ensure logs directory exists
+    os.makedirs(logs_folder, exist_ok=True)
     if not os.path.exists(logs_folder):
         os.makedirs(logs_folder, exist_ok=True)
     if platform == "Windows":
@@ -1429,14 +1439,14 @@ def open_logs_folder(logs_folder=None):
 
 def check_logs_exist():
     try:
-        logs_folder = os.path.join(os.getcwd(), "logs")
+        logs_folder = os.path.join(base_dir, "logs")  # Changed from os.getcwd()
         txt_files = [f for f in os.listdir(logs_folder) if os.path.isfile(os.path.join(logs_folder, f)) and f.endswith('.txt')]
         return len(txt_files)
     except:
         return 0
 
 def clear_all_logs():
-    logs_folder = os.path.join(os.path.dirname(__file__), "logs")
+    logs_folder = os.path.join(base_dir, "logs")  # Changed from __file__
     if os.path.exists(logs_folder):
         num_txt_files = check_logs_exist()
         if num_txt_files == 0:
@@ -1998,7 +2008,7 @@ def save_log_file(log_window, suffix=""):
     if keep_logs:
         # Save log window content to a log file
         log_content = log_window.get("1.0", tk.END)
-        log_folder = "logs"
+        log_folder = os.path.join(base_dir, "logs")
         os.makedirs(log_folder, exist_ok=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         log_filename = os.path.join(log_folder, f"{timestamp}{suffix}.txt")
