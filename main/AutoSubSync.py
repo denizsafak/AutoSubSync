@@ -1425,7 +1425,7 @@ def set_theme(theme):
     restart_program()
 
 def open_logs_folder():
-    logs_folder = os.path.join(base_dir, "logs")
+    logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
     # Ensure logs directory exists
     os.makedirs(logs_folder, exist_ok=True)
     if not os.path.exists(logs_folder):
@@ -1439,14 +1439,14 @@ def open_logs_folder():
 
 def check_logs_exist():
     try:
-        logs_folder = os.path.join(base_dir, "logs")  # Changed from os.getcwd()
+        logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
         txt_files = [f for f in os.listdir(logs_folder) if os.path.isfile(os.path.join(logs_folder, f)) and f.endswith('.txt')]
         return len(txt_files)
     except:
         return 0
 
 def clear_all_logs():
-    logs_folder = os.path.join(base_dir, "logs")  # Changed from __file__
+    logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
     if os.path.exists(logs_folder):
         num_txt_files = check_logs_exist()
         if num_txt_files == 0:
@@ -2008,10 +2008,10 @@ def save_log_file(log_window, suffix=""):
     if keep_logs:
         # Save log window content to a log file
         log_content = log_window.get("1.0", tk.END)
-        log_folder = os.path.join(base_dir, "logs")
-        os.makedirs(log_folder, exist_ok=True)
+        logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
+        os.makedirs(logs_folder, exist_ok=True)
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_filename = os.path.join(log_folder, f"{timestamp}{suffix}.txt")
+        log_filename = os.path.join(logs_folder, f"{timestamp}{suffix}.txt")
         with open(log_filename, "w", encoding="utf-8") as log_file:
             log_file.write(log_content)
 
