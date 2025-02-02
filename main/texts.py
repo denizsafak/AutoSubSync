@@ -14,13 +14,16 @@ ARABIC_LANGUAGES = {
     "sd",  # Sindhi
     "ug"   # Uyghur
 }
-from bidi.algorithm import get_display
-import arabic_reshaper
 import platform
+platform = platform.system()
+if platform != "Darwin":
+    from bidi.algorithm import get_display
+    import arabic_reshaper
+
 class TranslationDict(dict):
     def __missing__(self, key):
         return self.get("en", "")
-    if platform.system() != "Darwin":
+    if platform != "Darwin":
         # Fix arabic text display
         def __getitem__(self, key):
             text = super().__getitem__(key)
