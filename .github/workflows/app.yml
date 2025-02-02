@@ -72,6 +72,12 @@ jobs:
             Write-Host "versions.json not found"
           }
 
+      - name: Read CHANGELOG
+        id: read-changelog
+        run: |
+          CHANGELOG_CONTENT=$(cat CHANGELOG)
+          echo "changelog=$CHANGELOG_CONTENT" >> $env:GITHUB_OUTPUT
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -92,19 +98,13 @@ jobs:
           pattern: build-*
           merge-multiple: true
 
-      - name: Read CHANGELOG
-        id: read-changelog
-        run: |
-          CHANGELOG_CONTENT=$(cat CHANGELOG)
-          echo "changelog=$CHANGELOG_CONTENT" >> $GITHUB_ENV
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ needs.build.outputs.version }}"
           name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
-            ${{ env.changelog }}
+            ${{ needs.build.outputs.changelog }}
 
             >Included:
             >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
