@@ -106,12 +106,12 @@ default_settings = {
 
 config_path = os.path.join(base_dir, 'config.json')
 
-def create_config_file(base_dir):
+def create_config_file():
     with open(config_path, 'w') as config_file:
         json.dump(default_settings, config_file, indent=4)
 
 if not os.path.exists(config_path):
-    create_config_file(base_dir)
+    create_config_file()
 
 try:
     with open(config_path, 'r') as config_file:
