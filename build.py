@@ -184,26 +184,25 @@ def create_archive():
                     arcname = os.path.relpath(file_path, dist_dir)
                     tar.add(file_path, arcname=arcname)
         print(f"Tar.gz archive created: {tar_name}")
+    elif platform_name == 'darwin':
+        platform_name = 'macos'
+        zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
+        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(dist_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.join(f'AutoSubSync-v{version}', os.path.relpath(file_path, dist_dir))
+                    zipf.write(file_path, arcname)
+        print(f"Zip archive created: {zip_name}")
     else:
-        if platform_name == 'darwin':
-            platform_name = 'macos'
-            zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
-            with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, _, files in os.walk(dist_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.join(f'AutoSubSync-v{version}', os.path.relpath(file_path, dist_dir))
-                        zipf.write(file_path, arcname)
-            print(f"Zip archive created: {zip_name}")
-        else:
-            zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
-            with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, _, files in os.walk(dist_dir):
-                    for file in files:
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, dist_dir)
-                        zipf.write(file_path, arcname)
-            print(f"Zip archive created: {zip_name}")
+        zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
+        with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(dist_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, dist_dir)
+                    zipf.write(file_path, arcname)
+        print(f"Zip archive created: {zip_name}")
 
 if __name__ == '__main__':
     check_modules()
