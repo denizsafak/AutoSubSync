@@ -1,0 +1,5 @@
+- Added new language: `Tiếng Việt` by @bayramhayri in https://github.com/denizsafak/AutoSubSync/pull/14.
+- Turned MacOS build into an app bundle, and fixed icon.
+- Fixed logs folder disappearing after closing the program in MacOS builds.
+- Fixed changes not being saved in MacOS builds.
+- Changed logs folder's name.

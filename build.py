@@ -174,7 +174,7 @@ def create_archive():
     platform_name = platform.system().lower()
     arch = platform.machine().lower()
     if arch == 'x86_64':
-            arch = 'amd64'
+        arch = 'amd64'
     if platform_name == 'linux':
         tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
         with tarfile.open(tar_name, 'w:gz') as tar:
@@ -187,6 +187,10 @@ def create_archive():
     else:
         if platform_name == 'darwin':
             platform_name = 'macos'
+            auto_sub_sync_path = os.path.join(dist_dir, 'AutoSubSync')
+            if os.path.exists(auto_sub_sync_path):
+                print(f"Removing extra file: {auto_sub_sync_path}")
+                os.remove(auto_sub_sync_path)
         zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(dist_dir):
