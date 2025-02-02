@@ -27,7 +27,7 @@ venv/
 build/
 dist/
 .old/
-main/logs
+main/AutoSubSync_logs
 main/resources/ffmpeg-bin/
 main/resources/ffsubsync-bin/
 main/resources/versions.json
