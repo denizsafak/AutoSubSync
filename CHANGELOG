@@ -1,2 +1,2 @@
 - Fixed language problems in Arabic languages in Windows and Linux builds.
-- MacOS executable is now extracted in a folder in MacOS builds.
+- MacOS executable is now extracted in a folder.
