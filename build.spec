@@ -86,7 +86,8 @@ if platform.system() == 'Darwin':
             'NSHighResolutionCapable': True,
             'LSEnvironment': {
                 'SHELL': '/bin/zsh',
-                'PATH': '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+                'PATH': '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin',
+                'HOME': os.path.expanduser('~')
             },
         }
     )
