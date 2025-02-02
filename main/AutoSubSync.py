@@ -259,7 +259,8 @@ LANGUAGES = {
     "हिन्दी": "hi",
     "বাংলা": "bn",
     "العربية": "ar",
-    "Tiếng Việt": "vi"
+    "Tiếng Việt": "vi",
+    "فارسی": "fa"
 }
 # Program information
 PROGRAM_NAME = texts.PROGRAM_NAME
