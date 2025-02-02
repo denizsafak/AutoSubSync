@@ -23,6 +23,7 @@ venv/
 .vscode/
 
 # AutoSubSync
+*config.json
 build/
 dist/
 .old/

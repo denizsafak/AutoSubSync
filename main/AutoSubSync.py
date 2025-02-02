@@ -80,8 +80,41 @@ if platform in ['Darwin', 'Linux']:
         messagebox.showerror("Permission Error", "\n".join(errors))
 
 # Config file
+default_settings = {
+    "theme": "system",
+    "keep_logs": True,
+    "log_window_font": "Cascadia Code SemiLight",
+    "log_window_font_size": 7,
+    "log_window_font_style": "normal",
+    "remember_the_changes": True,
+    "notify_about_updates": True,
+    "ffsubsync_option_framerate": False,
+    "ffsubsync_option_gss": False,
+    "ffsubsync_option_vad": False,
+    "alass_disable_fps_guessing": False,
+    "alass_speed_optimization": False,
+    "alass_split_penalty": 7,
+    "action_var_auto": "OPTION_SAVE_NEXT_TO_SUBTITLE",
+    "sync_tool_var_auto": "SYNC_TOOL_FFSUBSYNC",
+    "keep_converted_subtitles": True,
+    "keep_extracted_subtitles": True,
+    "backup_subtitles_before_overwriting": True,
+    "check_video_for_subtitle_stream_in_alass": True,
+    "additional_ffsubsync_args": "",
+    "additional_alass_args": ""
+}
+
+config_path = os.path.join(base_dir, 'config.json')
+
+def create_config_file(base_dir):
+    with open(config_path, 'w') as config_file:
+        json.dump(default_settings, config_file, indent=4)
+
+if not os.path.exists(config_path):
+    create_config_file(base_dir)
+
 try:
-    with open('config.json', 'r') as config_file:
+    with open(config_path, 'r') as config_file:
         config = json.load(config_file)
 except FileNotFoundError:
     config = {}
@@ -119,7 +152,7 @@ if platform == "Darwin" and config.get("log_window_font", "Cascadia Code") in ["
     config["log_window_font_style"] = "normal"
     # Save the updated configuration
     try:
-        with open('config.json', 'w') as config_file:
+        with open(config_path, 'w') as config_file:
             json.dump(config, config_file, indent=4)
     except Exception as e:
         messagebox.showerror("Error", 'Failed to fix font: ' + str(e))
@@ -501,13 +534,13 @@ def create_process(cmd):
 def update_config(key, value):
     if remember_the_changes or key == 'remember_the_changes':
         try:
-            with open('config.json', 'r') as config_file:
+            with open(config_path, 'r') as config_file:
                 config = json.load(config_file)
         except FileNotFoundError:
             config = {}
             messagebox.showerror("Error", CONFIG_FILE_NOT_FOUND)
         config[key] = value
-        with open('config.json', 'w') as config_file:
+        with open(config_path, 'w') as config_file:
             json.dump(config, config_file, indent=4)
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
@@ -1022,30 +1055,6 @@ github_label.bind("<Button-1>", lambda event: webbrowser.open(GITHUB_URL))
 github_label.grid(row=0, column=0, sticky="ne", padx=0, pady=(10,0))
 
 # Settings
-default_settings = {
-    "theme": "system",
-    "log_window_font": "Cascadia Code SemiLight",
-    "log_window_font_size": 7,
-    "log_window_font_style": "normal",
-    "keep_logs": True,
-    "remember_the_changes": True,
-    "notify_about_updates": True,
-    "ffsubsync_option_framerate": False,
-    "ffsubsync_option_gss": False,
-    "ffsubsync_option_vad": False,
-    "alass_disable_fps_guessing": False,
-    "alass_speed_optimization": False,
-    "alass_split_penalty": 7,
-    "action_var_auto": "OPTION_SAVE_NEXT_TO_SUBTITLE",
-    "sync_tool_var_auto": "SYNC_TOOL_FFSUBSYNC",
-    "keep_converted_subtitles": True,
-    "keep_extracted_subtitles": True,
-    "backup_subtitles_before_overwriting": True,
-    "check_video_for_subtitle_stream_in_alass": True,
-    "additional_ffsubsync_args": "",
-    "additional_alass_args": ""
-}
-
 def change_log_window_font():
     initial_config = {
         "log_window_font": config["log_window_font"],
@@ -1082,7 +1091,7 @@ def change_log_window_font():
             if 'log_window' in globals():
                 log_window.config(font=(selected_font, selected_font_size, selected_font_style))
             if not preview:
-                with open("config.json", "w") as f:
+                with open(config_path, "w") as f:
                     config["log_window_font"] = selected_font
                     config["log_window_font_size"] = selected_font_size
                     config["log_window_font_style"] = selected_font_style
@@ -1097,7 +1106,7 @@ def change_log_window_font():
         config.update(initial_config)
         if 'log_window' in globals():
             log_window.config(font=(config["log_window_font"], config["log_window_font_size"], config["log_window_font_style"]))
-        with open("config.json", "w") as f:
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=4)
         font_dialog.destroy()
     def close_window():
