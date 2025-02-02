@@ -6,9 +6,28 @@ PROGRAM_NAME = "AutoSubSync"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
 GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
+ARABIC_LANGUAGES = {
+    "ar",  # Arabic
+    "fa",  # Farsi (Persian)
+    "ur",  # Urdu
+    "ps",  # Pashto
+    "sd",  # Sindhi
+    "ug"   # Uyghur
+}
+from bidi.algorithm import get_display
+import arabic_reshaper
+import platform
 class TranslationDict(dict):
     def __missing__(self, key):
         return self.get("en", "")
+    if platform.system() != "Darwin":
+        # Fix arabic text display
+        def __getitem__(self, key):
+            text = super().__getitem__(key)
+            if key in ARABIC_LANGUAGES:
+                reshaped_text = arabic_reshaper.reshape(text)
+                return get_display(reshaped_text)
+            return text
 TOOLTIP_SAVE_TO_DESKTOP = {
     "en": "Check this box if you want to save the new subtitle to your Desktop. If unchecked, it will be saved in the input subtitle's folder.",
     "es": "Marque esta casilla si desea guardar el nuevo subtítulo en su escritorio. Si no está marcado, se guardará en la carpeta del subtítulo de entrada.",
@@ -505,7 +524,7 @@ LABEL_SHIFT_SUBTITLE = {
     "fr": "Déplacer le sous-titre de (ms) :",
     "de": "Untertitel verschieben um (ms):",
     "pt": "Deslocar legenda por (ms):",
-    "ar": "تحويل العنوان الفرعي بمقدار (مللي ثانية):",
+    "ar": "تحويل العنوان الفرعي (مللي ثانية):",
     "vi": "Chuyển đổi phụ đề bằng (ms):"
 }
 REPLACE_ORIGINAL_TITLE = {

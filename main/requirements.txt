@@ -1,5 +1,7 @@
 chardet
 tkinterdnd2
+python-bidi
+arabic-reshaper
 tkmacosx
 requests
 pyinstaller
