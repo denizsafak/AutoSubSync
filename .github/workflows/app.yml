@@ -50,6 +50,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-venv python3-tk
 
+      - name: Set HOME environment variable (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: echo "HOME=$(eval echo ~$USER)" >> $GITHUB_ENV
+
       - name: Install required modules globally
         run: |
           pip install requests
