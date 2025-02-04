@@ -2462,7 +2462,7 @@ def start_batch_sync():
                         else:
                             log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
                             if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
-                                log_window.insert(tk.END, f"{VOICE_ACTIVITY_DETECTOR}: {vad_option_map.get(ffsubsync_option_vad_var.get(), "")}\n")
+                                log_window.insert(tk.END, f"{VOICE_ACTIVITY_DETECTOR}: {vad_option_map.get(ffsubsync_option_vad_var.get(), '')}\n")
                         if ffsubsync_option_framerate_var.get():
                                 log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
                         if ffsubsync_option_gss_var.get():
@@ -3965,7 +3965,7 @@ def start_automatic_sync():
             else:
                 log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
                 if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
-                    log_window.insert(tk.END, f"{VOICE_ACTIVITY_DETECTOR}: {vad_option_map.get(ffsubsync_option_vad_var.get(), "")}\n")
+                    log_window.insert(tk.END, f"{VOICE_ACTIVITY_DETECTOR}: {vad_option_map.get(ffsubsync_option_vad_var.get(), '')}\n")
             if ffsubsync_option_framerate_var.get():
                     log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
             if ffsubsync_option_gss_var.get():
@@ -4298,12 +4298,23 @@ remove_video_button = TkButton(
     takefocus=0,
     state='normal'
 )
+# Define the mapping for VAD options
+vad_option_map = {
+    DEFAULT: 'default',
+    'subs_then_webrtc': 'subs_then_webrtc',
+    'webrtc': 'webrtc',
+    'subs_then_auditok': 'subs_then_auditok',
+    'auditok': 'auditok',
+    'subs_then_silero': 'subs_then_silero',
+    'silero': 'silero'
+}
 remove_video_button.grid_remove()
 sync_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
 sync_frame.grid(row=6, column=1, padx=(0, 10), pady=(5,10), sticky="e")
 ffsubsync_option_framerate_var = tk.BooleanVar(value=config.get('ffsubsync_option_framerate', False))
 ffsubsync_option_gss_var = tk.BooleanVar(value=config.get('ffsubsync_option_gss', False))
-ffsubsync_option_vad_var_value = globals().get(config.get('ffsubsync_option_vad', DEFAULT), DEFAULT)
+ffsubsync_option_vad_var_value = config.get('ffsubsync_option_vad', DEFAULT)
+ffsubsync_option_vad_var_value = vad_option_map.get(ffsubsync_option_vad_var_value, DEFAULT)
 ffsubsync_option_vad_var = tk.StringVar(value=ffsubsync_option_vad_var_value)
 action_var_auto_value = globals().get(config.get('action_var_auto', OPTION_SAVE_NEXT_TO_SUBTITLE), OPTION_SAVE_NEXT_TO_SUBTITLE)
 action_var_auto = tk.StringVar(value=action_var_auto_value)
@@ -4345,16 +4356,6 @@ vad_frame.columnconfigure(1, weight=1)
 vad_label = tk.Label(vad_frame, text=VOICE_ACTIVITY_DETECTOR, bg=COLOR_BACKGROUND, fg=COLOR_BW)
 vad_label.grid(row=0, column=0, pady=(5,5), sticky="w")
 
-# Define the mapping for VAD options
-vad_option_map = {
-    DEFAULT: 'default',
-    'subs_then_webrtc': 'subs_then_webrtc',
-    'webrtc': 'webrtc',
-    'subs_then_auditok': 'subs_then_auditok',
-    'auditok': 'auditok',
-    'subs_then_silero': 'subs_then_silero',
-    'silero': 'silero'
-}
 ffsubsync_option_vad = ttk.OptionMenu(
     vad_frame,
     ffsubsync_option_vad_var,
