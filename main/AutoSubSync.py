@@ -261,7 +261,8 @@ LANGUAGES = {
     "العربية": "ar",
     "Tiếng Việt": "vi",
     "فارسی": "fa",
-    "Bahasa Indonesia": "id"
+    "Bahasa Indonesia": "id",
+    "Bahasa Melayu": "ms"
 }
 # Program information
 PROGRAM_NAME = texts.PROGRAM_NAME
