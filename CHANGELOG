@@ -1,3 +1,1 @@
-- Added new language: `فارسی` by @bayramhayri in https://github.com/denizsafak/AutoSubSync/pull/15.
-- Fixed display problems in Arabic languages in Windows and Linux builds.
-- MacOS executable is now extracted in a folder.
+- Added new languages: `Bahasa Indonesia` and `Bahasa Melayu` by @bayramhayri in https://github.com/denizsafak/AutoSubSync/pull/16 and https://github.com/denizsafak/AutoSubSync/pull/18.
