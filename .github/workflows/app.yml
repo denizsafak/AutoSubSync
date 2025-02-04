@@ -76,6 +76,14 @@ jobs:
             Write-Host "versions.json not found"
           }
 
+      - name: Create a signed tag
+        uses: mathieudutour/github-tag-action@v6
+        with:
+          github_token: ${{ secrets.TOKEN }}
+          tag_prefix: "v"
+          create_annotated_tag: true
+          sign_tag: true
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
