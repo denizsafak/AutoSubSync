@@ -2432,7 +2432,7 @@ def start_batch_sync():
                     cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
-                            cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), "")}"
+                            cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), '')}"
                     if ffsubsync_option_framerate_var.get():
                             cmd += " --no-fix-framerate"
                     if ffsubsync_option_gss_var.get():
@@ -3931,7 +3931,7 @@ def start_automatic_sync():
             cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
-                    cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), "")}"
+                    cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), '')}"
             if ffsubsync_option_framerate_var.get():
                 cmd += " --no-fix-framerate"
             if ffsubsync_option_gss_var.get():
