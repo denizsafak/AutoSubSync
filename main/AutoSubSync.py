@@ -2437,6 +2437,8 @@ def start_batch_sync():
                             cmd += " --no-fix-framerate"
                     if ffsubsync_option_gss_var.get():
                         cmd += " --gss"
+                    if additional_ffsubsync_args:
+                        cmd += f" {additional_ffsubsync_args}"
                 elif sync_tool == SYNC_TOOL_ALASS:
                     split_penalty = alass_split_penalty_var.get()
                     if split_penalty == 0:

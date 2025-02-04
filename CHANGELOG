@@ -1,1 +1,2 @@
 - Added new languages: `Bahasa Indonesia` and `Bahasa Melayu` by @bayramhayri in https://github.com/denizsafak/AutoSubSync/pull/16 and https://github.com/denizsafak/AutoSubSync/pull/18.
+- Fixed not adding additional arguments for ffsubsync in batch mode, mentioned in https://github.com/denizsafak/AutoSubSync/issues/17.
