@@ -799,7 +799,7 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
             if not response:
                 return
     elif save_to_desktop:
-        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
+        desktop_path = get_desktop_path()
         new_subtitle_file = os.path.join(desktop_path, f"{total_shifted}ms_{filename}")
     else:
         new_subtitle_file = os.path.join(os.path.dirname(subtitle_file), f"{total_shifted}ms_{filename}")
@@ -2108,6 +2108,22 @@ def kill_process_tree(pid):
     except psutil.NoSuchProcess:
         pass
 
+def get_desktop_path():
+    if platform == 'Windows':
+        try:
+            import winreg
+            reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders')
+            desktop = winreg.QueryValueEx(reg_key, 'Desktop')[0]
+            winreg.CloseKey(reg_key)
+        except:
+            desktop = "None"
+    else:
+        from pathlib import Path
+        desktop = Path.home() / 'Desktop'
+    if not os.path.exists(desktop):
+        desktop = os.path.normpath(os.path.expanduser("~"))
+    return desktop
+
 # Convert subtitles to SRT End
 def start_batch_sync():
     global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch, log_window
@@ -2309,7 +2325,7 @@ def start_batch_sync():
                     continue
                 # Prepare output file path
                 if action_var_auto.get() == OPTION_SAVE_TO_DESKTOP:
-                    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+                    desktop_path = get_desktop_path()
                     base_output_dir = desktop_path
                 elif action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE:
                     base_output_dir = os.path.dirname(subtitle_file)
@@ -3785,7 +3801,7 @@ def start_automatic_sync():
     if action == OPTION_SAVE_NEXT_TO_VIDEO:
         output_dir = os.path.dirname(video_file)
     elif action == OPTION_SAVE_TO_DESKTOP:
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        desktop_path = get_desktop_path()
         output_dir = desktop_path
     elif action == OPTION_REPLACE_ORIGINAL_SUBTITLE:
         output_subtitle_file = subtitle_file

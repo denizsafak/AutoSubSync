@@ -1,4 +1,5 @@
 - Added new languages: `Bahasa Indonesia` and `Bahasa Melayu` by @bayramhayri in https://github.com/denizsafak/AutoSubSync/pull/16 and https://github.com/denizsafak/AutoSubSync/pull/18.
-- Changed the voice activity detector (VAD) checkbox in ffsubsync to a combobox with options: `subs_then_webrtc`, `webrtc`, `subs_then_auditok`, `auditok`, `subs_then_silero`, `silero`, mentioned in https://github.com/denizsafak/AutoSubSync/issues/17.
+- Improved the function that tries to find the Deskop path.
 - Fixed not adding additional arguments for ffsubsync in batch mode, mentioned in https://github.com/denizsafak/AutoSubSync/issues/17.
+- Changed the voice activity detector (VAD) checkbox in ffsubsync to a combobox with options: `subs_then_webrtc`, `webrtc`, `subs_then_auditok`, `auditok`, `subs_then_silero`, `silero`, mentioned in https://github.com/denizsafak/AutoSubSync/issues/17.
 - When pairing in batch mode, filenames ending with "filename[._][language].ext" (2 to 4 letters) are now recognized as the same filename and will be paired automatically, mentioned in https://github.com/denizsafak/AutoSubSync/issues/19.
