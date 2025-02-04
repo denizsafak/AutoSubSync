@@ -2706,6 +2706,15 @@ def toggle_batch_mode():
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
             tree_frame.grid_remove()
 
+# Helper function to compute effective base name by removing a trailing language tag 
+# (i.e. the last 2, 3, or 4 letters if preceded by '_' or '.')
+def effective_basename(file_path):
+    base = os.path.splitext(os.path.basename(file_path))[0]
+    for tag_length in [4, 3, 2]:
+        if len(base) > tag_length and base[-(tag_length+1)] in ['_', '.']:
+            return base[:-(tag_length+1)]
+    return base
+
 def process_files(filepaths, reference_pairs=False):
     subtitle_files = []
     video_files = []
@@ -2799,32 +2808,34 @@ def process_files(filepaths, reference_pairs=False):
                         existing_pairs.add((video_file, subtitle_file))
         incomplete_pairs = []
         complete_pairs = []
-        # Pair videos with subtitles based on the same filename (search within the same directory first, then parent directories)
+        # Pair videos with subtitles based on similar filenames (considering language tags)
         for video_file in sorted(video_files, key=lambda x: os.path.basename(x) if x else ''):
             video_name = os.path.basename(video_file) if video_file else NO_VIDEO
             subtitle_name = NO_SUBTITLE
             subtitle_file = None
             if video_file:
                 video_dir = os.path.dirname(video_file)
-                # Check if there is a subtitle in the same directory with the same name as the video
-                base_name = os.path.splitext(os.path.basename(video_file))[0]
+                effective_video = effective_basename(video_file)
+                # Check if there is a subtitle in the same directory with matching effective base
                 for sub_file in subtitle_files[:]:
-                    if sub_file and os.path.dirname(sub_file) == video_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
-                        subtitle_file = sub_file
-                        subtitle_name = os.path.basename(subtitle_file)
-                        subtitle_files.remove(sub_file)
-                        break
+                    if sub_file and os.path.dirname(sub_file) == video_dir:
+                        if effective_basename(sub_file) == effective_video:
+                            subtitle_file = sub_file
+                            subtitle_name = os.path.basename(subtitle_file)
+                            subtitle_files.remove(sub_file)
+                            break
                 # If no subtitle is found in the same directory, check parent directories
                 if not subtitle_file:
                     parent_dir = video_dir
                     while parent_dir != os.path.dirname(parent_dir):  # Check parent directories until root
                         parent_dir = os.path.dirname(parent_dir)
                         for sub_file in subtitle_files[:]:
-                            if sub_file and os.path.dirname(sub_file) == parent_dir and os.path.splitext(os.path.basename(sub_file))[0] == base_name:
-                                subtitle_file = sub_file
-                                subtitle_name = os.path.basename(subtitle_file)
-                                subtitle_files.remove(sub_file)
-                                break
+                            if sub_file and os.path.dirname(sub_file) == parent_dir:
+                                if effective_basename(sub_file) == effective_video:
+                                    subtitle_file = sub_file
+                                    subtitle_name = os.path.basename(subtitle_file)
+                                    subtitle_files.remove(sub_file)
+                                    break
                         if subtitle_file:
                             break
                 if subtitle_file:
@@ -2841,7 +2852,7 @@ def process_files(filepaths, reference_pairs=False):
                     files_not_paired += 1
                     incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
             else:
-                incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))
+                incomplete_pairs.append((video_name, subtitle_name, video_file, subtitle_file))      
         # Handle remaining unpaired subtitles
         unpaired_subtitles = list(filter(None, subtitle_files))
         if len(unpaired_subtitles) == 1 and len(video_files) == 1 and video_files[0] is not None:
@@ -4288,7 +4299,6 @@ remove_video_button = TkButton(
     state='normal'
 )
 remove_video_button.grid_remove()
-
 sync_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
 sync_frame.grid(row=6, column=1, padx=(0, 10), pady=(5,10), sticky="e")
 ffsubsync_option_framerate_var = tk.BooleanVar(value=config.get('ffsubsync_option_framerate', False))
