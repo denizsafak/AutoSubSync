@@ -251,6 +251,9 @@ LANGUAGES = {
     "Polski": "pl",
     "Português": "pt",
     "Türkçe": "tr",
+    "Tiếng Việt": "vi",
+    "Bahasa Indonesia": "id",
+    "Bahasa Melayu": "ms",
     "Українська": "uk",
     "Русский": "ru",
     "中国人": "zh",
@@ -259,10 +262,7 @@ LANGUAGES = {
     "हिन्दी": "hi",
     "বাংলা": "bn",
     "العربية": "ar",
-    "Tiếng Việt": "vi",
-    "فارسی": "fa",
-    "Bahasa Indonesia": "id",
-    "Bahasa Melayu": "ms"
+    "فارسی": "fa"
 }
 # Program information
 PROGRAM_NAME = texts.PROGRAM_NAME
