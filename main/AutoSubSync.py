@@ -90,7 +90,6 @@ default_settings = {
     "notify_about_updates": True,
     "ffsubsync_option_framerate": False,
     "ffsubsync_option_gss": False,
-    "ffsubsync_option_vad": False,
     "alass_disable_fps_guessing": False,
     "alass_speed_optimization": False,
     "alass_split_penalty": 7,
@@ -322,6 +321,8 @@ LABEL_KEEP_EXTRACTED_SUBTITLES = texts.LABEL_KEEP_EXTRACTED_SUBTITLES[LANGUAGE]
 LABEL_REMEMBER_THE_CHANGES = texts.LABEL_REMEMBER_THE_CHANGES[LANGUAGE]
 LABEL_RESET_TO_DEFAULT_SETTINGS = texts.LABEL_RESET_TO_DEFAULT_SETTINGS[LANGUAGE]
 # Options
+DEFAULT = texts.DEFAULT[LANGUAGE]
+VOICE_ACTIVITY_DETECTOR = texts.VOICE_ACTIVITY_DETECTOR[LANGUAGE]
 LABEL_KEEP_LOG_RECORDS = texts.LABEL_KEEP_LOG_RECORDS[LANGUAGE]
 LABEL_OPEN_LOGS_FOLDER = texts.LABEL_OPEN_LOGS_FOLDER[LANGUAGE]
 LABEL_CLEAR_ALL_LOGS = texts.LABEL_CLEAR_ALL_LOGS[LANGUAGE]
@@ -464,7 +465,6 @@ USING_REFERENCE_SUBTITLE = texts.USING_REFERENCE_SUBTITLE[LANGUAGE]
 USING_VIDEO_FOR_SYNC = texts.USING_VIDEO_FOR_SYNC[LANGUAGE]
 ENABLED_NO_FIX_FRAMERATE = texts.ENABLED_NO_FIX_FRAMERATE[LANGUAGE]
 ENABLED_GSS = texts.ENABLED_GSS[LANGUAGE]
-ENABLED_AUDITOK_VAD = texts.ENABLED_AUDITOK_VAD[LANGUAGE]
 ADDITIONAL_ARGS_ADDED = texts.ADDITIONAL_ARGS_ADDED[LANGUAGE]
 SYNCING_STARTED = texts.SYNCING_STARTED[LANGUAGE]
 SYNCING_ENDED = texts.SYNCING_ENDED[LANGUAGE]
@@ -2172,11 +2172,11 @@ def start_batch_sync():
             alass_disable_fps_guessing.grid()
             alass_speed_optimization.grid()
             ffsubsync_option_gss.grid_remove()
-            ffsubsync_option_vad.grid_remove()
+            vad_frame.grid_remove()
             ffsubsync_option_framerate.grid_remove()
         else:
             ffsubsync_option_gss.grid()
-            ffsubsync_option_vad.grid()
+            vad_frame.grid()
             ffsubsync_option_framerate.grid()
             alass_split_penalty_slider.grid_remove()
             alass_disable_fps_guessing.grid_remove()
@@ -2207,11 +2207,11 @@ def start_batch_sync():
             alass_disable_fps_guessing.grid()
             alass_speed_optimization.grid()
             ffsubsync_option_gss.grid_remove()
-            ffsubsync_option_vad.grid_remove()
+            vad_frame.grid_remove()
             ffsubsync_option_framerate.grid_remove()
         else:
             ffsubsync_option_gss.grid()
-            ffsubsync_option_vad.grid()
+            vad_frame.grid()
             ffsubsync_option_framerate.grid()
             alass_split_penalty_slider.grid_remove()
             alass_disable_fps_guessing.grid_remove()
@@ -2431,8 +2431,8 @@ def start_batch_sync():
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                        if ffsubsync_option_vad_var.get():
-                            cmd += " --vad=auditok"
+                        if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
+                            cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), "")}"
                     if ffsubsync_option_framerate_var.get():
                             cmd += " --no-fix-framerate"
                     if ffsubsync_option_gss_var.get():
@@ -2461,8 +2461,8 @@ def start_batch_sync():
                             log_window.insert(tk.END, f"{USING_REFERENCE_SUBTITLE}\n")
                         else:
                             log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
-                            if ffsubsync_option_vad_var.get():
-                                log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
+                            if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
+                                log_window.insert(tk.END, f"{VOICE_ACTIVITY_DETECTOR}: {vad_option_map.get(ffsubsync_option_vad_var.get(), "")}\n")
                         if ffsubsync_option_framerate_var.get():
                                 log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
                         if ffsubsync_option_gss_var.get():
@@ -2570,7 +2570,7 @@ def start_batch_sync():
         action_menu_auto.grid_remove()
         sync_frame.grid_remove()
         ffsubsync_option_gss.grid_remove()
-        ffsubsync_option_vad.grid_remove()
+        vad_frame.grid_remove()
         ffsubsync_option_framerate.grid_remove()
         alass_split_penalty_slider.grid_remove()
         alass_disable_fps_guessing.grid_remove()
@@ -2652,9 +2652,7 @@ def start_batch_sync():
         # Bind the <<Modified>> event to the log window
         
 # Global variable to store options state
-options_states = {}
 def toggle_batch_mode():
-    global options_states
     if treeview.get_children():
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
@@ -2671,12 +2669,6 @@ def toggle_batch_mode():
             tree_frame.grid_remove()
             automatic_tab.rowconfigure(1, weight=1)
             root.update_idletasks()
-            # Restore options state
-            #for option in [ffsubsync_option_gss, ffsubsync_option_vad, ffsubsync_option_framerate]:
-            for option in [ffsubsync_option_vad]:
-                if options_states.get(option) == 'disabled':
-                    option.config(state='disabled')
-            options_states = {}
         else:
             batch_mode_var.set(True)
             batch_mode_button.config(text=NORMAL_MODE_TEXT, bg=DEFAULT_BUTTON_COLOR, fg=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
@@ -2687,12 +2679,6 @@ def toggle_batch_mode():
             remove_video_button.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
             tree_frame.grid()
-            # Enable options if disabled
-            options_states = {}
-            for option in [ffsubsync_option_vad]:
-                if option.cget('state') == 'disabled':
-                    options_states[option] = 'disabled'
-                    option.config(state='normal')
     else:
         log_message("", "info", tab='auto')
         if batch_mode_var.get():
@@ -2709,11 +2695,6 @@ def toggle_batch_mode():
             tree_frame.grid_remove()
             automatic_tab.rowconfigure(1, weight=1)
             root.update_idletasks()
-            # Restore options state
-            for option in [ffsubsync_option_vad]:
-                if options_states.get(option) == 'disabled':
-                    option.config(state='disabled')
-            options_states = {}
         else:
             batch_mode_var.set(True)
             batch_mode_button.config(text=NORMAL_MODE_TEXT, bg=DEFAULT_BUTTON_COLOR, fg=COLOR_WB, activebackground=DEFAULT_BUTTON_COLOR_ACTIVE)
@@ -2724,12 +2705,6 @@ def toggle_batch_mode():
             remove_video_button.grid_remove()
             batch_input.grid(row=0, column=0, padx=10, pady=(10,0), sticky="nsew", columnspan=2, rowspan=2)
             tree_frame.grid_remove()
-            # Enable options if disabled
-            options_states = {}
-            for option in [ffsubsync_option_vad]:
-                if option.cget('state') == 'disabled':
-                    options_states[option] = 'disabled'
-                    option.config(state='normal')
 
 def process_files(filepaths, reference_pairs=False):
     subtitle_files = []
@@ -3648,9 +3623,6 @@ def remove_subtitle_input():
 def remove_video_input():
     video_input.config(text=VIDEO_INPUT_TEXT, bg=COLOR_ONE, fg=COLOR_BW)
     del video_input.tooltip_text
-    ffsubsync_option_gss.config(state=tk.NORMAL)
-    ffsubsync_option_vad.config(state=tk.NORMAL)
-    ffsubsync_option_framerate.config(state=tk.NORMAL)
     remove_video_button.grid_remove()
 
 def browse_subtitle(event=None):
@@ -3676,11 +3648,6 @@ def browse_video(event=None):
         video_input.config(bg=COLOR_TWO, fg=COLOR_BW)
         remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
         log_message("", "info", tab='auto')
-        if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-            # If the video file is a subtitle, disable parameters
-            ffsubsync_option_vad.config(state=tk.DISABLED)
-        else:
-            ffsubsync_option_vad.config(state=tk.NORMAL)
     else:
         if video_file != '':
             log_message(SELECT_VIDEO_OR_SUBTITLE, "error", tab='auto')
@@ -3706,9 +3673,6 @@ def on_video_drop(event):
             remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
             remove_subtitle_button.grid(row=1, column=1, padx=(0, 12), pady=(2,0), sticky="ne")
             log_message("", "info", tab='auto')
-            ffsubsync_option_gss.config(state=tk.NORMAL)
-            ffsubsync_option_vad.config(state=tk.NORMAL)
-            ffsubsync_option_framerate.config(state=tk.NORMAL)
             return
     elif len(files) != 1:
         log_message(DROP_VIDEO_OR_SUBTITLE, "error", tab='auto')
@@ -3720,10 +3684,6 @@ def on_video_drop(event):
         video_input.config(bg=COLOR_TWO, fg=COLOR_BW)
         remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
         log_message("", "info", tab='auto')
-        if filepath.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-            ffsubsync_option_vad.config(state=tk.DISABLED)
-        else:
-            ffsubsync_option_vad.config(state=tk.NORMAL)
     else:
         log_message(DROP_VIDEO_OR_SUBTITLE, "error", tab='auto')
 
@@ -3747,7 +3707,6 @@ def on_subtitle_drop(event):
             remove_video_button.grid(row=0, column=1, padx=(0, 12), pady=(12,0), sticky="ne")
             remove_subtitle_button.grid(row=1, column=1, padx=(0, 12), pady=(2,0), sticky="ne")
             log_message("", "info", tab='auto')
-            ffsubsync_option_vad.config(state=tk.NORMAL)
             return
     elif len(files) != 1:
         log_message(DROP_SINGLE_SUBTITLE_PAIR, "error", tab='auto')
@@ -3898,11 +3857,11 @@ def start_automatic_sync():
             alass_disable_fps_guessing.grid()
             alass_speed_optimization.grid()
             ffsubsync_option_gss.grid_remove()
-            ffsubsync_option_vad.grid_remove()
+            vad_frame.grid_remove()
             ffsubsync_option_framerate.grid_remove()
         elif sync_tool_var_auto.get() == SYNC_TOOL_FFSUBSYNC:
             ffsubsync_option_gss.grid()
-            ffsubsync_option_vad.grid()
+            vad_frame.grid()
             ffsubsync_option_framerate.grid()
             alass_split_penalty_slider.grid_remove()
             alass_disable_fps_guessing.grid_remove()
@@ -3934,11 +3893,11 @@ def start_automatic_sync():
             alass_disable_fps_guessing.grid()
             alass_speed_optimization.grid()
             ffsubsync_option_gss.grid_remove()
-            ffsubsync_option_vad.grid_remove()
+            vad_frame.grid_remove()
             ffsubsync_option_framerate.grid_remove()
         elif sync_tool_var_auto.get() == SYNC_TOOL_FFSUBSYNC:
             ffsubsync_option_gss.grid()
-            ffsubsync_option_vad.grid()
+            vad_frame.grid()
             ffsubsync_option_framerate.grid()
             alass_split_penalty_slider.grid_remove()
             alass_disable_fps_guessing.grid_remove()
@@ -3949,9 +3908,6 @@ def start_automatic_sync():
         button_generate_again.grid_remove()
         button_cancel_automatic_sync.grid_remove()
         label_message_auto.grid_remove()
-        ffsubsync_option_gss.config(state=tk.NORMAL)
-        ffsubsync_option_vad.config(state=tk.NORMAL)
-        ffsubsync_option_framerate.config(state=tk.NORMAL)
         automatic_tab.columnconfigure(0, weight=0)
         root.update_idletasks()
 
@@ -3963,8 +3919,8 @@ def start_automatic_sync():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
             cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
-                if ffsubsync_option_vad_var.get():
-                    cmd += (" --vad=auditok")
+                if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
+                    cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), "")}"
             if ffsubsync_option_framerate_var.get():
                 cmd += " --no-fix-framerate"
             if ffsubsync_option_gss_var.get():
@@ -3997,8 +3953,8 @@ def start_automatic_sync():
                 log_window.insert(tk.END, f"{USING_REFERENCE_SUBTITLE}\n")
             else:
                 log_window.insert(tk.END, f"{USING_VIDEO_FOR_SYNC}\n")
-                if ffsubsync_option_vad_var.get():
-                    log_window.insert(tk.END, f"{ENABLED_AUDITOK_VAD}\n")
+                if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
+                    log_window.insert(tk.END, f"{VOICE_ACTIVITY_DETECTOR}: {vad_option_map.get(ffsubsync_option_vad_var.get(), "")}\n")
             if ffsubsync_option_framerate_var.get():
                     log_window.insert(tk.END, f"{ENABLED_NO_FIX_FRAMERATE}\n")
             if ffsubsync_option_gss_var.get():
@@ -4171,7 +4127,7 @@ def start_automatic_sync():
         action_menu_auto.grid_remove()
         sync_frame.grid_remove()
         ffsubsync_option_gss.grid_remove()
-        ffsubsync_option_vad.grid_remove()
+        vad_frame.grid_remove()
         ffsubsync_option_framerate.grid_remove()
         alass_split_penalty_slider.grid_remove()
         alass_disable_fps_guessing.grid_remove()
@@ -4251,7 +4207,6 @@ def start_automatic_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
-
 # Start automatic sync end
 label_message_auto = tk.Label(automatic_tab, text="", bg=COLOR_BACKGROUND, fg=COLOR_BW, anchor="center")
 subtitle_input = tk.Label(
@@ -4333,11 +4288,13 @@ remove_video_button = TkButton(
     state='normal'
 )
 remove_video_button.grid_remove()
+
 sync_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
 sync_frame.grid(row=6, column=1, padx=(0, 10), pady=(5,10), sticky="e")
 ffsubsync_option_framerate_var = tk.BooleanVar(value=config.get('ffsubsync_option_framerate', False))
 ffsubsync_option_gss_var = tk.BooleanVar(value=config.get('ffsubsync_option_gss', False))
-ffsubsync_option_vad_var = tk.BooleanVar(value=config.get('ffsubsync_option_vad', False))
+ffsubsync_option_vad_var_value = globals().get(config.get('ffsubsync_option_vad', DEFAULT), DEFAULT)
+ffsubsync_option_vad_var = tk.StringVar(value=ffsubsync_option_vad_var_value)
 action_var_auto_value = globals().get(config.get('action_var_auto', OPTION_SAVE_NEXT_TO_SUBTITLE), OPTION_SAVE_NEXT_TO_SUBTITLE)
 action_var_auto = tk.StringVar(value=action_var_auto_value)
 # Convert string values to actual variables
@@ -4371,18 +4328,32 @@ ffsubsync_option_gss = tk.Checkbutton(
     takefocus=0,
     state='normal'
 )
-ffsubsync_option_vad = tk.Checkbutton(
-    automatic_tab,text=CHECKBOX_VAD,
-    background=COLOR_BACKGROUND, foreground=COLOR_BW,
-    variable=ffsubsync_option_vad_var, 
-    command=lambda: update_config('ffsubsync_option_vad', ffsubsync_option_vad_var.get()),
-    selectcolor=COLOR_WB,  # Change the checkbox square background
-    activebackground=COLOR_BACKGROUND,
-    activeforeground=COLOR_BW,
-    highlightthickness=0,
-    takefocus=0,
-    state='normal'
+# Create frame for VAD controls
+vad_frame = tk.Frame(automatic_tab, bg=COLOR_BACKGROUND)
+vad_frame.grid(row=4, column=0, columnspan=2, padx=10, pady=0, sticky="ew")
+vad_frame.columnconfigure(1, weight=1)
+vad_label = tk.Label(vad_frame, text=VOICE_ACTIVITY_DETECTOR, bg=COLOR_BACKGROUND, fg=COLOR_BW)
+vad_label.grid(row=0, column=0, pady=(5,5), sticky="w")
+
+# Define the mapping for VAD options
+vad_option_map = {
+    DEFAULT: 'default',
+    'subs_then_webrtc': 'subs_then_webrtc',
+    'webrtc': 'webrtc',
+    'subs_then_auditok': 'subs_then_auditok',
+    'auditok': 'auditok',
+    'subs_then_silero': 'subs_then_silero',
+    'silero': 'silero'
+}
+ffsubsync_option_vad = ttk.OptionMenu(
+    vad_frame,
+    ffsubsync_option_vad_var,
+    ffsubsync_option_vad_var_value,
+    *vad_option_map.keys(),
+    command=lambda _: update_config('ffsubsync_option_vad', vad_option_map.get(ffsubsync_option_vad_var.get(), ""))
 )
+ffsubsync_option_vad.configure(style='TMenubutton', takefocus=0)
+ffsubsync_option_vad.grid(row=0, column=1, sticky="w")
 def select_destination_folder():
     global tooltip_action_menu_auto
     folder_path = filedialog.askdirectory()
@@ -4394,7 +4365,6 @@ def select_destination_folder():
     else:
         log_message(TEXT_NO_FOLDER_SELECTED, "error", tab='auto')
         action_var_auto.set(OPTION_SAVE_NEXT_TO_SUBTITLE)
-        
 def on_action_menu_change(*args):
     tooltip_action_menu_auto = ToolTip(action_menu_auto, TOOLTIP_TEXT_ACTION_MENU_AUTO)
     log_message("", "info", tab='auto')
@@ -4412,13 +4382,12 @@ def on_action_menu_change(*args):
         }
         variable_name = variable_name_map.get(selected_option, "")
         update_config("action_var_auto", variable_name)
-
 def on_sync_tool_change(*args):
     if sync_tool_var_auto.get() == SYNC_TOOL_ALASS:
         update_config('sync_tool_var_auto', 'SYNC_TOOL_ALASS')
         ffsubsync_option_framerate.grid_remove()
         ffsubsync_option_gss.grid_remove()
-        ffsubsync_option_vad.grid_remove()
+        vad_frame.grid_remove()
         alass_disable_fps_guessing.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
         alass_speed_optimization.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
         alass_split_penalty_slider.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="ew")
@@ -4429,10 +4398,8 @@ def on_sync_tool_change(*args):
         alass_disable_fps_guessing.grid_remove()
         ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
         ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-        ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-
+        vad_frame.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
 style.configure('TMenubutton', background=COLOR_OPTIONS, foreground=COLOR_BW, relief="flat")
-
 action_menu_auto = ttk.OptionMenu(
     automatic_tab, 
     action_var_auto,
@@ -4445,7 +4412,6 @@ action_menu_auto = ttk.OptionMenu(
     OPTION_SELECT_DESTINATION_FOLDER
 )
 action_menu_auto.configure(style='TMenubutton')
-
 sync_tool_menu_auto = ttk.OptionMenu(
     sync_frame, 
     sync_tool_var_auto, 
@@ -4516,7 +4482,7 @@ subtitle_input.grid(row=1, column=0, padx=10, pady=0, sticky="nsew", columnspan=
 if sync_tool_var_auto.get() == SYNC_TOOL_ALASS:
     ffsubsync_option_framerate.grid_remove()
     ffsubsync_option_gss.grid_remove()
-    ffsubsync_option_vad.grid_remove()
+    vad_frame.grid_remove()
     alass_disable_fps_guessing.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
     alass_speed_optimization.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
     alass_split_penalty_slider.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="ew")
@@ -4526,7 +4492,7 @@ else:
     alass_disable_fps_guessing.grid_remove()
     ffsubsync_option_framerate.grid(row=2, column=0, columnspan=5, padx=10, pady=(5,0), sticky="w")
     ffsubsync_option_gss.grid(row=3, column=0, columnspan=5, padx=10, pady=0, sticky="w")
-    ffsubsync_option_vad.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
+    vad_frame.grid(row=4, column=0, columnspan=5, padx=10, pady=0, sticky="w")
 sync_tool_var_auto.trace_add("write", on_sync_tool_change)
 sync_tool_label = tk.Label(sync_frame, text=SYNC_TOOL_LABEL_TEXT, bg=COLOR_BACKGROUND, fg=COLOR_BW)
 sync_tool_label.grid(row=0, column=0, padx=(5, 0), sticky="w")
