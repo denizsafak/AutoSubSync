@@ -98,7 +98,7 @@ TOOLTIP_GSS = {
     "fa": "--gss: برای یافتن نسبت بهینه بین نرخ فریم ویدیو و زیرنویس از جستجوی بخش طلایی استفاده کنید (به طور پیش فرض، تنها چند نسبت معمول ارزیابی می‌شود)",
     "id": "--gss: Gunakan pencarian golden-section untuk mencari rasio optimal antara kecepatan frame video dan subtitle (default, hanya menilai beberapa rasio umum)",
     "ms": "--gss: Gunakan carian bahagian emas untuk mencari nisbah optimum antara kadar bingkai video dan sari kata (secara lalai, hanya beberapa nisbah biasa yang dinilai)",
-    "th": "- -gss: ใช้การค้นหาภาคตัดทองเพื่อหาอัตราส่วนที่เหมาะสมระหว่างเฟรมเรตของวิดีโอและคำบรรยาย (ตามค่าเริ่มต้น จะประเมินเฉพาะอัตราส่วนที่พบบ่อยเท่านั้น)"
+    "th": "--gss: ใช้การค้นหาภาคตัดทองเพื่อหาอัตราส่วนที่เหมาะสมระหว่างเฟรมเรตของวิดีโอและคำบรรยาย (ตามค่าเริ่มต้น จะประเมินเฉพาะอัตราส่วนที่พบบ่อยเท่านั้น)"
 }
 DEFAULT = {
     "en": "Default",
