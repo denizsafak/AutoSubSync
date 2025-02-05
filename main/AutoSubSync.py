@@ -90,6 +90,7 @@ default_settings = {
     "notify_about_updates": True,
     "ffsubsync_option_framerate": False,
     "ffsubsync_option_gss": False,
+    "ffsubsync_option_vad": "default",
     "alass_disable_fps_guessing": False,
     "alass_speed_optimization": False,
     "alass_split_penalty": 7,
