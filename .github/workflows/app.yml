@@ -107,18 +107,10 @@ jobs:
           echo "$changelog" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Create Tag
-        uses: mathieudutour/github-tag-action@v6.1
-        id: tag_version
-        with:
-          github_token: ${{ secrets.TOKEN }}
-          custom_tag: ${{ needs.build.outputs.version }}
-          tag_prefix: "v"
-          create_annotated_tag: true
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v${{ needs.build.outputs.version }}"
           name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
             ${{ env.changelog }}
