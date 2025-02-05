@@ -254,6 +254,7 @@ LANGUAGES = {
     "Tiếng Việt": "vi",
     "Bahasa Indonesia": "id",
     "Bahasa Melayu": "ms",
+    "ไทย": "th",
     "Українська": "uk",
     "Русский": "ru",
     "中国人": "zh",
