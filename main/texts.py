@@ -51,7 +51,8 @@ TOOLTIP_SAVE_TO_DESKTOP = {
     "vi": "Đánh dấu vào ô này nếu bạn muốn lưu phụ đề mới vào Máy tính của bạn. Nếu không được chọn, nó sẽ được lưu trong thư mục phụ đề đầu vào.",
     "fa": "اگر می‌خواهید زیرنویس جدید را در رومیزی خود ذخیره کنید، این جعبه را علامت بزنید. اگر علامت گذاری نشود، در پوشه زیرنویس ورودی ذخیره می‌شود.",
     "id": "Centang kotak ini jika Anda ingin menyimpan subtitle baru ke Desktop Anda. Jika tidak dicentang, itu akan disimpan di folder subtitle masukan.",
-    "ms": "Tandai kotak ini jika anda ingin menyimpan sari kata baharu pada Desktop anda. Jika dinyahtandai, ia akan disimpan dalam folder sari kata input."
+    "ms": "Tandai kotak ini jika anda ingin menyimpan sari kata baharu pada Desktop anda. Jika dinyahtandai, ia akan disimpan dalam folder sari kata input.",
+    "th": "ทำเครื่องหมายในช่องนี้หากคุณต้องการบันทึกคำบรรยายใหม่ลงในเดสก์ท็อป หากไม่ทำเครื่องหมาย คำบรรยายใหม่จะถูกบันทึกไว้ในโฟลเดอร์ของคำบรรยายที่ป้อน"
 }
 TOOLTIP_REPLACE_ORIGINAL = {
     "en": "Check this box if you want to replace the input subtitle file with the new one. Please be careful. It will overwrite the current subtitle.",
@@ -73,7 +74,8 @@ TOOLTIP_REPLACE_ORIGINAL = {
     "vi": "Đánh dấu vào ô này nếu bạn muốn thay thế tệp phụ đề đầu vào bằng tệp phụ đề mới. Hãy cẩn thận. Nó sẽ ghi đè lên phụ đề hiện tại.",
     "fa": "اگر می‌خواهید فایل زیرنویس ورودی را با فایل جدید جایگزین کنید، این جعبه را علامت بزنید. توجه داشته باشید. این جایگزینی برای فایل زیرنویس فعلی است.",
     "id": "Centang kotak ini jika Anda ingin mengganti file subtitle masukan dengan file subtitle baru. Harap hati-hati. Ini akan menimpa subtitle saat ini.",
-    "ms": "Tandai kotak ini jika anda ingin mengganti fail sari kata input dengan fail sari kata baru. Sila berhati-hati. Ini akan menimpa sari kata semasa."
+    "ms": "Tandai kotak ini jika anda ingin mengganti fail sari kata input dengan fail sari kata baru. Sila berhati-hati. Ini akan menimpa sari kata semasa.",
+    "th": "ทำเครื่องหมายช่องนี้หากต้องการแทนที่ไฟล์คำบรรยายต้นฉบับด้วยไฟล์ใหม่ กรุณาระมัดระวัง จะทำการเขียนทับไฟล์คำบรรยายปัจจุบัน"
 }
 TOOLTIP_GSS = {
     "en": "--gss: Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
@@ -95,7 +97,8 @@ TOOLTIP_GSS = {
     "vi": "--gss: Sử dụng tìm kiếm cắt cốc để tìm phương pháp tối ưu cho tỷ lệ khung hình và khung văn bản (mặc định, chỉ đánh giá một số tỷ lệ thông thường)",
     "fa": "--gss: برای یافتن نسبت بهینه بین نرخ فریم ویدیو و زیرنویس از جستجوی بخش طلایی استفاده کنید (به طور پیش فرض، تنها چند نسبت معمول ارزیابی می‌شود)",
     "id": "--gss: Gunakan pencarian golden-section untuk mencari rasio optimal antara kecepatan frame video dan subtitle (default, hanya menilai beberapa rasio umum)",
-    "ms": "--gss: Gunakan carian bahagian emas untuk mencari nisbah optimum antara kadar bingkai video dan sari kata (secara lalai, hanya beberapa nisbah biasa yang dinilai)"
+    "ms": "--gss: Gunakan carian bahagian emas untuk mencari nisbah optimum antara kadar bingkai video dan sari kata (secara lalai, hanya beberapa nisbah biasa yang dinilai)",
+    "th": "--gss: ใช้การค้นหาภาคตัดทองเพื่อหาอัตราส่วนที่เหมาะสมระหว่างเฟรมเรตของวิดีโอและคำบรรยาย (ตามค่าเริ่มต้น จะประเมินเฉพาะอัตราส่วนที่พบบ่อยเท่านั้น)"
 }
 DEFAULT = {
     "en": "Default",
@@ -117,7 +120,8 @@ DEFAULT = {
     "vi": "Mặc định",
     "fa": "پیش فرض",
     "id": "Bawaan",
-    "ms": "Lalai"
+    "ms": "Lalai",
+    "th": "ค่าเริ่มต้น"
 }
 VOICE_ACTIVITY_DETECTOR = {
     "en": "Voice activity detector",
@@ -139,7 +143,8 @@ VOICE_ACTIVITY_DETECTOR = {
     "vi": "Bộ phát hiện hoạt động giọng nói",
     "fa": "آشکارساز فعالیت صوتی",
     "id": "Detektor aktivitas suara",
-    "ms": "Pengesan aktiviti suara"
+    "ms": "Pengesan aktiviti suara",
+    "th": "เครื่องตรวจจับความเคลื่อนไหวเสียง"
 }
 TOOLTIP_VAD = {
     "en": "--vad: Which voice activity detector (VAD) to use for speech extraction (if using video / audio as a reference, default=subs_then_webrtc). Auditok can sometimes work better in the case of low-quality audio than WebRTC.",
@@ -161,7 +166,8 @@ TOOLTIP_VAD = {
     "vi": "--vad: Nên sử dụng bộ phát hiện hoạt động giọng nói (VAD) nào để trích xuất giọng nói (nếu sử dụng video / âm thanh làm tham chiếu, mặc định=subs_then_webrtc). Auditok đôi khi có thể hoạt động tốt hơn trong trường hợp âm thanh chất lượng thấp hơn WebRTC.",
     "fa": "--vad: کدام آشکارساز فعالیت صوتی (VAD) برای استخراج گفتار استفاده شود (اگر از ویدیو / صدا به عنوان مرجع استفاده می‌کنید، پیش‌فرض=subs_then_webrtc). Auditok در برخی موارد ممکن است بهتر از WebRTC در صورت کیفیت پایین صدا عمل کند.",
     "id": "--vad: Detektor aktivitas suara (VAD) mana yang akan digunakan untuk ekstraksi ucapan (jika menggunakan video / audio sebagai referensi, default=subs_then_webrtc). Auditok kadang-kadang dapat bekerja lebih baik dalam kasus audio berkualitas rendah daripada WebRTC.",
-    "ms": "--vad: Pengesan aktiviti suara (VAD) mana yang akan digunakan untuk pengekstrakan ucapan (jika menggunakan video / audio sebagai rujukan, lalai=subs_then_webrtc). Auditok mungkin akan bekerja lebih baik dalam kasus audio dengan kualiti rendah daripada WebRTC."
+    "ms": "--vad: Pengesan aktiviti suara (VAD) mana yang akan digunakan untuk pengekstrakan ucapan (jika menggunakan video / audio sebagai rujukan, lalai=subs_then_webrtc). Auditok mungkin akan bekerja lebih baik dalam kasus audio dengan kualiti rendah daripada WebRTC.",
+    "th": "--vad: เลือกเครื่องตรวจจับความเคลื่อนไหวเสียง (VAD) ที่ใช้สำหรับการแยกเสียงพูด (หากใช้วิดีโอ/เสียงเป็นอ้างอิง ค่าเริ่มต้น=subs_then_webrtc) Auditok สามารถทำงานได้ดีกว่า WebRTC ในกรณีที่มีคุณภาพเสียงต่ำ"
 }
 TOOLTIP_FRAMERATE = {
     "en": "--no-fix-framerate: If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles. This can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync.",
@@ -183,7 +189,8 @@ TOOLTIP_FRAMERATE = {
     "vi": "--no-fix-framerate: Nếu được chỉ định, ffsubsync sẽ không cố gắng sửa chữa sự không phù hợp về tốc độ khung hình giữa tham chiếu và phụ đề. Điều này có thể hữu ích khi bạn biết rằng tốc độ khung hình của video và phụ đề giống nhau, chỉ có phụ đề không đồng bộ.",
     "fa": "--no-fix-framerate: اگر مشخص شود، ffsubsync تلاشی برای اصلاح عدم تطابق نرخ فریم بین مرجع و زیرنویس انجام نخواهد داد. این می‌تواند مفید باشد زمانی که می‌دانید نرخ فریم ویدیو و زیرنویس یکسان است، تنها زیرنویس‌ها هماهنگ نیستند.",
     "id": "--no-fix-framerate: Jika ditentukan, ffsubsync tidak akan mencoba memperbaiki ketidakcocokan framerate antara referensi dan subtitle. Ini dapat berguna ketika Anda tahu bahwa framerate video dan subtitle sama, hanya subtitle yang tidak sinkron.",
-    "ms": "--no-fix-framerate: Jika ditetapkan, ffsubsync tidak akan mencoba memperbaiki kesalahan framerate antara referensi dan subtitle. Ini dapat berguna ketika Anda tahu bahwa framerate video dan subtitle sama, hanya subtitle yang tidak sinkron."
+    "ms": "--no-fix-framerate: Jika ditetapkan, ffsubsync tidak akan mencoba memperbaiki kesalahan framerate antara referensi dan subtitle. Ini dapat berguna ketika Anda tahu bahwa framerate video dan subtitle sama, hanya subtitle yang tidak sinkron.",
+    "th": "--no-fix-framerate: หากระบุ ffsubsync จะไม่พยายามแก้ไขความไม่ตรงกันของเฟรมเรตระหว่างอ้างอิงและคำบรรยาย นี่อาจมีประโยชน์เมื่อคุณทราบว่าเฟรมเรตของวิดีโอและคำบรรยายเหมือนกัน เพียงแต่คำบรรยายไม่ตรงเวลา"
 }
 TOOLTIP_ALASS_SPEED_OPTIMIZATION = {
     "en": "--speed optimization 0: Disable speed optimization for better accuracy. This will increase the processing time.",
@@ -205,7 +212,8 @@ TOOLTIP_ALASS_SPEED_OPTIMIZATION = {
     "vi": "--speed optimization 0: Vô hiệu hóa tối ưu hóa tốc độ để đạt độ chính xác cao hơn. Điều này sẽ tăng thời gian xử lý.",
     "fa": "--speed optimization 0: برای دقت بیشتر، بهینه‌سازی سرعت را غیرفعال کنید. این باعث افزایش زمان پردازش می‌شود.",
     "id": "--speed optimization 0: Nonaktifkan pengoptimalan kecepatan untuk akurasi yang lebih baik. Hal ini akan meningkatkan waktu pemrosesan.",
-    "ms": "--speed optimization 0: Nyahaktifkan pengoptimalan kecepatan untuk kepastian yang lebih baik. Ini akan meningkatkan masa pengendalian."
+    "ms": "--speed optimization 0: Nyahaktifkan pengoptimalan kecepatan untuk kepastian yang lebih baik. Ini akan meningkatkan masa pengendalian.",
+    "th": "--speed optimization 0: ปิดใช้งานการปรับความเร็วเพื่อความแม่นยำที่ดีขึ้น ซึ่งจะเพิ่มเวลาในการประมวลผล"
 }
 TOOLTIP_ALASS_DISABLE_FPS_GUESSING = {
     "en": "--disable-fps-guessing: Disables guessing and correcting of framerate differences between reference file and input file.",
@@ -227,7 +235,8 @@ TOOLTIP_ALASS_DISABLE_FPS_GUESSING = {
     "vi": "--disable-fps-guessing: Vô hiệu hóa dự đoán và sửa đổi sự khác biệt giữa tốc độ khung hình giữa tệp tham chiếu và tệp đầu vào.",
     "fa": "--disable-fps-guessing: غیرفعال کردن حدس و اصلاح تفاوت‌های نرخ فریم بین فایل مرجع و فایل ورودی.",
     "id": "--disable-fps-guessing: Nonaktifkan tebak dan perbaiki perbedaan framerate antara file referensi dan file masukan.",
-    "ms": "--disable-fps-guessing: Nyahaktifkan tebakan dan perbaiki perbedaan framerate antara fail referensi dan fail masukan."
+    "ms": "--disable-fps-guessing: Nyahaktifkan tebakan dan perbaiki perbedaan framerate antara fail referensi dan fail masukan.",
+    "th": "--disable-fps-guessing: ปิดการคาดเดาและแก้ไขความแตกต่างของเฟรมเรตระหว่างไฟล์อ้างอิงและไฟล์อินพุต"
 }
 TOOLTIP_TEXT_ACTION_MENU_AUTO = {
     "en": "Choose what to do with the synchronized subtitle file(s). (Existing subtitle files will be backed up in the same folder, if they need to be replaced.)",
@@ -249,7 +258,8 @@ TOOLTIP_TEXT_ACTION_MENU_AUTO = {
     "vi": "Chọn cách xử lý tập tin phụ đề được đồng bộ hóa. (Các tập tin phụ đề hiện có sẽ được sao lưu trong cùng một thư mục, nếu cần phải thay thế.)",
     "fa": "انتخاب کنید که چه کاری با فایل(های) زیرنویس هماهنگ شده انجام شود. (فایل‌های زیرنویس موجود در صورت نیاز باید جایگزین شوند، در همان پوشه پشتیبان گرفته می‌شوند.)",
     "id": "Pilih apa yang akan dilakukan dengan file subtitle yang disinkronkan. (File subtitle yang ada akan disimpan di folder yang sama, jika perlu diganti.)",
-    "ms": "Pilih apa yang akan anda lakukan dengan fail subtitle yang disinkronkan. (Fail subtitle yang ada akan disimpan dalam folder yang sama, jika perlu ditukar.)"
+    "ms": "Pilih apa yang akan anda lakukan dengan fail subtitle yang disinkronkan. (Fail subtitle yang ada akan disimpan dalam folder yang sama, jika perlu ditukar.)",
+    "th": "เลือกวิธีที่ต้องการทำกับไฟล์คำบรรยายที่ซิงโครไนซ์แล้ว (ไฟล์คำบรรยายที่มีอยู่จะถูกสำรองในโฟลเดอร์เดียวกัน หากจำเป็นต้องถูกแทนที่)"
 }
 TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = {
     "en": "Select the tool to use for synchronization.",
@@ -271,7 +281,8 @@ TOOLTIP_TEXT_SYNC_TOOL_MENU_AUTO = {
     "vi": "Chọn công cụ để sử dụng cho việc đồng bộ.",
     "fa": "ابزاری را برای هماهنگ سازی انتخاب کنید.",
     "id": "Pilih alat yang akan digunakan untuk sinkronisasi.",
-    "ms": "Pilih alat yang digunakan untuk sinkronisasi."
+    "ms": "Pilih alat yang digunakan untuk sinkronisasi.",
+    "th": "เลือกเครื่องมือที่จะใช้สำหรับการซิงโครไนซ์"
 }
 UPDATE_AVAILABLE_TITLE = {
     "en": "Update Available",
@@ -293,7 +304,8 @@ UPDATE_AVAILABLE_TITLE = {
     "vi": "Có Cập Nhật",
     "fa": "بروزرسانی موجود است",
     "id": "Update Tersedia",
-    "ms": "Kemas kini Tersedia"
+    "ms": "Kemas kini Tersedia",
+    "th": "มีการอัปเดต"
 }
 UPDATE_AVAILABLE_TEXT = {
     "en": "A new version ({latest_version}) is available. Do you want to update?",
@@ -315,7 +327,8 @@ UPDATE_AVAILABLE_TEXT = {
     "vi": "Một phiên bản mới ({latest_version}) đã có sẵn. Bạn có muốn cập nhật không?",
     "fa": "یک نسخه جدید ({latest_version}) موجود است. آیا می‌خواهید بروزرسانی کنید؟",
     "id": "Versi terbaru ({latest_version}) tersedia. Apakah Anda ingin memperbarui?",
-    "ms": "Versi baru ({latest_version}) tersedia. Adakah Anda mahu memperbaharui?"
+    "ms": "Versi baru ({latest_version}) tersedia. Adakah Anda mahu memperbaharui?",
+    "th": "มีเวอร์ชันใหม่ ({latest_version}) แล้ว คุณต้องการอัพเดตหรือไม่?"
 }
 NOTIFY_ABOUT_UPDATES_TEXT = {
     "en": "Check for updates",
@@ -337,7 +350,8 @@ NOTIFY_ABOUT_UPDATES_TEXT = {
     "vi": "Kiểm tra cập nhật",
     "fa": "بررسی بروزرسانی‌ها",
     "id": "Periksa pembaruan",
-    "ms": "Semak pembaruan"
+    "ms": "Semak pembaruan",
+    "th": "ตรวจสอบการอัปเดต"
 }
 LANGUAGE_LABEL_TEXT = {
     "en": "Language",
@@ -359,7 +373,8 @@ LANGUAGE_LABEL_TEXT = {
     "vi": "Ngôn Ngữ",
     "fa": "زبان",
     "id": "Bahasa",
-    "ms": "Bahasa"
+    "ms": "Bahasa",
+    "th": "ภาษา"
 }
 # TEXT SHOULD BE SHORT
 TAB_AUTOMATIC_SYNC = {
@@ -382,7 +397,8 @@ TAB_AUTOMATIC_SYNC = {
     "vi": "Tự Động Đồng Bộ",
     "fa": "هماهنگی خودکار",
     "id": "Sinkron Auto",
-    "ms": "Auto Segerak"
+    "ms": "Auto Segerak",
+    "th": "ซิงค์อัตโนมัติ"
 }
 # TEXT SHOULD BE SHORT
 TAB_MANUAL_SYNC = {
@@ -405,7 +421,8 @@ TAB_MANUAL_SYNC = {
     "vi": "Đồng Bộ Thủ Công",
     "fa": "هماهنگی دستی",
     "id": "Sinkron Manual",
-    "ms": "Segerak Manual"
+    "ms": "Segerak Manual",
+    "th": "ซิงค์ด้วยตนเอง"
 }
 CANCEL_TEXT = {
     "en": 'Cancel',
@@ -427,7 +444,8 @@ CANCEL_TEXT = {
     "vi": "Hủy",
     "fa": "لغو",
     "id": "Batal",
-    "ms": "Batal"
+    "ms": "Batal",
+    "th": "ยกเลิก"
 }
 GENERATE_AGAIN_TEXT = {
     "en": 'Generate Again',
@@ -449,7 +467,8 @@ GENERATE_AGAIN_TEXT = {
     "vi": "Tạo Lại",
     "fa": "مجدداً تولید کنید",
     "id": "Buat Lagi",
-    "ms": "Menjana Semula"
+    "ms": "Menjana Semula",
+    "th": "สร้างอีกครั้ง"
 }
 GO_BACK = {
     "en": 'Go Back',
@@ -471,7 +490,8 @@ GO_BACK = {
     "vi": "Quay Lại",
     "fa": "بازگشت",
     "id": "Kembali",
-    "ms": "Kembali"
+    "ms": "Kembali",
+    "th": "กลับ"
 }
 BATCH_MODE_TEXT = {
     "en": 'Batch Mode',
@@ -493,7 +513,8 @@ BATCH_MODE_TEXT = {
     "vi": "Chế độ hàng loạt",
     "fa": "حالت دسته‌ای",
     "id": "Mode Batch",
-    "ms": "Mode Batch"
+    "ms": "Mode Batch",
+    "th": "โหมด Batch"
 }
 NORMAL_MODE_TEXT = {
     "en": 'Normal Mode',
@@ -515,7 +536,8 @@ NORMAL_MODE_TEXT = {
     "vi": "Chế Độ Bình Thường",
     "fa": "حالت عادی",
     "id": "Mode Normal",
-    "ms": "Mode Normal"
+    "ms": "Mode Normal",
+    "th": "โหมดปกติ"
 }
 # TEXT SHOULD BE SHORT
 START_AUTOMATIC_SYNC_TEXT = {
@@ -538,7 +560,8 @@ START_AUTOMATIC_SYNC_TEXT = {
     "vi": "Bắt Đầu Tự Động Đồng Bộ",
     "fa": "هماهنگ خودکار شروع کنید",
     "id": "Mulai Sinkron Auto",
-    "ms": "Mulai Auto Segerak"
+    "ms": "Mulai Auto Segerak",
+    "th": "เริ่มซิงค์อัตโนมัติ"
 }
 
 # TEXT SHOULD BE SHORT
@@ -562,7 +585,8 @@ START_BATCH_SYNC_TEXT = {
     "vi": "Bắt Đầu Đồng Bộ Hàng Loạt",
     "fa": "هماهنگ دسته‌ای شروع کنید",
     "id": "Mulai Sinkron Batch",
-    "ms": "Mulai Segerak Batch"
+    "ms": "Mulai Segerak Batch",
+    "th": "เริ่มซิงค์กลุ่ม"
 }
 BATCH_INPUT_TEXT = {
     "en": "Drag and drop multiple files/folders here or click to browse.\n\n(Videos and subtitles that have the same filenames will be paired automatically. You need to pair others manually.)",
@@ -584,7 +608,8 @@ BATCH_INPUT_TEXT = {
     "vi": "Kéo và thả nhiều tệp/thư mục vào đây hoặc nhấp để duyệt.\n\n(Các video và phụ đề có cùng tên tệp sẽ được ghép cặp tự động. Bạn cần ghép cặp các tệp khác bằng tay.)",
     "fa": "چندین فایل/پوشه را اینجا بکشید و رها کنید یا برای مرور کلیک کنید.\n\n(ویدیوها و زیرنویس‌هایی که همان نام فایل را دارند به طور خودکار جفت می‌شوند. شما باید دیگری را به صورت دستی جفت کنید.)",
     "id": "Tarik dan lepas beberapa file/folder di sini atau klik untuk menelusuri.\n\n(Video dan subtitle dengan nama file yang sama akan dipasangkan secara otomatis. Anda perlu dipasangkan file lain secara manual.)",
-    "ms": "Tarik dan lepaskan beberapa fail/folder di sini atau klik untuk melihat.\n\n(Video dan subtitle dengan nama file yang sama akan dipasangkan secara automatik. Anda perlu dipasangkan file lain secara manual.)"
+    "ms": "Tarik dan lepaskan beberapa fail/folder di sini atau klik untuk melihat.\n\n(Video dan subtitle dengan nama file yang sama akan dipasangkan secara automatik. Anda perlu dipasangkan file lain secara manual.)",
+    "th": "ลากและวางไฟล์/โฟลเดอร์หลายรายการที่นี่ หรือคลิกเพื่อเรียกดู\n\n(วิดีโอและคำบรรยายที่มีชื่อไฟล์เหมือนกันจะจับคู่อัตโนมัติ คุณต้องจับคู่อื่นๆ ด้วยตนเอง)"
 }
 BATCH_INPUT_LABEL_TEXT = {
     "en": "Batch Processing Mode",
@@ -606,7 +631,8 @@ BATCH_INPUT_LABEL_TEXT = {
     "vi": "Chế Độ Xử Lý Hàng Loạt",
     "fa": "حالت پردازش دسته‌ای",
     "id": "Mode Pengolahan Batch",
-    "ms": "Mod Pemprosesan Kelompok"
+    "ms": "Mod Pemprosesan Kelompok",
+    "th": "โหมดประมวลผลกลุ่ม"
 }
 SHIFT_SUBTITLE_TEXT = {
     "en": 'Shift Subtitle',
@@ -628,7 +654,8 @@ SHIFT_SUBTITLE_TEXT = {
     "vi": "Chuyển đổi phụ đề",
     "fa": "جابجایی زیرنویس",
     "id": "Pindahkan Subtitle",
-    "ms": "Pindahkan Subtitle"
+    "ms": "Pindahkan Subtitle",
+    "th": "เลื่อนคำบรรยาย"
 }
 LABEL_SHIFT_SUBTITLE = {
     "en": "Shift subtitle by (ms):",
@@ -650,7 +677,8 @@ LABEL_SHIFT_SUBTITLE = {
     "vi": "Chuyển đổi phụ đề bằng (ms):",
     "fa": "جابجایی زیرنویس توسط (ms):",
     "id": "Pindahkan Subtitle oleh (ms):",
-    "ms": "Pindahkan Subtitle oleh (ms):"
+    "ms": "Pindahkan Subtitle oleh (ms):",
+    "th": "เลื่อนคำบรรยายโดย (มิลลิวินาที):"
 }
 REPLACE_ORIGINAL_TITLE = {
     "en": "Subtitle Change Confirmation",
@@ -672,7 +700,8 @@ REPLACE_ORIGINAL_TITLE = {
     "vi": "Xác nhận Thay Đổi Phụ Đề",
     "fa": "تأیید تغییرات زیرنویس",
     "id": "Konfirmasi Perubahan Subtitle",
-    "ms": "Sahkan Perubahan Subtitle"
+    "ms": "Sahkan Perubahan Subtitle",
+    "th": "ยืนยันการเปลี่ยนแปลงคำบรรยาย"
 }
 REPLACE_ORIGINAL_TEXT = {
     "en": "Adjusting again by {milliseconds}ms, will make a total difference of {total_shifted}ms. Proceed?",
@@ -694,7 +723,8 @@ REPLACE_ORIGINAL_TEXT = {
     "vi": "Điều chỉnh lại {milliseconds}ms, sẽ tạo ra một sự khác biệt tổng cộng {total_shifted}ms. Tiếp tục?",
     "fa": "تنظیم مجدد به میزان {milliseconds}ms، مجموع تفاوت {total_shifted}ms را ایجاد خواهد کرد. آیا ادامه می‌دهید؟",
     "id": "Menyesuaikan lagi sebesar {milliseconds}ms, akan membuat perbedaan total {total_shifted}ms. Lanjutkan?",
-    "ms": "Melaraskan semula sebanyak {milliseconds}ms, akan menghasilkan jumlah perbezaan sebanyak {total_shifted}ms. Teruskan?"
+    "ms": "Melaraskan semula sebanyak {milliseconds}ms, akan menghasilkan jumlah perbezaan sebanyak {total_shifted}ms. Teruskan?",
+    "th": "การปรับอีกครั้งที่ {milliseconds} มิลลิวินาที จะทำให้ความแตกต่างทั้งหมดเป็น {total_shifted} มิลลิวินาที ดำเนินการต่อหรือไม่?"
 }
 FILE_EXISTS_TITLE = {
     "en": "File Exists",
@@ -716,7 +746,8 @@ FILE_EXISTS_TITLE = {
     "vi": "Tập Tin Đã Tồn Tại",
     "fa": "فایل موجود است",
     "id": "File Sudah Ada",
-    "ms": "Fail Sudah Ada"
+    "ms": "Fail Sudah Ada",
+    "th": "ไฟล์มีอยู่แล้ว"
 }
 FILE_EXISTS_TEXT = {
     "en": "A file with the name '{filename}' already exists. Do you want to replace it?",
@@ -738,7 +769,8 @@ FILE_EXISTS_TEXT = {
     "vi": "Một tập tin với tên '{filename}' đã tồn tại. Bạn có muốn thay thế không?",
     "fa": "یک فایل با نام '{filename}' از قبل وجود دارد. آیا می‌خواهید جایگزین کنید؟",
     "id": "Sebuah file dengan nama '{filename}' sudah ada. Apakah Anda ingin menggantinya?",
-    "ms": "Fail '{filename}' sudah wujud. Adakah anda ingin menggantinya?"
+    "ms": "Fail '{filename}' sudah wujud. Adakah anda ingin menggantinya?",
+    "th": "มีไฟล์ชื่อ '{filename}' อยู่แล้ว ต้องการแทนที่หรือไม่?"
 }
 ALREADY_SYNCED_FILES_TITLE = {
     "en": "Already Synced Files Detected",
@@ -760,7 +792,8 @@ ALREADY_SYNCED_FILES_TITLE = {
     "vi": "Phát Hiện Các Tập Tin Đã Đồng Bộ",
     "fa": "فایل‌های تمام شده‌ی سینک شده را تشخیص داد",
     "id": "File yang Sudah Disinkronkan Terdeteksi",
-    "ms": "Fail Sudah Disegerakkan Dikesan"
+    "ms": "Fail Sudah Disegerakkan Dikesan",
+    "th": "ตรวจพบไฟล์ที่ซิงโครไนซ์แล้ว"
 }
 ALREADY_SYNCED_FILES_MESSAGE = {
     "en": "Detected {count} subtitle(s) already synced, because there are subtitles that have 'autosync_' prefix in the same folder with same filenames. Do you want to skip processing them?",
@@ -782,7 +815,8 @@ ALREADY_SYNCED_FILES_MESSAGE = {
     "vi": "Phát hiện {count} phụ đề đã được đồng bộ, vì có phụ đề có tiền tố 'autosync_' trong cùng một thư mục với cùng tên tệp. Bạn có muốn bỏ qua xử lý chúng không?",
     "fa": "{count} عنوان فرعی تمام شده، بنابراین 'autosync_' در آنجا با نام فایل های مشابه وجود دارد. آیا می‌خواهید این‌ها را رد کنید؟",
     "id": "Terdeteksi {count} subtitle yang sudah disinkronkan, karena ada subtitle yang memiliki awalan 'autosync_' di folder yang sama dengan nama file yang sama. Apakah Anda ingin melewati pemrosesan mereka?",
-    "ms": "Dikesan {count} subtitle yang sudah disegerakkan, karena ada subtitle yang memiliki awalan 'autosync_' dalam folder yang sama dengan nama fail yang sama. Adakah Anda ingin melewatkan proses mereka?"
+    "ms": "Dikesan {count} subtitle yang sudah disegerakkan, karena ada subtitle yang memiliki awalan 'autosync_' dalam folder yang sama dengan nama fail yang sama. Adakah Anda ingin melewatkan proses mereka?",
+    "th": "ตรวจพบ {count} คำบรรยายที่ซิงค์แล้ว เนื่องจากมีคำบรรยายที่มีคำนำหน้า 'autosync_' ในโฟลเดอร์เดียวกันและมีชื่อไฟล์เดียวกัน ต้องการข้ามการประมวลผลหรือไม่?"
 }
 SUBTITLE_INPUT_TEXT = {
     "en": "Drag and drop the unsynchronized subtitle file here or click to browse.",
@@ -804,7 +838,8 @@ SUBTITLE_INPUT_TEXT = {
     "vi": "Kéo và thả tệp phụ đề chưa đồng bộ vào đây hoặc nhấp để duyệt.",
     "fa": "فایل زیرنویس غیرهمگام را اینجا بکشید و رها کنید یا برای مرور کلیک کنید.",
     "id": "Seret dan lepas file subtitle yang belum disinkronkan di sini atau klik untuk menelusuri.",
-    "ms": "Tarik dan lepaskan fail subtitle yang belum disegerakkan di sini atau klik untuk melihat."
+    "ms": "Tarik dan lepaskan fail subtitle yang belum disegerakkan di sini atau klik untuk melihat.",
+    "th": "ลากและวางไฟล์คำบรรยายที่ยังไม่ซิงค์ที่นี่ หรือคลิกเพื่อเรียกดู"
 }
 VIDEO_INPUT_TEXT = {
     "en": "Drag and drop video or reference subtitle file here or click to browse.",
@@ -826,7 +861,8 @@ VIDEO_INPUT_TEXT = {
     "vi": "Kéo và thả tệp phụ đề video hoặc tham chiếu vào đây hoặc nhấp để duyệt.",
     "fa": "ویدیو یا فایل زیرنویس مرجع را اینجا بکشید و رها کنید یا برای مرور کلیک کنید.",
     "id": "Seret dan lepas video atau file subtitle referensi di sini atau klik untuk menelusuri.",
-    "ms": "Tarik dan lepaskan fail video atau fail subtitle referensi di sini atau klik untuk melihat."
+    "ms": "Tarik dan lepaskan fail video atau fail subtitle referensi di sini atau klik untuk melihat.",
+    "th": "ลากและวางวิดีโอหรือไฟล์คำบรรยายอ้างอิงที่นี่ หรือคลิกเพื่อเรียกดู"
 }
 LABEL_DROP_BOX = {
     "en": "Drag and drop subtitle file here or click to browse.",
@@ -848,7 +884,8 @@ LABEL_DROP_BOX = {
     "vi": "Kéo và thả tệp phụ đề vào đây hoặc nhấp để duyệt.",
     "fa": "فایل زیرنویس را اینجا بکشید و رها کنید یا برای مرور کلیک کنید.",
     "id": "Seret dan lepas file subtitle di sini atau klik untuk menelusuri.",
-    "ms": "Tarik dan lepaskan fail subtitle di sini atau klik untuk melihat."
+    "ms": "Tarik dan lepaskan fail subtitle di sini atau klik untuk melihat.",
+    "th": "ลากและวางไฟล์คำบรรยายที่นี่ หรือคลิกเพื่อเรียกดู"
 }
 WARNING = {
     "en": "Warning",
@@ -870,7 +907,8 @@ WARNING = {
     "vi": "Cảnh Báo",
     "fa": "هشدار",
     "id": "Peringatan",
-    "ms": "Amaran"
+    "ms": "Amaran",
+    "th": "คำเตือน"
 }
 CONFIRM_RESET_MESSAGE = {
     "en": "Are you sure you want to reset settings to default values?",
@@ -892,7 +930,8 @@ CONFIRM_RESET_MESSAGE = {
     "vi": "Bạn có chắc chắn muốn đặt lại cài đặt mặc định?",
     "fa": "آیا از بازنشانی تنظیمات به مقادیر پیش‌فرض اطمینان دارید؟",
     "id": "Apakah Anda yakin ingin mereset pengaturan ke nilai default?",
-    "ms": "Adakah anda pasti anda mahu tetapkan tetapan ke nilai lalai?"
+    "ms": "Adakah anda pasti anda mahu tetapkan tetapan ke nilai lalai?",
+    "th": "คุณต้องการที่จะรีเซ็ตการตั้งค่าเป็นค่าเริ่มต้น?"
 }
 TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = {
     "en": 'Subtitles with "converted_subtitlefilename" in the output folder will be deleted automatically. Do you want to continue?',
@@ -914,7 +953,8 @@ TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = {
     "vi": 'Phụ đề với "converted_subtitlefilename" trong thư mục đầu ra sẽ bị xóa tự động. Bạn có muốn tiếp tục không?',
     "fa": 'زیرنویس‌هایی که "converted_subtitlefilename" در پوشه خروجی دارند، به صورت خودکار حذف می‌شوند. آیا می‌خواهید ادامه دهید؟',
     "id": 'Subtitle dengan "converted_subtitlefilename" di folder output akan dihapus secara otomatis. Apakah Anda ingin melanjutkan?',
-    "ms": 'Subtitular yang mempunyai "converted_subtitlefilename" dalam folder keluaran akan dihapuskan secara automatik. Adakah anda mahu meneruskan?'
+    "ms": 'Subtitular yang mempunyai "converted_subtitlefilename" dalam folder keluaran akan dihapuskan secara automatik. Adakah anda mahu meneruskan?',
+    "th": 'คำบรรยายที่มี "converted_subtitlefilename" ในโฟลเดอร์ผลลัพธ์จะถูกลบอัตโนมัติ ต้องการดำเนินการต่อหรือไม่?'
 }
 TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = {
     "en": 'Folders with "extracted_subtitles_videofilename" in the output folder will be deleted automatically. Do you want to continue?',
@@ -936,7 +976,8 @@ TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = {
     "vi": 'Thư mục với "extracted_subtitles_videofilename" trong thư mục đầu ra sẽ bị xóa tự động. Bạn có muốn tiếp tục không?',
     "fa": 'پوشه‌هایی که "extracted_subtitles_videofilename" در پوشه خروجی دارند، به صورت خودکار حذف می‌شوند. آیا می‌خواهید ادامه دهید؟',
     "id": 'Folder dengan "extracted_subtitles_videofilename" di folder output akan dihapus secara otomatis. Apakah Anda ingin melanjutkan?',
-    "ms": 'Folder yang mempunyai "extracted_subtitles_videofilename" dalam folder keluaran akan dihapuskan secara automatik. Adakah anda mahu meneruskan?'
+    "ms": 'Folder yang mempunyai "extracted_subtitles_videofilename" dalam folder keluaran akan dihapuskan secara automatik. Adakah anda mahu meneruskan?',
+    "th": 'โฟลเดอร์ที่มี "extracted_subtitles_videofilename" ในโฟลเดอร์เอาต์พุตจะถูกลบโดยอัตโนมัติ คุณต้องการดำเนินการต่อหรือไม่?'
 }
 BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = {
     "en": "Existing subtitle files will not be backed up before overwriting. Do you want to continue?",
@@ -958,7 +999,8 @@ BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = {
     "vi": "Các tệp phụ đề hiện có sẽ không được sao lưu trước khi ghi đè. Bạn có muốn tiếp tục không?",
     "fa": "فایل‌های زیرنویس موجود پشتیبان گیری نخواهند شد قبل از بازنویسی. آیا می‌خواهید ادامه دهید؟",
     "id": "File subtitle yang ada tidak akan dipulihkan sebelum ditimpa. Apakah Anda ingin melanjutkan?",
-    "ms": "Fail subtitle yang ada tidak akan disalin sebelum ditimpa. Adakah anda mahu meneruskan?"
+    "ms": "Fail subtitle yang ada tidak akan disalin sebelum ditimpa. Adakah anda mahu meneruskan?",
+    "th": "ไฟล์คำบรรยายที่มีอยู่จะไม่ถูกสำรองก่อนเขียนทับ ต้องการดำเนินการต่อหรือไม่?"
 }
 PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = {
     "en": "Enter additional arguments for ffsubsync:",
@@ -980,7 +1022,8 @@ PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = {
     "vi": "Nhập các đối số bổ sung cho ffsubsync:",
     "fa": "وارد کردن آرگومان‌های اضافی برای ffsubsync:",
     "id": "Masukkan argumen tambahan untuk ffsubsync:",
-    "ms": "Masukkan argumen tambahan untuk ffsubsync:"
+    "ms": "Masukkan argumen tambahan untuk ffsubsync:",
+    "th": "ป้อนอาร์กิวเมนต์เพิ่มเติมสำหรับ ffsubsync:"
 }
 PROMPT_ADDITIONAL_ALASS_ARGS = {
     "en": "Enter additional arguments for alass:",
@@ -1002,7 +1045,8 @@ PROMPT_ADDITIONAL_ALASS_ARGS = {
     "vi": "Nhập các đối số bổ sung cho alass:",
     "fa": "وارد کردن آرگومان‌های اضافی برای alass:",
     "id": "Masukkan argumen tambahan untuk alass:",
-    "ms": "Masukkan argumen tambahan untuk alass:"
+    "ms": "Masukkan argumen tambahan untuk alass:",
+    "th": "ป้อนอาร์กิวเมนต์เพิ่มเติมสำหรับ alass:"
 }
 LABEL_ADDITIONAL_FFSUBSYNC_ARGS = {
     "en": "Additional arguments for ffsubsync",
@@ -1024,7 +1068,8 @@ LABEL_ADDITIONAL_FFSUBSYNC_ARGS = {
     "vi": "Các đối số bổ sung cho ffsubsync",
     "fa": "آرگومان‌های اضافی برای ffsubsync",
     "id": "Argumen tambahan untuk ffsubsync",
-    "ms": "Argumen tambahan untuk ffsubsync"
+    "ms": "Argumen tambahan untuk ffsubsync",
+    "th": "อาร์กิวเมนต์เพิ่มเติมสำหรับ ffsubsync"
 }
 LABEL_ADDITIONAL_ALASS_ARGS = {
     "en": "Additional arguments for alass",
@@ -1046,7 +1091,8 @@ LABEL_ADDITIONAL_ALASS_ARGS = {
     "vi": "Các đối số bổ sung cho alass",
     "fa": "آرگومان‌های اضافی برای alass",
     "id": "Argumen tambahan untuk alass",
-    "ms": "Argumen tambahan untuk alass"
+    "ms": "Argumen tambahan untuk alass",
+    "th": "อาร์กิวเมนต์เพิ่มเติมสำหรับ alass"
 }
 LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "en": "Check video for subtitle streams in alass",
@@ -1068,7 +1114,8 @@ LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "vi": "Kiểm tra video để tìm các luồng phụ đề trong alass",
     "fa": "بررسی ویدیو برای جریان‌های زیرنویس در alass",
     "id": "Periksa video untuk aliran subtitle di alass",
-    "ms": "Semak video untuk aliran subtitle di alass"
+    "ms": "Semak video untuk aliran subtitle di alass",
+    "th": "ตรวจสอบวิดีโอสำหรับสตรีมคำบรรยายใน alass"
 }
 LABEL_BACKUP_SUBTITLES = {
     "en": "Backup subtitles before overwriting",
@@ -1090,7 +1137,8 @@ LABEL_BACKUP_SUBTITLES = {
     "vi": "Sao lưu phụ đề trước khi ghi đè",
     "fa": "پشتیبان‌گیری از زیرنویس‌ها قبل از بازنویسی",
     "id": "Cadangkan subtitle sebelum ditimpa",
-    "ms": "Cadangkan subtitle sebelum ditimpa"
+    "ms": "Cadangkan subtitle sebelum ditimpa",
+    "th": "สำรองคำบรรยายก่อนเขียนทับ"
 }
 LABEL_KEEP_CONVERTED_SUBTITLES = {
     "en": "Keep converted subtitles",
@@ -1112,7 +1160,8 @@ LABEL_KEEP_CONVERTED_SUBTITLES = {
     "vi": "Giữ phụ đề đã chuyển đổi",
     "fa": "نگهداری زیرنویس‌های تبدیل‌شده",
     "id": "Simpan subtitle yang telah diubah",
-    "ms": "Simpan subtitle yang telah diubah"
+    "ms": "Simpan subtitle yang telah diubah",
+    "th": "เก็บคำบรรยายที่แปลงแล้ว"
 }
 LABEL_KEEP_EXTRACTED_SUBTITLES = {
     "en": "Keep extracted subtitles",
@@ -1134,7 +1183,8 @@ LABEL_KEEP_EXTRACTED_SUBTITLES = {
     "vi": "Giữ phụ đề đã trích xuất",
     "fa": "نگهداری زیرنویس‌های استخراج‌شده",
     "id": "Simpan subtitle yang diekstrak",
-    "ms": "Simpan subtitle yang diekstrak"
+    "ms": "Simpan subtitle yang diekstrak",
+    "th": "เก็บคำบรรยายที่แยกออกมา"
 }
 LABEL_REMEMBER_THE_CHANGES = {
     "en": "Remember the changes",
@@ -1156,7 +1206,8 @@ LABEL_REMEMBER_THE_CHANGES = {
     "vi": "Nhớ các thay đổi",
     "fa": "یادآوری تغییرات",
     "id": "Ingat perubahan",
-    "ms": "Ingat perubahan"
+    "ms": "Ingat perubahan",
+    "th": "จดจำการเปลี่ยนแปลง"
 }
 LABEL_RESET_TO_DEFAULT_SETTINGS = {
     "en": "Reset to default settings",
@@ -1178,7 +1229,8 @@ LABEL_RESET_TO_DEFAULT_SETTINGS = {
     "vi": "Đặt lại thành cài đặt mặc định",
     "fa": "بازنشانی به تنظیمات پیش‌فرض",
     "id": "Setel ulang ke pengaturan default",
-    "ms": "Tetapkan ke tetapan laluan default"
+    "ms": "Tetapkan ke tetapan laluan default",
+    "th": "รีเซ็ตการตั้งค่าเริ่มต้น"
 }
 LABEL_KEEP_LOG_RECORDS = {
     "en": "Keep log records",
@@ -1200,7 +1252,8 @@ LABEL_KEEP_LOG_RECORDS = {
     "vi": "Giữ hồ sơ nhật ký",
     "fa": "نگهداری سوابق ورود",
     "id": "Simpan catatan log",
-    "ms": "Simpan catatan log"
+    "ms": "Simpan catatan log",
+    "th": "เก็บบันทึกล็อก"
 }
 LABEL_OPEN_LOGS_FOLDER = {
     "en": "Open logs folder",
@@ -1222,7 +1275,8 @@ LABEL_OPEN_LOGS_FOLDER = {
     "vi": "Mở thư mục nhật ký",
     "fa": "بازکردن پوشه ورود",
     "id": "Buka folder log",
-    "ms": "Buka folder log"
+    "ms": "Buka folder log",
+    "th": "เปิดโฟลเดอร์บันทึก"
 }
 LABEL_CLEAR_ALL_LOGS = {
     "en": "Clear all logs",
@@ -1244,7 +1298,8 @@ LABEL_CLEAR_ALL_LOGS = {
     "vi": "Xóa tất cả các nhật ký",
     "fa": "حذف همه ورودی‌ها",
     "id": "Hapus semua log",
-    "ms": "Padamkan semua log"
+    "ms": "Padamkan semua log",
+    "th": "ล้างบันทึกทั้งหมด"
 }
 LOG_FILES_DELETE_WARNING = {
     "en": "There are {count} log files. Do you want to delete them?",
@@ -1266,7 +1321,8 @@ LOG_FILES_DELETE_WARNING = {
     "vi": "Có {count} tệp nhật ký. Bạn có muốn xóa chúng không?",
     "fa": "تعداد {count} فایل ورودی وجود دارد. آیا می‌خواهید آن‌ها را حذف کنید؟",
     "id": "Ada {count} file log. Apakah Anda ingin menghapusnya?",
-    "ms": "Ada {count} log file. Adakah anda ingin memadamkan mereka?"
+    "ms": "Ada {count} log file. Adakah anda ingin memadamkan mereka?",
+    "th": "มีไฟล์บันทึก {count} ไฟล์ คุณต้องการลบพวกมันหรือไม่?"
 }
 SYNC_TOOL_FFSUBSYNC = {
     "en": "ffsubsync",
@@ -1288,7 +1344,8 @@ SYNC_TOOL_FFSUBSYNC = {
     "vi": "ffsubsync",
     "fa": "ffsubsync",
     "id": "ffsubsync",
-    "ms": "ffsubsync"
+    "ms": "ffsubsync",
+    "th": "ffsubsync"
 }
 SYNC_TOOL_ALASS = {
     "en": "alass",
@@ -1310,7 +1367,8 @@ SYNC_TOOL_ALASS = {
     "vi": "alass",
     "fa": "alass",
     "id": "alass",
-    "ms": "alass"
+    "ms": "alass",
+    "th": "alass"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_SUBTITLE = {
@@ -1333,7 +1391,8 @@ OPTION_SAVE_NEXT_TO_SUBTITLE = {
     "vi": "Lưu kế bên phụ đề đầu vào",
     "fa": "زیرنویس ورودی را ذخیره کنید",
     "id": "Simpan di samping subtitle input",
-    "ms": "Simpan di samping subtitle input"
+    "ms": "Simpan di samping subtitle input",
+    "th": "บันทึกไว้ข้างกับอินพุตคำบรรยาย"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO = {
@@ -1356,7 +1415,8 @@ OPTION_SAVE_NEXT_TO_VIDEO = {
     "vi": "Lưu kế bên video",
     "fa": "نزدیک به ویدیو ذخیره کنید",
     "id": "Simpan di samping video",
-    "ms": "Simpan di samping video"
+    "ms": "Simpan di samping video",
+    "th": "บันทึกถัดจากวิดีโอ"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = {
@@ -1379,7 +1439,8 @@ OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = {
     "vi": "Lưu kế bên video với cùng tên tệp",
     "fa": "نزدیک به ویدیو با همان نام فایل ذخیره کنید",
     "id": "Simpan di samping video dengan nama file yang sama",
-    "ms": "Simpan di samping video dengan nama file yang sama"
+    "ms": "Simpan di samping video dengan nama file yang sama",
+    "th": "บันทึกถัดจากวิดีโอโดยใช้ชื่อไฟล์เดียวกัน"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SAVE_TO_DESKTOP = {
@@ -1402,7 +1463,8 @@ OPTION_SAVE_TO_DESKTOP = {
     "vi": "Lưu vào Máy tính",
     "fa": "ذخیره در رومیزی",
     "id": "Simpan ke Desktop",
-    "ms": "Simpan ke Desktop"
+    "ms": "Simpan ke Desktop",
+    "th": "บันทึกลงเดสก์ท็อป"
 }
 # TEXT SHOULD BE SHORT
 OPTION_REPLACE_ORIGINAL_SUBTITLE = {
@@ -1425,7 +1487,8 @@ OPTION_REPLACE_ORIGINAL_SUBTITLE = {
     "vi": "Ghi đè phụ đề đầu vào",
     "fa": "بازنویسی زیرنویس ورودی",
     "id": "Timpa subtitle input",
-    "ms": "Tulis ulang subtitle input"
+    "ms": "Tulis ulang subtitle input",
+    "th": "เขียนทับคำบรรยายที่ป้อน"
 }
 # TEXT SHOULD BE SHORT
 OPTION_SELECT_DESTINATION_FOLDER = {
@@ -1448,7 +1511,8 @@ OPTION_SELECT_DESTINATION_FOLDER = {
     "vi": "Chọn thư mục đích",
     "fa": "انتخاب پوشه مقصد",
     "id": "Pilih folder tujuan",
-    "ms": "Pilih folder tujuan"
+    "ms": "Pilih folder tujuan",
+    "th": "เลือกโฟลเดอร์ปลายทาง"
 }
 CHECKBOX_NO_FIX_FRAMERATE = {
     "en": "Don't fix framerate",
@@ -1470,7 +1534,8 @@ CHECKBOX_NO_FIX_FRAMERATE = {
     "vi": "Không sửa đổi tốc độ khung hình",
     "fa": "فریم ریت را اصلاح نکنید",
     "id": "Jangan perbaiki framerate",
-    "ms": "Jangan perbaiki framerate"
+    "ms": "Jangan perbaiki framerate",
+    "th": "อย่าแก้ไขอัตราเฟรม"
 }
 CHECKBOX_GSS = {
     "en": "Use golden-section search",
@@ -1492,7 +1557,8 @@ CHECKBOX_GSS = {
     "vi": "Sử dụng tìm kiếm tỷ lệ vàng",
     "fa": "از جستجوی بخش طلایی استفاده کنید",
     "id": "Gunakan pencarian golden-section",
-    "ms": "Gunakan golden-section search"
+    "ms": "Gunakan golden-section search",
+    "th": "ใช้การค้นหาส่วนทองคำ"
 }
 CHECKBOX_VAD = {
     "en": "Use auditok instead of WebRTC's VAD",
@@ -1514,7 +1580,8 @@ CHECKBOX_VAD = {
     "vi": "Sử dụng auditok thay vì VAD của WebRTC",
     "fa": "از auditok به جای VAD WebRTC استفاده کنید",
     "id": "Gunakan auditok alih-alih VAD WebRTC",
-    "ms": "Gunakan auditok alih-alih VAD WebRTC"
+    "ms": "Gunakan auditok alih-alih VAD WebRTC",
+    "th": "ใช้ auditok แทน VAD ของ WebRTC"
 }
 # TEXT SHOULD BE SHORT
 LABEL_SPLIT_PENALTY = {
@@ -1537,7 +1604,8 @@ LABEL_SPLIT_PENALTY = {
     "vi": "Phạt chia (Mặc định: 7, Đề xuất: 5-20, Không chia: 0)",
     "fa": "جریمه اقساط (پیش‌فرض: 7، پیشنهاد: 5-20، بدون اقساط: 0)",
     "id": "Pemisahan Denda (Default: 7, Direkomendasikan: 5-20, Tanpa pemisahan: 0)",
-    "ms": "Pemisahan Denda (Default: 7, Direkomendasikan: 5-20, Tanpa pemisahan: 0)"
+    "ms": "Pemisahan Denda (Default: 7, Direkomendasikan: 5-20, Tanpa pemisahan: 0)",
+    "th": "การลงโทษการแยก (ค่าเริ่มต้น: 7, แนะนำ: 5-20, ไม่มีการแยก: 0)"
 }
 PAIR_FILES_TITLE = {
     "en": "Pair Files",
@@ -1559,7 +1627,8 @@ PAIR_FILES_TITLE = {
     "vi": "Ghép cặp Tệp",
     "fa": "جفت فایل‌ها",
     "id": "Pasangkan File",
-    "ms": "Pasangkan File"
+    "ms": "Pasangkan File",
+    "th": "จับคู่ไฟล์"
 }
 PAIR_FILES_MESSAGE = {
     "en": "The subtitle and video have different filenames. Do you want to pair them?",
@@ -1581,7 +1650,8 @@ PAIR_FILES_MESSAGE = {
     "vi": "Phụ đề và video có tên tệp khác nhau. Bạn có muốn ghép chúng không?",
     "fa": "زیرنویس و ویدیو نام‌های فایل متفاوتی دارند. آیا می‌خواهید آن‌ها را جفت کنید؟",
     "id": "Subtitle dan video memiliki nama file yang berbeda. Apakah Anda ingin memasangkan mereka?",
-    "ms": "Subtitle dan video memiliki nama file yang berbeza. Adakah Anda mahu mengikatkan mereka?"
+    "ms": "Subtitle dan video memiliki nama file yang berbeza. Adakah Anda mahu mengikatkan mereka?",
+    "th": "ไฟล์คำบรรยายและวิดีโอมีชื่อไฟล์ต่างกัน คุณต้องการจับคู่พวกเขาหรือไม่?"
 }
 UNPAIRED_SUBTITLES_TITLE = {
     "en": "Unpaired Subtitles",
@@ -1603,7 +1673,8 @@ UNPAIRED_SUBTITLES_TITLE = {
     "vi": "Phụ Đề Không Ghép Cặp",
     "fa": "زیرنویس‌های جفت نشده",
     "id": "Subtitle Tidak Dipasangkan",
-    "ms": "Subtitle Tidak Dipasangkan"
+    "ms": "Subtitle Tidak Dipasangkan",
+    "th": "คำบรรยายที่ยังไม่จับคู่"
 }
 UNPAIRED_SUBTITLES_MESSAGE = {
     "en": "There are {unpaired_count} unpaired subtitle(s). Do you want to add them as subtitles with [no video/reference subtitle] tag?",
@@ -1625,7 +1696,8 @@ UNPAIRED_SUBTITLES_MESSAGE = {
     "vi": "Có {unpaired_count} phụ đề chưa ghép cặp. Bạn có muốn thêm chúng như phụ đề với thẻ [không video/phụ đề tham chiếu] không?",
     "fa": "{unpaired_count} عنوان فرعی جفت نشده است. آیا می‌خواهید آن‌ها را به عنوان فرعی برچسب [بدون فيديو/نشانی اصلی] اضافه کنید؟",
     "id": "Ada {unpaired_count} subtitle yang tidak dipasangkan. Apakah Anda ingin menambahkannya sebagai subtitle dengan tag [no video/reference subtitle]?",
-    "ms": "Ada {unpaired_count} subtitle yang tidak dipasangkan. Adakah Anda ingin menambahkannya sebagai subtitle dengan tag [no video/reference subtitle]?"
+    "ms": "Ada {unpaired_count} subtitle yang tidak dipasangkan. Adakah Anda ingin menambahkannya sebagai subtitle dengan tag [no video/reference subtitle]?",
+    "th": "มีคำบรรยายที่ยังไม่จับคู่ {unpaired_count} รายการ คุณต้องการเพิ่มเป็นคำบรรยายที่มีป้าย [ไม่มีวิดีโอ/คำบรรยายอ้างอิง] หรือไม่?"
 }
 NO_VIDEO = {
     "en": "[no video/reference subtitle]",
@@ -1647,7 +1719,8 @@ NO_VIDEO = {
     "vi": "[không video/phụ đề tham chiếu]",
     "fa": "[بدون ویدیو/زیرنویس مرجع]",
     "id": "[no video/reference subtitle]",
-    "ms": "[no video/reference subtitle]"
+    "ms": "[no video/reference subtitle]",
+    "th": "[ไม่มีวิดีโอ/คำบรรยายอ้างอิง]"
 }
 NO_SUBTITLE = {
     "en": "[no subtitle]",
@@ -1669,7 +1742,8 @@ NO_SUBTITLE = {
     "vi": "[không phụ đề]",
     "fa": "[بدون زیرنویس]",
     "id": "[no subtitle]",
-    "ms": "[no subtitle]"
+    "ms": "[no subtitle]",
+    "th": "[ไม่มีคำบรรยาย]"
 }
 VIDEO_OR_SUBTITLE_TEXT = {
     "en": "Video or subtitle",
@@ -1691,7 +1765,8 @@ VIDEO_OR_SUBTITLE_TEXT = {
     "vi": "Video hoặc phụ đề",
     "fa": "ویدیو یا زیرنویس",
     "id": "Video atau subtitle",
-    "ms": "Video atau subtitle"
+    "ms": "Video atau subtitle",
+    "th": "วิดีโอหรือคำบรรยาย"
 }
 VIDEO_INPUT_LABEL = {
     "en": "Video/Reference subtitle",
@@ -1713,7 +1788,8 @@ VIDEO_INPUT_LABEL = {
     "vi": "Video/Phụ đề tham chiếu",
     "fa": "ویدیو/زیرنویس مرجع",
     "id": "Video/Subtitle referensi",
-    "ms": "Video/Subtitle referensi"
+    "ms": "Video/Subtitle referensi",
+    "th": "วิดีโอ/คำบรรยายอ้างอิง"
 }
 SUBTITLE_INPUT_LABEL = {
     "en": "Input Subtitle",
@@ -1735,7 +1811,8 @@ SUBTITLE_INPUT_LABEL = {
     "vi": "Phụ đề đầu vào",
     "fa": "زیرنویس ورودی",
     "id": "Subtitle Input",
-    "ms": "Subtitle Input"
+    "ms": "Subtitle Input",
+    "th": "คำบรรยายที่ป้อน"
 }
 SUBTITLE_FILES_TEXT = {
     "en": "Subtitle files",
@@ -1757,7 +1834,8 @@ SUBTITLE_FILES_TEXT = {
     "vi": "Tệp phụ đề",
     "fa": "فایل‌های زیرنویس",
     "id": "File Subtitle",
-    "ms": "File subtitle"
+    "ms": "File subtitle",
+    "th": "ไฟล์คำบรรยาย"
 }
 CONTEXT_MENU_REMOVE = {
     "en": "Remove",
@@ -1779,7 +1857,8 @@ CONTEXT_MENU_REMOVE = {
     "vi": "Xóa",
     "fa": "حذف",
     "id": "Hapus",
-    "ms": "Buang"
+    "ms": "Buang",
+    "th": "ลบ"
 }
 CONTEXT_MENU_CHANGE = {
     "en": "Change",
@@ -1801,7 +1880,8 @@ CONTEXT_MENU_CHANGE = {
     "vi": "Thay đổi",
     "fa": "تغییر",
     "id": "Ubah",
-    "ms": "Tukar"
+    "ms": "Tukar",
+    "th": "เปลี่ยน"
 }
 CONTEXT_MENU_ADD_PAIR = {
     "en": "Add Pair",
@@ -1823,7 +1903,8 @@ CONTEXT_MENU_ADD_PAIR = {
     "vi": "Thêm cặp",
     "fa": "افزودن جفت",
     "id": "Tambahkan Pasangan",
-    "ms": "Tambahkan Pasangan"
+    "ms": "Tambahkan Pasangan",
+    "th": "เพิ่มคู่"
 }
 CONTEXT_MENU_CLEAR_ALL = {
     "en": "Clear All",
@@ -1845,7 +1926,8 @@ CONTEXT_MENU_CLEAR_ALL = {
     "vi": "Xóa Tất Cả",
     "fa": "پاک کردن همه",
     "id": "Hapus Semua",
-    "ms": "Kosongkan Semua"
+    "ms": "Kosongkan Semua",
+    "th": "ล้างทั้งหมด"
 }
 CONTEXT_MENU_SHOW_PATH = {
     "en": "Show path",
@@ -1867,7 +1949,8 @@ CONTEXT_MENU_SHOW_PATH = {
     "vi": "Hiển thị đường dẫn",
     "fa": "نمایش مسیر",
     "id": "Tampilkan jalur",
-    "ms": "Tunjukkan jalur"
+    "ms": "Tunjukkan jalur",
+    "th": "แสดงเส้นทาง"
 }
 BUTTON_ADD_FILES = {
     "en": "Add files",
@@ -1889,7 +1972,8 @@ BUTTON_ADD_FILES = {
     "vi": "Thêm tệp",
     "fa": "اضافه کردن فایل‌ها",
     "id": "Tambahkan file",
-    "ms": "Tambahkan file"
+    "ms": "Tambahkan file",
+    "th": "เพิ่มไฟล์"
 }
 MENU_ADD_FOLDER = {
     "en": "Add Folder",
@@ -1911,7 +1995,8 @@ MENU_ADD_FOLDER = {
     "vi": "Thêm Thư Mục",
     "fa": "افزودن پوشه",
     "id": "Tambahkan Folder",
-    "ms": "Tambahkan Folder"
+    "ms": "Tambahkan Folder",
+    "th": "เพิ่มโฟลเดอร์"
 }
 MENU_ADD_MULTIPLE_FILES = {
     "en": "Add Multiple Files",
@@ -1933,7 +2018,8 @@ MENU_ADD_MULTIPLE_FILES = {
     "vi": "Thêm Nhiều Tệp",
     "fa": "افزودن چند فایل",
     "id": "Tambahkan Banyak File",
-    "ms": "Tambahkan Beberapa File"
+    "ms": "Tambahkan Beberapa File",
+    "th": "เพิ่มไฟล์หลายไฟล์"
 }
 MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "en": "Auto-Pairing with Season/Episode",
@@ -1955,7 +2041,8 @@ MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "vi": "Tự động ghép nối với Mùa/Tập",
     "fa": "جفت‌کردن خودکار با فصل/قسمت",
     "id": "Pencocokan Otomatis dengan Musim/Episode",
-    "ms": "Auto-Pairing dengan Musim/Episode"
+    "ms": "Auto-Pairing dengan Musim/Episode",
+    "th": "การจับคู่โดยอัตโนมัติด้วยซีซั่น/ตอน"
 }
 ALASS_SPEED_OPTIMIZATION_TEXT = {
     "en": "Disable speed optimization",
@@ -1977,7 +2064,8 @@ ALASS_SPEED_OPTIMIZATION_TEXT = {
     "vi": "Tắt tối ưu tốc độ",
     "fa": "غیرفعال کردن بهینه‌سازی سرعت",
     "id": "Nonaktifkan optimasi kecepatan",
-    "ms": "Nonaktifkan optimasi kecepatan"
+    "ms": "Nonaktifkan optimasi kecepatan",
+    "th": "ปิดการเพิ่มประสิทธิภาพความเร็ว"
 }
 ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "en": "Disable FPS guessing",
@@ -1999,7 +2087,8 @@ ALASS_DISABLE_FPS_GUESSING_TEXT = {
     "vi": "Tắt đoán FPS",
     "fa": "غیرفعال کردن حدس زدن FPS",
     "id": "Nonaktifkan Tebakan FPS",
-    "ms": "Nonaktifkan Tebakan FPS"
+    "ms": "Nonaktifkan Tebakan FPS",
+    "th": "ปิดการเดา FPS"
 }
 REF_DROP_TEXT = {
     "en": "Drop videos or reference subtitles here\nor click to browse.",
@@ -2021,7 +2110,8 @@ REF_DROP_TEXT = {
     "vi": "Kéo và thả video hoặc phụ đề tham chiếu vào đây\nhoặc nhấn để duyệt.",
     "fa": "ویدیو یا زیرنویس مرجع را اینجا بکشید\nیا برای مرور کلیک کنید.",
     "id": "Seret video atau subtitle referensi di sini\natau klik untuk menjelajah.",
-    "ms": "Letakkan video atau subtitle referensi di sini\natau klik untuk melihat."
+    "ms": "Letakkan video atau subtitle referensi di sini\natau klik untuk melihat.",
+    "th": "วางวิดีโอหรือคำบรรยายอ้างอิงที่นี่\nหรือคลิกเพื่อเรียกดู"
 }
 SUB_DROP_TEXT = {
     "en": "Drag and drop subtitles here\nor click to browse.",
@@ -2043,7 +2133,8 @@ SUB_DROP_TEXT = {
     "vi": "Kéo và thả phụ đề vào đây\nhoặc nhấn để duyệt.",
     "fa": "زیرنویس را اینجا بکشید\nیا برای مرور کلیک کنید.",
     "id": "Seret dan lepas subtitle di sini\natau klik untuk menjelajah.",
-    "ms": "Letakkan subtitle di sini\natau klik untuk melihat."
+    "ms": "Letakkan subtitle di sini\natau klik untuk melihat.",
+    "th": "ลากและวางคำบรรยายที่นี่\nหรือคลิกเพื่อเรียกดู"
 }
 REF_LABEL_TEXT = {
     "en": "Videos/Reference Subtitles",
@@ -2065,7 +2156,8 @@ REF_LABEL_TEXT = {
     "vi": "Video/Phụ đề tham chiếu",
     "fa": "ویدیو/زیرنویس مرجع",
     "id": "Video/Subtitle Referensi",
-    "ms": "Video/Subtitan Referensi"
+    "ms": "Video/Subtitan Referensi",
+    "th": "วิดีโอ/คำบรรยายอ้างอิง"
 }
 SUB_LABEL_TEXT = {
     "en": "Input Subtitles",
@@ -2087,7 +2179,8 @@ SUB_LABEL_TEXT = {
     "vi": "Phụ đề đầu vào",
     "fa": "زیرنویس ورودی",
     "id": "Subtitle Input",
-    "ms": "Subtitle Input"
+    "ms": "Subtitle Input",
+    "th": "คำบรรยายที่ป้อน"
 }
 PROCESS_PAIRS = {
     "en": "Add Pairs",
@@ -2109,7 +2202,8 @@ PROCESS_PAIRS = {
     "vi": "Thêm cặp",
     "fa": "افزودن جفت",
     "id": "Tambahkan Pasangan",
-    "ms": "Tambahkan Pasangan"
+    "ms": "Tambahkan Pasangan",
+    "th": "เพิ่มการจับคู่"
 }
 # TEXT SHOULD BE SHORT
 SYNC_TOOL_LABEL_TEXT = {
@@ -2132,7 +2226,8 @@ SYNC_TOOL_LABEL_TEXT = {
     "vi": "Đồng bộ. với",
     "fa": "همگام‌سازی با",
     "id": "Sinkron via",
-    "ms": "Segerak guna"
+    "ms": "Segerak guna",
+    "th": "ซิงค์โดยใช้"
 }
 EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING = {
     "en": """How the Pairing Works?
@@ -2214,7 +2309,11 @@ EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING = {
     "ms": """Bagaimana Gandingan Berfungsi?
     {program_name} akan memadankan video atau sari kata rujukan secara automatik dengan fail sari kata menggunakan nama yang serupa.
     Contohnya: "S01E01.srt/mkv" akan digandingkan dengan "1x01.srt"
-    Gabungan yang disokong: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
+    Gabungan yang disokong: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "th": """การจับคู่ทำงานอย่างไร?
+    {program_name} จะจับคู่ไฟล์วิดีโอหรือคำบรรยายอ้างอิงกับไฟล์คำบรรยายโดยอัตโนมัติโดยใช้ชื่อที่คล้ายกัน
+    ตัวอย่างเช่น: "S01E01.srt/mkv" จะจับคู่กับ "1x01.srt"
+    การจับคู่ที่รองรับ: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "en": """How the Pairing Works?
@@ -2296,7 +2395,11 @@ EXPLANATION_TEXT_IN_REFERENCE__SUBTITLE_PARIRING = {
     "ms": """Bagaimana Gandingan Berfungsi?
     """+PROGRAM_NAME+""" akan memadankan video atau sari kata rujukan secara automatik dengan fail sari kata menggunakan nama yang serupa.
     Contohnya: "S01E01.srt/mkv" akan digandingkan dengan "1x01.srt"
-    Gabungan yang disokong: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
+    Gabungan yang disokong: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101""",
+    "th": """การจับคู่ทำงานอย่างไร?
+    """+PROGRAM_NAME+""" จะจับคู่ไฟล์วิดีโอหรือคำบรรยายอ้างอิงกับไฟล์คำบรรยายโดยอัตโนมัติโดยใช้ชื่อที่คล้ายกัน
+    ตัวอย่างเช่น: "S01E01.srt/mkv" จะจับคู่กับ "1x01.srt"
+    การจับคู่ที่รองรับ: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"""
 }
 THEME_TEXT = {
     "en": "Theme",
@@ -2318,7 +2421,8 @@ THEME_TEXT = {
     "vi": "Chủ đề",
     "fa": "پوسته",
     "id": "Tema",
-    "ms": "Tema"
+    "ms": "Tema",
+    "th": "ธีม"
 }
 THEME_SYSTEM_TEXT = {
     "en": "System",
@@ -2340,7 +2444,8 @@ THEME_SYSTEM_TEXT = {
     "vi": "Hệ thống",
     "fa": "سیستم",
     "id": "Sistem",
-    "ms": "Sistem"
+    "ms": "Sistem",
+    "th": "ระบบ"
 }
 THEME_DARK_TEXT = {
     "en": "Dark",
@@ -2362,7 +2467,8 @@ THEME_DARK_TEXT = {
     "vi": "Tối",
     "fa": "تاریک",
     "id": "Gelap",
-    "ms": "Gelap"
+    "ms": "Gelap",
+    "th": "มืด"
 }
 THEME_LIGHT_TEXT = {
     "en": "Light",
@@ -2384,7 +2490,8 @@ THEME_LIGHT_TEXT = {
     "vi": "Sáng",
     "fa": "روشن",
     "id": "Cahaya",
-    "ms": "Cahaya"
+    "ms": "Cahaya",
+    "th": "สว่าง"
 }
 SUCCESS_LOG_TEXT = {
     "en": "Success! Subtitle shifted by {milliseconds} milliseconds and saved to: {new_subtitle_file}",
@@ -2406,7 +2513,8 @@ SUCCESS_LOG_TEXT = {
     "vi": "Thành công! Phụ đề được dời đi {milliseconds} mili giây và lưu vào: {new_subtitle_file}",
     "fa": "موفقیت! زیرنویس به میزان {milliseconds} میلی ثانیه جابجا شده و در: {new_subtitle_file} ذخیره شده است",
     "id": "Berhasil! Subtitle bergeser sebesar {milliseconds} milidetik dan disimpan ke: {new_subtitle_file}",
-    "ms": "Berjaya! Sari kata dialihkan sebanyak {milliseconds} milisaat dan disimpan ke: {new_subtitle_file}"
+    "ms": "Berjaya! Sari kata dialihkan sebanyak {milliseconds} milisaat dan disimpan ke: {new_subtitle_file}",
+    "th": "สำเร็จ! คำบรรยายถูกเลื่อนออกไป {milliseconds} มิลลิวินาที และบันทึกลงใน: {new_subtitle_file}"
 }
 SYNC_SUCCESS_MESSAGE = {
     "en": "Success! Synchronized subtitle saved to: {output_subtitle_file}",
@@ -2428,7 +2536,8 @@ SYNC_SUCCESS_MESSAGE = {
     "vi": "Thành công! Phụ đề được đồng bộ hóa và lưu vào: {output_subtitle_file}",
     "fa": "موفقیت! زیرنویس هماهنگ شده در: {output_subtitle_file} ذخیره شده است",
     "id": "Berhasil! Subjudul yang disinkronkan disimpan ke: {output_subtitle_file}",
-    "ms": "Berjaya! Sari kata disegerakkan disimpan ke: {output_subtitle_file}"
+    "ms": "Berjaya! Sari kata disegerakkan disimpan ke: {output_subtitle_file}",
+    "th": "สำเร็จ! คำบรรยายที่ซิงค์แล้วถูกบันทึกลงใน: {output_subtitle_file}"
 }
 ERROR_SAVING_SUBTITLE = {
     "en": "Error saving subtitle file: {error_message}",
@@ -2450,7 +2559,8 @@ ERROR_SAVING_SUBTITLE = {
     "vi": "Lỗi khi lưu tệp phụ đề: {error_message}",
     "fa": "خطا در ذخیره فایل زیرنویس: {error_message}",
     "id": "Kesalahan menyimpan file subtitle: {error_message}",
-    "ms": "Ralat menyimpan fail sari kata: {error_message}"
+    "ms": "Ralat menyimpan fail sari kata: {error_message}",
+    "th": "เกิดข้อผิดพลาดในการบันทึกไฟล์คำบรรยาย: {error_message}"
 }
 NON_ZERO_MILLISECONDS = {
     "en": "Please enter a non-zero value for milliseconds.",
@@ -2472,7 +2582,8 @@ NON_ZERO_MILLISECONDS = {
     "vi": "Vui lòng nhập giá trị khác không cho mili giây.",
     "fa": "لطفاً برای میلی‌ثانیه مقدار غیر صفر وارد کنید.",
     "id": "Masukkan nilai bukan nol untuk milidetik.",
-    "ms": "Sila masukkan nilai bukan sifar untuk milisaat."
+    "ms": "Sila masukkan nilai bukan sifar untuk milisaat.",
+    "th": "โปรดป้อนค่าที่ไม่เป็นศูนย์สำหรับมิลลิวินาที"
 }
 SELECT_ONLY_ONE_OPTION = {
     "en": "Please select only one option: Save to Desktop or Replace Input Subtitle.",
@@ -2494,7 +2605,8 @@ SELECT_ONLY_ONE_OPTION = {
     "vi": "Vui lòng chỉ chọn một tùy chọn: Lưu vào Máy tính hoặc Thay thế Phụ đề đầu vào.",
     "fa": "لطفاً تنها یک گزینه را انتخاب کنید: ذخیره در رومیزی یا جایگزینی زیرنویس ورودی.",
     "id": "Pilih hanya satu opsi: Simpan ke Desktop atau Ganti Teks Input.",
-    "ms": "Sila pilih hanya satu pilihan: Simpan ke Desktop atau Gantikan Sari Kata Input."
+    "ms": "Sila pilih hanya satu pilihan: Simpan ke Desktop atau Gantikan Sari Kata Input.",
+    "th": "โปรดเลือกเพียงตัวเลือกเดียว: บันทึกลงเดสก์ท็อปหรือแทนที่คำบรรยายที่ป้อน"
 }
 VALID_NUMBER_MILLISECONDS = {
     "en": "Please enter a valid number of milliseconds.",
@@ -2516,7 +2628,8 @@ VALID_NUMBER_MILLISECONDS = {
     "vi": "Vui lòng nhập số mili giây hợp lệ.",
     "fa": "لطفاً یک عدد صحیح از میلی‌ثانیه وارد کنید.",
     "id": "Masukkan jumlah milidetik yang valid.",
-    "ms": "Sila masukkan bilangan milisaat yang sah."
+    "ms": "Sila masukkan bilangan milisaat yang sah.",
+    "th": "โปรดป้อนจำนวนมิลลิวินาทีที่ถูกต้อง"
 }
 DIALOG_TITLE_TEXT = {
     "en": "Change log window font",
@@ -2538,7 +2651,8 @@ DIALOG_TITLE_TEXT = {
     "vi": "Thay đổi phông chữ cửa sổ nhật ký",
     "fa": "تغییر فونت پنجره گزارش",
     "id": "Mengubah font jendela log",
-    "ms": "Tukar fon tetingkap log"
+    "ms": "Tukar fon tetingkap log",
+    "th": "เปลี่ยนฟอนต์หน้าต่างบันทึกการเปลี่ยนแปลง"
 }
 FONT_FAMILY_LABEL_TEXT = {
     "en": "Select font family:",
@@ -2560,7 +2674,8 @@ FONT_FAMILY_LABEL_TEXT = {
     "vi": "Chọn họ phông chữ:",
     "fa": "انتخاب خانواده فونت:",
     "id": "Pilih keluarga font:",
-    "ms": "Pilih keluarga fon:"
+    "ms": "Pilih keluarga fon:",
+    "th": "เลือกตระกูลฟอนต์:"
 }
 FONT_SIZE_LABEL_TEXT = {
     "en": "Select font size:",
@@ -2582,7 +2697,8 @@ FONT_SIZE_LABEL_TEXT = {
     "vi": "Chọn kích thước phông chữ:",
     "fa": "انتخاب اندازه فونت:",
     "id": "Pilih ukuran font:",
-    "ms": "Pilih saiz fon:"
+    "ms": "Pilih saiz fon:",
+    "th": "เลือกขนาดฟอนต์:"
 }
 FONT_STYLE_LABEL_TEXT = {
     "en": "Select font style:",
@@ -2604,7 +2720,8 @@ FONT_STYLE_LABEL_TEXT = {
     "vi": "Chọn kiểu phông chữ:",
     "fa": "انتخاب سبک فونت:",
     "id": "Pilih gaya font:",
-    "ms": "Pilih gaya fon:"
+    "ms": "Pilih gaya fon:",
+    "th": "เลือกชนิดฟอนต์:"
 }
 BOLD_TEXT = {
     "en": "Bold",
@@ -2626,7 +2743,8 @@ BOLD_TEXT = {
     "vi": "Đậm",
     "fa": "ضخیم",
     "id": "Tebal",
-    "ms": "Tebal"
+    "ms": "Tebal",
+    "th": "ตัวหนา"
 }
 ITALIC_TEXT = {
     "en": "Italic",
@@ -2648,7 +2766,8 @@ ITALIC_TEXT = {
     "vi": "Nghiêng",
     "fa": "ایتالیک",
     "id": "Miring",
-    "ms": "Italik"
+    "ms": "Italik",
+    "th": "ตัวเอน"
 }
 
 UNDERLINE_TEXT = {
@@ -2671,7 +2790,8 @@ UNDERLINE_TEXT = {
     "vi": "Gạch chân",
     "fa": "زیرخط",
     "id": "Garis Bawah",
-    "ms": "Garis Bawah"
+    "ms": "Garis Bawah",
+    "th": "ขีดเส้นใต้"
 }
 
 STRIKETHROUGH_TEXT = {
@@ -2694,7 +2814,8 @@ STRIKETHROUGH_TEXT = {
     "vi": "Gạch ngang",
     "fa": "خط خورده",
     "id": "Coretan",
-    "ms": "Coretan"
+    "ms": "Coretan",
+    "th": "ขีดขวาง"
 }
 APPLY_TEXT = {
     "en": "Apply",
@@ -2716,7 +2837,8 @@ APPLY_TEXT = {
     "vi": "Áp dụng",
     "fa": "اعمال",
     "id": "Terapkan",
-    "ms": "Terapkan"
+    "ms": "Terapkan",
+    "th": "ใช้"
 }
 SELECT_SUBTITLE = {
     "en": "Please select a subtitle file.",
@@ -2738,7 +2860,8 @@ SELECT_SUBTITLE = {
     "vi": "Vui lòng chọn một tập tin phụ đề.",
     "fa": "لطفاً یک فایل زیرنویس انتخاب کنید.",
     "id": "Pilih file subtitle.",
-    "ms": "Sila pilih fail subtitle."
+    "ms": "Sila pilih fail subtitle.",
+    "th": "โปรดเลือกไฟล์คำบรรยาย"
 }
 SELECT_VIDEO = {
     "en": "Please select a video file.",
@@ -2760,7 +2883,8 @@ SELECT_VIDEO = {
     "vi": "Vui lòng chọn một tập tin video.",
     "fa": "لطفاً یک فایل ویدیو انتخاب کنید.",
     "id": "Pilih file video.",
-    "ms": "Sila pilih fail video."
+    "ms": "Sila pilih fail video.",
+    "th": "โปรดเลือกไฟล์วิดีโอ"
 }
 SELECT_VIDEO_OR_SUBTITLE = {
     "en": "Please select a video or reference subtitle.",
@@ -2782,7 +2906,8 @@ SELECT_VIDEO_OR_SUBTITLE = {
     "vi": "Vui lòng chọn một video hoặc phụ đề tham chiếu.",
     "fa": "لطفاً یک ویدیو یا زیرنویس مرجع انتخاب کنید.",
     "id": "Pilih video atau subtitle referensi.",
-    "ms": "Sila pilih video atau subtitle referensi."
+    "ms": "Sila pilih video atau subtitle referensi.",
+    "th": "โปรดเลือกวิดีโอหรือคำบรรยายอ้างอิง"
 }
 DROP_VIDEO_SUBTITLE_PAIR = {
     "en": "Please drop a video, subtitle or pair.",
@@ -2804,7 +2929,8 @@ DROP_VIDEO_SUBTITLE_PAIR = {
     "vi": "Vui lòng thả một video, phụ đề hoặc cặp.",
     "fa": "لطفاً یک ویدیو، زیرنویس یا جفت را بیاورید.",
     "id": "Silakan jatuhkan video, subtitle, atau pasangan",
-    "ms": "Sila letak video, subtitle atau pasangan."
+    "ms": "Sila letak video, subtitle atau pasangan.",
+    "th": "โปรดวางวิดีโอ คำบรรยาย หรือการจับคู่"
 }
 DROP_VIDEO_OR_SUBTITLE = {
     "en": "Please drop a video or reference subtitle file.",
@@ -2826,7 +2952,8 @@ DROP_VIDEO_OR_SUBTITLE = {
     "vi": "Vui lòng thả một video hoặc tập tin phụ đề tham chiếu.",
     "fa": "لطفاً یک ویدیو یا فایل زیرنویس مرجع انتخاب کنید.",
     "id": "Silakan jatuhkan file video atau subtitle referensi.",
-    "ms": "Sila letak fail video atau subtitle referensi."
+    "ms": "Sila letak fail video atau subtitle referensi.",
+    "th": "โปรดวางไฟล์วิดีโอหรือคำบรรยายอ้างอิง"
 }
 DROP_SUBTITLE_FILE = {
     "en": "Please drop a subtitle file.",
@@ -2848,7 +2975,8 @@ DROP_SUBTITLE_FILE = {
     "vi": "Vui lòng thả một tập tin phụ đề.",
     "fa": "لطفاً یک فایل زیرنویس انتخاب کنید.",
     "id": "Silakan jatuhkan file subtitle.",
-    "ms": "Sila letak fail subtitle."
+    "ms": "Sila letak fail subtitle.",
+    "th": "โปรดวางไฟล์คำบรรยาย"
 }
 DROP_SINGLE_SUBTITLE_FILE = {
     "en": "Please drop a single subtitle file.",
@@ -2870,7 +2998,8 @@ DROP_SINGLE_SUBTITLE_FILE = {
     "vi": "Vui lòng thả một tập tin phụ đề duy nhất.",
     "fa": "لطفاً یک فایل زیرنویس انتخاب کنید.",
     "id": "Silakan jatuhkan satu file subtitle.",
-    "ms": "Sila letak satu fail subtitle."
+    "ms": "Sila letak satu fail subtitle.",
+    "th": "โปรดวางไฟล์คำบรรยายไฟล์เดียว"
 }
 DROP_SINGLE_SUBTITLE_PAIR = {
     "en": "Please drop a single subtitle or pair.",
@@ -2892,7 +3021,8 @@ DROP_SINGLE_SUBTITLE_PAIR = {
     "vi": "Vui lòng thả một phụ đề duy nhất hoặc cặp.",
     "fa": "لطفاً یک فایل زیرنویس یا جفت را بیاورید.",
     "id": "Silakan jatuhkan satu subtitle atau pasangan.",
-    "ms": "Sila letak satu subtitle atau pasangan."
+    "ms": "Sila letak satu subtitle atau pasangan.",
+    "th": "โปรดวางคำบรรยายหรือการจับคู่เพียงชุดเดียว"
 }
 SELECT_BOTH_FILES = {
     "en": "Please select both video/reference subtitle and subtitle file.",
@@ -2914,7 +3044,8 @@ SELECT_BOTH_FILES = {
     "vi": "Vui lòng chọn cả video/phụ đề tham chiếu và tập tin phụ đề.",
     "fa": "لطفاً هر دو فایل ویدیو/زیرنویس مرجع و فایل زیرنویس را انتخاب کنید.",
     "id": "Pilih video/subtitle referensi dan file subtitle.",
-    "ms": "Sila pilih kedua video/subtitle referensi dan fail subtitle."
+    "ms": "Sila pilih kedua video/subtitle referensi dan fail subtitle.",
+    "th": "โปรดเลือกทั้งไฟล์วิดีโอ/คำบรรยายอ้างอิงและไฟล์คำบรรยาย"
 }
 SELECT_DIFFERENT_FILES = {
     "en": "Please select different subtitle files.",
@@ -2936,7 +3067,8 @@ SELECT_DIFFERENT_FILES = {
     "vi": "Vui lòng chọn các tập tin phụ đề khác nhau.",
     "fa": "لطفاً فایل های زیرنویس متفاوت انتخاب کنید.",
     "id": "Pilih file subtitle yang berbeda.",
-    "ms": "Sila pilih fail subtitle yang berbeza."
+    "ms": "Sila pilih fail subtitle yang berbeza.",
+    "th": "โปรดเลือกไฟล์คำบรรยายที่แตกต่างกัน"
 }
 SUBTITLE_FILE_NOT_EXIST = {
     "en": "Subtitle file does not exist.",
@@ -2958,7 +3090,8 @@ SUBTITLE_FILE_NOT_EXIST = {
     "vi": "Tập tin phụ đề không tồn tại.",
     "fa": "فایل زیرنویس وجود ندارد.",
     "id": "File subtitle tidak ada.",
-    "ms": "Fail subtitle tidak wujud."
+    "ms": "Fail subtitle tidak wujud.",
+    "th": "ไฟล์คำบรรยายไม่มีอยู่"
 }
 VIDEO_FILE_NOT_EXIST = {
     "en": "Video file does not exist.",
@@ -2980,7 +3113,8 @@ VIDEO_FILE_NOT_EXIST = {
     "vi": "Tập tin video không tồn tại.",
     "fa": "فایل ویدیو وجود ندارد.",
     "id": "File video tidak ada.",
-    "ms": "Fail video tidak wujud."
+    "ms": "Fail video tidak wujud.",
+    "th": "ไฟล์วิดีโอไม่มีอยู่"
 }
 ERROR_LOADING_SUBTITLE = {
     "en": "Error loading subtitle file: {error_message}",
@@ -3002,7 +3136,8 @@ ERROR_LOADING_SUBTITLE = {
     "vi": "Lỗi khi tải tập tin phụ đề: {error_message}",
     "fa": "خطا در بارگذاری فایل زیرنویس: {error_message}",
     "id": "Kesalahan memuat file subtitle: {error_message}",
-    "ms": "Ralat memuat fail subtitle: {error_message}"
+    "ms": "Ralat memuat fail subtitle: {error_message}",
+    "th": "เกิดข้อผิดพลาดในการโหลดไฟล์คำบรรยาย: {error_message}"
 }
 ERROR_CONVERT_TIMESTAMP = {
     "en": "Failed to convert timestamp '{timestamp}' for format '{format_type}'",
@@ -3024,7 +3159,8 @@ ERROR_CONVERT_TIMESTAMP = {
     "vi": "Không thể chuyển đổi dấu thời gian '{timestamp}' sang định dạng '{format_type}'",
     "fa": "تبدیل برچسب زمان '{timestamp}' به فرمت '{format_type}' ناموفق بود",
     "id": "Gagal mengonversi timestamp '{timestamp}' ke format '{format_type}'",
-    "ms": "Gagal mengonversi timestamp '{timestamp}' ke format '{format_type}'"
+    "ms": "Gagal mengonversi timestamp '{timestamp}' ke format '{format_type}'",
+    "th": "เกิดข้อผิดพลาดในการแปลงเวลาเครื่องหมายเวลา '{timestamp}' เป็นรูปแบบ '{format_type}'"
 }
 ERROR_PARSING_TIME_STRING = {
     "en": "Error parsing time string '{time_str}'",
@@ -3046,7 +3182,8 @@ ERROR_PARSING_TIME_STRING = {
     "vi": "Lỗi phân tích chuỗi thời gian '{time_str}'",
     "fa": "خطا در تجزیه و تحلیل رشته زمان '{time_str}'",
     "id": "Kesalahan memuat string waktu '{time_str}'",
-    "ms": "Ralat memuat string waktu '{time_str}'"
+    "ms": "Ralat memuat string waktu '{time_str}'",
+    "th": "เกิดข้อผิดพลาดในการ解析สตริงเวลา '{time_str}'"
 }
 ERROR_PARSING_TIME_STRING_DETAILED = {
     "en": "Error parsing time string '{time_str}' for format '{format_type}': {error_message}",
@@ -3068,7 +3205,8 @@ ERROR_PARSING_TIME_STRING_DETAILED = {
     "vi": "Lỗi phân tích chuỗi thời gian '{time_str}' cho định dạng '{format_type}': {error_message}",
     "fa": "خطا در تجزیه و تحلیل رشته زمان '{time_str}' برای فرمت '{format_type}': {error_message}",
     "id": "Kesalahan memuat string waktu '{time_str}' untuk format '{format_type}': {error_message}",
-    "ms": "Ralat memuat string waktu '{time_str}' untuk format '{format_type}': {error_message}"
+    "ms": "Ralat memuat string waktu '{time_str}' untuk format '{format_type}': {error_message}",
+    "th": "เกิดข้อผิดพลาดในการ解析สตริงเวลา '{time_str}' สำหรับรูปแบบ '{format_type}': {error_message}"
 }
 NO_FILES_TO_SYNC = {
     "en": "No files to sync. Please add files to the batch list.",
@@ -3090,7 +3228,8 @@ NO_FILES_TO_SYNC = {
     "vi": "Không có tập tin nào để đồng bộ. Vui lòng thêm tập tin vào danh sách lô.",
     "fa": "هیچ فایلی برای همگام سازی وجود ندارد. لطفاً فایل ها را به لیست دسته اضافه کنید.",
     "id": "Tidak ada file untuk sinkronisasi. Silakan tambahkan file ke daftar batch.",
-    "ms": "Tiada fail untuk disegerakkan. Sila tambah fail ke senarai batch."
+    "ms": "Tiada fail untuk disegerakkan. Sila tambah fail ke senarai batch.",
+    "th": "ไม่มีไฟล์ที่จะซิงค์ โปรดเพิ่มไฟล์ในรายการชุดงาน"
 }
 NO_VALID_FILE_PAIRS = {
     "en": "No valid file pairs to sync.",
@@ -3112,7 +3251,8 @@ NO_VALID_FILE_PAIRS = {
     "vi": "Không có cặp tập tin hợp lệ để đồng bộ.",
     "fa": "هیچ جفت فایل معتبری برای همگام سازی وجود ندارد.",
     "id": "Tidak ada pasangan file yang valid untuk sinkronisasi.",
-    "ms": "Tiada pasangan fail yang valid untuk disegerakkan."
+    "ms": "Tiada pasangan fail yang valid untuk disegerakkan.",
+    "th": "ไม่มีการจับคู่ไฟล์ที่ถูกต้องสำหรับการซิงค์"
 }
 ERROR_PROCESS_TERMINATION = {
     "en": "Error occurred during process termination: {error_message}",
@@ -3134,7 +3274,8 @@ ERROR_PROCESS_TERMINATION = {
     "vi": "Đã xảy ra lỗi trong quá trình kết thúc quá trình: {error_message}",
     "fa": "خطا در هنگام پایان فرآیند: {error_message}",
     "id": "Terjadi kesalahan saat proses berakhir: {error_message}",
-    "ms": "Ralat berlaku selama proses berakhir: {error_message}"
+    "ms": "Ralat berlaku selama proses berakhir: {error_message}",
+    "th": "เกิดข้อผิดพลาดระหว่างการสิ้นสุดกระบวนการ: {error_message}"
 }
 AUTO_SYNC_CANCELLED = {
     "en": "Automatic synchronization cancelled.",
@@ -3156,7 +3297,8 @@ AUTO_SYNC_CANCELLED = {
     "vi": "Đã hủy đồng bộ tự động.",
     "fa": "همگام سازی خودکار لغو شد.",
     "id": "Sinkronisasi otomatis dibatalkan.",
-    "ms": "Segera senkronisasi dibatalkan."
+    "ms": "Segera senkronisasi dibatalkan.",
+    "th": "การซิงค์อัตโนมัติถูกยกเลิก"
 }
 BATCH_SYNC_CANCELLED = {
     "en": "Batch synchronization cancelled.",
@@ -3178,7 +3320,8 @@ BATCH_SYNC_CANCELLED = {
     "vi": "Đã hủy đồng bộ lô.",
     "fa": "همگام سازی دسته ای لغو شد.",
     "id": "Sinkronisasi batch dibatalkan.",
-    "ms": "Segera senkronisasi batch dibatalkan."
+    "ms": "Segera senkronisasi batch dibatalkan.",
+    "th": "การซิงค์ชุดงานถูกยกเลิก"
 }
 NO_SYNC_PROCESS = {
     "en": "No synchronization process to cancel.",
@@ -3200,7 +3343,8 @@ NO_SYNC_PROCESS = {
     "vi": "Không có quy trình đồng bộ hóa nào để hủy.",
     "fa": "هیچ فرآیند همگام سازی برای لغو وجود ندارد.",
     "id": "Tidak ada proses sinkronisasi untuk dibatalkan.",
-    "ms": "Tiada proses sinkronisasi untuk dibatalkan."
+    "ms": "Tiada proses sinkronisasi untuk dibatalkan.",
+    "th": "ไม่มีกระบวนการซิงค์ที่จะยกเลิก"
 }
 INVALID_SYNC_TOOL = {
     "en": "Invalid sync tool selected.",
@@ -3222,7 +3366,8 @@ INVALID_SYNC_TOOL = {
     "vi": "Chọn công cụ đồng bộ hóa không hợp lệ.",
     "fa": "ابزار همگام سازی نامعتبر انتخاب شده است.",
     "id": "Alat sinkronisasi yang tidak valid dipilih.",
-    "ms": "Pilihan alat sinkronisasi tidak sah."
+    "ms": "Pilihan alat sinkronisasi tidak sah.",
+    "th": "เครื่องมือซิงค์ที่เลือกไม่ถูกต้อง"
 }
 FAILED_START_PROCESS = {
     "en": "Failed to start process: {error_message}",
@@ -3244,7 +3389,8 @@ FAILED_START_PROCESS = {
     "vi": "Không thể bắt đầu quá trình: {error_message}",
     "fa": "شکست در شروع فرآیند: {error_message}",
     "id": "Gagal memulai proses: {error_message}",
-    "ms": "Tidak dapat memulakan proses: {error_message}"
+    "ms": "Tidak dapat memulakan proses: {error_message}",
+    "th": "ไม่สามารถเริ่มกระบวนการได้: {error_message}"
 }
 ERROR_OCCURRED = {
     "en": "Error occurred: {error_message}",
@@ -3266,7 +3412,8 @@ ERROR_OCCURRED = {
     "vi": "Đã xảy ra lỗi: {error_message}",
     "fa": "خطا رخ داد: {error_message}",
     "id": "Terjadi kesalahan: {error_message}",
-    "ms": "Ralat berlaku: {error_message}"
+    "ms": "Ralat berlaku: {error_message}",
+    "th": "เกิดข้อผิดพลาด: {error_message}"
 }
 ERROR_EXECUTING_COMMAND = {
     "en": "Error executing command: ",
@@ -3288,7 +3435,8 @@ ERROR_EXECUTING_COMMAND = {
     "vi": "Lỗi khi thực thi lệnh: ",
     "fa": "خطا در اجرای دستور: ",
     "id": "Terjadi kesalahan saat mengeksekusi perintah: ",
-    "ms": "Ralat mengeksekusi perintah: "
+    "ms": "Ralat mengeksekusi perintah: ",
+    "th": "เกิดข้อผิดพลาดในการประมวลผลคำสั่ง: "
 }
 DROP_VALID_FILES = {
     "en": "Please drop valid subtitle and video files.",
@@ -3310,7 +3458,8 @@ DROP_VALID_FILES = {
     "vi": "Vui lòng thả các tập tin phụ đề và video hợp lệ.",
     "fa": "لطفاً فایل های زیرنویس و ویدیو معتبر را رها کنید.",
     "id": "Silakan lepas file subtitle dan video yang valid.",
-    "ms": "Sila lepaskan fail subtitle dan video yang sah."
+    "ms": "Sila lepaskan fail subtitle dan video yang sah.",
+    "th": "โปรดวางไฟล์คำบรรยายและวิดีโอที่ถูกต้อง"
 }
 PAIRS_ADDED = {
     "en": "Added {count} pair(s)",
@@ -3332,7 +3481,8 @@ PAIRS_ADDED = {
     "vi": "Đã thêm {count} cặp",
     "fa": "{count} جفت اضافه شد",
     "id": "Menambahkan {count} pasangan",
-    "ms": "Menambahkan {count} pasangan"
+    "ms": "Menambahkan {count} pasangan",
+    "th": "เพิ่ม {count} การจับคู่"
 }
 UNPAIRED_FILES_ADDED = {
     "en": "Added {count} unpaired file(s)",
@@ -3354,7 +3504,8 @@ UNPAIRED_FILES_ADDED = {
     "vi": "Đã thêm {count} tập tin không được ghép cặp",
     "fa": "{count} فایل غیر معتبر اضافه شد",
     "id": "Menambahkan {count} file tidak terpasang",
-    "ms": "Menambahkan {count} fail yang tidak terpasang"
+    "ms": "Menambahkan {count} fail yang tidak terpasang",
+    "th": "เพิ่ม {count} ไฟล์ที่ยังไม่จับคู่"
 }
 UNPAIRED_FILES = {
     "en": "{count} unpaired file(s)",
@@ -3376,7 +3527,8 @@ UNPAIRED_FILES = {
     "vi": "{count} tập tin không được ghép cặp",
     "fa": "{count} فایل غیر معتبر",
     "id": "{count} file tidak terpasang",
-    "ms": "{count} fail yang tidak terpasang"
+    "ms": "{count} fail yang tidak terpasang",
+    "th": "{count} ไฟล์ที่ยังไม่จับคู่"
 }
 DUPLICATE_PAIRS_SKIPPED = {
     "en": "{count} duplicate pair(s) skipped",
@@ -3398,7 +3550,8 @@ DUPLICATE_PAIRS_SKIPPED = {
     "vi": "Đã bỏ qua {count} cặp trùng lặp",
     "fa": "{count} جفت تکراری رد شد",
     "id": "{count} pasangan duplikat dilewati",
-    "ms": "{count} pasangan duplikat yang dilewati"
+    "ms": "{count} pasangan duplikat yang dilewati",
+    "th": "{count} การจับคู่ซ้ำถูกข้ามไป"
 }
 PAIR_ADDED = {
     "en": "Added 1 pair.",
@@ -3420,7 +3573,8 @@ PAIR_ADDED = {
     "vi": "Đã thêm 1 cặp.",
     "fa": "1 جفت اضافه شد",
     "id": "Menambahkan 1 pasangan",
-    "ms": "Menambahkan 1 pasangan"
+    "ms": "Menambahkan 1 pasangan",
+    "th": "เพิ่ม 1 การจับคู่"
 }
 SAME_FILE_ERROR = {
     "en": "Cannot use the same file for both inputs.",
@@ -3442,7 +3596,8 @@ SAME_FILE_ERROR = {
     "vi": "Không thể sử dụng cùng một tập tin cho cả hai đầu vào.",
     "fa": "نمی توان برای هر دو ورودی از همان فایل استفاده کرد.",
     "id": "Tidak dapat menggunakan file yang sama untuk kedua input.",
-    "ms": "Tidak boleh menggunakan file yang sama untuk kedua input."
+    "ms": "Tidak boleh menggunakan file yang sama untuk kedua input.",
+    "th": "ไม่สามารถใช้ไฟล์เดียวกันสำหรับทั้งสองอินพุต"
 }
 PAIR_ALREADY_EXISTS = {
     "en": "This pair already exists. Please select a different file.",
@@ -3464,7 +3619,8 @@ PAIR_ALREADY_EXISTS = {
     "vi": "Cặp này đã tồn tại. Vui lòng chọn một tập tin khác.",
     "fa": "این جفت از قبل وجود دارد. لطفاً یک فایل متفاوت انتخاب کنید.",
     "id": "Pasangan ini sudah ada. Silakan pilih file lain.",
-    "ms": "Pasangan ini sudah wujud. Sila pilih fail yang lain."
+    "ms": "Pasangan ini sudah wujud. Sila pilih fail yang lain.",
+    "th": "การจับคู่นี้มีอยู่แล้ว โปรดเลือกไฟล์อื่น"
 }
 SUBTITLE_ADDED = {
     "en": "Subtitle added.",
@@ -3486,7 +3642,8 @@ SUBTITLE_ADDED = {
     "vi": "Đã thêm phụ đề.",
     "fa": "زیرنویس اضافه شد.",
     "id": "Subtitle ditambahkan.",
-    "ms": "Subtitle ditambah."
+    "ms": "Subtitle ditambah.",
+    "th": "เพิ่มคำบรรยายแล้ว"
 }
 VIDEO_ADDED = {
     "en": "Video/reference subtitle added.",
@@ -3508,7 +3665,8 @@ VIDEO_ADDED = {
     "vi": "Đã thêm video/phụ đề tham khảo.",
     "fa": "ویدیو/زیرنویس مرجع اضافه شد.",
     "id": "Video/subtitle referensi ditambahkan.",
-    "ms": "Video/subtitan referensi ditambah."
+    "ms": "Video/subtitan referensi ditambah.",
+    "th": "เพิ่มวิดีโอ/คำบรรยายอ้างอิงแล้ว"
 }
 FILE_CHANGED = {
     "en": "File changed.",
@@ -3530,7 +3688,8 @@ FILE_CHANGED = {
     "vi": "Tập tin đã thay đổi.",
     "fa": "فایل تغییر کرد.",
     "id": "File telah diubah.",
-    "ms": "Fail telah ditukar."
+    "ms": "Fail telah ditukar.",
+    "th": "ไฟล์เปลี่ยนแปลงแล้ว"
 }
 SELECT_ITEM_TO_CHANGE = {
     "en": "Please select an item to change.",
@@ -3552,7 +3711,8 @@ SELECT_ITEM_TO_CHANGE = {
     "vi": "Vui lòng chọn một mục để thay đổi.",
     "fa": "لطفاً یک مورد برای تغییر انتخاب کنید.",
     "id": "Silakan pilih item untuk diubah.",
-    "ms": "Sila pilih item untuk mengubah."
+    "ms": "Sila pilih item untuk mengubah.",
+    "th": "โปรดเลือกไอเทมเพื่อทำการเปลี่ยนแปลง"
 }
 SELECT_ITEM_TO_REMOVE = {
     "en": "Please select an item to remove.",
@@ -3574,7 +3734,8 @@ SELECT_ITEM_TO_REMOVE = {
     "vi": "Vui lòng chọn một mục để xóa.",
     "fa": "لطفاً یک مورد برای حذف انتخاب کنید.",
     "id": "Silakan pilih item untuk dihapus.",
-    "ms": "Sila pilih item untuk dipadam."
+    "ms": "Sila pilih item untuk dipadam.",
+    "th": "โปรดเลือกไอเทมเพื่อลบ"
 }
 FILE_NOT_EXIST = {
     "en": "File specified in the argument does not exist.",
@@ -3596,7 +3757,8 @@ FILE_NOT_EXIST = {
     "vi": "Tập tin được chỉ định trong đối số không tồn tại.",
     "fa": "فایل مشخص شده در آرگومان وجود ندارد.",
     "id": "File yang ditentukan dalam argumen tidak ada.",
-    "ms": "Fail yang ditentukan dalam argumen tidak wujud."
+    "ms": "Fail yang ditentukan dalam argumen tidak wujud.",
+    "th": "ไฟล์ที่ระบุในอาร์กิวเมนต์ไม่มีอยู่"
 }
 MULTIPLE_ARGUMENTS = {
     "en": "Multiple arguments provided. Please provide only one subtitle file path.",
@@ -3618,7 +3780,8 @@ MULTIPLE_ARGUMENTS = {
     "vi": "Đã cung cấp nhiều đối số. Vui lòng chỉ cung cấp một đường dẫn tập tin phụ đề.",
     "fa": "چندین آرگومان ارائه شده است. لطفاً فقط یک مسیر فایل زیرنویس ارائه دهید.",
     "id": "Diberikan banyak argumen. Harap masukkan hanya satu jalur file subtitle.",
-    "ms": "Diberikan banyak argumen. Sila masukkan satu jalur fail subtitle."
+    "ms": "Diberikan banyak argumen. Sila masukkan satu jalur fail subtitle.",
+    "th": "มีการระบุอาร์กิวเมนต์หลายตัว โปรดระบุเส้นทางไฟล์คำบรรยายเพียงไฟล์เดียว"
 }
 INVALID_FILE_FORMAT = {
     "en": "Invalid file format. Please provide a subtitle file.",
@@ -3640,7 +3803,8 @@ INVALID_FILE_FORMAT = {
     "vi": "Định dạng tập tin không hợp lệ. Vui lòng cung cấp một tập tin phụ đề.",
     "fa": "فرمت فایل نامعتبر است. لطفاً یک فایل زیرنویس ارائه دهید.",
     "id": "Format file tidak valid. Harap masukkan file subtitle.",
-    "ms": "Format fail tidak sah. Sila masukkan fail subtitle."
+    "ms": "Format fail tidak sah. Sila masukkan fail subtitle.",
+    "th": "รูปแบบไฟล์ไม่ถูกต้อง โปรดระบุไฟล์คำบรรยาย"
 }
 INVALID_SYNC_TOOL_SELECTED = {
     "en": "Invalid sync tool selected.",
@@ -3662,7 +3826,8 @@ INVALID_SYNC_TOOL_SELECTED = {
     "vi": "Chọn công cụ đồng bộ không hợp lệ.",
     "fa": "ابزار همگام سازی نامعتبر است.",
     "id": "Alat sinkronisasi yang dipilih tidak valid.",
-    "ms": "Pilihan alat sinkronisasi tidak sah."
+    "ms": "Pilihan alat sinkronisasi tidak sah.",
+    "th": "เลือกเครื่องมือซิงค์ที่ไม่ถูกต้อง"
 }
 TEXT_SELECTED_FOLDER = {
     "en": "Selected folder: {}",
@@ -3684,7 +3849,8 @@ TEXT_SELECTED_FOLDER = {
     "vi": "Thư mục đã chọn: {}",
     "fa": "پوشه انتخاب شده: {}",
     "id": "Folder yang dipilih: {}",
-    "ms": "Folder yang dipilih: {}"
+    "ms": "Folder yang dipilih: {}",
+    "th": "โฟลเดอร์ที่เลือก: {}"
 }
 TEXT_NO_FOLDER_SELECTED = {
     "en": "No folder selected.",
@@ -3706,7 +3872,8 @@ TEXT_NO_FOLDER_SELECTED = {
     "vi": "Không có thư mục nào được chọn.",
     "fa": "هیچ پوشه ای انتخاب نشده است.",
     "id": "Tidak ada folder yang dipilih.",
-    "ms": "Tiada folder yang dipilih."
+    "ms": "Tiada folder yang dipilih.",
+    "th": "ยังไม่ได้เลือกโฟลเดอร์"
 }
 TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "en": "The selected destination folder does not exist.",
@@ -3728,7 +3895,8 @@ TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = {
     "vi": "Thư mục đích được chọn không tồn tại.",
     "fa": "پوشه مقصد انتخاب شده وجود ندارد.",
     "id": "Folder tujuan yang dipilih tidak ada.",
-    "ms": "Folder tujuan yang dipilih tidak wujud."
+    "ms": "Folder tujuan yang dipilih tidak wujud.",
+    "th": "โฟลเดอร์ปลายทางที่เลือกไม่มีอยู่"
 }
 ADDED_PAIRS_MSG = {
     "en": "{} pairs automatically matched",
@@ -3750,7 +3918,8 @@ ADDED_PAIRS_MSG = {
     "vi": "{} cặp được kết hợp tự động",
     "fa": "{} جفت به صورت خودکار مطابقت یافت",
     "id": "{} pasangan otomatis cocok",
-    "ms": "{} pasangan secara automatik cocok"
+    "ms": "{} pasangan secara automatik cocok",
+    "th": "{} การจับคู่ถูกจับคู่โดยอัตโนมัติ"
 }
 SKIPPED_DUPLICATES_MSG = {
     "en": "Skipped {} duplicate pair{}",
@@ -3772,7 +3941,8 @@ SKIPPED_DUPLICATES_MSG = {
     "vi": "Đã bỏ qua {} cặp trùng lặp{}",
     "fa": "{} جفت تکراری انتخاب شد",
     "id": "Dilewati {} pasangan ganda",
-    "ms": "Dilepasi {} pasangan berulang"
+    "ms": "Dilepasi {} pasangan berulang",
+    "th": "ข้าม {} การจับคู่ซ้ำ{}"
 }
 INVALID_PARENT_ITEM = {
     "en": "Invalid parent item with no values.",
@@ -3794,7 +3964,8 @@ INVALID_PARENT_ITEM = {
     "vi": "Mục cha không hợp lệ không có giá trị.",
     "fa": "مورد والد نامعتبر بدون مقادیر.",
     "id": "Item induk tidak valid tanpa nilai.",
-    "ms": "Item induk tidak sah tanpa nilai."
+    "ms": "Item induk tidak sah tanpa nilai.",
+    "th": "ไอเทมหลักไม่ถูกต้อง ไม่มีค่า"
 }
 SKIP_NO_VIDEO_NO_SUBTITLE = {
     "en": "Skipping entry with no video and no subtitle.",
@@ -3816,7 +3987,8 @@ SKIP_NO_VIDEO_NO_SUBTITLE = {
     "vi": "Bỏ qua mục không có video và không có phụ đề.",
     "fa": "ورودی بدون ویدیو و زیرنویس رد شد.",
     "id": "Lewati entri tanpa video dan subtitle.",
-    "ms": "Lompatkan masukkan tanpa video dan subtitle."
+    "ms": "Lompatkan masukkan tanpa video dan subtitle.",
+    "th": "ข้ามรายการที่ไม่มีวิดีโอและไม่มีคำบรรยาย"
 }
 SKIP_NO_SUBTITLE = {
     "en": "Skipping '{video_file}': No subtitle file.",
@@ -3838,7 +4010,8 @@ SKIP_NO_SUBTITLE = {
     "vi": "Bỏ qua '{video_file}': Không có tập tin phụ đề.",
     "fa": "'{video_file}' رد شد: هیچ فایل زیرنویسی وجود ندارد.",
     "id": "Lewati '{video_file}': Tidak ada file subtitle.",
-    "ms": "Lompatkan '{video_file}': Tiada fail subtitle."
+    "ms": "Lompatkan '{video_file}': Tiada fail subtitle.",
+    "th": "ข้าม '{video_file}': ไม่มีไฟล์คำบรรยาย"
 }
 SKIP_NO_VIDEO = {
     "en": "Skipping '{subtitle_file}': No video/reference file.",
@@ -3860,7 +4033,8 @@ SKIP_NO_VIDEO = {
     "vi": "Bỏ qua '{subtitle_file}': Không có tập tin video/tham chiếu.",
     "fa": "'{subtitle_file}' رد شد: هیچ فایل ویدیو/مرجعی وجود ندارد.",
     "id": "Lewati '{subtitle_file}': Tidak ada file video/referensi.",
-    "ms": "Lompatkan '{subtitle_file}': Tiada fail video/referensi."
+    "ms": "Lompatkan '{subtitle_file}': Tiada fail video/referensi.",
+    "th": "ข้าม '{subtitle_file}': ไม่มีไฟล์วิดีโอ/คำบรรยายอ้างอิง"
 }
 SKIP_UNPAIRED_ITEM = {
     "en": "Unpaired item skipped.",
@@ -3882,7 +4056,8 @@ SKIP_UNPAIRED_ITEM = {
     "vi": "Bỏ qua mục không được ghép cặp.",
     "fa": "موردی که جفت نشده است رد شد.",
     "id": "Item tidak terpasang dilewati.",
-    "ms": "Item yang tidak terpasang dilewati."
+    "ms": "Item yang tidak terpasang dilewati.",
+    "th": "ข้ามไอเทมที่ยังไม่จับคู่"
 }
 SKIPPING_ALREADY_SYNCED = {
     "en": "Skipping {filename}: Already synced.",
@@ -3904,7 +4079,8 @@ SKIPPING_ALREADY_SYNCED = {
     "vi": "Bỏ qua {filename}: Đã được đồng bộ.",
     "fa": "{filename} رد شد: قبلا سینک شده.",
     "id": "Lewati {filename}: Sudah disinkronkan.",
-    "ms": "Lompatkan {filename}: Sudah disinkronkan."
+    "ms": "Lompatkan {filename}: Sudah disinkronkan.",
+    "th": "ข้าม {filename}: ซิงค์แล้ว"
 }
 CONVERTING_SUBTITLE = {
     "en": "Converting {file_extension} to SRT...",
@@ -3926,7 +4102,8 @@ CONVERTING_SUBTITLE = {
     "vi": "Chuyển đổi {file_extension} sang SRT...",
     "fa": "تبدیل {file_extension} به SRT...",
     "id": "Mengonversi {file_extension} ke SRT...",
-    "ms": "Menukar {file_extension} kepada SRT..."
+    "ms": "Menukar {file_extension} kepada SRT...",
+    "th": "กำลังแปลง {file_extension} เป็น SRT..."
 }
 SYNCING_LOG_TEXT = {
     "en": "[{}/{}] Syncing {} with {}...\n",
@@ -3948,7 +4125,8 @@ SYNCING_LOG_TEXT = {
     "vi": "[{}/{}] Đồng bộ hóa {} với {}...\n",
     "fa": "[{}/{}] همگام سازی {} با {}...\n",
     "id": "[{}/{}] Sinkronisasi {} dengan {}...\n",
-    "ms": "[{}/{}] Sinkronisasi {} dengan {}...\n"
+    "ms": "[{}/{}] Sinkronisasi {} dengan {}...\n",
+    "th": "[{}/{}] กำลังซิงค์ {} กับ {}...\n"
 }
 ERROR_CONVERTING_SUBTITLE = {
     "en": "Error converting subtitle: {error_message}",
@@ -3970,7 +4148,8 @@ ERROR_CONVERTING_SUBTITLE = {
     "vi": "Lỗi khi chuyển đổi phụ đề: {error_message}",
     "fa": "خطا در تبدیل زیرنویس: {error_message}",
     "id": "Kesalahan dalam mengonversi subtitle: {error_message}",
-    "ms": "Ralat dalam mengonversi subtitle: {error_message}"
+    "ms": "Ralat dalam mengonversi subtitle: {error_message}",
+    "th": "เกิดข้อผิดพลาดในการแปลงคำบรรยาย: {error_message}"
 }
 SUBTITLE_CONVERTED = {
     "en": "Subtitle successfully converted and saved to: {srt_file}.",
@@ -3992,7 +4171,8 @@ SUBTITLE_CONVERTED = {
     "vi": "Phụ đề đã được chuyển đổi thành công và lưu vào: {srt_file}.",
     "fa": "زیرنویس با موفقیت تبدیل و در: {srt_file} ذخیره شد.",
     "id": "Subtitle berhasil dikonversi dan disimpan ke: {srt_file}.",
-    "ms": "Subtitle berjaya dikonversi dan disimpan ke: {srt_file}."
+    "ms": "Subtitle berjaya dikonversi dan disimpan ke: {srt_file}.",
+    "th": "คำบรรยายถูกแปลงสำเร็จและบันทึกลงใน: {srt_file}."
 }
 ERROR_UNSUPPORTED_CONVERSION = {
     "en": "Error: Conversion for {file_extension} is not supported.",
@@ -4014,7 +4194,8 @@ ERROR_UNSUPPORTED_CONVERSION = {
     "vi": "Lỗi: Không hỗ trợ chuyển đổi cho {file_extension}.",
     "fa": "خطا: تبدیل برای {file_extension} پشتیبانی نمی‌شود.",
     "id": "Kesalahan: Konversi untuk {file_extension} tidak didukung.",
-    "ms": "Ralat: Pengunci untuk {file_extension} tidak disokong."
+    "ms": "Ralat: Pengunci untuk {file_extension} tidak disokong.",
+    "th": "ข้อผิดพลาด: ไม่รองรับการแปลงสำหรับ {file_extension}."
 }
 FAILED_CONVERT_SUBTITLE = {
     "en": "Failed to convert subtitle file: {subtitle_file}",
@@ -4036,7 +4217,8 @@ FAILED_CONVERT_SUBTITLE = {
     "vi": "Không thể chuyển đổi tập tin phụ đề: {subtitle_file}",
     "fa": "تبدیل فایل زیرنویس ناموفق بود: {subtitle_file}",
     "id": "Gagal mengonversi file subtitle: {subtitle_file}",
-    "ms": "Gagal mengonversi fail subtitle: {subtitle_file}"
+    "ms": "Gagal mengonversi fail subtitle: {subtitle_file}",
+    "th": "ไม่สามารถแปลงไฟล์คำบรรยาย: {subtitle_file}"
 }
 FAILED_CONVERT_VIDEO = {
     "en": "Failed to convert video/reference file: {video_file}",
@@ -4058,7 +4240,8 @@ FAILED_CONVERT_VIDEO = {
     "vi": "Không thể chuyển đổi tập tin video/tham chiếu: {video_file}",
     "fa": "تبدیل فایل ویدیو/مرجع ناموفق بود: {video_file}",
     "id": "Gagal mengonversi file video/referensi: {video_file}",
-    "ms": "Gagal mengonversi fail video/referensi: {video_file}"
+    "ms": "Gagal mengonversi fail video/referensi: {video_file}",
+    "th": "ไม่สามารถแปลงไฟล์วิดีโอ/คำบรรยายอ้างอิง: {video_file}"
 }
 SPLIT_PENALTY_ZERO = {
     "en": "Split penalty is set to 0. Using --no-split argument...",
@@ -4080,7 +4263,8 @@ SPLIT_PENALTY_ZERO = {
     "vi": "Phạt chia bị đặt là 0. Sử dụng đối số --no-split...",
     "fa": "جریمه تقسیم برابر با 0 تنظیم شده است. استفاده از آرگومان --no-split...",
     "id": "Penalti pembagian diatur ke 0. Menggunakan argumen --no-split...",
-    "ms": "Penalti pembagian ditetapkan ke 0. Menggunakan argumen --no-split..."
+    "ms": "Penalti pembagian ditetapkan ke 0. Menggunakan argumen --no-split...",
+    "th": "การลงโทษการแยกตั้งค่าเป็น 0 กำลังใช้พารามิเตอร์ --no-split..."
 }
 SPLIT_PENALTY_SET = {
     "en": "Split penalty is set to {split_penalty}...",
@@ -4102,7 +4286,8 @@ SPLIT_PENALTY_SET = {
     "vi": "Phạt chia bị đặt là {split_penalty}...",
     "fa": "جریمه تقسیم برابر با {split_penalty} تنظیم شده است...",
     "id": "Penalti pembagian diatur ke {split_penalty}...",
-    "ms": "Penalti pembagian ditetapkan ke {split_penalty}..."
+    "ms": "Penalti pembagian ditetapkan ke {split_penalty}...",
+    "th": "การลงโทษการแยกตั้งค่าเป็น {split_penalty}..."
 }
 USING_REFERENCE_SUBTITLE = {
     "en": "Using reference subtitle for syncing...",
@@ -4124,7 +4309,8 @@ USING_REFERENCE_SUBTITLE = {
     "vi": "Sử dụng phụ đề tham chiếu để đồng bộ...",
     "fa": "استفاده از زیرنویس مرجع برای همگام سازی...",
     "id": "Menggunakan subtitle referensi untuk sinkronisasi...",
-    "ms": "Menggunakan subtitle referensi untuk sinkronisasi..."
+    "ms": "Menggunakan subtitle referensi untuk sinkronisasi...",
+    "th": "กำลังใช้คำบรรยายอ้างอิงสำหรับการซิงค์..."
 }
 USING_VIDEO_FOR_SYNC = {
     "en": "Using video for syncing...",
@@ -4146,7 +4332,8 @@ USING_VIDEO_FOR_SYNC = {
     "vi": "Sử dụng video để đồng bộ...",
     "fa": "استفاده از ویدیو برای همگام سازی...",
     "id": "Menggunakan video untuk sinkronisasi...",
-    "ms": "Menggunakan video untuk sinkronisasi..."
+    "ms": "Menggunakan video untuk sinkronisasi...",
+    "th": "กำลังใช้วิดีโอสำหรับการซิงค์..."
 }
 ENABLED_NO_FIX_FRAMERATE = {
     "en": "Enabled: Don't fix framerate.",
@@ -4168,7 +4355,8 @@ ENABLED_NO_FIX_FRAMERATE = {
     "vi": "Đã bật: Không sửa đổi tốc độ khung hình.",
     "fa": "فعال: نصب نکردن نرخ فریم",
     "id": "Diaktifkan: Tidak memperbaiki kecepatan frame.",
-    "ms": "Diaktifkan: Tidak memperbaiki kecepatan kerangka."
+    "ms": "Diaktifkan: Tidak memperbaiki kecepatan kerangka.",
+    "th": "เปิดใช้งาน: ไม่แก้ไขอัตราเฟรม"
 }
 ENABLED_GSS = {
     "en": "Enabled: Golden-section search.",
@@ -4190,7 +4378,8 @@ ENABLED_GSS = {
     "vi": "Đã bật: Tìm kiếm khối vàng.",
     "fa": "فعال: جستجوی بخش طلایی.",
     "id": "Diaktifkan: Pencarian bagian emas.",
-    "ms": "Diaktifkan: Pencarian bagian emas."
+    "ms": "Diaktifkan: Pencarian bagian emas.",
+    "th": "เปิดใช้งาน: การค้นหาด้วยส่วนทองคำ"
 }
 ADDITIONAL_ARGS_ADDED = {
     "en": "Additional arguments: {additional_args}",
@@ -4212,7 +4401,8 @@ ADDITIONAL_ARGS_ADDED = {
     "vi": "Đối số bổ sung: {additional_args}",
     "fa": "آرگومان‌های اضافی: {additional_args}",
     "id": "Argumen tambahan: {additional_args}",
-    "ms": "Argumen tambahan: {additional_args}"
+    "ms": "Argumen tambahan: {additional_args}",
+    "th": "อาร์กิวเมนต์เพิ่มเติม: {additional_args}"
 }
 SYNCING_STARTED = {
     "en": "Syncing started:",
@@ -4234,7 +4424,8 @@ SYNCING_STARTED = {
     "vi": "Bắt đầu đồng bộ hóa:",
     "fa": "همگام‌سازی شروع شد:",
     "id": "Sinkronisasi dimulai:",
-    "ms": "Sinking dimulai:"
+    "ms": "Sinking dimulai:",
+    "th": "เริ่มการซิงค์แล้ว:"
 }
 SYNCING_ENDED = {
     "en": "Syncing ended.",
@@ -4256,7 +4447,8 @@ SYNCING_ENDED = {
     "vi": "Đã kết thúc đồng bộ hóa.",
     "fa": "همگام‌سازی پایان یافت.",
     "id": "Sinkronisasi berakhir",
-    "ms": "Penyegerakan tamat."
+    "ms": "Penyegerakan tamat.",
+    "th": "การซิงค์สิ้นสุดแล้ว"
 }
 SYNC_SUCCESS = {
     "en": "Success! Synchronized subtitle saved to: {output_subtitle_file}\n\n",
@@ -4278,7 +4470,8 @@ SYNC_SUCCESS = {
     "vi": "Thành công! Phụ đề đã được đồng bộ và lưu vào: {output_subtitle_file}\n\n",
     "fa": "موفقیت! زیرنویس همگام‌سازی شده در: {output_subtitle_file} ذخیره شد\n\n",
     "id": "Berhasil! Subjudul yang disinkronkan disimpan ke: {output_subtitle_file}\n\n",
-    "ms": "Berjaya! Sari kata disegerakkan disimpan ke: {output_subtitle_file}\n\n"
+    "ms": "Berjaya! Sari kata disegerakkan disimpan ke: {output_subtitle_file}\n\n",
+    "th": "สำเร็จ! คำบรรยายที่ซิงค์แล้วถูกบันทึกลงใน: {output_subtitle_file}\n\n"
 }
 SYNC_ERROR = {
     "en": "Error occurred during synchronization of {filename}",
@@ -4300,7 +4493,8 @@ SYNC_ERROR = {
     "vi": "Đã xảy ra lỗi trong quá trình đồng bộ hóa {filename}",
     "fa": "خطا در هنگام همگام‌سازی {filename}",
     "id": "Terjadi kesalahan selama sinkronisasi {filename}",
-    "ms": "Ralat berlaku semasa penyegerakan {filename}"
+    "ms": "Ralat berlaku semasa penyegerakan {filename}",
+    "th": "เกิดข้อผิดพลาดระหว่างการซิงค์ของ {filename}"
 }
 SYNC_ERROR_OCCURRED = {
     "en": "Error occurred during synchronization. Please check the log messages.",
@@ -4322,7 +4516,8 @@ SYNC_ERROR_OCCURRED = {
     "vi": "Đã xảy ra lỗi trong quá trình đồng bộ hóa. Vui lòng kiểm tra các thông báo nhật ký.",
     "fa": "خطا در هنگام همگام‌سازی. لطفا پیام‌های لاگ را بررسی کنید.",
     "id": "Terjadi kesalahan selama sinkronisasi. Silakan periksa pesan log.",
-    "ms": "Ralat berlaku semasa penyegerakan. Sila semak mesej log."
+    "ms": "Ralat berlaku semasa penyegerakan. Sila semak mesej log.",
+    "th": "เกิดข้อผิดพลาดระหว่างการซิงค์ โปรดตรวจสอบข้อความบันทึก"
 }
 BATCH_SYNC_COMPLETED = {
     "en": "Batch syncing completed.",
@@ -4344,7 +4539,8 @@ BATCH_SYNC_COMPLETED = {
     "vi": "Đã hoàn tất đồng bộ hóa theo lô.",
     "fa": "همگام‌سازی دسته‌ای به پایان رسید.",
     "id": "Sinkronisasi batch selesai.",
-    "ms": "Penyegerakan kelompok selesai."
+    "ms": "Penyegerakan kelompok selesai.",
+    "th": "การซิงค์ชุดงานเสร็จสมบูรณ์"
 }
 PREPARING_SYNC = {
     "en": "Preparing {base_name}{file_extension} for automatic sync...",
@@ -4366,7 +4562,8 @@ PREPARING_SYNC = {
     "vi": "Đang chuẩn bị {base_name}{file_extension} để đồng bộ tự động...",
     "fa": "آماده‌سازی {base_name}{file_extension} برای همگام‌سازی خودکار...",
     "id": "Mempersiapkan {base_name}{file_extension} untuk sinkronisasi otomatis...",
-    "ms": "Menyediakan {base_name}{file_extension} untuk penyegerakan automatik..."
+    "ms": "Menyediakan {base_name}{file_extension} untuk penyegerakan automatik...",
+    "th": "กำลังเตรียม {base_name}{file_extension} สำหรับการซิงค์อัตโนมัติ..."
 }
 CONVERTING_TTML = {
     "en": "Converting TTML/DFXP/ITT to SRT...",
@@ -4388,7 +4585,8 @@ CONVERTING_TTML = {
     "vi": "Chuyển đổi TTML/DFXP/ITT sang SRT...",
     "fa": "تبدیل TTML/DFXP/ITT به SRT...",
     "id": "Mengonversi TTML/DFXP/ITT ke SRT...",
-    "ms": "Menukar TTML/DFXP/ITT kepada SRT..."
+    "ms": "Menukar TTML/DFXP/ITT kepada SRT...",
+    "th": "กำลังแปลง TTML/DFXP/ITT เป็น SRT..."
 }
 CONVERTING_VTT = {
     "en": "Converting VTT to SRT...",
@@ -4410,7 +4608,8 @@ CONVERTING_VTT = {
     "vi": "Chuyển đổi VTT sang SRT...",
     "fa": "تبدیل VTT به SRT...",
     "id": "Mengonversi VTT ke SRT...",
-    "ms": "Menukar VTT kepada SRT..."
+    "ms": "Menukar VTT kepada SRT...",
+    "th": "กำลังแปลง VTT เป็น SRT..."
 }
 CONVERTING_SBV = {
     "en": "Converting SBV to SRT...",
@@ -4432,7 +4631,8 @@ CONVERTING_SBV = {
     "vi": "Chuyển đổi SBV sang SRT...",
     "fa": "تبدیل SBV به SRT...",
     "id": "Mengonversi SBV ke SRT...",
-    "ms": "Menukar SBV kepada SRT..."
+    "ms": "Menukar SBV kepada SRT...",
+    "th": "กำลังแปลง SBV เป็น SRT..."
 }
 CONVERTING_SUB = {
     "en": "Converting SUB to SRT...",
@@ -4454,7 +4654,8 @@ CONVERTING_SUB = {
     "vi": "Chuyển đổi SUB sang SRT...",
     "fa": "تبدیل SUB به SRT...",
     "id": "Mengonversi SUB ke SRT...",
-    "ms": "Menukar SUB kepada SRT..."
+    "ms": "Menukar SUB kepada SRT...",
+    "th": "กำลังแปลง SUB เป็น SRT..."
 }
 CONVERTING_ASS = {
     "en": "Converting ASS/SSA to SRT...",
@@ -4476,7 +4677,8 @@ CONVERTING_ASS = {
     "vi": "Chuyển đổi ASS/SSA sang SRT...",
     "fa": "تبدیل ASS/SSA به SRT...",
     "id": "Mengonversi ASS/SSA ke SRT...",
-    "ms": "Menukar ASS/SSA kepada SRT..."
+    "ms": "Menukar ASS/SSA kepada SRT...",
+    "th": "กำลังแปลง ASS/SSA เป็น SRT..."
 }
 CONVERTING_STL = {
     "en": "Converting STL to SRT...",
@@ -4498,7 +4700,8 @@ CONVERTING_STL = {
     "vi": "Chuyển đổi STL sang SRT...",
     "fa": "تبدیل STL به SRT...",
     "id": "Mengonversi STL ke SRT...",
-    "ms": "Menukar STL kepada SRT..."
+    "ms": "Menukar STL kepada SRT...",
+    "th": "กำลังแปลง STL เป็น SRT..."
 }
 CONVERSION_NOT_SUPPORTED = {
     "en": "Error: Conversion for {file_extension} is not supported.",
@@ -4520,7 +4723,8 @@ CONVERSION_NOT_SUPPORTED = {
     "vi": "Lỗi: Không hỗ trợ chuyển đổi cho {file_extension}.",
     "fa": "خطا: تبدیل برای {file_extension} پشتیبانی نمی‌شود.",
     "id": "Kesalahan: Konversi untuk {file_extension} tidak didukung.",
-    "ms": "Ralat: Penukaran untuk {file_extension} tidak disokong."
+    "ms": "Ralat: Penukaran untuk {file_extension} tidak disokong.",
+    "th": "ข้อผิดพลาด: ไม่รองรับการแปลงสำหรับ {file_extension}."
 }
 RETRY_ENCODING_MSG = {
     "en": "Previous sync failed. Retrying with pre-detected encodings...",
@@ -4542,7 +4746,8 @@ RETRY_ENCODING_MSG = {
     "vi": "Đồng bộ hóa trước đó thất bại. Thử lại với các bộ mã hóa được phát hiện trước...",
     "fa": "همگام‌سازی قبلی ناموفق بود. دوباره با رمزگذاری‌های پیش‌تشخیص شده تلاش می‌شود...",
     "id": "Sinkronisasi sebelumnya gagal. Mencoba kembali dengan pengkodean yang telah terdeteksi sebelumnya...",
-    "ms": "Penyelarasan sebelum ini gagal. Mencuba semula dengan pengekodan yang telah dikesan..."
+    "ms": "Penyelarasan sebelum ini gagal. Mencuba semula dengan pengekodan yang telah dikesan...",
+    "th": "การซิงค์ครั้งก่อนล้มเหลว กำลังลองใหม่ด้วยการเข้ารหัสที่ตรวจพบล่วงหน้า..."
 }
 ALASS_SPEED_OPTIMIZATION_LOG = {
     "en": "Disabled: Speed optimization...",
@@ -4564,7 +4769,8 @@ ALASS_SPEED_OPTIMIZATION_LOG = {
     "vi": "Đã vô hiệu hóa: Tối ưu tốc độ...",
     "fa": "غیرفعال: بهینه‌سازی سرعت...",
     "id": "Dinonaktifkan: Optimalisasi kecepatan...",
-    "ms": "Dilumpuhkan: Pengoptimuman kelajuan..."
+    "ms": "Dilumpuhkan: Pengoptimuman kelajuan...",
+    "th": "ปิดใช้งาน: การปรับปรุงความเร็ว..."
 }
 ALASS_DISABLE_FPS_GUESSING_LOG = {
     "en": "Disabled: FPS guessing...",
@@ -4586,7 +4792,8 @@ ALASS_DISABLE_FPS_GUESSING_LOG = {
     "vi": "Đã vô hiệu hóa: Đoán FPS...",
     "fa": "غیرفعال: حدس زدن FPS...",
     "id": "Dinonaktifkan: Menebak FPS...",
-    "ms": "Dilumpuhkan: Anggaran FPS..."
+    "ms": "Dilumpuhkan: Anggaran FPS...",
+    "th": "ปิดใช้งาน: การทำนาย FPS..."
 }
 CHANGING_ENCODING_MSG = {
     "en": "The synchronized subtitle's encoding does not match the input subtitle's encoding. Changing from {synced_subtitle_encoding} encoding to {encoding_inc} encoding...",
@@ -4608,7 +4815,8 @@ CHANGING_ENCODING_MSG = {
     "vi": "Bộ mã hóa của phụ đề đã đồng bộ không khớp với bộ mã hóa của phụ đề đầu vào. Đang thay đổi từ bộ mã hóa {synced_subtitle_encoding} sang bộ mã hóa {encoding_inc}...",
     "fa": "رمزگذاری زیرنویس همگام شده با رمزگذاری زیرنویس ورودی مطابقت ندارد. از رمزگذاری {synced_subtitle_encoding} به رمزگذاری {encoding_inc} تغییر داده می‌شود...",
     "id": "Pengodean subtitle yang disinkronkan tidak sesuai dengan pengodean subtitle masukan. Mengubah dari pengodean {synced_subtitle_encoding} ke pengodean {encoding_inc}...",
-    "ms": "Pengekodan sari kata yang diselaraskan tidak sepadan dengan pengekodan sari kata input. Menukar daripada pengekodan {synced_subtitle_encoding} kepada pengekodan {encoding_inc}..."
+    "ms": "Pengekodan sari kata yang diselaraskan tidak sepadan dengan pengekodan sari kata input. Menukar daripada pengekodan {synced_subtitle_encoding} kepada pengekodan {encoding_inc}...",
+    "th": "การเข้ารหัสคำบรรยายที่ซิงค์ไม่ตรงกับการเข้ารหัสของคำบรรยายที่ป้อน กำลังเปลี่ยนจากการเข้ารหัส {synced_subtitle_encoding} เป็นการเข้ารหัส {encoding_inc}..."
 }
 ENCODING_CHANGED_MSG = {
     "en": "Encoding changed successfully.",
@@ -4630,7 +4838,8 @@ ENCODING_CHANGED_MSG = {
     "vi": "Đã thay đổi bộ mã hóa thành công.",
     "fa": "رمزگذاری با موفقیت تغییر یافت.",
     "id": "Pengkodean berhasil diubah.",
-    "ms": "Pengekodan berjaya ditukar."
+    "ms": "Pengekodan berjaya ditukar.",
+    "th": "การเข้ารหัสเปลี่ยนแปลงสำเร็จ"
 }
 SYNC_SUCCESS_COUNT = {
     "en": "Successfully synced {success_count} subtitle file(s).",
@@ -4652,7 +4861,8 @@ SYNC_SUCCESS_COUNT = {
     "vi": "Đã đồng bộ hóa thành công {success_count} tập tin phụ đề.",
     "fa": "{success_count} فایل زیرنویس با موفقیت همگام شده.",
     "id": "{success_count} berkas subtitle berhasil disinkronkan.",
-    "ms": "{success_count} fail yang berjaya diselaraskan."
+    "ms": "{success_count} fail yang berjaya diselaraskan.",
+    "th": "ซิงค์ไฟล์คำบรรยาย {success_count} ไฟล์สำเร็จ"
 }
 SYNC_FAILURE_COUNT = {
     "en": "Failed to sync {failure_count} subtitle file(s).",
@@ -4674,7 +4884,8 @@ SYNC_FAILURE_COUNT = {
     "vi": "Không thể đồng bộ hóa {failure_count} tập tin phụ đề.",
     "fa": "{failure_count} فایل زیرنویس همگام سازی نشد.",
     "id": "{failure_count} berkas subtitle gagal disinkronkan.",
-    "ms": "{failure_count} fail yang gagal diselaraskan."
+    "ms": "{failure_count} fail yang gagal diselaraskan.",
+    "th": "ไม่สามารถซิงค์ไฟล์คำบรรยาย {failure_count} ไฟล์"
 }
 SYNC_FAILURE_COUNT_BATCH = {
     "en": "Failed to sync {failure_count} pair(s):",
@@ -4696,7 +4907,8 @@ SYNC_FAILURE_COUNT_BATCH = {
     "vi": "Không thể đồng bộ hóa {failure_count} cặp:",
     "fa": "{failure_count} جفت ناموفق بودند:",
     "id": "{failure_count} pasangan gagal disinkronkan:",
-    "ms": "{failure_count} pasangan yang gagal diselaraskan:"
+    "ms": "{failure_count} pasangan yang gagal diselaraskan:",
+    "th": "ไม่สามารถซิงค์ {failure_count} การจับคู่: "
 }
 ERROR_CHANGING_ENCODING_MSG = {
     "en": "Error changing encoding: {error_message}\n",
@@ -4718,7 +4930,8 @@ ERROR_CHANGING_ENCODING_MSG = {
     "vi": "Lỗi khi thay đổi mã hóa: {error_message}\n",
     "fa": "خطا در تغییر رمزگذاری: {error_message}\n",
     "id": "Kesalahan saat mengubah pengkodean: {error_message}\n",
-    "ms": "Ralat mengubah pengkodean: {error_message}\n"
+    "ms": "Ralat mengubah pengkodean: {error_message}\n",
+    "th": "เกิดข้อผิดพลาดในการเปลี่ยนการเข้ารหัส: {error_message}\n"
 }
 BACKUP_CREATED = {
     "en": "A backup of the existing subtitle file has been saved to: {output_subtitle_file}.",
@@ -4740,7 +4953,8 @@ BACKUP_CREATED = {
     "vi": "Một bản sao lưu của tệp phụ đề hiện có đã được lưu vào: {output_subtitle_file}.",
     "fa": "یک پشتیبان از فایل زیرنویس موجود ذخیره شده است در: {output_subtitle_file}.",
     "id": "Cadangan berkas subtitle yang ada disimpan di: {output_subtitle_file}.",
-    "ms": "Cadangan fail subtitle yang ada telah disimpan di: {output_subtitle_file}."
+    "ms": "Cadangan fail subtitle yang ada telah disimpan di: {output_subtitle_file}.",
+    "th": "สำรองไฟล์คำบรรยายที่มีอยู่ได้ถูกบันทึกไว้ที่: {output_subtitle_file}."
 }
 CHECKING_SUBTITLE_STREAMS = {
     "en": "Checking the video for subtitle streams...",
@@ -4762,7 +4976,8 @@ CHECKING_SUBTITLE_STREAMS = {
     "vi": "Kiểm tra video để tìm các luồng phụ đề...",
     "fa": "در حال بررسی ویدیو برای جریان‌های زیرنویس...",
     "id": "Mengecek video untuk alirkan subtitle streams...",
-    "ms": "Mengesahkan video untuk aliran subtitle streams..."
+    "ms": "Mengesahkan video untuk aliran subtitle streams...",
+    "th": "กำลังตรวจสอบวิดีโอสำหรับสตรีมคำบรรยาย..."
 }
 FOUND_COMPATIBLE_SUBTITLES = {
     "en": "Found {count} compatible subtitles to extract.\nExtracting subtitles to folder: {output_folder}...",
@@ -4784,7 +4999,8 @@ FOUND_COMPATIBLE_SUBTITLES = {
     "vi": "Đã tìm thấy {count} phụ đề tương thích để trích xuất.\nĐang trích xuất phụ đề vào thư mục: {output_folder}...",
     "fa": "یافت شد {count} زیرنویس سازگار برای استخراج.\nاستخراج زیرنویس به پوشه: {output_folder}...",
     "id": "Ditemukan {count} subtitle yang kompatibel untuk diekstraksi.\nEkstrak subtitle ke folder: {output_folder}...",
-    "ms": "Ditemukan {count} subtitle yang kompatibel untuk diekstraksi.\nEkstrak subtitle ke folder: {output_folder}..."
+    "ms": "Ditemukan {count} subtitle yang kompatibel untuk diekstraksi.\nEkstrak subtitle ke folder: {output_folder}...",
+    "th": "พบคำบรรยายที่สามารถใช้งานได้ {count} รายการ\nกำลังกำลังดึงคำบรรยายไปยังโฟลเดอร์: {output_folder}..."
 }
 NO_COMPATIBLE_SUBTITLES = {
     "en": "No compatible subtitles found to extract.",
@@ -4806,7 +5022,8 @@ NO_COMPATIBLE_SUBTITLES = {
     "vi": "Không tìm thấy phụ đề tương thích để trích xuất.",
     "fa": "هیچ زیرنویس سازگاری برای استخراج یافت نشد.",
     "id": "Tidak ditemukan subtitle yang kompatibel untuk diekstraksi.",
-    "ms": "Tidak ditemukan subtitle yang kompatibel untuk diekstraksi."
+    "ms": "Tidak ditemukan subtitle yang kompatibel untuk diekstraksi.",
+    "th": "ไม่พบคำบรรยายที่สามารถใช้งานได้สำหรับการดึง"
 }
 SUCCESSFULLY_EXTRACTED = {
     "en": "Successfully extracted: {filename}.",
@@ -4828,7 +5045,8 @@ SUCCESSFULLY_EXTRACTED = {
     "vi": "Trích xuất thành công: {filename}.",
     "fa": "با موفقیت استخراج شد: {filename}.",
     "id": "Berhasil diekstraksi: {filename}.",
-    "ms": "Berjaya diekstraksi: {filename}."
+    "ms": "Berjaya diekstraksi: {filename}.",
+    "th": "ดึงข้อมูลสำเร็จ: {filename}."
 }
 CHOOSING_BEST_SUBTITLE = {
     "en": "Selecting the best subtitle for syncing...",
@@ -4850,7 +5068,8 @@ CHOOSING_BEST_SUBTITLE = {
     "vi": "Đang chọn phụ đề tốt nhất để đồng bộ...",
     "fa": "انتخاب بهترین زیرنویس برای همگام سازی...",
     "id": "Memilih subtitle terbaik untuk sinkronisasi...",
-    "ms": "Memilih subtitle terbaik untuk sinkronisasi..."
+    "ms": "Memilih subtitle terbaik untuk sinkronisasi...",
+    "th": "กำลังเลือกคำบรรยายที่ดีที่สุดสำหรับการซิงค์..."
 }
 CHOSEN_SUBTITLE = {
     "en": "Selected: {filename} with timestamp difference: {score}",
@@ -4872,7 +5091,8 @@ CHOSEN_SUBTITLE = {
     "vi": "Đã chọn: {filename} với sự khác biệt thời gian: {score}",
     "fa": "انتخاب شد: {filename} با تفاوت زمانی: {score}",
     "id": "Dipilih: {filename} dengan selisih waktu: {score}",
-    "ms": "Dipilih: {filename} dengan selisih waktu: {score}"
+    "ms": "Dipilih: {filename} dengan selisih waktu: {score}",
+    "th": "เลือกแล้ว: {filename} โดยมีความแตกต่างของเวลาสตรีม: {score}"
 }
 VIDEO_FILE_NOT_FOUND = {
     "en": "Video file not found: {error}",
@@ -4894,7 +5114,8 @@ VIDEO_FILE_NOT_FOUND = {
     "vi": "Không tìm thấy tệp video: {error}",
     "fa": "فایل ویدیو یافت نشد: {error}",
     "id": "File video tidak ditemukan: {error}",
-    "ms": "File video tidak ditemukan: {error}"
+    "ms": "File video tidak ditemukan: {error}",
+    "th": "ไม่พบไฟล์วิดีโอ: {error}"
 }
 FILE_NOT_FOUND = {
     "en": "File not found",
@@ -4916,7 +5137,8 @@ FILE_NOT_FOUND = {
     "vi": "Không tìm thấy tệp",
     "fa": "فایل یافت نشد",
     "id": "File tidak ditemukan",
-    "ms": "File tidak ditemukan"
+    "ms": "File tidak ditemukan",
+    "th": "ไม่พบไฟล์"
 }
 ERROR_OPENING_DIRECTORY = {
     "en": "Error opening directory: {error}",
@@ -4938,7 +5160,8 @@ ERROR_OPENING_DIRECTORY = {
     "vi": "Lỗi khi mở thư mục: {error}",
     "fa": "خطا در باز کردن پوشه: {error}",
     "id": "Kesalahan membuka direktori: {error}",
-    "ms": "Ralat membuka direktori: {error}"
+    "ms": "Ralat membuka direktori: {error}",
+    "th": "ข้อผิดพลาดในการเปิดไดเรกทอรี: {error}"
 }
 CONFIG_FILE_NOT_FOUND = {
     "en": "Config file not found.",
@@ -4960,7 +5183,8 @@ CONFIG_FILE_NOT_FOUND = {
     "vi": "Không tìm thấy tệp cấu hình.",
     "fa": "فایل پیکربندی یافت نشد.",
     "id": "File konfigurasi tidak ditemukan.",
-    "ms": "File konfigurasi tidak ditemukan."
+    "ms": "File konfigurasi tidak ditemukan.",
+    "th": "ไม่พบไฟล์คอนฟิก"
 }
 FFPROBE_FAILED = {
     "en": "FFprobe failed to detect streams",
@@ -4982,7 +5206,8 @@ FFPROBE_FAILED = {
     "vi": "FFprobe không thể phát hiện luồng",
     "fa": "FFprobe نتوانست جریان‌ها را شناسایی کند",
     "id": "FFprobe tidak dapat mendeteksi aliran",
-    "ms": "FFprobe tidak dapat mendeteksi aliran"
+    "ms": "FFprobe tidak dapat mendeteksi aliran",
+    "th": "FFprobe ไม่สามารถตรวจจับสตรีมได้"
 }
 SUBTITLE_EXTRACTION_FAILED = {
     "en": "Failed to extract subtitles from video: {error}",
@@ -5004,7 +5229,8 @@ SUBTITLE_EXTRACTION_FAILED = {
     "vi": "Không thể trích xuất phụ đề từ video: {error}",
     "fa": "استخراج زیرنویس از ویدیو ناموفق بود: {error}",
     "id": "Gagal mengekstrak subtitle dari video: {error}",
-    "ms": "Gagal mengekstrak subtitle dari video: {error}"
+    "ms": "Gagal mengekstrak subtitle dari video: {error}",
+    "th": "ไม่สามารถดึงคำบรรยายจากวิดีโอได้: {error}"
 }
 FAILED_TO_EXTRACT_SUBTITLES = {
     "en": "Failed to extract subtitles. Error: {error}",
@@ -5026,7 +5252,8 @@ FAILED_TO_EXTRACT_SUBTITLES = {
     "vi": "Không thể trích xuất phụ đề. Lỗi: {error}",
     "fa": "استخراج زیرنویس ناموفق بود. خطا: {error}",
     "id": "Gagal mengekstrak subtitle. Kesalahan: {error}",
-    "ms": "Gagal mengekstrak subtitle. Kesalahan: {error}"
+    "ms": "Gagal mengekstrak subtitle. Kesalahan: {error}",
+    "th": "ไม่สามารถดึงคำบรรยายได้ ข้อผิดพลาด: {error}"
 }
 USED_THE_LONGEST_SUBTITLE = {
     "en": "Used the longest subtitle file because parse_timestamps failed.",
@@ -5048,7 +5275,8 @@ USED_THE_LONGEST_SUBTITLE = {
     "vi": "Sử dụng tệp phụ đề dài nhất vì parse_timestamps thất bại.",
     "fa": "استفاده کردن برای زیرنویس‌های بیشتر برای خطا در parse_timestamps.",
     "id": "Menggunakan file subtitle terpanjang karena parse_timestamps gagal.",
-    "ms": "Menggunakan file subtitle terpanjang karena parse_timestamps gagal."
+    "ms": "Menggunakan file subtitle terpanjang karena parse_timestamps gagal.",
+    "th": "ใช้ไฟล์คำบรรยายที่ยาวที่สุดเพราะการแปลง parse_timestamps ล้มเหลว"
 }
 DELETING_EXTRACTED_SUBTITLE_FOLDER = {
     "en": "Deleting the extracted subtitles folder...",
@@ -5070,7 +5298,8 @@ DELETING_EXTRACTED_SUBTITLE_FOLDER = {
     "vi": "Đang xóa thư mục phụ đề đã trích xuất...",
     "fa": "حذف پوشه زیرنویس‌های استخراج شده...",
     "id": "Menghapus folder subtitle yang diekstrak...",
-    "ms": "Menghapus folder subtitle yang diekstrak..."
+    "ms": "Menghapus folder subtitle yang diekstrak...",
+    "th": "กำลังลบโฟลเดอร์คำบรรยายที่ดึงออกมา..."
 }
 DELETING_CONVERTED_SUBTITLE = {
     "en": "Deleting the converted subtitle file...",
@@ -5092,7 +5321,8 @@ DELETING_CONVERTED_SUBTITLE = {
     "vi": "Đang xóa tệp phụ đề đã chuyển đổi...",
     "fa": "حذف فایل زیرنویس تبدیل شده...",
     "id": "Menghapus file subtitle yang dikonversi...",
-    "ms": "Menghapus file subtitle yang dikonversi..."
+    "ms": "Menghapus file subtitle yang dikonversi...",
+    "th": "กำลังลบไฟล์คำบรรยายที่แปลงแล้ว..."
 }
 ADDED_FILES_TEXT = {
     "en": "Added {added_files} files",
@@ -5114,7 +5344,8 @@ ADDED_FILES_TEXT = {
     "vi": "Đã thêm {added_files} tệp",
     "fa": "{added_files} فایل اضافه شد",
     "id": "Menambahkan {added_files} file",
-    "ms": "Menambahkan {added_files} file"
+    "ms": "Menambahkan {added_files} file",
+    "th": "เพิ่มไฟล์ {added_files} ไฟล์"
 }
 SKIPPED_DUPLICATE_FILES_TEXT = {
     "en": "Skipped {skipped_files} duplicate files",
@@ -5136,7 +5367,8 @@ SKIPPED_DUPLICATE_FILES_TEXT = {
     "vi": "Đã bỏ qua {skipped_files} tệp trùng lặp",
     "fa": "{skipped_files} فایل تکراری اضافه نشد",
     "id": "Dilewati {skipped_files} file duplikat",
-    "ms": "Dilewati {skipped_files} file duplikat"
+    "ms": "Dilewati {skipped_files} file duplikat",
+    "th": "ข้ามไฟล์ซ้ำ {skipped_files} ไฟล์"
 }
 SKIPPED_OTHER_LIST_FILES_TEXT = {
     "en": "Skipped {duplicate_in_other} files already in other list",
@@ -5158,7 +5390,8 @@ SKIPPED_OTHER_LIST_FILES_TEXT = {
     "vi": "Đã bỏ qua {duplicate_in_other} tệp đã có trong danh sách khác",
     "fa": "{duplicate_in_other} فایل دیگر در لیست وجود دارد",
     "id": "Dilewati {duplicate_in_other} file yang sudah ada di list lainnya",
-    "ms": "Dilewati {duplicate_in_other} file yang sudah ada di list lainnya"
+    "ms": "Dilewati {duplicate_in_other} file yang sudah ada di list lainnya",
+    "th": "ข้าม {duplicate_in_other} ไฟล์ที่มีอยู่ในรายการอื่นแล้ว"
 }
 SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = {
     "en": "Skipped {len} files with duplicate season/episode numbers",
@@ -5180,7 +5413,8 @@ SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = {
     "vi": "Đã bỏ qua {len} tệp có số mùa/tập trùng lặp",
     "fa": "{len} فایل با شماره فصل/قسمت تکراری اضافه نشد",
     "id": "Dilewati {len} file dengan nomor season/episode duplikat",
-    "ms": "Dilewati {len} file dengan nomor season/episode duplikat"
+    "ms": "Dilewati {len} file dengan nomor season/episode duplikat",
+    "th": "ข้าม {len} ไฟล์ที่มีหมายเลขฤดูกาล/ตอนซ้ำ"
 }
 SKIPPED_INVALID_FORMAT_FILES_TEXT = {
     "en": "Skipped {len} files without valid episode format",
@@ -5202,7 +5436,8 @@ SKIPPED_INVALID_FORMAT_FILES_TEXT = {
     "vi": "Đã bỏ qua {len} tệp không có định dạng tập hợp hợp lệ",
     "fa": "{len} فایل بدون فرمت قسمت معتبر اضافه نشد",
     "id": "Dilewati {len} file tanpa format episode yang valid",
-    "ms": "Dilewati {len} file tanpa format episode yang valid"
+    "ms": "Dilewati {len} file tanpa format episode yang valid",
+    "th": "ข้าม {len} ไฟล์ที่ไม่มีรูปแบบตอนที่ถูกต้อง"
 }
 NO_FILES_SELECTED = {
     "en": "No files selected.",
@@ -5224,7 +5459,8 @@ NO_FILES_SELECTED = {
     "vi": "Không có tệp nào được chọn.",
     "fa": "هیچ فایلی انتخاب نشده است.",
     "id": "Tidak ada file yang dipilih.",
-    "ms": "Tiada fail yang dipilih."
+    "ms": "Tiada fail yang dipilih.",
+    "th": "ไม่มีไฟล์ที่เลือก"
 }
 NO_ITEM_SELECTED_TO_REMOVE = {
     "en": "No item selected to remove.",
@@ -5246,7 +5482,8 @@ NO_ITEM_SELECTED_TO_REMOVE = {
     "vi": "Không có mục nào được chọn để xóa.",
     "fa": "هیچ موردی برای حذف انتخاب نشده است.",
     "id": "Tidak ada item yang dipilih untuk dihapus.",
-    "ms": "Tiada item yang dipilih untuk dihapuskan."
+    "ms": "Tiada item yang dipilih untuk dihapuskan.",
+    "th": "ไม่มีรายการที่เลือกเพื่อลบ"
 }
 NO_FILES_SELECTED_TO_SHOW_PATH = {
     "en": "No file selected to show path.",
@@ -5268,7 +5505,8 @@ NO_FILES_SELECTED_TO_SHOW_PATH = {
     "vi": "Không có tệp nào được chọn để hiển thị đường dẫn.",
     "fa": "هیچ فایلی برای نمایش مسیر انتخاب نشده است.",
     "id": "Tidak ada file yang dipilih untuk menampilkan jalur.",
-    "ms": "Tiada fail yang dipilih untuk menunjukkan jalur."
+    "ms": "Tiada fail yang dipilih untuk menunjukkan jalur.",
+    "th": "ไม่มีไฟล์ที่เลือกเพื่อแสดงเส้นทาง"
 }
 REMOVED_ITEM = {
     "en": "Removed item.",
@@ -5290,7 +5528,8 @@ REMOVED_ITEM = {
     "vi": "Đã xóa mục.",
     "fa": "مورد حذف شد.",
     "id": "Item telah dihapus.",
-    "ms": "Item telah dihapuskan."
+    "ms": "Item telah dihapuskan.",
+    "th": "ลบรายการแล้ว"
 }
 FILES_MUST_CONTAIN_PATTERNS = {
     "en": "Files must contain patterns like S01E01, 1x01 etc.",
@@ -5312,7 +5551,8 @@ FILES_MUST_CONTAIN_PATTERNS = {
     "vi": "Tệp phải chứa các mẫu như S01E01, 1x01 v.v.",
     "fa": "فایل‌ها باید شامل الگوهایی مانند S01E01، 1x01 و غیره باشند.",
     "id": "File harus mengandung pola seperti S01E01, 1x01, dll.",
-    "ms": "Fail harus mengandungi pola seperti S01E01, 1x01, dll."
+    "ms": "Fail harus mengandungi pola seperti S01E01, 1x01, dll.",
+    "th": "ไฟล์ต้องประกอบด้วยรูปแบบเช่น S01E01, 1x01 เป็นต้น"
 }
 NO_VALID_SUBTITLE_FILES = {
     "en": "No valid files found.",
@@ -5334,7 +5574,8 @@ NO_VALID_SUBTITLE_FILES = {
     "vi": "Không tìm thấy tệp hợp lệ.",
     "fa": "هیچ فایل معتبری یافت نشد.",
     "id": "Tidak ada file yang valid ditemukan.",
-    "ms": "Tiada fail yang valid ditemui."
+    "ms": "Tiada fail yang valid ditemui.",
+    "th": "ไม่พบไฟล์ที่ถูกต้อง"
 }
 NO_SUBTITLE_PAIRS_TO_PROCESS = {
     "en": "No pairs to process.",
@@ -5356,7 +5597,8 @@ NO_SUBTITLE_PAIRS_TO_PROCESS = {
     "vi": "Không có cặp nào để xử lý.",
     "fa": "هیچ جفتی برای پردازش وجود ندارد.",
     "id": "Tidak ada pasangan untuk diproses.",
-    "ms": "Tiada pasangan untuk diproses."
+    "ms": "Tiada pasangan untuk diproses.",
+    "th": "ไม่มีการจับคู่ที่จะประมวลผล"
 }
 NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
     "en": "No matching pairs found.",
@@ -5378,7 +5620,8 @@ NO_MATCHING_SUBTITLE_PAIRS_FOUND = {
     "vi": "Không tìm thấy cặp phù hợp.",
     "fa": "هیچ جفتی یافت نشد.",
     "id": "Tidak ada pasangan yang cocok ditemukan.",
-    "ms": "Tiada pasangan yang cocok ditemui."
+    "ms": "Tiada pasangan yang cocok ditemui.",
+    "th": "ไม่พบการจับคู่ที่ตรงกัน"
 }
 NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
     "en": "No valid pairs to process.",
@@ -5400,7 +5643,8 @@ NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = {
     "vi": "Không có cặp hợp lệ để xử lý.",
     "fa": "هیچ جفتی معتبر برای پردازش وجود ندارد.",
     "id": "Tidak ada pasangan yang valid untuk diproses.",
-    "ms": "Tiada pasangan yang valid untuk diproses."
+    "ms": "Tiada pasangan yang valid untuk diproses.",
+    "th": "ไม่มีการจับคู่ที่ถูกต้องสำหรับการประมวลผล"
 }
 for name, obj in list(globals().items()):
     if isinstance(obj, dict) and name != "TranslationDict":
