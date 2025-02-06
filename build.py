@@ -82,8 +82,8 @@ def ensure_ffmpeg():
 def ensure_ffsubsync():
     exe = '.exe' if platform.system() == 'Windows' else ''
     ffsubsync_dir = 'main/resources/ffsubsync-bin'
-    
-    if not os.path.exists(os.path.join(ffsubsync_dir, f"ffsubsync{exe}")):
+    ffsubsync_exe = "ffsubsync" + exe
+    if not os.path.exists(os.path.join(ffsubsync_dir, ffsubsync_exe)):
         print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
         if platform.system() == 'Windows':
             python_executable = 'venv\\Scripts\\python'
