@@ -11,12 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest, macos-13]
+        os: [windows-latest, ubuntu-20.04, macos-latest, macos-13]
         include:
           - os: windows-latest
             build: win-x64
             file_name: win_amd64
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             build: linux-x64
             file_name: linux_amd64
           - os: macos-latest
@@ -45,7 +45,7 @@ jobs:
           cache: "pip"
 
       - name: Install system dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-20.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-venv python3-tk
@@ -54,13 +54,12 @@ jobs:
         run: |
           pip install requests
 
-      - name: Build with Docker (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Check GLIBC version (Linux)
+        if: matrix.os == 'ubuntu-20.04'
         run: |
-          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux2014_x86_64 /bin/bash -c "python build.py"
+          ldd --version
 
-      - name: Build (Windows and macOS)
-        if: matrix.os != 'ubuntu-latest'
+      - name: Run build script
         run: |
           python build.py
 
@@ -88,7 +87,7 @@ jobs:
 
   release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Check out the repository
@@ -116,6 +115,7 @@ jobs:
           name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
             ${{ env.changelog }}
+            
             > MacOS users please read [this](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#for-macososx-users).
             
             >Included:

@@ -54,9 +54,13 @@ jobs:
         run: |
           pip install requests
 
-      - name: Run build script
+      - name: Check GLIBC version (Linux)
+        if: matrix.os == 'ubuntu-20.04'
         run: |
           ldd --version
+
+      - name: Run build script
+        run: |
           python build.py
 
       - name: Upload build artifacts
