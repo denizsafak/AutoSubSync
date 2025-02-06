@@ -61,21 +61,33 @@ if platform.system() == 'Darwin':
         strip=False,
         upx=True,
         console=False,
-        onefile=True,
-        disable_windowed_traceback=True,
-        argv_emulation=False,
+        disable_windowed_traceback=False,
+        argv_emulation=True,
         target_arch=None,
         codesign_identity=None,
         entitlements_file=None,
+    )
+    
+    app = BUNDLE(
+        exe,
+        name='AutoSubSync.app',
         icon=os.path.join(os.curdir, 'main', 'icon.icns'),
+        bundle_identifier='com.denizsafak.AutoSubSync',
+        version=version,
         info_plist={
             'CFBundleName': 'AutoSubSync',
             'CFBundleDisplayName': 'AutoSubSync',
+            'CFBundleExecutable': 'AutoSubSync',
+            'CFBundleIdentifier': 'com.denizsafak.AutoSubSync',
             'CFBundleVersion': version,
             'CFBundleShortVersionString': version,
-            'CFBundleIdentifier': 'com.denizsafak.AutoSubSync',
-            'CFBundleExecutable': 'AutoSubSync',
-            'CFBundleIconFile': 'icon.icns',
+            'CFBundlePackageType': 'APPL',
+            'LSMinimumSystemVersion': '10.13.0',
+            'NSHighResolutionCapable': True,
+            'LSEnvironment': {
+                'SHELL': '/bin/zsh',
+                'PATH': '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+            },
         }
     )
 else:
