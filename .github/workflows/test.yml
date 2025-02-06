@@ -1,4 +1,4 @@
-name: AutoSubSync
+name: AutoSubSync Test
 
 on:
   workflow_dispatch:
