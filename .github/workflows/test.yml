@@ -53,15 +53,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux2014_x86_64 /bin/bash -c "
-            curl -O https://www.python.org/ftp/python/3.11.0/Python-3.11.0.tgz &&
-            tar -xzf Python-3.11.0.tgz &&
-            cd Python-3.11.0 &&
-            ./configure --enable-optimizations &&
-            make &&
-            make altinstall &&
-            ln -s /usr/local/bin/python3.11 /usr/bin/python &&
-            ln -s /usr/local/bin/pip3.11 /usr/bin/pip &&
-            python build.py
+            yum install -y python3 python3-pip python3-tkinter python3-venv &&
+            ln -s /usr/bin/python3 /usr/bin/python &&
+            python3 -m pip install --upgrade pip &&
+            python3 build.py
           "
 
       - name: Build (Windows and macOS)
