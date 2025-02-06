@@ -63,10 +63,10 @@ def install_requirements():
     print("Requirements installed.")
 
 def ensure_ffmpeg():
+    apps = ['ffmpeg', 'ffprobe']
     exe = '.exe' if platform.system() == 'Windows' else ''
     ffmpeg_dir = 'main/resources/ffmpeg-bin'
-    
-    if not all(os.path.exists(os.path.join(ffmpeg_dir, f"{app}{exe}")) for app in ['ffmpeg', 'ffprobe']):
+    if not all(os.path.exists(os.path.join(ffmpeg_dir, app + exe)) for app in apps):
         print("FFmpeg executables not found, running ffmpeg_download.py...")
         if platform.system() == 'Windows':
             python_executable = 'venv\\Scripts\\python'
