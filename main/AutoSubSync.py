@@ -145,17 +145,21 @@ def is_dark_mode():
             return False
     return False
 
-# Font Fix: if platform is macOS and current config["log_window_font"] is "Cascadia Code" or "Cascadia Code SemiLight", change it
+# Font Fix: if platform is macOS or Linux, adjust font settings accordingly
 if platform == "Darwin" and config.get("log_window_font", "Cascadia Code") in ["Cascadia Code", "Cascadia Code SemiLight"]:
     config["log_window_font"] = "Andale Mono"
     config["log_window_font_size"] = 10
     config["log_window_font_style"] = "normal"
-    # Save the updated configuration
-    try:
-        with open(config_path, 'w') as config_file:
-            json.dump(config, config_file, indent=4)
-    except Exception as e:
-        messagebox.showerror("Error", 'Failed to fix font: ' + str(e))
+elif platform == "Linux" and config.get("log_window_font", "Cascadia Code") in ["Cascadia Code", "Cascadia Code SemiLight"]:
+    config["log_window_font"] = "Noto Sans Sinhala"
+    config["log_window_font_size"] = 10
+    config["log_window_font_style"] = "normal"
+# Save the updated configuration
+try:
+    with open(config_path, 'w') as config_file:
+        json.dump(config, config_file, indent=4)
+except Exception as e:
+    messagebox.showerror("Error", 'Failed to fix font: ' + str(e))
 
 # Fix small font size on macOS
 if platform == "Darwin":  # macOS
