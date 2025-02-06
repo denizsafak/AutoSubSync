@@ -51,11 +51,7 @@ jobs:
       - name: Build with Docker (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux2014_x86_64 /bin/bash -c "
-              yum install -y python3.11 &&
-              python3.11 -m pip install --upgrade pip &&
-              python3.11 build.py
-          "
+          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux_2_28_x86_64 /bin/bash -c "python build.py"
 
       - name: Build (Windows and macOS)
         if: matrix.os != 'ubuntu-latest'
