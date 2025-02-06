@@ -44,12 +44,6 @@ jobs:
           python-version: 3.12.8
           cache: "pip"
 
-      - name: Install system dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-venv python3-tk
-
       - name: Install required modules globally
         run: |
           pip install requests
