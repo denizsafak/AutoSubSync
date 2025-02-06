@@ -1,4 +1,4 @@
-name: AutoSubSync Build Test
+name: AutoSubSync
 
 on:
   workflow_dispatch:
@@ -11,12 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest, macos-13]
+        os: [windows-latest, ubuntu-20.04, macos-latest, macos-13]
         include:
           - os: windows-latest
             build: win-x64
             file_name: win_amd64
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             build: linux-x64
             file_name: linux_amd64
           - os: macos-latest
@@ -39,28 +39,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        if: matrix.os != 'ubuntu-latest'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12.8
           cache: "pip"
 
-      - name: Install required modules
-        if: matrix.os != 'ubuntu-latest'
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv python3-tk
+
+      - name: Install required modules globally
         run: |
           pip install requests
 
-      - name: Build with Docker (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux_2_28_x86_64 /bin/bash -c "
-            yum update -y ncurses readline &&
-            ldd --version &&
-            python3.11 build.py
-          "
-
-      - name: Build (Windows and macOS)
-        if: matrix.os != 'ubuntu-latest'
+      - name: Run build script
         run: |
           python build.py
 
