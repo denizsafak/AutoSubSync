@@ -66,8 +66,7 @@ def ensure_ffmpeg():
     exe = '.exe' if platform.system() == 'Windows' else ''
     ffmpeg_dir = 'main/resources/ffmpeg-bin'
     
-    if not all(os.path.exists(os.path.join(ffmpeg_dir, f'{app}{exe}')) 
-               for app in ['ffmpeg', 'ffprobe']):
+    if not all(os.path.exists(os.path.join(ffmpeg_dir, f"{app}{exe}")) for app in ['ffmpeg', 'ffprobe']):
         print("FFmpeg executables not found, running ffmpeg_download.py...")
         if platform.system() == 'Windows':
             python_executable = 'venv\\Scripts\\python'
@@ -84,7 +83,7 @@ def ensure_ffsubsync():
     exe = '.exe' if platform.system() == 'Windows' else ''
     ffsubsync_dir = 'main/resources/ffsubsync-bin'
     
-    if not os.path.exists(os.path.join(ffsubsync_dir, f'ffsubsync{exe}')):
+    if not os.path.exists(os.path.join(ffsubsync_dir, f"ffsubsync{exe}")):
         print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
         if platform.system() == 'Windows':
             python_executable = 'venv\\Scripts\\python'
@@ -176,7 +175,7 @@ def create_archive():
     if arch == 'x86_64':
         arch = 'amd64'
     if platform_name == 'linux':
-        tar_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz'
+        tar_name = f"AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz"
         with tarfile.open(tar_name, 'w:gz') as tar:
             for root, _, files in os.walk(dist_dir):
                 for file in files:
@@ -186,16 +185,16 @@ def create_archive():
         print(f"Tar.gz archive created: {tar_name}")
     elif platform_name == 'darwin':
         platform_name = 'macos'
-        zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
+        zip_name = f"AutoSubSync-v{version}-{platform_name}-{arch}.zip"
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(dist_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
-                    arcname = os.path.join(f'AutoSubSync-v{version}', os.path.relpath(file_path, dist_dir))
+                    arcname = os.path.join(f"AutoSubSync-v{version}", os.path.relpath(file_path, dist_dir))
                     zipf.write(file_path, arcname)
         print(f"Zip archive created: {zip_name}")
     else:
-        zip_name = f'AutoSubSync-v{version}-{platform_name}-{arch}.zip'
+        zip_name = f"AutoSubSync-v{version}-{platform_name}-{arch}.zip"
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(dist_dir):
                 for file in files:
