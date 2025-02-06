@@ -25,7 +25,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - **Choose Synchronization Tool:**
    - Select the synchronization tool (`ffsubsync` or `alass`) from the dropdown menu.-
 - **Set Options:**
-   - Configure additional options such as `Don't fix framerate`, `Use golden-section search`, and `Use auditok instead of WebRTC's VAD` for `ffsubsync`.
+   - Configure additional options such as `Don't fix framerate`, `Use golden-section search`, and `Voice activity detector (VAD)` for `ffsubsync`.
    - For `alass`, configure options like `Disable FPS guessing`, `Disable speed optimization`, and set the `Split Penalty`.
 - **Select Output Location:**
    - Choose where to save the synchronized subtitle file using the dropdown menu.
@@ -50,7 +50,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
    - Click the `Shift Subtitle` button to apply the time shift.
  
 ### Settings (Top Right Corner)
-- Language: `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`
+- Language: `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Tiếng Việt`, `Bahasa Indonesia`, `Bahasa Melayu`, `ไทย`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`, `فارسی`, `اردو`
 - Theme: `System`, `Dark`, `Light`
 - Change log window font: Configure the font used in log window. (Trigger log window to preview the changes)
 - Log records and options: `Keep log records`, `Open logs folder` and `Clear all logs`
@@ -93,4 +93,4 @@ Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/f
 > [!IMPORTANT]
 > The automatic sync feature is not always perfect. I recommend you to check the subtitle after syncing.
 
-> Tags: automatic subtitle synchronization, autosubsync, automatic sub sync, subtitle synchronization, subtitle shifter, subtitle adjuster, subtitle tools, subtitle utilities, synchronize subtitles, adjust subtitle timing, subtitle management, Python subtitle tool, subtitle manipulation, subtitle synchronization script, subtitle sync fixing, subtitle sync fix, fix subtitle sync.
+> Tags: automatic subtitle synchronization, autosubsync, automatic sub sync, subtitle synchronization, resync subtitles, re-sync subtitles, subtitle shifter, subtitle adjuster, subtitle tools, subtitle utilities, synchronize subtitles, adjust subtitle timing, subtitle management, Python subtitle tool, subtitle manipulation, subtitle synchronization script, subtitle sync fixing, subtitle sync fix, fix subtitle sync.
