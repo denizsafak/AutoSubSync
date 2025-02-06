@@ -152,7 +152,7 @@ if platform == "Darwin" and config.get("log_window_font", "Cascadia Code") in ["
     config["log_window_font_style"] = "normal"
 elif platform == "Linux" and config.get("log_window_font", "Cascadia Code") in ["Cascadia Code", "Cascadia Code SemiLight"]:
     config["log_window_font"] = "Noto Sans Sinhala"
-    config["log_window_font_size"] = 10
+    config["log_window_font_size"] = 8
     config["log_window_font_style"] = "normal"
 # Save the updated configuration
 try:
