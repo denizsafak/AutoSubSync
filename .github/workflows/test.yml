@@ -1,0 +1,73 @@
+name: AutoSubSync Build Test
+
+on:
+  workflow_dispatch:
+
+env:
+  DIST_DIR: /tmp/builds
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest, macos-13]
+        include:
+          - os: windows-latest
+            build: win-x64
+            file_name: win_amd64
+          - os: ubuntu-latest
+            build: linux-x64
+            file_name: linux_amd64
+          - os: macos-latest
+            build: osx-arm64
+            file_name: macos_arm64
+          - os: macos-13
+            build: macos-amd64
+            file_name: macos_amd64
+
+    runs-on: ${{ matrix.os }}
+
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+      ffmpeg_version: ${{ steps.set-version.outputs.ffmpeg_version }}
+      ffsubsync_version: ${{ steps.set-version.outputs.ffsubsync_version }}
+      alass_version: ${{ steps.set-version.outputs.alass_version }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.8
+          cache: "pip"
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv python3-tk
+
+      - name: Install required modules globally
+        run: |
+          pip install requests
+
+      - name: Build with Docker (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux2014_x86_64 /bin/bash -c "python build.py"
+
+      - name: Build (Windows and macOS)
+        if: matrix.os != 'ubuntu-latest'
+        run: |
+          python build.py
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.file_name }}
+          path: |
+            *.zip
+            *.tar.gz
