@@ -39,6 +39,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: matrix.os != 'ubuntu-latest'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12.8
@@ -51,7 +52,12 @@ jobs:
       - name: Build with Docker (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux_2_28_x86_64 /bin/bash -c "python3 build.py"
+          docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux2014_x86_64 /bin/bash -c "
+            yum install -y python3.11 python3.11-pip python3.11-tkinter python3.11-venv &&
+            ln -s /usr/bin/python3.11 /usr/bin/python &&
+            python3.11 -m pip install --upgrade pip &&
+            python3.11 build.py
+          "
 
       - name: Build (Windows and macOS)
         if: matrix.os != 'ubuntu-latest'
