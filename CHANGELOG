@@ -1,3 +1,3 @@
 - Added new languages: `ไทย` and `اردو` by @bayramhayri in https://github.com/denizsafak/AutoSubSync/pull/21 and https://github.com/denizsafak/AutoSubSync/pull/22.
-- Potential fix for `GLIBC_2.38` not found error in older Linux distributions by switching to GLIBC 2.31, mentioned in https://github.com/denizsafak/AutoSubSync/issues/20.
+- Fixed `GLIBC_2.38` not found error in older Linux distributions by switching to GLIBC 2.31, mentioned in https://github.com/denizsafak/AutoSubSync/issues/20.
 - Changed font in Linux build to `Noto Sans Sinhala` for better readability.
