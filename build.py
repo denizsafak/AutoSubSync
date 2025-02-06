@@ -100,7 +100,7 @@ def get_autosubsync_version():
     try:
         with open("main/VERSION", "r") as f:
             version = f.read().strip()
-        print(f"Detected AutoSubSync version: {version}")
+        print("Detected AutoSubSync version: " + version)
         return version
     except:
         return "unknown"
@@ -113,7 +113,7 @@ def get_ffmpeg_version():
         # Split by -www and take first part
         version = first_line.split('-www')[0].strip()
         # Print version info
-        print(f"Detected FFmpeg version: {version}")
+        print("Detected FFmpeg version: " + version)
         return version
     except:
         return "unknown"
@@ -123,7 +123,7 @@ def get_ffsubsync_version():
         ffsubsync_path = os.path.join("main", "resources", "ffsubsync-bin", "ffsubsync.exe")
         result = subprocess.run([ffsubsync_path, "--version"], capture_output=True, text=True)
         version = result.stdout.strip()
-        print(f"Detected ffsubsync version: {version}")
+        print("Detected ffsubsync version: " + version)
         return version
     except:
         return "unknown"
@@ -133,7 +133,7 @@ def get_alass_version():
         alass_path = os.path.join("main", "resources", "alass-bin", "alass-cli.exe")
         result = subprocess.run([alass_path, "--version"], capture_output=True, text=True)
         version = result.stdout.strip()
-        print(f"Detected alass version: {version}")
+        print("Detected alass version: " + version)
         return version
     except:
         return "unknown"
@@ -175,33 +175,33 @@ def create_archive():
     if arch == 'x86_64':
         arch = 'amd64'
     if platform_name == 'linux':
-        tar_name = f"AutoSubSync-v{version}-{platform_name}-{arch}.tar.gz"
+        tar_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".tar.gz"
         with tarfile.open(tar_name, 'w:gz') as tar:
             for root, _, files in os.walk(dist_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, dist_dir)
                     tar.add(file_path, arcname=arcname)
-        print(f"Tar.gz archive created: {tar_name}")
+        print("Tar.gz archive created: " + tar_name)
     elif platform_name == 'darwin':
         platform_name = 'macos'
-        zip_name = f"AutoSubSync-v{version}-{platform_name}-{arch}.zip"
+        zip_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".zip"
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(dist_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
-                    arcname = os.path.join(f"AutoSubSync-v{version}", os.path.relpath(file_path, dist_dir))
+                    arcname = os.path.join("AutoSubSync-v" + version, os.path.relpath(file_path, dist_dir))
                     zipf.write(file_path, arcname)
-        print(f"Zip archive created: {zip_name}")
+        print("Zip archive created: " + zip_name)
     else:
-        zip_name = f"AutoSubSync-v{version}-{platform_name}-{arch}.zip"
+        zip_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".zip"
         with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(dist_dir):
                 for file in files:
                     file_path = os.path.join(root, file)
                     arcname = os.path.relpath(file_path, dist_dir)
                     zipf.write(file_path, arcname)
-        print(f"Zip archive created: {zip_name}")
+        print("Zip archive created: " + zip_name)
 
 if __name__ == '__main__':
     check_modules()
