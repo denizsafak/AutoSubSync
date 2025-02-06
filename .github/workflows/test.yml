@@ -53,10 +53,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           docker run --rm -v $(pwd):/src -w /src quay.io/pypa/manylinux2014_x86_64 /bin/bash -c "
-            yum install -y python3 python3-pip python3-tkinter python3-venv &&
-            ln -s /usr/bin/python3 /usr/bin/python &&
-            python3 -m pip install --upgrade pip &&
-            python3 build.py
+            yum install -y python python-pip python-tkinter python-venv &&
+            ln -s /usr/bin/python /usr/bin/python &&
+            python -m pip install --upgrade pip &&
+            python build.py
           "
 
       - name: Build (Windows and macOS)
