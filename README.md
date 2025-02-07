@@ -9,7 +9,12 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 <img title="AutoSubSync" src='images/AutoSubSync1.png'> <img title="AutoSubSync" src='images/AutoSubSync2.png'> <img title="AutoSubSync" src='images/AutoSubSync3.png'> <img title="AutoSubSync" src='images/AutoSubSync4.png'>
 
 > # [Download the Latest Release](https://github.com/denizsafak/AutoSubSync/releases/latest)
-> You can download the latest executable version of AutoSubSync from this link.
+> You can download the latest executable version of AutoSubSync from this link. <br>
+> Or you can also download AutoSubSync from AUR in Arch Linux using the following command:
+> ``` 
+>yay -S autosubsync-bin 
+>```
+> Thanks to [@Rainoutt](https://github.com/Rainoutt) for the AUR package.
 
 ## `How to Run?`
 - Extract the zip.
