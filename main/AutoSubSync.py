@@ -30,6 +30,8 @@ def get_base_dir():
         return os.path.dirname(sys.executable)
     else:
         # Running as Python script
+        if platform == 'Linux':
+            return os.path.expanduser('~/.AutoSubSync')
         return os.path.dirname(os.path.abspath(__file__))
 
 base_dir = get_base_dir()
