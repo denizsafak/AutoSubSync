@@ -28,11 +28,15 @@ def get_base_dir():
     if getattr(sys, 'frozen', False):
         # Running as PyInstaller executable
         if platform == 'Linux':
-            return os.path.expanduser('~/.AutoSubSync')
-        return os.path.dirname(sys.executable)
+            base_dir = os.path.expanduser('~/.AutoSubSync')
+        else:
+            base_dir = os.path.dirname(sys.executable)
     else:
         # Running as Python script
-        return os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Ensure the directory exists
+    os.makedirs(base_dir, exist_ok=True)
+    return base_dir
 
 base_dir = get_base_dir()
 
