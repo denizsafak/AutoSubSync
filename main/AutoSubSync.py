@@ -1185,7 +1185,7 @@ def change_log_window_font():
     current_style = config["log_window_font_style"]
     font_label = tk.Label(font_dialog, text=FONT_FAMILY_LABEL_TEXT, background=COLOR_BACKGROUND, foreground=COLOR_BW)
     font_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-    fonts = tkFont.families()
+    fonts = sorted(set(tkFont.families()))  # Remove duplicates and sort the fonts
     font_listbox = tk.Listbox(font_dialog, selectmode=tk.SINGLE, exportselection=0, borderwidth=2, background=COLOR_WB, fg=COLOR_BW)
     for font in fonts:
         font_listbox.insert(tk.END, font)
