@@ -929,7 +929,6 @@ def open_directory(filepath):
         log_message(FILE_NOT_FOUND, "error")
         return
     filepath = os.path.normpath(os.path.realpath(filepath))
-    
     try:
         if platform == "Windows":
             subprocess.run(["explorer", "/select,", filepath])
@@ -937,7 +936,15 @@ def open_directory(filepath):
             subprocess.call(["open", "-R", filepath])
         else:  # Linux
             directory = os.path.dirname(filepath)
-            subprocess.call(["xdg-open", directory])
+            file_managers = ["dolphin", "xdg-open", "gnome-open", "kde-open", "nautilus", "thunar", "pcmanfm"]
+            for fm in file_managers:
+                if shutil.which(fm):
+                    try:
+                        subprocess.call([fm, directory])
+                        return
+                    except Exception:
+                        continue
+            log_message(f"Info: Could not find a compatible file manager. The location is: {directory}", "error")
     except Exception as e:
         log_message(ERROR_OPENING_DIRECTORY.format(variable=str(e)), "error")
 
@@ -1461,7 +1468,15 @@ def open_logs_folder():
     elif platform == "Darwin":  # macOS
         subprocess.call(["open", logs_folder])
     else:  # Linux
-        subprocess.call(["xdg-open", logs_folder])
+        file_managers = ["dolphin", "xdg-open", "gnome-open", "kde-open", "nautilus", "thunar", "pcmanfm"]
+        for fm in file_managers:
+            if shutil.which(fm):
+                try:
+                    subprocess.call([fm, logs_folder])
+                    return
+                except Exception:
+                    continue
+        messagebox.showinfo("Info", f"Could not find a compatible file manager. The location is: {logs_folder}")
 
 def check_logs_exist():
     try:
