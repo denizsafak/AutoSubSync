@@ -1,2 +1,2 @@
-- Fixed the issue with folders and files not opening in file explorers on various Linux distributions.
-- Fixed permission issues preventing the [AUR](https://aur.archlinux.org/packages/autosubsync-bin) package from runnig.
+- Re-formatted all Python files with [Black](https://github.com/psf/black)
+- Fixed "Save next to video with same filename" option was not saving subtitles with same filename as video in batch mode.
