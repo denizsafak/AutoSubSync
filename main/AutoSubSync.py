@@ -2964,6 +2964,7 @@ def start_batch_sync():
                         os.path.basename(video_file),
                     ),
                 )
+                original_video_file = video_file
                 if sync_tool == SYNC_TOOL_ALASS:
                     # if it is a video file, extract subtitle streams
                     if (
@@ -3005,7 +3006,7 @@ def start_batch_sync():
                 ):
                     output_subtitle_file = os.path.join(
                         base_output_dir,
-                        f"{os.path.splitext(os.path.basename(video_file))[0]}{original_ext}",
+                        f"{os.path.splitext(os.path.basename(original_video_file))[0]}{original_ext}",
                     )
                 elif action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE:
                     output_subtitle_file = subtitle_file
