@@ -1,22 +1,22 @@
-import chardet
 import os
 import sys
 import re
 import shutil
 import subprocess
 import threading
-import tkinter as tk
-import tkinter.font as tkFont
-from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
-from tkinterdnd2 import DND_FILES, TkinterDnD
 import xml.etree.ElementTree as ET
-from datetime import datetime
-import psutil
 import ctypes
 import json
-import requests
-import platform
 import webbrowser
+import platform
+import tkinter as tk
+import tkinter.font as tkFont
+from datetime import datetime
+from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
+from tkinterdnd2 import DND_FILES, TkinterDnD
+import requests
+import psutil
+import chardet
 import texts
 
 platform = platform.system()
@@ -57,28 +57,28 @@ os.environ["PATH"] += (
 )
 
 # Determine correct alass executable based on platform
-if platform == "Windows" or platform == "Darwin":
-    call_alass = "alass-cli"
+if platform in ("Windows", "Darwin"):
+    CALL_ALASS = "alass-cli"
 elif platform == "Linux":
-    call_alass = "alass-linux64"
+    CALL_ALASS = "alass-linux64"
 else:
-    call_alass = "alass"  # fallback
+    CALL_ALASS = "alass"  # fallback
 
 # Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
 if platform == "Windows":
-    call_ffmpeg = os.path.join(ffmpeg_bin, "ffmpeg.exe")
-    call_ffprobe = os.path.join(ffmpeg_bin, "ffprobe.exe")
-    call_ffsubsync = os.path.join(ffsubsync_bin, "ffsubsync.exe")
+    CALL_FFMPEG = os.path.join(ffmpeg_bin, "ffmpeg.exe")
+    CALL_FFPROBE = os.path.join(ffmpeg_bin, "ffprobe.exe")
+    CALL_FFPSUBSYNC = os.path.join(ffsubsync_bin, "ffsubsync.exe")
 else:
-    call_ffmpeg = "ffmpeg"
-    call_ffprobe = "ffprobe"
-    call_ffsubsync = "ffsubsync"
+    CALL_FFMPEG = "ffmpeg"
+    CALL_FFPROBE = "ffprobe"
+    CALL_FFPSUBSYNC = "ffsubsync"
 
 # Set execute permissions for ffmpeg, ffprobe, and ffsubsync in MacOS and Linux
 if platform in ["Darwin", "Linux"]:
     import stat
 
-    executables = [call_ffmpeg, call_ffprobe, call_ffsubsync]
+    executables = [CALL_FFMPEG, CALL_FFPROBE, CALL_FFPSUBSYNC]
     errors = []
     for exe in executables:
         exe_path = (
@@ -88,7 +88,7 @@ if platform in ["Darwin", "Linux"]:
         )
         if os.path.exists(exe_path):
             current_permissions = os.stat(exe_path).st_mode
-            if not (current_permissions & stat.S_IEXEC):
+            if not current_permissions & stat.S_IEXEC:
                 try:
                     os.chmod(exe_path, current_permissions | stat.S_IEXEC)
                 except Exception as e:
@@ -127,7 +127,7 @@ config_path = os.path.join(base_dir, "config.json")
 
 
 def create_config_file():
-    with open(config_path, "w") as config_file:
+    with open(config_path, "w", encoding="utf-8") as config_file:
         json.dump(default_settings, config_file, indent=4)
 
 
@@ -135,13 +135,13 @@ if not os.path.exists(config_path):
     create_config_file()
 
 try:
-    with open(config_path, "r") as config_file:
+    with open(config_path, "r", encoding="utf-8") as config_file:
         config = json.load(config_file)
 except FileNotFoundError:
     config = {}
     messagebox.showerror("Error", '"config.json" file not found')
 try:
-    with open("VERSION", "r") as version_file:
+    with open("VERSION", "r", encoding="utf-8") as version_file:
         VERSION = version_file.read().strip()
 except FileNotFoundError:
     VERSION = " UNKNOWN VERSION"
@@ -159,7 +159,7 @@ def is_dark_mode():
             ) as key:
                 value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
                 return value == 0
-        except:
+        except Exception:
             return False
     elif platform == "Linux":
         # Check for GNOME dark mode
@@ -168,9 +168,10 @@ def is_dark_mode():
                 ["gsettings", "get", "org.gnome.desktop.interface", "gtk-theme"],
                 capture_output=True,
                 text=True,
+                check=False,
             )
             return "dark" in result.stdout.lower()
-        except:
+        except Exception:
             return False
     return False
 
@@ -192,18 +193,18 @@ elif platform == "Linux" and config.get("log_window_font", "Cascadia Code") in [
     config["log_window_font_style"] = "normal"
 # Save the updated configuration
 try:
-    with open(config_path, "w") as config_file:
+    with open(config_path, "w", encoding="utf-8") as config_file:
         json.dump(config, config_file, indent=4)
 except Exception as e:
     messagebox.showerror("Error", "Failed to fix font: " + str(e))
 
 # Fix small font size on macOS
 if platform == "Darwin":  # macOS
-    font_size = 12  # Bigger font for macOS
-    font_size_two = 14
+    FONT_SIZE = 12  # Bigger font for macOS
+    FONT_SIZE_TWO = 14
 else:  # Windows or Linux
-    font_size = 8  # Default font size
-    font_size_two = 10
+    FONT_SIZE = 8  # Default font size
+    FONT_SIZE_TWO = 10
 
 # Get the theme from the config, or set it based on the system's theme
 THEME = config.get("theme", "system")
@@ -300,7 +301,9 @@ TREEVIEW_SELECTED_COLOR = COLOR_SCHEMES["TREEVIEW_SELECTED_COLOR"][is_dark_theme
 COLOR_MILISECONDS_HIGH = COLOR_SCHEMES["COLOR_MILISECONDS_HIGH"][is_dark_theme]
 COLOR_MILISECONDS_LOW = COLOR_SCHEMES["COLOR_MILISECONDS_LOW"][is_dark_theme]
 DEFAULT_BUTTON_COLOR = COLOR_SCHEMES["DEFAULT_BUTTON_COLOR"][is_dark_theme]
-DEFAULT_BUTTON_COLOR_ACTIVE = COLOR_SCHEMES["DEFAULT_BUTTON_COLOR_ACTIVE"][is_dark_theme]
+DEFAULT_BUTTON_COLOR_ACTIVE = COLOR_SCHEMES["DEFAULT_BUTTON_COLOR_ACTIVE"][
+    is_dark_theme
+]
 BUTTON_COLOR_MANUAL = COLOR_SCHEMES["BUTTON_COLOR_MANUAL"][is_dark_theme]
 BUTTON_COLOR_MANUAL_ACTIVE = COLOR_SCHEMES["BUTTON_COLOR_MANUAL_ACTIVE"][is_dark_theme]
 BUTTON_COLOR_AUTO = COLOR_SCHEMES["BUTTON_COLOR_AUTO"][is_dark_theme]
@@ -377,14 +380,22 @@ VIDEO_INPUT_TEXT = texts.VIDEO_INPUT_TEXT[LANGUAGE]
 LABEL_DROP_BOX = texts.LABEL_DROP_BOX[LANGUAGE]
 WARNING = texts.WARNING[LANGUAGE]
 CONFIRM_RESET_MESSAGE = texts.CONFIRM_RESET_MESSAGE[LANGUAGE]
-TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = texts.TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING[LANGUAGE]
-TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = texts.TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING[LANGUAGE]
-BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = (texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING[LANGUAGE])
+TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING = texts.TOGGLE_KEEP_CONVERTED_SUBTITLES_WARNING[
+    LANGUAGE
+]
+TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING = texts.TOGGLE_KEEP_EXTRACTED_SUBTITLES_WARNING[
+    LANGUAGE
+]
+BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING = (
+    texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING_WARNING[LANGUAGE]
+)
 PROMPT_ADDITIONAL_FFSUBSYNC_ARGS = texts.PROMPT_ADDITIONAL_FFSUBSYNC_ARGS[LANGUAGE]
 PROMPT_ADDITIONAL_ALASS_ARGS = texts.PROMPT_ADDITIONAL_ALASS_ARGS[LANGUAGE]
 LABEL_ADDITIONAL_FFSUBSYNC_ARGS = texts.LABEL_ADDITIONAL_FFSUBSYNC_ARGS[LANGUAGE]
 LABEL_ADDITIONAL_ALASS_ARGS = texts.LABEL_ADDITIONAL_ALASS_ARGS[LANGUAGE]
-LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = texts.LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM[LANGUAGE]
+LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = texts.LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM[
+    LANGUAGE
+]
 LABEL_BACKUP_SUBTITLES = texts.LABEL_BACKUP_SUBTITLES[LANGUAGE]
 LABEL_KEEP_CONVERTED_SUBTITLES = texts.LABEL_KEEP_CONVERTED_SUBTITLES[LANGUAGE]
 LABEL_KEEP_EXTRACTED_SUBTITLES = texts.LABEL_KEEP_EXTRACTED_SUBTITLES[LANGUAGE]
@@ -401,7 +412,9 @@ SYNC_TOOL_FFSUBSYNC = texts.SYNC_TOOL_FFSUBSYNC[LANGUAGE]
 SYNC_TOOL_ALASS = texts.SYNC_TOOL_ALASS[LANGUAGE]
 OPTION_SAVE_NEXT_TO_SUBTITLE = texts.OPTION_SAVE_NEXT_TO_SUBTITLE[LANGUAGE]
 OPTION_SAVE_NEXT_TO_VIDEO = texts.OPTION_SAVE_NEXT_TO_VIDEO[LANGUAGE]
-OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = texts.OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME[LANGUAGE]
+OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME = (
+    texts.OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME[LANGUAGE]
+)
 OPTION_SAVE_TO_DESKTOP = texts.OPTION_SAVE_TO_DESKTOP[LANGUAGE]
 OPTION_REPLACE_ORIGINAL_SUBTITLE = texts.OPTION_REPLACE_ORIGINAL_SUBTITLE[LANGUAGE]
 OPTION_SELECT_DESTINATION_FOLDER = texts.OPTION_SELECT_DESTINATION_FOLDER[LANGUAGE]
@@ -427,7 +440,9 @@ CONTEXT_MENU_SHOW_PATH = texts.CONTEXT_MENU_SHOW_PATH[LANGUAGE]
 BUTTON_ADD_FILES = texts.BUTTON_ADD_FILES[LANGUAGE]
 MENU_ADD_FOLDER = texts.MENU_ADD_FOLDER[LANGUAGE]
 MENU_ADD_MULTIPLE_FILES = texts.MENU_ADD_MULTIPLE_FILES[LANGUAGE]
-MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = texts.MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS[LANGUAGE]
+MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = (
+    texts.MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS[LANGUAGE]
+)
 ALASS_SPEED_OPTIMIZATION_TEXT = texts.ALASS_SPEED_OPTIMIZATION_TEXT[LANGUAGE]
 ALASS_DISABLE_FPS_GUESSING_TEXT = texts.ALASS_DISABLE_FPS_GUESSING_TEXT[LANGUAGE]
 REF_DROP_TEXT = texts.REF_DROP_TEXT[LANGUAGE]
@@ -436,7 +451,9 @@ REF_LABEL_TEXT = texts.REF_LABEL_TEXT[LANGUAGE]
 SUB_LABEL_TEXT = texts.SUB_LABEL_TEXT[LANGUAGE]
 PROCESS_PAIRS = texts.PROCESS_PAIRS[LANGUAGE]
 SYNC_TOOL_LABEL_TEXT = texts.SYNC_TOOL_LABEL_TEXT[LANGUAGE]
-EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING = texts.EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING[LANGUAGE]
+EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING = (
+    texts.EXPLANATION_TEXT_IN_REFERENCE_SUBTITLE_PAIRING[LANGUAGE]
+)
 THEME_TEXT = texts.THEME_TEXT[LANGUAGE]
 THEME_SYSTEM_TEXT = texts.THEME_SYSTEM_TEXT[LANGUAGE]
 THEME_DARK_TEXT = texts.THEME_DARK_TEXT[LANGUAGE]
@@ -503,7 +520,9 @@ INVALID_FILE_FORMAT = texts.INVALID_FILE_FORMAT[LANGUAGE]
 INVALID_SYNC_TOOL_SELECTED = texts.INVALID_SYNC_TOOL_SELECTED[LANGUAGE]
 TEXT_SELECTED_FOLDER = texts.TEXT_SELECTED_FOLDER[LANGUAGE]
 TEXT_NO_FOLDER_SELECTED = texts.TEXT_NO_FOLDER_SELECTED[LANGUAGE]
-TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = texts.TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST[LANGUAGE]
+TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST = texts.TEXT_DESTINATION_FOLDER_DOES_NOT_EXIST[
+    LANGUAGE
+]
 ADDED_PAIRS_MSG = texts.ADDED_PAIRS_MSG[LANGUAGE]
 SKIPPED_DUPLICATES_MSG = texts.SKIPPED_DUPLICATES_MSG[LANGUAGE]
 NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = texts.NO_VALID_SUBTITLE_PAIRS_TO_PROCESS[LANGUAGE]
@@ -575,7 +594,9 @@ DELETING_CONVERTED_SUBTITLE = texts.DELETING_CONVERTED_SUBTITLE[LANGUAGE]
 ADDED_FILES_TEXT = texts.ADDED_FILES_TEXT[LANGUAGE]
 SKIPPED_DUPLICATE_FILES_TEXT = texts.SKIPPED_DUPLICATE_FILES_TEXT[LANGUAGE]
 SKIPPED_OTHER_LIST_FILES_TEXT = texts.SKIPPED_OTHER_LIST_FILES_TEXT[LANGUAGE]
-SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = texts.SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT[LANGUAGE]
+SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT = texts.SKIPPED_SEASON_EPISODE_DUPLICATES_TEXT[
+    LANGUAGE
+]
 SKIPPED_INVALID_FORMAT_FILES_TEXT = texts.SKIPPED_INVALID_FORMAT_FILES_TEXT[LANGUAGE]
 NO_FILES_SELECTED = texts.NO_FILES_SELECTED[LANGUAGE]
 NO_ITEM_SELECTED_TO_REMOVE = texts.NO_ITEM_SELECTED_TO_REMOVE[LANGUAGE]
@@ -610,22 +631,18 @@ def create_process(cmd):
 def update_config(key, value):
     if remember_the_changes or key == "remember_the_changes":
         try:
-            with open(config_path, "r") as config_file:
+            with open(config_path, "r", encoding="utf-8") as config_file:
                 config = json.load(config_file)
         except FileNotFoundError:
             config = {}
             messagebox.showerror("Error", CONFIG_FILE_NOT_FOUND)
         config[key] = value
-        with open(config_path, "w") as config_file:
+        with open(config_path, "w", encoding="utf-8") as config_file:
             json.dump(config, config_file, indent=4)
 
 
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
-
-
-def log_message(message, level, tab="manual"):
-    print(f"[{level.upper()}] {message}")
 
 
 def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_original):
@@ -756,24 +773,24 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
                 h, m, s = map(int, parts[:3])
                 ms = int(parts[3])
                 return (h * 3600 + m * 60 + s) * 1000 + ms
-            elif format_type == "sbv":
+            if format_type == "sbv":
                 parts = re.split(r"[:.]", time_str)
                 h, m, s, ms = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + ms
-            elif format_type == "sub":
+            if format_type == "sub":
                 parts = re.split(r"[:.]", time_str)
                 h, m, s, cs = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + (cs * 10)
-            elif format_type == "stl":
+            if format_type == "stl":
                 parts = re.split(r"[:.]", time_str)
                 h, m, s, f = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + (f * 40)  # Assuming 25 fps
-            elif format_type == "dfxp":
+            if format_type == "dfxp":
                 parts = re.split(r"[:.,]", time_str)
                 h, m, s = map(int, parts[:3])
                 ms = int(parts[3].replace(",", "")) if len(parts) > 3 else 0
                 return (h * 3600 + m * 60 + s) * 1000 + ms
-            elif format_type in ["itt", "ttml"]:
+            if format_type in ["itt", "ttml"]:
                 if ":" in time_str:
                     # Handle 'HH:MM:SS.MS' and 'HH:MM:SS:FF' (SMPTE) formats
                     # Check for 'HH:MM:SS.MS' format
@@ -795,30 +812,28 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
                         # Assuming 25 fps
                         ms = int(frames * (1000 / 25))
                         return (h * 3600 + m * 60 + s) * 1000 + ms
-                    else:
-                        log_message(
-                            ERROR_PARSING_TIME_STRING.format(time_str=time_str),
-                            "error",
-                            tab="manual",
-                        )
-                        return None
-                else:
-                    # Handle 'SSSSSS.MS' seconds format
-                    seconds_match = re.match(r"^(\d+(?:\.\d+)?)(?:s)?$", time_str)
-                    if seconds_match:
-                        total_seconds = float(seconds_match.group(1))
-                        return int(total_seconds * 1000)
-                    else:
-                        log_message(
-                            ERROR_PARSING_TIME_STRING.format(time_str=time_str),
-                            "error",
-                            tab="manual",
-                        )
-                        return None
-            elif format_type == "ass_ssa":
+                    log_message(
+                        ERROR_PARSING_TIME_STRING.format(time_str=time_str),
+                        "error",
+                        tab="manual",
+                    )
+                    return None
+                # Handle 'SSSSSS.MS' seconds format
+                seconds_match = re.match(r"^(\d+(?:\.\d+)?)(?:s)?$", time_str)
+                if seconds_match:
+                    total_seconds = float(seconds_match.group(1))
+                    return int(total_seconds * 1000)
+                log_message(
+                    ERROR_PARSING_TIME_STRING.format(time_str=time_str),
+                    "error",
+                    tab="manual",
+                )
+                return None
+            if format_type == "ass_ssa":
                 parts = re.split(r"[:.]", time_str)
                 h, m, s, cs = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + (cs * 10)
+            return None
         except (ValueError, IndexError) as e:
             log_message(
                 ERROR_PARSING_TIME_STRING_DETAILED.format(
@@ -836,44 +851,42 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
         ms_remainder = ms % 1000
         if format_type == "srt":
             return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
-        elif format_type == "vtt":
+        if format_type == "vtt":
             return f"{h:02}:{m:02}:{s:02}.{ms_remainder:03}"
-        elif format_type == "sbv":
+        if format_type == "sbv":
             return f"{h}:{m:02}:{s:02}.{ms_remainder:03}"
-        elif format_type == "sub":
+        if format_type == "sub":
             cs = ms_remainder // 10
             return f"{h:02}:{m:02}:{s:02}.{cs:02}"
-        elif format_type == "stl":
+        if format_type == "stl":
             f = ms_remainder // 40  # Assuming 25 fps
             return f"{h:02}:{m:02}:{s:02}:{f:02}"
-        elif format_type == "dfxp":
+        if format_type == "dfxp":
             return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
-        elif format_type in ["ttml", "itt"]:
+        if format_type in ["ttml", "itt"]:
             if original_time_str:
                 if ":" in original_time_str:
                     if "." in original_time_str:
                         # Original format is 'HH:MM:SS.MS' with flexible milliseconds
                         timestamp = f"{h:02}:{m:02}:{s:02}.{ms_remainder:03}"
                         return timestamp
-                    elif ":" in original_time_str:
+                    if ":" in original_time_str:
                         # Original format is 'HH:MM:SS:FF' (SMPTE)
                         frame_rate = 25  # Assuming 25 fps
                         frames = int(round(ms_remainder / 1000 * frame_rate))
                         return f"{h:02}:{m:02}:{s:02}:{frames:02}"
-                    else:
-                        # Original format is 'HH:MM:SS' without milliseconds
-                        return f"{h:02}:{m:02}:{s:02}"
-                else:
-                    # Original format is seconds 'SSSSSs'
-                    total_seconds = ms / 1000
-                    timestamp = f"{total_seconds:.3f}".rstrip("0").rstrip(".") + "s"
-                    return timestamp
-            else:
-                # Default TTML format
-                return f"{h:02}:{m:02}:{s:02}.{ms_remainder:03}"
-        elif format_type == "ass_ssa":
+                    # Original format is 'HH:MM:SS' without milliseconds
+                    return f"{h:02}:{m:02}:{s:02}"
+                # Original format is seconds 'SSSSSs'
+                total_seconds = ms / 1000
+                timestamp = f"{total_seconds:.3f}".rstrip("0").rstrip(".") + "s"
+                return timestamp
+            # Default TTML format
+            return f"{h:02}:{m:02}:{s:02}.{ms_remainder:03}"
+        if format_type == "ass_ssa":
             cs = ms_remainder // 10
             return f"{h}:{m:02}:{s:02}.{cs:02}"
+        return None
 
     # Process each line based on format type
     for line in lines:
@@ -1011,7 +1024,7 @@ current_log_type = None
 
 def log_message(message, msg_type=None, filepath=None, tab="both"):
     global current_log_type
-    font_style = ("Arial", font_size, "bold")
+    font_style = ("Arial", FONT_SIZE, "bold")
     if msg_type == "error":
         current_log_type = "error"
         color = COLOR_EIGHT
@@ -1068,7 +1081,7 @@ def open_directory(filepath):
     filepath = os.path.normpath(os.path.realpath(filepath))
     try:
         if platform == "Windows":
-            subprocess.run(["explorer", "/select,", filepath])
+            subprocess.run(["explorer", "/select,", filepath], check=False)
         elif platform == "Darwin":  # macOS
             subprocess.call(["open", "-R", filepath])
         else:  # Linux
@@ -1159,11 +1172,9 @@ class ToolTip:
             if y_pos + self.widget.winfo_height() > screen_height:
                 y_pos = screen_height - self.widget.winfo_height() - 3
             # Adjust tooltip position to avoid covering the button
-            if y_pos < 0:
-                y_pos = 0
+            y_pos = max(y_pos, 0)
             # Adjust tooltip position if too far to the left
-            if x_pos < 0:
-                x_pos = 0
+            x_pos = max(x_pos, 0)
             self.tooltip.wm_geometry("+%d+%d" % (x_pos, y_pos))
             label = tk.Label(
                 self.tooltip,
@@ -1206,7 +1217,7 @@ def dark_title_bar(window):
             set_window_attribute(
                 hwnd, rendering_policy, ctypes.byref(value), ctypes.sizeof(value)
             )
-        except:
+        except Exception:
             pass
     elif platform == "Linux":
         # No direct equivalent for Linux, but you could set window properties
@@ -1214,7 +1225,7 @@ def dark_title_bar(window):
             window.attributes("-type", "normal")
             if THEME == "dark":
                 window.attributes("-alpha", 0.95)  # Slightly transparent for dark theme
-        except:
+        except Exception:
             pass
 
 
@@ -1269,10 +1280,9 @@ def change_log_window_font():
     def validate_size_entry(input):
         if input.isdigit():
             return True
-        elif input == "":
+        if input == "":
             return True
-        else:
-            return False
+        return False
 
     def apply_changes(preview=False):
         selected_font_index = font_listbox.curselection()
@@ -1299,7 +1309,7 @@ def change_log_window_font():
                     font=(selected_font, selected_font_size, selected_font_style)
                 )
             if not preview:
-                with open(config_path, "w") as f:
+                with open(config_path, "w", encoding="utf-8") as f:
                     config["log_window_font"] = selected_font
                     config["log_window_font_size"] = selected_font_size
                     config["log_window_font_style"] = selected_font_style
@@ -1323,7 +1333,7 @@ def change_log_window_font():
                     config["log_window_font_style"],
                 )
             )
-        with open(config_path, "w") as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4)
         font_dialog.destroy()
 
@@ -1712,7 +1722,7 @@ def set_language(lang):
 def check_for_updates():
     def update_check():
         try:
-            response = requests.get(GITHUB_VERSION_URL)
+            response = requests.get(GITHUB_VERSION_URL, timeout=10)
             latest_version = response.text.strip()
 
             def parse_version(v):
@@ -1790,7 +1800,7 @@ def check_logs_exist():
             if os.path.isfile(os.path.join(logs_folder, f)) and f.endswith(".txt")
         ]
         return len(txt_files)
-    except:
+    except Exception:
         return 0
 
 
@@ -1965,7 +1975,7 @@ style.theme_create(
         "TNotebook.Tab": {
             "configure": {
                 "padding": [15, 5],
-                "font": ("TkDefaultFont", font_size_two, "normal"),
+                "font": ("TkDefaultFont", FONT_SIZE_TWO, "normal"),
                 "background": COLOR_PRIMARY,
                 "foreground": COLOR_TAB_INACTVE,
                 "borderwidth": 1,
@@ -2004,7 +2014,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
         )
         return False
     ffprobe_cmd = [
-        call_ffprobe,
+        CALL_FFPROBE,
         "-v",
         "error",
         "-select_streams",
@@ -2053,7 +2063,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
             f"{FOUND_COMPATIBLE_SUBTITLES.format(count=len(compatible_subtitles), output_folder=output_folder)}\n",
         )
         # Prepare FFmpeg command
-        ffmpeg_base_cmd = [call_ffmpeg, "-y", "-i", video_file]
+        ffmpeg_base_cmd = [CALL_FFMPEG, "-y", "-i", video_file]
         output_files = []
         # Add subtitle mappings
         for i, (stream, codec, language) in enumerate(compatible_subtitles):
@@ -2089,11 +2099,11 @@ def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
                 )
                 return closest_subtitle
             return True
-        else:
-            log_window.insert(
-                tk.END, f"{FAILED_TO_EXTRACT_SUBTITLES.format(error=output)}\n"
-            )
-            return False
+
+        log_window.insert(
+            tk.END, f"{FAILED_TO_EXTRACT_SUBTITLES.format(error=output)}\n"
+        )
+        return False
     except Exception as e:
         log_window.insert(
             tk.END, f"\n{SUBTITLE_EXTRACTION_FAILED.format(error=str(e))}\n"
@@ -2207,11 +2217,10 @@ def format_sub_time(time_str):
         m, s = divmod(s, 60)
         h, m = divmod(m, 60)
         return f"{h:02}:{m:02}:{s:02},{ms:03}"
-    else:
-        parts = re.split(r"[:.]", time_str)
-        h, m, s, ms = map(int, parts)
-        ms = ms * 10  # Convert to milliseconds
-        return f"{h:02}:{m:02}:{s:02},{ms:03}"
+    parts = re.split(r"[:.]", time_str)
+    h, m, s, ms = map(int, parts)
+    ms = ms * 10  # Convert to milliseconds
+    return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 
 def convert_ass_to_srt(input_file, output_file):
@@ -2460,38 +2469,6 @@ def strip_namespace(tag):
     return tag
 
 
-def detect_encoding(file_path):
-    with open(file_path, "rb") as f:
-        raw_data = f.read()
-    result = chardet.detect(raw_data)
-    encoding = result["encoding"]
-    return encoding
-
-
-def create_backup(file_path):
-    base_name, ext = os.path.splitext(os.path.basename(file_path))
-    backup_dir = os.path.dirname(file_path)
-    backup_file = os.path.join(backup_dir, f"backup_{base_name}{ext}")
-    suffix = 2
-    while os.path.exists(backup_file):
-        backup_file = os.path.join(backup_dir, f"backup_{base_name}_{suffix}{ext}")
-        suffix += 1
-    shutil.copy2(file_path, backup_file)
-    return backup_file
-
-
-def save_log_file(log_window, suffix=""):
-    if keep_logs:
-        # Save log window content to a log file
-        log_content = log_window.get("1.0", tk.END)
-        logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
-        os.makedirs(logs_folder, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_filename = os.path.join(logs_folder, f"{timestamp}{suffix}.txt")
-        with open(log_filename, "w", encoding="utf-8") as log_file:
-            log_file.write(log_content)
-
-
 def convert_to_srt(subtitle_file, output_dir, log_window):
     file_extension = os.path.splitext(subtitle_file)[-1].lower()
     original_base_name = os.path.basename(
@@ -2528,12 +2505,47 @@ def convert_to_srt(subtitle_file, output_dir, log_window):
             return None
         log_window.insert(tk.END, f"{SUBTITLE_CONVERTED.format(srt_file=srt_file)}\n")
         return srt_file
-    else:
-        log_window.insert(
-            tk.END,
-            f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n",
-        )
-        return None
+
+    log_window.insert(
+        tk.END,
+        f"{ERROR_UNSUPPORTED_CONVERSION.format(file_extension=file_extension)}\n",
+    )
+    return None
+
+
+# Convert subtitles to SRT End
+
+
+def detect_encoding(file_path):
+    with open(file_path, "rb") as f:
+        raw_data = f.read()
+    result = chardet.detect(raw_data)
+    encoding = result["encoding"]
+    return encoding
+
+
+def create_backup(file_path):
+    base_name, ext = os.path.splitext(os.path.basename(file_path))
+    backup_dir = os.path.dirname(file_path)
+    backup_file = os.path.join(backup_dir, f"backup_{base_name}{ext}")
+    suffix = 2
+    while os.path.exists(backup_file):
+        backup_file = os.path.join(backup_dir, f"backup_{base_name}_{suffix}{ext}")
+        suffix += 1
+    shutil.copy2(file_path, backup_file)
+    return backup_file
+
+
+def save_log_file(log_window, suffix=""):
+    if keep_logs:
+        # Save log window content to a log file
+        log_content = log_window.get("1.0", tk.END)
+        logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
+        os.makedirs(logs_folder, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_filename = os.path.join(logs_folder, f"{timestamp}{suffix}.txt")
+        with open(log_filename, "w", encoding="utf-8") as log_file:
+            log_file.write(log_content)
 
 
 def create_process(cmd):
@@ -2565,7 +2577,7 @@ def kill_process_tree(pid):
         for child in children:
             try:
                 child.terminate()
-            except:
+            except Exception:
                 pass
         # Give them some time to terminate
         gone, still_alive = psutil.wait_procs(children, timeout=3)
@@ -2573,16 +2585,16 @@ def kill_process_tree(pid):
         for child in still_alive:
             try:
                 child.kill()
-            except:
+            except Exception:
                 pass
         # Kill parent process
         try:
             parent.terminate()
             parent.wait(3)
-        except:
+        except Exception:
             try:
                 parent.kill()
-            except:
+            except Exception:
                 pass
     except psutil.NoSuchProcess:
         pass
@@ -2599,7 +2611,7 @@ def get_desktop_path():
             )
             desktop = winreg.QueryValueEx(reg_key, "Desktop")[0]
             winreg.CloseKey(reg_key)
-        except:
+        except Exception:
             desktop = "None"
     else:
         from pathlib import Path
@@ -2610,7 +2622,9 @@ def get_desktop_path():
     return desktop
 
 
-# Convert subtitles to SRT End
+selected_destination_folder = None
+
+
 def start_batch_sync():
     global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch, log_window
     sync_tool = sync_tool_var_auto.get()
@@ -2742,7 +2756,7 @@ def start_batch_sync():
             previous_line_had_percentage = False
             for output in process.stdout:
                 if cancel_flag_batch:
-                    return
+                    return False
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     # Remove timestamps
                     output = re.sub(r"\[\d{2}:\d{2}:\d{2}\]\s*", "", output)
@@ -2811,7 +2825,7 @@ def start_batch_sync():
             add_suffix = False
         for parent in tree_items:
             if cancel_flag_batch:
-                return
+                return False
             parent_values = treeview.item(parent, "values")
             if not parent_values:
                 log_window.insert(tk.END, f"{INVALID_PARENT_ITEM}\n")
@@ -2824,19 +2838,19 @@ def start_batch_sync():
                 if not subtitle_file and not video_file:
                     log_window.insert(tk.END, f"\n{SKIP_NO_VIDEO_NO_SUBTITLE}\n")
                     continue
-                elif not subtitle_file:
+                if not subtitle_file:
                     log_window.insert(
                         tk.END,
                         f"\n{SKIP_NO_SUBTITLE.format(video_file=os.path.basename(video_file))}\n",
                     )
                     continue
-                elif not video_file:
+                if not video_file:
                     log_window.insert(
                         tk.END,
                         f"\n{SKIP_NO_VIDEO.format(subtitle_file=os.path.basename(subtitle_file))}\n",
                     )
                     continue
-                elif not values:
+                if not values:
                     log_window.insert(tk.END, f"\n{SKIP_UNPAIRED_ITEM}\n")
                     continue
                 # Prepare output file path
@@ -2889,7 +2903,7 @@ def start_batch_sync():
             skip = False
         for parent in tree_items:
             if cancel_flag_batch:
-                return
+                return False
             parent_values = treeview.item(parent, "values")
             if not parent_values:
                 continue
@@ -3024,14 +3038,14 @@ def start_batch_sync():
                     output_ext = ".srt"
                 autosync_pattern = rf"^autosync_{re.escape(original_base_name)}(?:_\d+)?{re.escape(original_ext)}$"
                 suffix = 2
-                while os.path.exists(output_subtitle_file) and add_suffix == True:
+                while os.path.exists(output_subtitle_file) and add_suffix is True:
                     output_subtitle_file = os.path.join(
                         base_output_dir,
                         f"autosync_{original_base_name}_{suffix}{output_ext}",
                     )
                     suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'{CALL_FFPSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if (
                             vad_option_map.get(ffsubsync_option_vad_var.get(), "")
@@ -3047,9 +3061,9 @@ def start_batch_sync():
                 elif sync_tool == SYNC_TOOL_ALASS:
                     split_penalty = alass_split_penalty_var.get()
                     if split_penalty == 0:
-                        cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
+                        cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
                     else:
-                        cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
+                        cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
                     if alass_speed_optimization_var.get():
                         cmd += " --speed-optimization 0"
                     if alass_disable_fps_guessing_var.get():
@@ -3058,7 +3072,7 @@ def start_batch_sync():
                         cmd += f" {additional_alass_args}"
                 else:
                     log_message(INVALID_SYNC_TOOL, "error", tab="auto")
-                    return
+                    return False
                 try:
                     progress_bar["value"] += 1
                     if sync_tool == SYNC_TOOL_FFSUBSYNC:
@@ -3121,7 +3135,6 @@ def start_batch_sync():
                     if sync_tool == SYNC_TOOL_ALASS:
                         encoding_ref = None
                         encoding_inc = detect_encoding(subtitle_file)
-                        # if decoding_error_occurred, retry with detected encodings
                         if returncode != 0 and decoding_error_occurred:
                             log_window.insert(
                                 tk.END, "\n" + RETRY_ENCODING_MSG + "\n\n"
@@ -3132,7 +3145,6 @@ def start_batch_sync():
                             cmd += f" --encoding-inc={encoding_inc}"
                             returncode, decoding_error_occurred = execute_cmd(cmd)
                         synced_subtitle_encoding = detect_encoding(output_subtitle_file)
-                        # If the encoding of synced subtitle is not the same as encoding_inc, change it
                         if synced_subtitle_encoding != encoding_inc:
                             change_encoding_msg = CHANGING_ENCODING_MSG.format(
                                 synced_subtitle_encoding=synced_subtitle_encoding,
@@ -3164,7 +3176,6 @@ def start_batch_sync():
                                 tk.END, f"\n{DELETING_EXTRACTED_SUBTITLE_FOLDER}\n\n"
                             )
                             shutil.rmtree(os.path.dirname(closest_subtitle))
-                        # if video_file_converted or subtitle_file_converted is not None and keep_converted_subtitles is False, delete the converted files
                         if not keep_converted_subtitles:
                             if video_file_converted:
                                 log_window.insert(
@@ -3177,7 +3188,7 @@ def start_batch_sync():
                                 )
                                 os.remove(subtitle_file_converted)
                     if cancel_flag_batch:
-                        return
+                        return False
                     if returncode == 0:
                         log_window.insert(
                             tk.END,
@@ -3190,17 +3201,13 @@ def start_batch_sync():
                             f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n",
                         )
                         failure_count += 1
-                        failed_syncs.append(
-                            (video_file, subtitle_file)
-                        )  # store the failed pairs
+                        failed_syncs.append((video_file, subtitle_file))
                 except Exception as e:
                     error_msg = (
                         "\n" + ERROR_OCCURRED.format(error_message=str(e)) + "\n"
                     )
                     failure_count += 1
-                    failed_syncs.append(
-                        (video_file, subtitle_file)
-                    )  # store the failed pairs
+                    failed_syncs.append((video_file, subtitle_file))
                     log_window.insert(tk.END, error_msg)
                 completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
@@ -3230,6 +3237,7 @@ def start_batch_sync():
             log_window.see(tk.END)
             root.after(50, lambda: log_window.see(tk.END))
             save_log_file(log_window, suffix="_batch")
+        return True
 
     try:
         batch_input.grid_remove()
@@ -3341,10 +3349,8 @@ def start_batch_sync():
     automatic_tab.rowconfigure(0, weight=1)
     automatic_tab.rowconfigure(1, weight=0)
     automatic_tab.columnconfigure(0, weight=1)
-    # Bind the <<Modified>> event to the log window
 
 
-# Global variable to store options state
 def toggle_batch_mode():
     if treeview.get_children():
         log_message("", "info", tab="auto")
@@ -3835,7 +3841,7 @@ def reference_subtitle_subtitle_pairs():
     ref_add_btn = TkButton(
         ref_header,
         text=BUTTON_ADD_FILES,
-        font=f"Arial {font_size} bold",
+        font=f"Arial {FONT_SIZE} bold",
         command=lambda: load_files(listbox_left, ref_file_paths, type="reference"),
         padx=4,
         pady=0,
@@ -3854,7 +3860,7 @@ def reference_subtitle_subtitle_pairs():
     ref_remove_btn = TkButton(
         ref_header,
         text=CONTEXT_MENU_REMOVE,
-        font=f"Arial {font_size} bold",
+        font=f"Arial {FONT_SIZE} bold",
         command=lambda: remove_selected_item(listbox_left, ref_file_paths),
         padx=4,
         pady=0,
@@ -3881,7 +3887,7 @@ def reference_subtitle_subtitle_pairs():
     sub_add_btn = TkButton(
         sub_header,
         text=BUTTON_ADD_FILES,
-        font=f"Arial {font_size} bold",
+        font=f"Arial {FONT_SIZE} bold",
         command=lambda: load_files(listbox_right, sub_file_paths, type="subtitle"),
         padx=4,
         pady=0,
@@ -3900,7 +3906,7 @@ def reference_subtitle_subtitle_pairs():
     sub_remove_btn = TkButton(
         sub_header,
         text=CONTEXT_MENU_REMOVE,
-        font=f"Arial {font_size} bold",
+        font=f"Arial {FONT_SIZE} bold",
         command=lambda: remove_selected_item(listbox_right, sub_file_paths),
         padx=4,
         pady=0,
@@ -4019,7 +4025,7 @@ def reference_subtitle_subtitle_pairs():
 
     def log_message_reference(message, msg_type=None):
         global current_log_type
-        font_style = ("Arial", font_size, "bold")
+        font_style = ("Arial", FONT_SIZE, "bold")
         if msg_type == "error":
             current_log_type = "error"
             color = COLOR_EIGHT
@@ -4814,7 +4820,7 @@ button_change_item = TkButton(
     tree_frame,
     text=CONTEXT_MENU_CHANGE,
     command=change_selected_item,
-    font=f"Arial {font_size} bold",
+    font=f"Arial {FONT_SIZE} bold",
     padx=4,
     pady=0,
     fg=COLOR_WB,
@@ -4832,7 +4838,7 @@ button_remove_item = TkButton(
     tree_frame,
     text=CONTEXT_MENU_REMOVE,
     command=remove_selected_item,
-    font=f"Arial {font_size} bold",
+    font=f"Arial {FONT_SIZE} bold",
     padx=4,
     pady=0,
     fg=COLOR_WB,
@@ -4859,7 +4865,7 @@ style.map("Treeview", background=[("selected", TREEVIEW_SELECTED_COLOR)])
 button_addfile = tk.Menubutton(
     tree_frame,
     text=BUTTON_ADD_FILES,
-    font=f"Arial {font_size} bold",
+    font=f"Arial {FONT_SIZE} bold",
     padx=4,
     pady=3,
     fg=COLOR_WB,
@@ -5144,7 +5150,7 @@ def start_automatic_sync():
         ):
             add_suffix = False
         suffix = 2
-        while os.path.exists(output_subtitle_file) and add_suffix == True:
+        while os.path.exists(output_subtitle_file) and add_suffix is True:
             filename = f"autosync_{base_name}_{suffix}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
             suffix += 1
@@ -5255,7 +5261,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'{call_ffsubsync} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'{CALL_FFPSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
                     cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), '')}"
@@ -5267,9 +5273,9 @@ def start_automatic_sync():
                 cmd += f" {additional_ffsubsync_args}"
         elif sync_tool == SYNC_TOOL_ALASS:
             if split_penalty == 0:
-                cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
+                cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
             else:
-                cmd = f'"{call_alass}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
+                cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
             if alass_speed_optimization_var.get():
                 cmd += " --speed-optimization 0"
             if alass_disable_fps_guessing_var.get():
@@ -5322,7 +5328,7 @@ def start_automatic_sync():
                     f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_alass_args)}\n",
                 )
         log_window.insert(tk.END, f"{SYNCING_STARTED}\n")
-        progress_line_number = log_window.index(tk.END).split(".")[0]
+        progress_line_number = log_window.index(tk.END).split(".", maxsplit=1)[0]
         decoding_error_occurred = False
         previous_line_had_percentage = False
         for output in process.stdout:
@@ -5363,21 +5369,18 @@ def start_automatic_sync():
                 and sync_tool == SYNC_TOOL_ALASS
             ):
                 decoding_error_occurred = True
+
         if process is not None and not cancel_flag:
             process.wait()
             if process.returncode == 0:  # Check if the process finished successfully
                 if (
                     "error" in output.lower()
                     or not os.path.exists(output_subtitle_file)
-                    and not decoding_error_occurred
-                ):
+                ) and not decoding_error_occurred:
                     return 1, decoding_error_occurred
-                else:
-                    return process.returncode, decoding_error_occurred
-            else:
                 return process.returncode, decoding_error_occurred
-        else:
-            return 1, decoding_error_occurred
+            return process.returncode, decoding_error_occurred
+        return 1, decoding_error_occurred
 
     def run_subprocess():
         global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
@@ -5703,7 +5706,7 @@ button_start_automatic_sync = TkButton(
 remove_subtitle_button = TkButton(
     automatic_tab,
     text="X",
-    font=f"Arial {font_size} bold",
+    font=f"Arial {FONT_SIZE} bold",
     command=remove_subtitle_input,
     padx=4,
     pady=0,
@@ -5722,7 +5725,7 @@ remove_subtitle_button.grid_remove()
 remove_video_button = TkButton(
     automatic_tab,
     text="X",
-    font=f"Arial {font_size} bold",
+    font=f"Arial {FONT_SIZE} bold",
     command=remove_video_input,
     padx=(4),
     pady=0,
@@ -5826,10 +5829,9 @@ ffsubsync_option_vad.grid(row=0, column=1, sticky="w")
 
 
 def select_destination_folder():
-    global tooltip_action_menu_auto
+    global tooltip_action_menu_auto, selected_destination_folder
     folder_path = filedialog.askdirectory()
     if folder_path:
-        global selected_destination_folder
         selected_destination_folder = folder_path
         tooltip_action_menu_auto = ToolTip(
             action_menu_auto, TEXT_SELECTED_FOLDER.format(folder_path)
@@ -5967,9 +5969,9 @@ alass_split_penalty_slider = tk.Scale(
         "alass_split_penalty", alass_split_penalty_var.get()
     ),
     highlightthickness=5,
-    highlightbackground=COLOR_BACKGROUND,  # Change the border color
-    troughcolor=COLOR_ONE,  # Set the background color of the trough
-    activebackground=COLOR_BACKGROUND,  # Set the background color when hovering
+    highlightbackground=COLOR_BACKGROUND,
+    troughcolor=COLOR_ONE,
+    activebackground=COLOR_BACKGROUND,
 )
 tooltip_ffsubsync_option_framerate = ToolTip(
     ffsubsync_option_framerate, TOOLTIP_FRAMERATE
@@ -6042,7 +6044,6 @@ batch_mode_button = TkButton(
     state="normal",
 )
 batch_mode_button.grid(row=5, column=0, padx=(10, 2.5), pady=10, sticky="w")
-# Ensure button_start_automatic_sync is set to expand horizontally
 button_start_automatic_sync.grid(row=5, column=1, padx=(2.5, 10), pady=10, sticky="ew")
 subtitle_input.dnd_bind("<<Drop>>", on_subtitle_drop)
 subtitle_input.bind("<Button-1>", browse_subtitle)
@@ -6091,16 +6092,14 @@ def browse_file(event=None):
     if subtitle_file:
         label_drop_box.config(text=subtitle_file)
         label_drop_box.tooltip_text = subtitle_file
-        label_drop_box.config(bg=COLOR_TWO)  # Change background color to light green
+        label_drop_box.config(bg=COLOR_TWO)
         button_clear.grid()
         log_message("", "info", tab="manual")
     else:
         # Check if the user canceled the dialog
         if subtitle_file != "":
             log_message(SELECT_SUBTITLE, "error", tab="manual")
-            label_drop_box.config(
-                bg=COLOR_ONE
-            )  # Restore background color to light gray
+            label_drop_box.config(bg=COLOR_ONE)
 
 
 def select_subtitle_at_startup():
@@ -6154,7 +6153,7 @@ def decrease_milliseconds():
 def validate_input(new_value):
     if " " in new_value:  # Check if the input contains spaces
         return False
-    if new_value == "" or new_value == "-":  # Allow empty string
+    if new_value in ("", "-"):  # Allow empty string
         return True
     if "--" in new_value:  # Disallow double negative signs
         return False
@@ -6223,7 +6222,7 @@ button_clear = TkButton(
     manual_tab,
     text="X",
     command=clear_label_drop_box,
-    font=f"Arial {font_size} bold",
+    font=f"Arial {FONT_SIZE} bold",
     padx=4,
     pady=0,
     fg=COLOR_WB,
@@ -6349,6 +6348,7 @@ tooltip_milliseconds = ToolTip(entry_milliseconds, "1 second = 1000ms")
 # ---------------- Manual Tab ---------------- #
 # Check for updates after the window is built
 def run_after_startup():
+    """Run tasks after the application startup."""
     if notify_about_updates:
         check_for_updates()
 
@@ -6387,7 +6387,6 @@ min_height_manual = sum(
 )
 min_height = max(min_height_automatic, min_height_manual)
 root.minsize(min_width, min_height)  # Set minimum size for the window
-# Place the window at the top right corner of the screen
 root.update_idletasks()
 dark_title_bar(root)
 place_window_top_right()
@@ -6399,7 +6398,7 @@ try:
         else:  # Linux or macOS
             icon = PhotoImage(file="icon.ico")
             root.iconphoto(True, icon)
-except Exception as e:
+except Exception:
     pass
 root.deiconify()  # Show the window after it's been built
 root.mainloop()
