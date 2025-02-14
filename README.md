@@ -95,8 +95,7 @@ If you'd like to modify the code and contribute to development, you can download
 ## `For MacOS/OSX users:`
 - You need to give permissions in "System Settings > Security & Privacy" to run the app.<br />
 - If does not work, download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it on your computer using build.py.
-- You can use `brew install alass` command to make alass work.
-- I haven't tested the `macos-arm64` build. Please open an issue if you face any problems.<br />
+- Use `brew install alass` command to make alass work.
 
 ## `Credits`
 Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync and alass. This is just a GUI application that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
