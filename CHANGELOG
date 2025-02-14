@@ -1,2 +1,4 @@
-- Re-formatted all Python files with [Black](https://github.com/psf/black)
-- Fixed "Save next to video with same filename" option was not saving subtitles with same filename as video in batch mode.
+- Added a new option: "Add pair (continuous)" which allows continuous selection of video and subtitle pairs, making it easier to add multiple pairs.
+- Fixed some issues when showing error messages.
+- Improvements in code and translations.
+- Changed icon.

@@ -1,5 +1,6 @@
+# AutoSubSync: Automatic / Manual Subtitle Synchronization Tool <img title="AutoSubSync Icon" src='images/AutoSubSync.ico' align="right" style="padding-left: 10px; padding-top:5px;">
 
-# AutoSubSync: Automatic / Manual Subtitle Synchronization Tool
+
 
 [![Build Status](https://github.com/denizsafak/AutoSubSync/actions/workflows/app.yml/badge.svg)](https://github.com/denizsafak/AutoSubSync/actions)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
@@ -9,7 +10,7 @@
 
 AutoSubSync is a Python-based application designed to effortlessly synchronize subtitle files by shifting them by a specified number of milliseconds or automatically syncing them. Whether you need to adjust subtitles for a movie or a video, this subtitle sync fixing tool offers a simple and intuitive interface to perform the task efficiently.
 
-<img title="AutoSubSync" src='images/AutoSubSync1.png'> <img title="AutoSubSync" src='images/AutoSubSync2.png'> <img title="AutoSubSync" src='images/AutoSubSync3.png'> <img title="AutoSubSync" src='images/AutoSubSync4.png'>
+<img title="AutoSubSync Automatic Tab" src='images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='images/AutoSubSync4.png'>
 
 > # [Download the Latest Release](https://github.com/denizsafak/AutoSubSync/releases/latest)
 > You can download the latest executable version of AutoSubSync from this link. <br>
@@ -26,7 +27,16 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 > MacOS users please read [this](#for-macososx-users).
 
 ## `Example Use Case`
-<img title="AutoSubSync" src='images/AutoSubSync.gif'>
+<img title="Example use case of AutoSubSync" src='images/AutoSubSync.gif'>
+
+## `Features`
+- **Automatic Subtitle Synchronization:** Automatically syncronize subtitles with the video/reference subtitle using [ffsubsync](https://github.com/smacke/ffsubsync) or [alass](https://github.com/kaegi/alass). Choose between tools and configure options for optimal results.
+- **Manual Subtitle Synchronization:** Shift subtitles manually by specifying the number of milliseconds. Adjust timing using the `+` and `-` buttons and choose to save the changes to the desktop or replace the original file.
+- **Batch Processing:** Efficiently process multiple video, reference subtitle, and subtitle pairs in one go.
+- **Auto-Pairing with Season/Episode:** Automatically pair videos and reference subtitles with subtitle files using patterns like S01E01, 1x01, etc.
+- **Subtitle Formats:** Supports a variety of formats including `.srt`, `.vtt`, `.sbv`, `.sub`, `.ass`, `.ssa`, `.dfxp`, `.ttml`, `.itt`, and `.stl`.
+- **Drag and Drop:** Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
+- **Informative Messages:** Receive clear feedback messages indicating the success or failure of the synchronization process.
 
 ## `Useage`
 ### Automatic Synchronization
@@ -43,13 +53,15 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 5. **Start Synchronization:**
    - Click the `Start Automatic Sync` button to begin the synchronization process.
 6. **Batch Mode:**
-   - Enable batch mode to process multiple files at once. Drag and drop multiple files or folders into the batch input area.
-   - Add `reference subtitle - subtitle` pairs in batch mode. You can add subtitles as `no video` or reference subtitles as `no subtitle`.
+   - Enable batch mode to process multiple files at once. 
+   - Drag and drop multiple files or folders into the batch input area.
+   - You can also add `reference subtitle - subtitle` pairs in batch mode. Just drag and drop them into the batch input area.
    - Use `Auto-Pairing with Season/Episode` to automatically pair multiple subtitles with similar names (e.g., S01E01 pairs with 01x01).
    - Double-click any item to change it.
    - Use the `del` key to delete any item.
 
-     
+<img title="Auto-Pairing" src='images/Auto-Pairing.png'>
+
 ### Manual Synchronization
 1. **Select Subtitle File:**
    - Drag and drop the subtitle file into the input box.
@@ -77,19 +89,6 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - **Remember the Changes:** Toggle for remembering changes made.
 - **Reset to Default Settings:** Restore settings to default values.
 
-<img title="Auto-Pairing" src='images/Auto-Pairing.png'>
-
-## Features
-- **Auto-Pairing with Season/Episode:** Automatically pair videos and reference subtitles with subtitles using Season/Episode patterns like S01E01, 1x01, etc.
-- **Synchronization Tools:** Choose between `alass` and `ffsubsync` for automatic subtitle syncing.
-- **Batch Processing:** Process multiple video/reference subtitle and subtitle pairs.
-- **Subtitle Formats:** Support for different subtitle formats: .srt, .vtt, .sbv, .sub, .ass, .ssa, .dfxp, .ttml, .itt, .stl.
-- **Automatic Subtitle Synchronization:** Automatically sync the subtitles with the video/reference subtitle using [ffsubsync](https://github.com/smacke/ffsubsync) or [alass](https://github.com/kaegi/alass).
-- **Subtitle Shifting:** Easily adjust subtitle timing by specifying the number of milliseconds to shift.
-- **Drag and Drop:** Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
-- **Customization Options:** Choose whether to save the shifted subtitle file to the desktop or replace the original file.
-- **Informative Messages:** Receive clear feedback messages indicating the success or failure of the synchronization process.
-
 ## `For developers and contributors`
 If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding. Also check [here](https://github.com/denizsafak/AutoSubSync/blob/main/main/resources/README.md).
 
@@ -101,8 +100,6 @@ If you'd like to modify the code and contribute to development, you can download
 
 ## `Credits`
 Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. The automatic subtitle syncing feature is possible because of ffsubsync and alass. This is just a GUI application that makes the process a bit easier. At the beginning, it was just a manual subtitle syncing program. Now it can do both manual and automatic subtitle sync.
-
-Icon: [Subtitles icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/subtitles)
 
 > [!IMPORTANT]
 > The automatic sync feature is not always perfect. I recommend you to check the subtitle after syncing.
