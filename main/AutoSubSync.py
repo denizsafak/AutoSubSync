@@ -435,6 +435,7 @@ SUBTITLE_FILES_TEXT = texts.SUBTITLE_FILES_TEXT[LANGUAGE]
 CONTEXT_MENU_REMOVE = texts.CONTEXT_MENU_REMOVE[LANGUAGE]
 CONTEXT_MENU_CHANGE = texts.CONTEXT_MENU_CHANGE[LANGUAGE]
 CONTEXT_MENU_ADD_PAIR = texts.CONTEXT_MENU_ADD_PAIR[LANGUAGE]
+CONTEXT_MENU_ADD_PAIRS = texts.CONTEXT_MENU_ADD_PAIRS[LANGUAGE]
 CONTEXT_MENU_CLEAR_ALL = texts.CONTEXT_MENU_CLEAR_ALL[LANGUAGE]
 CONTEXT_MENU_SHOW_PATH = texts.CONTEXT_MENU_SHOW_PATH[LANGUAGE]
 BUTTON_ADD_FILES = texts.BUTTON_ADD_FILES[LANGUAGE]
@@ -528,6 +529,7 @@ SKIPPED_DUPLICATES_MSG = texts.SKIPPED_DUPLICATES_MSG[LANGUAGE]
 NO_VALID_SUBTITLE_PAIRS_TO_PROCESS = texts.NO_VALID_SUBTITLE_PAIRS_TO_PROCESS[LANGUAGE]
 NO_MATCHING_SUBTITLE_PAIRS_FOUND = texts.NO_MATCHING_SUBTITLE_PAIRS_FOUND[LANGUAGE]
 NO_SUBTITLE_PAIRS_TO_PROCESS = texts.NO_SUBTITLE_PAIRS_TO_PROCESS[LANGUAGE]
+NOT_FIND_COMPATIBLE_FILE_MANAGER = texts.NOT_FIND_COMPATIBLE_FILE_MANAGER[LANGUAGE]
 FILE_NOT_FOUND = texts.FILE_NOT_FOUND[LANGUAGE]
 ERROR_OPENING_DIRECTORY = texts.ERROR_OPENING_DIRECTORY[LANGUAGE]
 CONFIG_FILE_NOT_FOUND = texts.CONFIG_FILE_NOT_FOUND[LANGUAGE]
@@ -1060,11 +1062,14 @@ def log_message(message, msg_type=None, filepath=None, tab="both"):
         else:
             label_message_manual.grid_forget()
     if msg_type == "success" and filepath:
-        message += f" Click to open: {filepath}"
         label_message_auto.config(cursor="hand2")
         label_message_manual.config(cursor="hand2")
-        label_message_auto.bind("<Button-1>", lambda event: open_directory(filepath))
-        label_message_manual.bind("<Button-1>", lambda event: open_directory(filepath))
+        label_message_auto.bind(
+            "<Button-1>", lambda event: open_directory(filepath, tab)
+        )
+        label_message_manual.bind(
+            "<Button-1>", lambda event: open_directory(filepath, tab)
+        )
     else:
         label_message_auto.config(cursor="")
         label_message_manual.config(cursor="")
@@ -1074,10 +1079,12 @@ def log_message(message, msg_type=None, filepath=None, tab="both"):
     label_message_manual.update_idletasks()
 
 
-def open_directory(filepath):
+def open_directory(filepath, tab="both"):
     if not os.path.exists(filepath):
-        log_message(FILE_NOT_FOUND, "error")
-        return
+        if tab != "ref":
+            log_message(FILE_NOT_FOUND, "error", tab=tab)
+            return None
+        return FILE_NOT_FOUND, "error"
     filepath = os.path.normpath(os.path.realpath(filepath))
     try:
         if platform == "Windows":
@@ -1099,15 +1106,20 @@ def open_directory(filepath):
                 if shutil.which(fm):
                     try:
                         subprocess.call([fm, directory])
-                        return
+                        return None
                     except Exception:
                         continue
-            log_message(
-                f"Info: Could not find a compatible file manager. The location is: {directory}",
-                "error",
+            messagebox.showinfo(
+                "Info", NOT_FIND_COMPATIBLE_FILE_MANAGER.format(directory=directory)
             )
+        return None
     except Exception as e:
-        log_message(ERROR_OPENING_DIRECTORY.format(variable=str(e)), "error")
+        if tab != "ref":
+            log_message(
+                ERROR_OPENING_DIRECTORY.format(variable=str(e)), "error", tab=tab
+            )
+            return None
+        return FILE_NOT_FOUND, "error"
 
 
 def update_wraplengt(event=None):
@@ -1786,8 +1798,7 @@ def open_logs_folder():
                 except Exception:
                     continue
         messagebox.showinfo(
-            "Info",
-            f"Could not find a compatible file manager. The location is: {logs_folder}",
+            "Info", NOT_FIND_COMPATIBLE_FILE_MANAGER.format(directory=logs_folder)
         )
 
 
@@ -3780,6 +3791,8 @@ def browse_batch(event=None):
 
 
 # REFERENCE SUBTITLE / SUBTITLE PAIRING START
+
+
 def reference_subtitle_subtitle_pairs():
     window = tk.Toplevel()
     dark_title_bar(window)
@@ -3928,7 +3941,7 @@ def reference_subtitle_subtitle_pairs():
     ref_options = tk.Menu(window, tearoff=0)
     ref_options.add_command(
         label=CONTEXT_MENU_SHOW_PATH,
-        command=lambda: show_path(listbox_left, ref_file_paths),
+        command=lambda: show_path_reference(listbox_left, ref_file_paths),
     )
     ref_options.add_command(
         label=CONTEXT_MENU_REMOVE,
@@ -3948,7 +3961,7 @@ def reference_subtitle_subtitle_pairs():
     sub_options = tk.Menu(window, tearoff=0)
     sub_options.add_command(
         label=CONTEXT_MENU_SHOW_PATH,
-        command=lambda: show_path(listbox_right, sub_file_paths),
+        command=lambda: show_path_reference(listbox_right, sub_file_paths),
     )
     sub_options.add_command(
         label=CONTEXT_MENU_REMOVE,
@@ -4351,7 +4364,7 @@ def reference_subtitle_subtitle_pairs():
         else:
             log_message_reference(NO_FILES_SELECTED, "info")
 
-    def show_path(listbox, file_paths_list):
+    def show_path_reference(listbox, file_paths_list):
         selected = listbox.curselection()
         if not selected:
             log_message_reference(NO_FILES_SELECTED_TO_SHOW_PATH, "info")
@@ -4360,7 +4373,11 @@ def reference_subtitle_subtitle_pairs():
         filepath = file_paths_list[selected[0]]
         normalized_path = os.path.normpath(filepath)
 
-        open_directory(normalized_path)
+        result = open_directory(normalized_path, tab="ref")
+        if result:
+            text, error = result
+            if error:
+                log_message_reference(text, error)
 
     def on_right_click(event, menu):
         menu.post(event.x_root, event.y_root)
@@ -4488,16 +4505,23 @@ def on_batch_drop(event):
     process_files(filepaths)
 
 
-def add_pair():
-    video_file = filedialog.askopenfilename(
-        filetypes=[
-            (
-                VIDEO_OR_SUBTITLE_TEXT,
-                " ".join([f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]),
-            )
-        ]
-    )
-    if video_file:
+def add_pair(multiple=False):
+    while True:
+        video_file = filedialog.askopenfilename(
+            filetypes=[
+                (
+                    VIDEO_OR_SUBTITLE_TEXT,
+                    " ".join(
+                        [f"*{ext}" for ext in SUBTITLE_EXTENSIONS + VIDEO_EXTENSIONS]
+                    ),
+                )
+            ]
+        )
+        if not video_file:
+            if not multiple:
+                log_message(SELECT_VIDEO, "error", tab="auto")
+            break
+
         subtitle_file = filedialog.askopenfilename(
             filetypes=[
                 (
@@ -4506,50 +4530,65 @@ def add_pair():
                 )
             ]
         )
-        if subtitle_file:
-            # Check if the same file is selected for both video and subtitle
-            if os.path.normpath(video_file.lower()) == os.path.normpath(
-                subtitle_file.lower()
-            ):
-                log_message(SAME_FILE_ERROR, "error", tab="auto")
-                return
-            video_name = os.path.basename(video_file)
-            subtitle_name = os.path.basename(subtitle_file)
-            pair = (
-                os.path.normpath(video_file.lower()),
-                os.path.normpath(subtitle_file.lower()),
-            )
-            # Check for duplicates based on normalized full file paths
-            for parent in treeview.get_children():
-                existing_video = treeview.item(parent, "values")
-                if (
-                    existing_video
-                    and os.path.normpath(existing_video[0].lower()) == pair[0]
-                ):
-                    subtitles = treeview.get_children(parent)
-                    for sub in subtitles:
-                        existing_sub = treeview.item(sub, "values")
-                        if (
-                            existing_sub
-                            and os.path.normpath(existing_sub[0].lower()) == pair[1]
-                        ):
-                            log_message(PAIR_ALREADY_EXISTS, "error", tab="auto")
-                            return
-            parent_id = treeview.insert(
-                "", "end", text=video_name, values=(video_file,), open=True
-            )
-            treeview.insert(
-                parent_id, "end", text=subtitle_name, values=(subtitle_file,)
-            )
-            treeview.item(parent_id, tags=("paired",))
-            log_message(PAIR_ADDED, "info", tab="auto")
-            # Handle UI updates
-            batch_input.grid_remove()
-            tree_frame.grid()
-        else:
+        if not subtitle_file:
             log_message(SELECT_SUBTITLE, "error", tab="auto")
-    else:
-        log_message(SELECT_VIDEO, "error", tab="auto")
+            break
+
+        # Check if the same file is selected for both video and subtitle
+        if os.path.normpath(video_file.lower()) == os.path.normpath(
+            subtitle_file.lower()
+        ):
+            log_message(SAME_FILE_ERROR, "error", tab="auto")
+            if not multiple:
+                break
+            else:
+                continue
+
+        video_name = os.path.basename(video_file)
+        subtitle_name = os.path.basename(subtitle_file)
+        pair = (
+            os.path.normpath(video_file.lower()),
+            os.path.normpath(subtitle_file.lower()),
+        )
+
+        # Check for duplicates based on normalized full file paths
+        duplicate_found = False
+        for parent in treeview.get_children():
+            existing_video = treeview.item(parent, "values")
+            if (
+                existing_video
+                and os.path.normpath(existing_video[0].lower()) == pair[0]
+            ):
+                subtitles = treeview.get_children(parent)
+                for sub in subtitles:
+                    existing_sub = treeview.item(sub, "values")
+                    if (
+                        existing_sub
+                        and os.path.normpath(existing_sub[0].lower()) == pair[1]
+                    ):
+                        log_message(PAIR_ALREADY_EXISTS, "error", tab="auto")
+                        duplicate_found = True
+                        break
+            if duplicate_found:
+                break
+        if duplicate_found:
+            if not multiple:
+                break
+            else:
+                continue
+
+        parent_id = treeview.insert(
+            "", "end", text=video_name, values=(video_file,), open=True
+        )
+        treeview.insert(parent_id, "end", text=subtitle_name, values=(subtitle_file,))
+        treeview.item(parent_id, tags=("paired",))
+        log_message(PAIR_ADDED, "info", tab="auto")
+        # Handle UI updates
+        batch_input.grid_remove()
+        tree_frame.grid()
+
+        if not multiple:
+            break
 
 
 def change_selected_item():
@@ -4768,7 +4807,7 @@ context_menu.add_command(
 
 
 # Function to show the context menu
-def show_path():
+def show_path(tab="both"):
     selected_item = treeview.selection()
     if not selected_item:
         return
@@ -4777,7 +4816,7 @@ def show_path():
     if not item_values or not item_values[0]:
         return
     path = os.path.normpath(item_values[0])
-    open_directory(path)
+    open_directory(path, tab)
 
 
 def show_context_menu(event):
@@ -4789,7 +4828,9 @@ def show_context_menu(event):
         treeview.selection_set(item)
         item_values = treeview.item(item, "values")
         if item_values and item_values[0]:
-            context_menu.add_command(label=CONTEXT_MENU_SHOW_PATH, command=show_path)
+            context_menu.add_command(
+                label=CONTEXT_MENU_SHOW_PATH, command=lambda: show_path(tab="auto")
+            )
             context_menu.add_separator()
     context_menu.add_command(label=CONTEXT_MENU_REMOVE, command=remove_selected_item)
     context_menu.add_command(label=CONTEXT_MENU_CHANGE, command=change_selected_item)
@@ -4879,6 +4920,9 @@ button_addfile = tk.Menubutton(
 options_menu = tk.Menu(button_addfile, tearoff=0)
 button_addfile.config(menu=options_menu)
 options_menu.add_command(label=CONTEXT_MENU_ADD_PAIR, command=add_pair)
+options_menu.add_command(
+    label=CONTEXT_MENU_ADD_PAIRS, command=lambda: add_pair(multiple=True)
+)
 options_menu.add_command(label=MENU_ADD_FOLDER, command=select_folder)
 options_menu.add_command(label=MENU_ADD_MULTIPLE_FILES, command=browse_batch)
 options_menu.add_command(
@@ -6179,6 +6223,7 @@ def clear_label_drop_box():
     label_drop_box.config(text=LABEL_DROP_BOX)
     label_drop_box.config(bg=COLOR_ONE)
     del label_drop_box.tooltip_text
+    log_message("", "info", tab="manual")
     button_clear.grid_remove()
 
 
