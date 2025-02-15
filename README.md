@@ -8,7 +8,7 @@
 [![Operating Systems](https://img.shields.io/badge/os-windows%20%7C%20linux%20%7C%20macos%20-blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/denizsafak/AutoSubSync/total?color=blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 
-AutoSubSync is a Python-based application designed to effortlessly synchronize subtitle files by shifting them by a specified number of milliseconds or automatically syncing them. Whether you need to adjust subtitles for a movie or a video, this subtitle sync fixing tool offers a simple and intuitive interface to perform the task efficiently.
+AutoSubSync is a user-friendly Python tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync) and [alass](https://github.com/kaegi/alass). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
 
 <img title="AutoSubSync Automatic Tab" src='images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='images/AutoSubSync4.png'>
 
@@ -18,7 +18,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 > ``` 
 >yay -S autosubsync-bin 
 >```
-> Thanks to [@Rainoutt](https://github.com/Rainoutt) for the AUR package.
+> Thanks to [@Rainoutt](https://github.com/Rainoutt) for the [AUR](https://aur.archlinux.org/packages/autosubsync-bin) package. (Note: The AUR package may not be up-to-date.)
 
 ## `How to Run?`
 - Extract the zip.
@@ -84,6 +84,7 @@ AutoSubSync is a Python-based application designed to effortlessly synchronize s
 - **Additional arguments for alass:** Configure additional arguments for alass.
 - **Check video for subtitle stream in alass:** Toggle for checking the subtitle streams in video for alass.
 - **Backup subtitles before overwriting:** Toggle for creating a backup of subtitles before overwriting them.
+- **Add "autosync_" prefix to subtitles:** Toggle for adding a prefix to the synchronized subtitles.
 - **Keep converted subtitles:** Toggle for keeping the converted subtitles after synchronization.
 - **Keep Extracted Subtitles:** Toggle for keeping the extracted subtitles after synchronization.
 - **Remember the Changes:** Toggle for remembering changes made.

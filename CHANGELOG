@@ -1,4 +1,2 @@
-- Added a new option: "Add pair (continuous)" which allows continuous selection of video and subtitle pairs, making it easier to add multiple pairs.
-- Fixed some issues when showing error messages.
-- Improvements in code and translations.
-- Changed icon.
+- Added new option: 'Add "autosync_" prefix to subtitles', allowing to toggle to add a prefix to the output subtitle files.
+- Switched from chardet to charset_normalizer for better encoding detection.
