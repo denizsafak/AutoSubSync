@@ -9,12 +9,13 @@ import ctypes
 import json
 import webbrowser
 import platform
+import codecs
 import tkinter as tk
 import tkinter.font as tkFont
 from datetime import datetime
 from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
-from charset_normalizer import from_bytes, constant
+from charset_normalizer import from_path, constant
 import requests
 import psutil
 import texts
@@ -645,15 +646,21 @@ def update_config(key, value):
             json.dump(config, config_file, indent=4)
 
 
+def normalize_encoding(encoding):
+    try:
+        # The codecs.lookup returns a CodecInfo object with the canonical name,
+        # which follows WHATWG Encoding Standard aliases.
+        info = codecs.lookup(encoding)
+        return info.name
+    except LookupError:
+        return encoding
+
+
 def detect_encoding(file_path):
-    with open(file_path, "rb") as f:
-        raw_data = f.read()
-    result = from_bytes(raw_data)
+    result = from_path(file_path)
     best_guess = result.best() if result else None
     if best_guess and best_guess.encoding:
-        encoding = constant.CHARDET_CORRESPONDENCE.get(
-            best_guess.encoding.lower(), best_guess.encoding
-        )
+        encoding = normalize_encoding(best_guess.encoding)
     else:
         encoding = "utf-8"
     return encoding.lower()
@@ -2648,6 +2655,7 @@ def get_desktop_path():
 
 selected_destination_folder = None
 subtitle_prefix = "autosync_"
+
 
 def start_batch_sync():
     global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch, log_window
