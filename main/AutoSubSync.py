@@ -119,6 +119,7 @@ default_settings = {
     "keep_extracted_subtitles": True,
     "backup_subtitles_before_overwriting": True,
     "check_video_for_subtitle_stream_in_alass": True,
+    "add_prefix": True,
     "additional_ffsubsync_args": "",
     "additional_alass_args": "",
 }
@@ -396,6 +397,7 @@ LABEL_ADDITIONAL_ALASS_ARGS = texts.LABEL_ADDITIONAL_ALASS_ARGS[LANGUAGE]
 LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = texts.LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM[
     LANGUAGE
 ]
+LABEL_ADD_PREFIX = texts.LABEL_ADD_PREFIX[LANGUAGE]
 LABEL_BACKUP_SUBTITLES = texts.LABEL_BACKUP_SUBTITLES[LANGUAGE]
 LABEL_KEEP_CONVERTED_SUBTITLES = texts.LABEL_KEEP_CONVERTED_SUBTITLES[LANGUAGE]
 LABEL_KEEP_EXTRACTED_SUBTITLES = texts.LABEL_KEEP_EXTRACTED_SUBTITLES[LANGUAGE]
@@ -1856,6 +1858,12 @@ def toggle_keep_logs():
     update_config("keep_logs", keep_logs)
 
 
+def toggle_add_prefix():
+    global add_prefix
+    add_prefix = not add_prefix
+    update_config("add_prefix", add_prefix)
+
+
 def open_settings(event):
     global logs_exist, log_state
     logs_exist = check_logs_exist()
@@ -1872,6 +1880,7 @@ keep_converted_subtitles = config.get("keep_converted_subtitles", False)
 keep_extracted_subtitles = config.get("keep_extracted_subtitles", False)
 additional_ffsubsync_args = config.get("additional_ffsubsync_args", "")
 additional_alass_args = config.get("additional_alass_args", "")
+add_prefix = config.get("add_prefix", True)
 backup_subtitles_before_overwriting = config.get(
     "backup_subtitles_before_overwriting", False
 )
@@ -1922,6 +1931,7 @@ keep_converted_var = tk.BooleanVar(value=keep_converted_subtitles)
 keep_extracted_var = tk.BooleanVar(value=keep_extracted_subtitles)
 backup_subtitles_var = tk.BooleanVar(value=backup_subtitles_before_overwriting)
 remember_the_changes_var = tk.BooleanVar(value=remember_the_changes)
+add_prefix_var = tk.BooleanVar(value=add_prefix)
 check_video_for_subtitle_stream_var = tk.BooleanVar(
     value=check_video_for_subtitle_stream_in_alass
 )
@@ -1942,6 +1952,11 @@ settings_menu.add_checkbutton(
     label=LABEL_BACKUP_SUBTITLES,
     command=toggle_backup_subtitles_before_overwriting,
     variable=backup_subtitles_var,
+)
+settings_menu.add_checkbutton(
+    label=LABEL_ADD_PREFIX,
+    command=toggle_add_prefix,
+    variable=add_prefix_var,
 )
 settings_menu.add_checkbutton(
     label=LABEL_KEEP_CONVERTED_SUBTITLES,
@@ -2632,7 +2647,7 @@ def get_desktop_path():
 
 
 selected_destination_folder = None
-
+subtitle_prefix = "autosync_"
 
 def start_batch_sync():
     global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch, log_window
@@ -2889,7 +2904,7 @@ def start_batch_sync():
                     output_ext = ".srt"
                 # Check for existing autosync files
                 # and optionally ending with '_2', '_3', etc.
-                autosync_pattern = rf"^autosync_{re.escape(base_name)}(?:_\d+)?{re.escape(output_ext)}$"
+                autosync_pattern = rf"^{subtitle_prefix}{re.escape(base_name)}(?:_\d+)?{re.escape(output_ext)}$"
                 synced_files = [
                     f
                     for f in os.listdir(base_output_dir)
@@ -3000,8 +3015,9 @@ def start_batch_sync():
                     os.path.basename(original_subtitle_file)
                 )
                 if action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO:
+                    prefix = subtitle_prefix if add_prefix else ""
                     output_subtitle_file = os.path.join(
-                        base_output_dir, f"autosync_{base_name}{original_ext}"
+                        base_output_dir, f"{prefix}{base_name}{original_ext}"
                     )
                 elif (
                     action_var_auto.get()
@@ -3014,8 +3030,9 @@ def start_batch_sync():
                 elif action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE:
                     output_subtitle_file = subtitle_file
                 else:
+                    prefix = subtitle_prefix if add_prefix else ""
                     output_subtitle_file = os.path.join(
-                        base_output_dir, f"autosync_{base_name}{original_ext}"
+                        base_output_dir, f"{prefix}{base_name}{original_ext}"
                     )
                 if not output_subtitle_file.lower().endswith(
                     tuple(SUPPORTED_SUBTITLE_EXTENSIONS)
@@ -3045,12 +3062,13 @@ def start_batch_sync():
                     output_ext = original_ext
                 else:
                     output_ext = ".srt"
-                autosync_pattern = rf"^autosync_{re.escape(original_base_name)}(?:_\d+)?{re.escape(original_ext)}$"
+                autosync_pattern = rf"^{subtitle_prefix}{re.escape(original_base_name)}(?:_\d+)?{re.escape(original_ext)}$"
                 suffix = 2
+                prefix = subtitle_prefix if add_prefix else ""
                 while os.path.exists(output_subtitle_file) and add_suffix is True:
                     output_subtitle_file = os.path.join(
                         base_output_dir,
-                        f"autosync_{original_base_name}_{suffix}{output_ext}",
+                        f"{prefix}{original_base_name}_{suffix}{output_ext}",
                     )
                     suffix += 1
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
@@ -5182,7 +5200,8 @@ def start_automatic_sync():
             filename = f"{base_name}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
         else:
-            filename = f"autosync_{base_name}{ext}"
+            prefix = subtitle_prefix if add_prefix else ""
+            filename = f"{prefix}{base_name}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
         add_suffix = True
 
@@ -5192,8 +5211,9 @@ def start_automatic_sync():
         ):
             add_suffix = False
         suffix = 2
+        prefix = subtitle_prefix if add_prefix else ""
         while os.path.exists(output_subtitle_file) and add_suffix is True:
-            filename = f"autosync_{base_name}_{suffix}{ext}"
+            filename = f"{prefix}{base_name}_{suffix}{ext}"
             output_subtitle_file = os.path.join(output_dir, filename)
             suffix += 1
 

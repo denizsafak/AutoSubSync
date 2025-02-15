@@ -1169,6 +1169,30 @@ LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM = {
     "th": "ตรวจสอบวิดีโอสำหรับสตรีมคำบรรยายใน alass",
     "ur": "alass میں ویڈیو کے لیے زیرنویس اسٹریمز چیک کریں",
 }
+LABEL_ADD_PREFIX = {
+    "en": 'Add "autosync_" prefix to subtitles',
+    "es": 'Agregar prefijo "autosync_" a los subtítulos',
+    "tr": 'Altyazılara "autosync_" öneki ekle',
+    "zh": '在字幕前添加 "autosync_" 前缀',
+    "ru": 'Добавить префикс "autosync_" к субтитрам',
+    "pl": 'Dodaj prefiks "autosync_" do napisów',
+    "uk": 'Додати префікс "autosync_" до субтитрів',
+    "ja": '字幕に "autosync_" プレフィックスを追加',
+    "ko": '자막에 "autosync_" 접두사 추가',
+    "hi": 'उपशीर्षकों में "autosync_" उपसर्ग जोड़ें',
+    "bn": 'সাবটাইটেলে "autosync_" প্রিফিক্স যোগ করুন',
+    "it": 'Aggiungi prefisso "autosync_" ai sottotitoli',
+    "fr": 'Ajouter le préfixe "autosync_" aux sous-titres',
+    "de": 'Füge "autosync_" Präfix zu Untertiteln hinzu',
+    "pt": 'Adicionar prefixo "autosync_" às legendas',
+    "ar": 'أضف البادئة "autosync_" إلى الترجمة',
+    "vi": 'Thêm tiền tố "autosync_" vào phụ đề',
+    "fa": 'پیشوند "autosync_" را به زیرنویس‌ها اضافه کنید',
+    "id": 'Tambahkan awalan "autosync_" ke subtitle',
+    "ms": 'Tambah awalan "autosync_" pada sari kata',
+    "th": 'เพิ่มคำนำหน้า "autosync_" ให้กับคำบรรยาย',
+    "ur": 'سب ٹائٹلز میں "autosync_" پیشوند شامل کریں'
+}
 LABEL_BACKUP_SUBTITLES = {
     "en": "Backup subtitles before overwriting",
     "es": "Respaldar subtítulos antes de sobrescribir",
