@@ -14,9 +14,9 @@ import tkinter.font as tkFont
 from datetime import datetime
 from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
+from charset_normalizer import from_bytes, constant
 import requests
 import psutil
-import chardet
 import texts
 
 platform = platform.system()
@@ -643,17 +643,31 @@ def update_config(key, value):
             json.dump(config, config_file, indent=4)
 
 
+def detect_encoding(file_path):
+    with open(file_path, "rb") as f:
+        raw_data = f.read()
+    result = from_bytes(raw_data)
+    best_guess = result.best() if result else None
+    if best_guess and best_guess.encoding:
+        encoding = constant.CHARDET_CORRESPONDENCE.get(
+            best_guess.encoding.lower(), best_guess.encoding
+        )
+    else:
+        encoding = "utf-8"
+    return encoding.lower()
+
+
 # Shift Subtitle Start
 total_shifted_milliseconds = {}
 
 
 def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_original):
     global total_shifted_milliseconds
-    # Load file with encoding detection
+    # Load file with encoding detection using detect_encoding function
     try:
         with open(subtitle_file, "rb") as file:
             raw_data = file.read()
-            encoding = chardet.detect(raw_data)["encoding"]
+            encoding = detect_encoding(subtitle_file)
             lines = raw_data.decode(encoding).splitlines()
     except Exception as e:
         log_message(
@@ -2126,9 +2140,7 @@ def parse_timestamps(subtitle_file):
     # If "ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS" gets updated, this function should be updated accordingly
     try:
         results = []
-        with open(subtitle_file, "rb") as file:
-            raw_data = file.read()
-            encoding = chardet.detect(raw_data)["encoding"]
+        encoding = detect_encoding(subtitle_file)
 
         with open(subtitle_file, "r", encoding=encoding) as file:
             lines = file.readlines()
@@ -2183,9 +2195,7 @@ def choose_best_subtitle(subtitle_file, extracted_subtitles_folder):
 
 # Convert subtitles to SRT Begin
 def convert_sub_to_srt(input_file, output_file):
-    with open(input_file, "rb") as sub_file:
-        sub_data = sub_file.read()
-        encoding = chardet.detect(sub_data)["encoding"]
+    encoding = detect_encoding(input_file)
     with open(input_file, "r", encoding=encoding, errors="replace") as sub, open(
         output_file, "w", encoding="utf-8"
     ) as srt:
@@ -2235,9 +2245,7 @@ def format_sub_time(time_str):
 
 
 def convert_ass_to_srt(input_file, output_file):
-    with open(input_file, "rb") as ass_file:
-        ass_data = ass_file.read()
-        encoding = chardet.detect(ass_data)["encoding"]
+    encoding = detect_encoding(input_file)
     with open(input_file, "r", encoding=encoding, errors="replace") as ass, open(
         output_file, "w", encoding="utf-8"
     ) as srt:
@@ -2282,7 +2290,7 @@ def convert_ttml_or_dfxp_to_srt(input_file, output_file):
     try:
         with open(input_file, "rb") as file:
             data = file.read()
-            encoding = chardet.detect(data)["encoding"]
+            encoding = detect_encoding(input_file)
             content = data.decode(encoding, errors="replace")
         root = ET.fromstring(content)
     except ET.ParseError as e:
@@ -2372,7 +2380,7 @@ def format_ttml_time(timestamp):
 def convert_vtt_to_srt(input_file, output_file):
     with open(input_file, "rb") as vtt_file:
         vtt_data = vtt_file.read()
-        encoding = chardet.detect(vtt_data)["encoding"]
+        encoding = detect_encoding(input_file)
     with open(input_file, "r", encoding=encoding, errors="replace") as vtt, open(
         output_file, "w", encoding="utf-8"
     ) as srt:
@@ -2402,9 +2410,7 @@ def convert_vtt_to_srt(input_file, output_file):
 
 
 def convert_sbv_to_srt(input_file, output_file):
-    with open(input_file, "rb") as sbv_file:
-        sbv_data = sbv_file.read()
-        encoding = chardet.detect(sbv_data)["encoding"]
+    encoding = detect_encoding(input_file)
     with open(input_file, "r", encoding=encoding, errors="replace") as sbv, open(
         output_file, "w", encoding="utf-8"
     ) as srt:
@@ -2448,7 +2454,7 @@ def format_sbv_time(time_str):
 def convert_stl_to_srt(input_file, output_file):
     with open(input_file, "rb") as stl:
         stl_data = stl.read()
-        encoding = chardet.detect(stl_data)["encoding"]
+        encoding = detect_encoding(input_file)
         lines = stl_data.decode(encoding, errors="replace").splitlines()
     with open(output_file, "w", encoding="utf-8") as srt:
         srt_counter = 1
@@ -2525,14 +2531,6 @@ def convert_to_srt(subtitle_file, output_dir, log_window):
 
 
 # Convert subtitles to SRT End
-
-
-def detect_encoding(file_path):
-    with open(file_path, "rb") as f:
-        raw_data = f.read()
-    result = chardet.detect(raw_data)
-    encoding = result["encoding"]
-    return encoding
 
 
 def create_backup(file_path):
