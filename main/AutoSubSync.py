@@ -5184,8 +5184,16 @@ def start_automatic_sync():
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
     elif sync_tool == "ffsubsync":
         SUPPORTED_SUBTITLE_EXTENSIONS = FFSUBSYNC_SUPPORTED_EXTENSIONS
-    subtitle_file = os.path.abspath(getattr(subtitle_input, "tooltip_text", None))
-    video_file = os.path.abspath(getattr(video_input, "tooltip_text", None))
+    subtitle_tooltip_text = getattr(subtitle_input, "tooltip_text", None)
+    video_tooltip_text = getattr(video_input, "tooltip_text", None)
+    if subtitle_tooltip_text:
+        subtitle_file = os.path.abspath(subtitle_tooltip_text)
+    else:
+        subtitle_file = None
+    if video_tooltip_text:
+        video_file = os.path.abspath(video_tooltip_text)
+    else:
+        video_file = None
     if not subtitle_file and not video_file:
         log_message(SELECT_BOTH_FILES, "error", tab="auto")
         return
