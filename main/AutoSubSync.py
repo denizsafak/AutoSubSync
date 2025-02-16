@@ -506,6 +506,7 @@ NO_SYNC_PROCESS = texts.NO_SYNC_PROCESS[LANGUAGE]
 INVALID_SYNC_TOOL = texts.INVALID_SYNC_TOOL[LANGUAGE]
 FAILED_START_PROCESS = texts.FAILED_START_PROCESS[LANGUAGE]
 ERROR_OCCURRED = texts.ERROR_OCCURRED[LANGUAGE]
+ERROR_DECODING_SUBTITLE = texts.ERROR_DECODING_SUBTITLE[LANGUAGE]
 ERROR_EXECUTING_COMMAND = texts.ERROR_EXECUTING_COMMAND[LANGUAGE]
 DROP_VALID_FILES = texts.DROP_VALID_FILES[LANGUAGE]
 PAIRS_ADDED = texts.PAIRS_ADDED[LANGUAGE]
@@ -2648,6 +2649,31 @@ def get_desktop_path():
     return desktop
 
 
+def levenshtein_distance(s1, s2):
+    """Compute the Levenshtein distance between s1 and s2."""
+    if len(s1) < len(s2):
+        s1, s2 = s2, s1
+    if not s2:
+        return len(s1)
+    previous = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1, 1):
+        current = [i]
+        for j, c2 in enumerate(s2, 1):
+            current.append(
+                min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (c1 != c2))
+            )
+        previous = current
+    return previous[-1]
+
+
+def find_closest_encoding(unsupported_encoding):
+    """Return the encoding from enc_list closest to unsupported_encoding."""
+    return min(
+        enc_list,
+        key=lambda enc: levenshtein_distance(enc.lower(), unsupported_encoding.lower()),
+    )
+
+
 selected_destination_folder = None
 subtitle_prefix = "autosync_"
 
@@ -2833,6 +2859,11 @@ def start_batch_sync():
             return process.returncode, decoding_error_occurred
         except Exception as e:
             error_msg = f"{ERROR_EXECUTING_COMMAND}{str(e)}\n"
+            if (
+                sync_tool == SYNC_TOOL_ALASS
+                and "could not convert string to float" in str(e)
+            ):
+                error_msg += "\n" + ERROR_DECODING_SUBTITLE + "\n"
             log_window.insert(tk.END, error_msg)
             return 1, decoding_error_occurred  # Ensure a tuple is returned
 
@@ -3167,12 +3198,7 @@ def start_batch_sync():
                         encoding_inc = detect_encoding(subtitle_file)
                         # if encoding_inc is not inside enc_list, select the closest encoding in enc_list
                         if encoding_inc not in enc_list:
-                            closest_encoding = min(
-                                enc_list,
-                                key=lambda enc: sum(
-                                    a != b for a, b in zip(enc, encoding_inc)
-                                ),
-                            )
+                            closest_encoding = find_closest_encoding(encoding_inc)
                             encoding_inc = closest_encoding
                         if returncode != 0 and decoding_error_occurred:
                             log_window.insert(
@@ -3182,11 +3208,8 @@ def start_batch_sync():
                                 encoding_ref = detect_encoding(video_file)
                                 # if encoding_ref is not inside enc_list, select the closest encoding in enc_list
                                 if encoding_ref not in enc_list:
-                                    closest_encoding = min(
-                                        enc_list,
-                                        key=lambda enc: sum(
-                                            a != b for a, b in zip(enc, encoding_ref)
-                                        ),
+                                    closest_encoding = find_closest_encoding(
+                                        encoding_ref
                                     )
                                     encoding_ref = closest_encoding
                                 cmd += f" --encoding-ref={encoding_ref}"
@@ -5528,10 +5551,7 @@ def start_automatic_sync():
                 encoding_inc = detect_encoding(subtitle_file)
                 # if encoding_inc is not inside enc_list, select the closest encoding in enc_list
                 if encoding_inc not in enc_list:
-                    closest_encoding = min(
-                        enc_list,
-                        key=lambda enc: sum(a != b for a, b in zip(enc, encoding_inc)),
-                    )
+                    closest_encoding = find_closest_encoding(encoding_inc)
                     encoding_inc = closest_encoding
                 # if decoding_error_occurred, retry with detected encodings
                 if returncode != 0 and decoding_error_occurred:
@@ -5540,12 +5560,7 @@ def start_automatic_sync():
                         encoding_ref = detect_encoding(video_file)
                         # if encoding_ref is not inside enc_list, select the closest encoding in enc_list
                         if encoding_ref not in enc_list:
-                            closest_encoding = min(
-                                enc_list,
-                                key=lambda enc: sum(
-                                    a != b for a, b in zip(enc, encoding_ref)
-                                ),
-                            )
+                            closest_encoding = find_closest_encoding(encoding_ref)
                             encoding_ref = closest_encoding
                         cmd += f" --encoding-ref={encoding_ref}"
                     cmd += f" --encoding-inc={encoding_inc}"
@@ -5608,17 +5623,25 @@ def start_automatic_sync():
                 log_message(
                     SYNC_ERROR_OCCURRED, "error", output_subtitle_file, tab="auto"
                 )
-            button_cancel_automatic_sync.grid_remove()
-            log_window.grid(pady=(10, 10), rowspan=2)
-            button_go_back.grid()
-            button_generate_again.grid()
-            log_window.insert(tk.END, f"\n{SYNCING_ENDED}\n")
+
         except Exception as e:
-            log_window.insert(
-                tk.END, f"{ERROR_OCCURRED.format(error_message=str(e))}\n"
-            )
+            if not cancel_flag:
+                error_msg_normal = f"{ERROR_OCCURRED}{str(e)}\n"
+                if (
+                    sync_tool == SYNC_TOOL_ALASS
+                    and "could not convert string to float" in str(e)
+                ):
+                    log_window.insert(tk.END, f"\n{ERROR_OCCURRED}{str(e)}\n")
+                    error_msg_normal = ERROR_DECODING_SUBTITLE
+                log_message(error_msg_normal, "error", tab="auto")
+
         finally:
             if not cancel_flag:
+                button_cancel_automatic_sync.grid_remove()
+                log_window.grid(pady=(10, 10), rowspan=2)
+                button_go_back.grid()
+                button_generate_again.grid()
+                log_window.insert(tk.END, f"\n{SYNCING_ENDED}\n")
                 progress_bar.grid_remove()
                 automatic_tab.rowconfigure(1, weight=1)
                 root.update_idletasks()

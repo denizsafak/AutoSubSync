@@ -1191,7 +1191,7 @@ LABEL_ADD_PREFIX = {
     "id": 'Tambahkan awalan "autosync_" ke subtitle',
     "ms": 'Tambah awalan "autosync_" pada sari kata',
     "th": 'เพิ่มคำนำหน้า "autosync_" ให้กับคำบรรยาย',
-    "ur": 'سب ٹائٹلز میں "autosync_" پیشوند شامل کریں'
+    "ur": 'سب ٹائٹلز میں "autosync_" پیشوند شامل کریں',
 }
 LABEL_BACKUP_SUBTITLES = {
     "en": "Backup subtitles before overwriting",
@@ -2139,7 +2139,7 @@ MENU_ADD_FOLDER = {
 MENU_ADD_MULTIPLE_FILES = {
     "en": "Add multiple files",
     "es": "Agregar múltiples archivos",
-    "tr": "Çoklu dosya ekle", 
+    "tr": "Çoklu dosya ekle",
     "zh": "添加多个文件",
     "ru": "Добавить несколько файлов",
     "pl": "Dodaj wiele plików",
@@ -2158,7 +2158,7 @@ MENU_ADD_MULTIPLE_FILES = {
     "id": "Tambahkan beberapa file",
     "ms": "Tambahkan beberapa fail",
     "th": "เพิ่มหลายไฟล์",
-    "ur": "متعدد فائلیں شامل کریں"
+    "ur": "متعدد فائلیں شامل کریں",
 }
 MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "en": "Auto-Pairing with Season/Episode",
@@ -3658,6 +3658,30 @@ ERROR_OCCURRED = {
     "ms": "Ralat berlaku: {error_message}",
     "th": "เกิดข้อผิดพลาด: {error_message}",
     "ur": "غلطی پیش آئی: {error_message}",
+}
+ERROR_DECODING_SUBTITLE = {
+    "en": "This error might be caused by using the characters ']' or '[' in file or folder names when using the tool 'alass'. Please rename the files or folders and try again.",
+    "es": "Este error puede ser causado por el uso de los caracteres ']' o '[' en los nombres de archivos o carpetas al usar la herramienta 'alass'. Por favor, renombre los archivos o carpetas y vuelva a intentarlo.",
+    "tr": "Bu hata, 'alass' aracını kullanırken dosya veya klasör adlarında ']' veya '[' karakterlerini kullanmaktan kaynaklanıyor olabilir. Lütfen dosya veya klasörleri yeniden adlandırın ve tekrar deneyin.",
+    "zh": "使用工具 'alass' 时，文件或文件夹名称中使用字符 ']' 或 '[' 可能会导致此错误。请重命名文件或文件夹，然后重试。",
+    "ru": "Эта ошибка может быть вызвана использованием символов ']' или '[' в именах файлов или папок при использовании инструмента 'alass'. Переименуйте файлы или папки и попробуйте снова.",
+    "pl": "Ten błąd może być spowodowany używaniem znaków ']' lub '[' w nazwach plików lub folderów podczas korzystania z narzędzia 'alass'. Proszę zmienić nazwy plików lub folderów i spróbować ponownie.",
+    "uk": "Ця помилка може бути викликана використанням символів ']' або '[' у назвах файлів або папок при використанні інструменту 'alass'. Перейменуйте файли або папки і спробуйте ще раз.",
+    "ja": "ツール 'alass' を使用する際に、ファイルまたはフォルダー名に ']' または '[' 文字を使用すると、このエラーが発生する可能性があります。ファイルまたはフォルダーの名前を変更して、もう一度お試しください。",
+    "ko": "도구 'alass'를 사용할 때 파일 또는 폴더 이름에 ']' 또는 '[' 문자를 사용하면 이 오류가 발생할 수 있습니다. 파일 또는 폴더 이름을 변경하고 다시 시도하십시오.",
+    "hi": "यह त्रुटि 'alass' उपकरण का उपयोग करते समय फ़ाइल या फ़ोल्डर नामों में ']' या '[' वर्णों का उपयोग करने के कारण हो सकती है। कृपया फ़ाइलों या फ़ोल्डरों का नाम बदलें और पुनः प्रयास करें।",
+    "bn": "এই ত্রুটি 'alass' টুল ব্যবহার করার সময় ফাইল বা ফোল্ডার নামগুলিতে ']' বা '[' অক্ষর ব্যবহার করার কারণে হতে পারে। অনুগ্রহ করে ফাইল বা ফোল্ডারের নাম পরিবর্তন করুন এবং আবার চেষ্টা করুন।",
+    "it": "Questo errore potrebbe essere causato dall'uso dei caratteri ']' o '[' nei nomi di file o cartelle durante l'utilizzo dello strumento 'alass'. Si prega di rinominare i file o le cartelle e riprovare.",
+    "fr": "Cette erreur peut être causée par l'utilisation des caractères ']' ou '[' dans les noms de fichiers ou de dossiers lors de l'utilisation de l'outil 'alass'. Veuillez renommer les fichiers ou les dossiers et réessayer.",
+    "de": "Dieser Fehler kann durch die Verwendung der Zeichen ']' oder '[' in Datei- oder Ordnernamen bei der Verwendung des Tools 'alass' verursacht werden. Bitte benennen Sie die Dateien oder Ordner um und versuchen Sie es erneut.",
+    "pt": "Este erro pode ser causado pelo uso dos caracteres ']' ou '[' nos nomes de arquivos ou pastas ao usar a ferramenta 'alass'. Por favor, renomeie os arquivos ou pastas e tente novamente.",
+    "ar": "قد يكون سبب هذا الخطأ هو استخدام الأحرف ']' أو '[' في أسماء الملفات أو المجلدات عند استخدام أداة 'alass'. يرجى إعادة تسمية الملفات أو المجلدات والمحاولة مرة أخرى.",
+    "vi": "Lỗi này có thể do sử dụng các ký tự ']' hoặc '[' trong tên tệp hoặc thư mục khi sử dụng công cụ 'alass'. Vui lòng đổi tên các tệp hoặc thư mục và thử lại.",
+    "fa": "این خطا ممکن است به دلیل استفاده از کاراکترهای ']' یا '[' در نام فایل‌ها یا پوشه‌ها هنگام استفاده از ابزار 'alass' باشد. لطفاً فایل‌ها یا پوشه‌ها را تغییر نام دهید و دوباره تلاش کنید.",
+    "id": "Kesalahan ini mungkin disebabkan oleh penggunaan karakter ']' atau '[' dalam nama file atau folder saat menggunakan alat 'alass'. Silakan ganti nama file atau folder dan coba lagi.",
+    "ms": "Ralat ini mungkin disebabkan oleh penggunaan aksara ']' atau '[' dalam nama fail atau folder semasa menggunakan alat 'alass'. Sila namakan semula fail atau folder dan cuba lagi.",
+    "th": "ข้อผิดพลาดนี้อาจเกิดจากการใช้ตัวอักษร ']' หรือ '[' ในชื่อไฟล์หรือโฟลเดอร์เมื่อใช้เครื่องมือ 'alass' โปรดเปลี่ยนชื่อไฟล์หรือโฟลเดอร์และลองอีกครั้ง",
+    "ur": "یہ خرابی 'alass' ٹول استعمال کرتے وقت فائل یا فولڈر کے ناموں میں ']' یا '[' حروف استعمال کرنے کی وجہ سے ہو سکتی ہے۔ براہ کرم فائلوں یا فولڈروں کا نام تبدیل کریں اور دوبارہ کوشش کریں۔",
 }
 ERROR_EXECUTING_COMMAND = {
     "en": "Error executing command: ",
@@ -5457,7 +5481,7 @@ NOT_FIND_COMPATIBLE_FILE_MANAGER = {
     "id": "Tidak dapat menemukan pengelola file yang kompatibel. Lokasinya adalah: {directory}",
     "ms": "Tidak dapat mencari pengurus fail yang serasi. Lokasinya ialah: {directory}",
     "th": "ไม่พบตัวจัดการไฟล์ที่เข้ากันได้ ตำแหน่งคือ: {directory}",
-    "ur": "ایک ہم آہنگ فائل مینیجر نہیں مل سکا۔ مقام ہے: {directory}"
+    "ur": "ایک ہم آہنگ فائل مینیجر نہیں مل سکا۔ مقام ہے: {directory}",
 }
 FILE_NOT_FOUND = {
     "en": "File not found",
