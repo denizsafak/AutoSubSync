@@ -1,3 +1,4 @@
+faust-cchardet
 chardet
 tkinterdnd2
 python-bidi

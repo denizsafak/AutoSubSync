@@ -9,13 +9,13 @@ import ctypes
 import json
 import webbrowser
 import platform
-import codecs
 import tkinter as tk
 import tkinter.font as tkFont
 from datetime import datetime
 from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
-from charset_normalizer import from_path, constant
+import cchardet
+import chardet
 import requests
 import psutil
 import texts
@@ -646,23 +646,19 @@ def update_config(key, value):
             json.dump(config, config_file, indent=4)
 
 
-def normalize_encoding(encoding):
-    try:
-        # The codecs.lookup returns a CodecInfo object with the canonical name,
-        # which follows WHATWG Encoding Standard aliases.
-        info = codecs.lookup(encoding)
-        return info.name
-    except LookupError:
-        return encoding
-
-
 def detect_encoding(file_path):
-    result = from_path(file_path)
-    best_guess = result.best() if result else None
-    if best_guess and best_guess.encoding:
-        encoding = normalize_encoding(best_guess.encoding)
-    else:
-        encoding = "utf-8"
+    with open(file_path, "rb") as f:
+        raw_data = f.read()
+    detected_encoding = None
+    for detectors in (cchardet, chardet):
+        try:
+            result = detectors.detect(raw_data)["encoding"]
+        except Exception:
+            continue
+        if result is not None:
+            detected_encoding = result
+            break
+    encoding = detected_encoding if detected_encoding else "utf-8"
     return encoding.lower()
 
 
@@ -671,7 +667,6 @@ total_shifted_milliseconds = {}
 
 
 def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_original):
-    global total_shifted_milliseconds
     # Load file with encoding detection using detect_encoding function
     try:
         with open(subtitle_file, "rb") as file:
@@ -1662,7 +1657,6 @@ def restart_program():
 
 
 def reset_to_default_settings():
-    global keep_converted_subtitles, keep_extracted_subtitles, additional_ffsubsync_args, additional_alass_args, backup_subtitles_before_overwriting, check_video_for_subtitle_stream_in_alass
     if messagebox.askyesno(WARNING, CONFIRM_RESET_MESSAGE):
         for key, value in default_settings.items():
             update_config(key, value)
@@ -2162,9 +2156,7 @@ def parse_timestamps(subtitle_file):
     # If "ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS" gets updated, this function should be updated accordingly
     try:
         results = []
-        encoding = detect_encoding(subtitle_file)
-
-        with open(subtitle_file, "r", encoding=encoding) as file:
+        with open(subtitle_file, "r") as file:
             lines = file.readlines()
             if subtitle_file.endswith(".srt") or subtitle_file.endswith(".vtt"):
                 for line in lines:
@@ -2183,7 +2175,7 @@ def parse_timestamps(subtitle_file):
                         total_seconds = hours * 3600 + minutes * 60 + seconds
                         results.append(total_seconds)
         return results
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -2658,7 +2650,7 @@ subtitle_prefix = "autosync_"
 
 
 def start_batch_sync():
-    global selected_destination_folder, process, output_subtitle_files, cancel_flag_batch, log_window
+    global process, output_subtitle_files, cancel_flag_batch, log_window
     sync_tool = sync_tool_var_auto.get()
     if sync_tool == SYNC_TOOL_ALASS:
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
@@ -2781,7 +2773,7 @@ def start_batch_sync():
         root.update_idletasks()
 
     def execute_cmd(cmd):
-        global cancel_flag_batch, process
+        global process
         decoding_error_occurred = False
         try:
             process = create_process(cmd)
@@ -2842,7 +2834,6 @@ def start_batch_sync():
             return 1, decoding_error_occurred  # Ensure a tuple is returned
 
     def run_batch_process():
-        global cancel_flag_batch, process
         nonlocal completed_items, total_items
         success_count = 0
         failure_count = 0
@@ -3079,6 +3070,7 @@ def start_batch_sync():
                         f"{prefix}{original_base_name}_{suffix}{output_ext}",
                     )
                     suffix += 1
+                subtitle_file = os.path.abspath(subtitle_file)
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
                     cmd = f'{CALL_FFPSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
@@ -3095,7 +3087,7 @@ def start_batch_sync():
                         cmd += f" {additional_ffsubsync_args}"
                 elif sync_tool == SYNC_TOOL_ALASS:
                     split_penalty = alass_split_penalty_var.get()
-                    if split_penalty == 0:
+                    if split_penalty == -1:
                         cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
                     else:
                         cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
@@ -3133,7 +3125,7 @@ def start_batch_sync():
                                 f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n",
                             )
                     elif sync_tool == SYNC_TOOL_ALASS:
-                        if split_penalty == 0:
+                        if split_penalty == -1:
                             log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
                         else:
                             log_window.insert(
@@ -5148,9 +5140,8 @@ def start_automatic_sync():
         SUPPORTED_SUBTITLE_EXTENSIONS = ALASS_SUPPORTED_EXTENSIONS
     elif sync_tool == "ffsubsync":
         SUPPORTED_SUBTITLE_EXTENSIONS = FFSUBSYNC_SUPPORTED_EXTENSIONS
-    global process, subtitle_file, video_file, output_subtitle_file
-    subtitle_file = getattr(subtitle_input, "tooltip_text", None)
-    video_file = getattr(video_input, "tooltip_text", None)
+    subtitle_file = os.path.abspath(getattr(subtitle_input, "tooltip_text", None))
+    video_file = os.path.abspath(getattr(video_input, "tooltip_text", None))
     if not subtitle_file and not video_file:
         log_message(SELECT_BOTH_FILES, "error", tab="auto")
         return
@@ -5342,7 +5333,7 @@ def start_automatic_sync():
             if additional_ffsubsync_args:
                 cmd += f" {additional_ffsubsync_args}"
         elif sync_tool == SYNC_TOOL_ALASS:
-            if split_penalty == 0:
+            if split_penalty == -1:
                 cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --no-split'
             else:
                 cmd = f'"{CALL_ALASS}" "{video_file}" "{subtitle_file}" "{output_subtitle_file}" --split-penalty={split_penalty}'
@@ -5358,7 +5349,7 @@ def start_automatic_sync():
         return cmd
 
     def execute_cmd(cmd):
-        global process, progress_line_number, subtitle_file, video_file, output_subtitle_file, split_penalty
+        global process, progress_line_number, split_penalty
         split_penalty = alass_split_penalty_var.get()
         process = create_process(cmd)
         progress_bar["value"] = 1
@@ -5382,7 +5373,7 @@ def start_automatic_sync():
                     f"{ADDITIONAL_ARGS_ADDED.format(additional_args=additional_ffsubsync_args)}\n",
                 )
         elif sync_tool == SYNC_TOOL_ALASS:
-            if split_penalty == 0:
+            if split_penalty == -1:
                 log_window.insert(tk.END, f"{SPLIT_PENALTY_ZERO}\n")
             else:
                 log_window.insert(
@@ -5453,7 +5444,7 @@ def start_automatic_sync():
         return 1, decoding_error_occurred
 
     def run_subprocess():
-        global process, progress_line_number, subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
+        global subtitle_file, video_file, cmd, output_subtitle_file, split_penalty, decoding_error_occurred
         split_penalty = alass_split_penalty_var.get()
         video_file_converted = None
         subtitle_file_converted = None
@@ -6027,7 +6018,7 @@ alass_speed_optimization = tk.Checkbutton(
 )
 alass_split_penalty_slider = tk.Scale(
     automatic_tab,
-    from_=0,
+    from_=-1,
     to=100,
     background=COLOR_BACKGROUND,
     foreground=COLOR_BW,
