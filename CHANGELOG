@@ -1,2 +1,3 @@
-- Added new option: 'Add "autosync_" prefix to subtitles', allowing to toggle to add a prefix to the output subtitle files.
-- Switched from chardet to charset_normalizer for better encoding detection.
+- Changed alass split penalty slider limits from `0,100` to `-1,100` to allow usage of value `0`.
+- Switched `charset_normalizer` to `chardet + cchardet` combination for better encoding detection. charset_normalizer was causing issues with alass.
+- General improvements, fixes.
