@@ -38,7 +38,7 @@ AutoSubSync is a user-friendly Python tool that automatically synchronizes your 
 - **Drag and Drop:** Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
 - **Informative Messages:** Receive clear feedback messages indicating the success or failure of the synchronization process.
 
-## `Useage`
+## `Usage`
 ### Automatic Synchronization
 1. **Select Video/Reference Subtitle and Subtitle Files:**
    - Drag and drop the video and subtitle files into the respective input boxes.
