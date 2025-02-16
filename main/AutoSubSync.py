@@ -2158,9 +2158,10 @@ def extract_subtitles(video_file, subtitle_file, output_dir, log_window):
 
 def parse_timestamps(subtitle_file):
     # If "ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS" gets updated, this function should be updated accordingly
+    sub_encoding = detect_encoding(subtitle_file)
     try:
         results = []
-        with open(subtitle_file, "r") as file:
+        with open(subtitle_file, "r", encoding=sub_encoding) as file:
             lines = file.readlines()
             if subtitle_file.endswith(".srt") or subtitle_file.endswith(".vtt"):
                 for line in lines:
