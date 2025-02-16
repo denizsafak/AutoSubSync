@@ -14,11 +14,14 @@ import tkinter.font as tkFont
 from datetime import datetime
 from tkinter import filedialog, ttk, messagebox, PhotoImage, Menu, simpledialog
 from tkinterdnd2 import DND_FILES, TkinterDnD
+from alass_encodings import enc_list
 import cchardet
+import charset_normalizer
 import chardet
 import requests
 import psutil
 import texts
+
 
 platform = platform.system()
 if platform == "Darwin":  # macOS
@@ -650,7 +653,7 @@ def detect_encoding(file_path):
     with open(file_path, "rb") as f:
         raw_data = f.read()
     detected_encoding = None
-    for detectors in (cchardet, chardet):
+    for detectors in (cchardet, charset_normalizer, chardet):
         try:
             result = detectors.detect(raw_data)["encoding"]
         except Exception:
@@ -3162,12 +3165,30 @@ def start_batch_sync():
                     if sync_tool == SYNC_TOOL_ALASS:
                         encoding_ref = None
                         encoding_inc = detect_encoding(subtitle_file)
+                        # if encoding_inc is not inside enc_list, select the closest encoding in enc_list
+                        if encoding_inc not in enc_list:
+                            closest_encoding = min(
+                                enc_list,
+                                key=lambda enc: sum(
+                                    a != b for a, b in zip(enc, encoding_inc)
+                                ),
+                            )
+                            encoding_inc = closest_encoding
                         if returncode != 0 and decoding_error_occurred:
                             log_window.insert(
                                 tk.END, "\n" + RETRY_ENCODING_MSG + "\n\n"
                             )
                             if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                                 encoding_ref = detect_encoding(video_file)
+                                # if encoding_ref is not inside enc_list, select the closest encoding in enc_list
+                                if encoding_ref not in enc_list:
+                                    closest_encoding = min(
+                                        enc_list,
+                                        key=lambda enc: sum(
+                                            a != b for a, b in zip(enc, encoding_ref)
+                                        ),
+                                    )
+                                    encoding_ref = closest_encoding
                                 cmd += f" --encoding-ref={encoding_ref}"
                             cmd += f" --encoding-inc={encoding_inc}"
                             returncode, decoding_error_occurred = execute_cmd(cmd)
@@ -5505,11 +5526,27 @@ def start_automatic_sync():
             if sync_tool == SYNC_TOOL_ALASS:
                 encoding_ref = None
                 encoding_inc = detect_encoding(subtitle_file)
+                # if encoding_inc is not inside enc_list, select the closest encoding in enc_list
+                if encoding_inc not in enc_list:
+                    closest_encoding = min(
+                        enc_list,
+                        key=lambda enc: sum(a != b for a, b in zip(enc, encoding_inc)),
+                    )
+                    encoding_inc = closest_encoding
                 # if decoding_error_occurred, retry with detected encodings
                 if returncode != 0 and decoding_error_occurred:
                     log_window.insert(tk.END, "\n" + RETRY_ENCODING_MSG + "\n\n")
                     if video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         encoding_ref = detect_encoding(video_file)
+                        # if encoding_ref is not inside enc_list, select the closest encoding in enc_list
+                        if encoding_ref not in enc_list:
+                            closest_encoding = min(
+                                enc_list,
+                                key=lambda enc: sum(
+                                    a != b for a, b in zip(enc, encoding_ref)
+                                ),
+                            )
+                            encoding_ref = closest_encoding
                         cmd += f" --encoding-ref={encoding_ref}"
                     cmd += f" --encoding-inc={encoding_inc}"
                     returncode, decoding_error_occurred = execute_cmd(cmd)

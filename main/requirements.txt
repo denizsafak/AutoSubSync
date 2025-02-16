@@ -1,4 +1,5 @@
 faust-cchardet
+charset-normalizer
 chardet
 tkinterdnd2
 python-bidi
