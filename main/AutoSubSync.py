@@ -46,14 +46,15 @@ def get_base_dir():
 
 
 base_dir = get_base_dir()
+program_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Define paths to the executables - FIXED
-ffmpeg_bin = os.path.join(base_dir, "resources", "ffmpeg-bin")
-alass_bin = os.path.join(base_dir, "resources", "alass-bin")
-ffsubsync_bin = os.path.join(base_dir, "resources", "ffsubsync-bin")
+ffmpeg_bin = os.path.join(program_dir, "resources", "ffmpeg-bin")
+alass_bin = os.path.join(program_dir, "resources", "alass-bin")
+ffsubsync_bin = os.path.join(program_dir, "resources", "ffsubsync-bin")
 
 # Add the paths to the system PATH environment variable
 os.environ["PATH"] = (
