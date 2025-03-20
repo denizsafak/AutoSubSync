@@ -28,7 +28,6 @@ if platform == "Darwin":  # macOS
 else:  # Windows or Linux
     from tkinter import Button as TkButton
 
-
 def get_base_dir():
     if getattr(sys, "frozen", False):
         # Running as PyInstaller executable
@@ -44,36 +43,27 @@ def get_base_dir():
         base_dir = os.path.dirname(os.path.abspath(__file__))
     return base_dir
 
-
 base_dir = get_base_dir()
-program_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-# Define paths to the executables - FIXED
-ffmpeg_bin = os.path.join(program_dir, "resources", "ffmpeg-bin")
-alass_bin = os.path.join(program_dir, "resources", "alass-bin")
-ffsubsync_bin = os.path.join(program_dir, "resources", "ffsubsync-bin")
-
+# Define paths to the executables
+ffmpeg_bin = os.path.join(os.curdir, "resources", "ffmpeg-bin")
+alass_bin = os.path.join(os.curdir, "resources", "alass-bin")
+ffsubsync_bin = os.path.join(os.curdir, "resources", "ffsubsync-bin")
 # Add the paths to the system PATH environment variable
-os.environ["PATH"] = (
-    ffmpeg_bin
-    + os.pathsep
-    + alass_bin
-    + os.pathsep
-    + ffsubsync_bin
-    + os.pathsep
-    + os.environ["PATH"]
+os.environ["PATH"] += (
+    os.pathsep + ffmpeg_bin + os.pathsep + alass_bin + os.pathsep + ffsubsync_bin
 )
 
 # Determine correct alass executable based on platform
 if platform in ("Windows", "Darwin"):
-    CALL_ALASS = os.path.join(alass_bin, "alass-cli")
+    CALL_ALASS = "alass-cli"
 elif platform == "Linux":
-    CALL_ALASS = os.path.join(alass_bin, "alass-linux64")
+    CALL_ALASS = "alass-linux64"
 else:
-    CALL_ALASS = os.path.join(alass_bin, "alass")  # fallback
+    CALL_ALASS = "alass"  # fallback
 
 # Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
 if platform == "Windows":
