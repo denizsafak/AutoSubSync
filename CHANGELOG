@@ -1,3 +1,2 @@
-- Fixed stuck when choosing the best subtitle in alass.
-- Better encoding detection and error handling.
-- Improvements in code and translations.
+- Fixed `Unable to detect speech` error in Linux distributions.
+- Fixed `charmap' codec can't encode character` error in some subtitles.

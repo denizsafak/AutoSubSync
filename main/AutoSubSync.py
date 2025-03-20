@@ -22,7 +22,6 @@ import requests
 import psutil
 import texts
 
-
 platform = platform.system()
 if platform == "Darwin":  # macOS
     from tkmacosx import Button as TkButton
@@ -51,38 +50,45 @@ base_dir = get_base_dir()
 # Set the working directory to the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-# Define paths to the executables
-ffmpeg_bin = os.path.join(os.curdir, "resources", "ffmpeg-bin")
-alass_bin = os.path.join(os.curdir, "resources", "alass-bin")
-ffsubsync_bin = os.path.join(os.curdir, "resources", "ffsubsync-bin")
+# Define paths to the executables - FIXED
+ffmpeg_bin = os.path.join(base_dir, "resources", "ffmpeg-bin")
+alass_bin = os.path.join(base_dir, "resources", "alass-bin")
+ffsubsync_bin = os.path.join(base_dir, "resources", "ffsubsync-bin")
+
 # Add the paths to the system PATH environment variable
-os.environ["PATH"] += (
-    os.pathsep + ffmpeg_bin + os.pathsep + alass_bin + os.pathsep + ffsubsync_bin
+os.environ["PATH"] = (
+    ffmpeg_bin
+    + os.pathsep
+    + alass_bin
+    + os.pathsep
+    + ffsubsync_bin
+    + os.pathsep
+    + os.environ["PATH"]
 )
 
 # Determine correct alass executable based on platform
 if platform in ("Windows", "Darwin"):
-    CALL_ALASS = "alass-cli"
+    CALL_ALASS = os.path.join(alass_bin, "alass-cli")
 elif platform == "Linux":
-    CALL_ALASS = "alass-linux64"
+    CALL_ALASS = os.path.join(alass_bin, "alass-linux64")
 else:
-    CALL_ALASS = "alass"  # fallback
+    CALL_ALASS = os.path.join(alass_bin, "alass")  # fallback
 
 # Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
 if platform == "Windows":
     CALL_FFMPEG = os.path.join(ffmpeg_bin, "ffmpeg.exe")
     CALL_FFPROBE = os.path.join(ffmpeg_bin, "ffprobe.exe")
-    CALL_FFPSUBSYNC = os.path.join(ffsubsync_bin, "ffsubsync.exe")
+    CALL_FFSUBSYNC = os.path.join(ffsubsync_bin, "ffsubsync.exe")
 else:
-    CALL_FFMPEG = "ffmpeg"
-    CALL_FFPROBE = "ffprobe"
-    CALL_FFPSUBSYNC = "ffsubsync"
+    CALL_FFMPEG = os.path.join(ffmpeg_bin, "ffmpeg")
+    CALL_FFPROBE = os.path.join(ffmpeg_bin, "ffprobe")
+    CALL_FFSUBSYNC = os.path.join(ffsubsync_bin, "ffsubsync")
 
 # Set execute permissions for ffmpeg, ffprobe, and ffsubsync in MacOS and Linux
 if platform in ["Darwin", "Linux"]:
     import stat
 
-    executables = [CALL_FFMPEG, CALL_FFPROBE, CALL_FFPSUBSYNC]
+    executables = [CALL_FFMPEG, CALL_FFPROBE, CALL_FFSUBSYNC]
     errors = []
     for exe in executables:
         exe_path = (
@@ -3107,7 +3113,7 @@ def start_batch_sync():
                     suffix += 1
                 subtitle_file = os.path.abspath(subtitle_file)
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'{CALL_FFPSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'{CALL_FFSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if (
                             vad_option_map.get(ffsubsync_option_vad_var.get(), "")
@@ -3228,10 +3234,14 @@ def start_batch_sync():
                                     output_subtitle_file,
                                     "r",
                                     encoding=synced_subtitle_encoding,
+                                    errors="replace",
                                 ) as f:
                                     content = f.read()
                                 with open(
-                                    output_subtitle_file, "w", encoding=encoding_inc
+                                    output_subtitle_file,
+                                    "w",
+                                    encoding=encoding_inc,
+                                    errors="replace",
                                 ) as f:
                                     f.write(content)
                                 log_window.insert(
@@ -5375,7 +5385,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'{CALL_FFPSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'{CALL_FFSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
                     cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), '')}"
@@ -5584,11 +5594,17 @@ def start_automatic_sync():
                     log_window.insert(tk.END, "\n" + change_encoding_msg + "\n")
                     try:
                         with open(
-                            output_subtitle_file, "r", encoding=synced_subtitle_encoding
+                            output_subtitle_file,
+                            "r",
+                            encoding=synced_subtitle_encoding,
+                            errors="replace",
                         ) as f:
                             content = f.read()
                         with open(
-                            output_subtitle_file, "w", encoding=encoding_inc
+                            output_subtitle_file,
+                            "w",
+                            encoding=encoding_inc,
+                            errors="replace",
                         ) as f:
                             f.write(content)
                         log_window.insert(tk.END, "\n" + ENCODING_CHANGED_MSG + "\n")
