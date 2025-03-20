@@ -1,3 +1,3 @@
 - Fixed `Unable to detect speech` error in Linux distributions.
+- Fixed `GLIBC_*` not found error caused by ffsubsync in most Linux distributions.
 - Fixed `charmap' codec can't encode character` error in some subtitles.
-- Fixed `GLIBC_*` not found error in most Linux distributions.
