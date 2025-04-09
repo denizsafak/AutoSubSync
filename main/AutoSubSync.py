@@ -2984,9 +2984,7 @@ def start_batch_sync():
             for sub in subtitles:
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
-                original_subtitle_file = (
-                    subtitle_file  # Store the original subtitle file name
-                )
+                original_subtitle_file = subtitle_file  # Store the original subtitle file name
                 if not video_file:
                     continue
                 if not subtitle_file:
@@ -2997,9 +2995,23 @@ def start_batch_sync():
                         f"{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n\n",
                     )
                     continue
-                original_base_name = os.path.splitext(os.path.basename(subtitle_file))[
-                    0
-                ]
+                    
+                # Determine base output directory for EACH file pair - moved inside the loop
+                if action_var_auto.get() == OPTION_SAVE_TO_DESKTOP:
+                    desktop_path = get_desktop_path()
+                    base_output_dir = desktop_path
+                elif action_var_auto.get() == OPTION_REPLACE_ORIGINAL_SUBTITLE:
+                    base_output_dir = os.path.dirname(subtitle_file)
+                elif action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO:
+                    base_output_dir = os.path.dirname(video_file)
+                elif action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
+                    base_output_dir = os.path.dirname(video_file)
+                elif action_var_auto.get() == OPTION_SELECT_DESTINATION_FOLDER:
+                    base_output_dir = selected_destination_folder
+                else:
+                    base_output_dir = os.path.dirname(subtitle_file)
+                    
+                original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
                 video_file_converted = None
                 subtitle_file_converted = None
                 closest_subtitle = None
