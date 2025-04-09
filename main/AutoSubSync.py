@@ -3564,11 +3564,11 @@ def toggle_batch_mode():
 
 
 # Helper function to compute effective base name by removing a trailing language tag
-# (i.e. the last 2, 3, or 4 letters if preceded by '_' or '.')
+# (i.e. the last 2, 3, or 4 letters if preceded by '_', "-" or '.')
 def effective_basename(file_path):
     base = os.path.splitext(os.path.basename(file_path))[0]
     for tag_length in [4, 3, 2]:
-        if len(base) > tag_length and base[-(tag_length + 1)] in ["_", "."]:
+        if len(base) > tag_length and base[-(tag_length + 1)] in ["_", ".", "-"]:
             return base[: -(tag_length + 1)]
     return base
 
@@ -3638,9 +3638,9 @@ def process_files(filepaths, reference_pairs=False):
     else:
         for filepath in filepaths:
             if os.path.isdir(filepath):
-                for root, _, files in os.walk(filepath):
+                for root_dir, _, files in os.walk(filepath):
                     for file in files:
-                        full_path = os.path.join(root, file)
+                        full_path = os.path.join(root_dir, file)
                         if full_path.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                             subtitle_files.append(full_path)
                         elif full_path.lower().endswith(tuple(VIDEO_EXTENSIONS)):
@@ -3665,13 +3665,13 @@ def process_files(filepaths, reference_pairs=False):
         for parent in treeview.get_children():
             parent_values = treeview.item(parent, "values")
             if parent_values and parent_values[0]:
-                video_file = os.path.normpath(parent_values[0].lower())
+                video_file_norm = os.path.normpath(parent_values[0].lower())
                 subtitles = treeview.get_children(parent)
                 for sub in subtitles:
                     values = treeview.item(sub, "values")
                     if values and values[0]:
-                        subtitle_file = os.path.normpath(values[0].lower())
-                        existing_pairs.add((video_file, subtitle_file))
+                        subtitle_file_norm = os.path.normpath(values[0].lower())
+                        existing_pairs.add((video_file_norm, subtitle_file_norm))
         incomplete_pairs = []
         complete_pairs = []
         # Pair videos with subtitles based on similar filenames (considering language tags)
@@ -3679,57 +3679,49 @@ def process_files(filepaths, reference_pairs=False):
             video_files, key=lambda x: os.path.basename(x) if x else ""
         ):
             video_name = os.path.basename(video_file) if video_file else NO_VIDEO
-            subtitle_name = NO_SUBTITLE
-            subtitle_file = None
+            # For a given video, gather all subtitles whose effective base matches
             if video_file:
                 video_dir = os.path.dirname(video_file)
                 effective_video = effective_basename(video_file)
-                # Check if there is a subtitle in the same directory with matching effective base
+                matched_subtitles = []
+                # First, check in the same directory
                 for sub_file in subtitle_files[:]:
                     if sub_file and os.path.dirname(sub_file) == video_dir:
                         if effective_basename(sub_file) == effective_video:
-                            subtitle_file = sub_file
-                            subtitle_name = os.path.basename(subtitle_file)
+                            matched_subtitles.append(sub_file)
                             subtitle_files.remove(sub_file)
-                            break
-                # If no subtitle is found in the same directory, check parent directories
-                if not subtitle_file:
+                # If none found in the same directory, check parent directories
+                if not matched_subtitles:
                     parent_dir = video_dir
-                    while parent_dir != os.path.dirname(
-                        parent_dir
-                    ):  # Check parent directories until root
+                    while parent_dir != os.path.dirname(parent_dir):
                         parent_dir = os.path.dirname(parent_dir)
                         for sub_file in subtitle_files[:]:
                             if sub_file and os.path.dirname(sub_file) == parent_dir:
                                 if effective_basename(sub_file) == effective_video:
-                                    subtitle_file = sub_file
-                                    subtitle_name = os.path.basename(subtitle_file)
+                                    matched_subtitles.append(sub_file)
                                     subtitle_files.remove(sub_file)
-                                    break
-                        if subtitle_file:
+                        if matched_subtitles:
                             break
-                if subtitle_file:
-                    norm_video = os.path.normpath(video_file.lower())
-                    norm_subtitle = os.path.normpath(subtitle_file.lower())
-                    pair = (norm_video, norm_subtitle)
-                    if pair in existing_pairs:
-                        duplicates += 1
-                        continue
-                    existing_pairs.add(pair)
-                    pairs_added += 1
-                    complete_pairs.append(
-                        (video_name, subtitle_name, video_file, subtitle_file)
-                    )
+                if matched_subtitles:
+                    for sub_file in matched_subtitles:
+                        subtitle_name = os.path.basename(sub_file)
+                        norm_video = os.path.normpath(video_file.lower())
+                        norm_subtitle = os.path.normpath(sub_file.lower())
+                        pair = (norm_video, norm_subtitle)
+                        if pair in existing_pairs:
+                            duplicates += 1
+                            continue
+                        existing_pairs.add(pair)
+                        pairs_added += 1
+                        complete_pairs.append(
+                            (video_name, subtitle_name, video_file, sub_file)
+                        )
                 else:
                     files_not_paired += 1
-                    incomplete_pairs.append(
-                        (video_name, subtitle_name, video_file, subtitle_file)
-                    )
+                    incomplete_pairs.append((video_name, NO_SUBTITLE, video_file, None))
             else:
-                incomplete_pairs.append(
-                    (video_name, subtitle_name, video_file, subtitle_file)
-                )
-        # Handle remaining unpaired subtitles
+                incomplete_pairs.append((video_name, NO_SUBTITLE, video_file, None))
+        # Handle remaining unpaired subtitles for single video case
         unpaired_subtitles = list(filter(None, subtitle_files))
         if (
             len(unpaired_subtitles) == 1
@@ -3759,7 +3751,6 @@ def process_files(filepaths, reference_pairs=False):
                     duplicates += 1
                     pairs_added = 0
                     files_not_paired = 0
-                # Remove the video file from incomplete pairs if it was added
                 incomplete_pairs = [
                     pair for pair in incomplete_pairs if pair[2] != video_file
                 ]
