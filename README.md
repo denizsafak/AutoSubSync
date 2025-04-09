@@ -28,6 +28,7 @@ AutoSubSync is a user-friendly Python tool that automatically synchronizes your 
 
 ## `Example Use Case`
 <img title="Example use case of AutoSubSync" src='images/AutoSubSync.gif'>
+This is an example use case of AutoSubSync. In this scenario, subtitles are paired with videos using season/episode numbers. The tool automatically matches subtitles with videos based on naming conventions (e.g., S01E01, 1x01) and saves the subtitles next to the videos with matching filenames. This ensures that media players can easily detect and load the subtitles alongside the corresponding videos. There are many other use cases as well. Simply drag and drop the files into the input boxes and let AutoSubSync handle the rest.
 
 ## `Features`
 - **Automatic Subtitle Synchronization:** Automatically syncronize subtitles with the video/reference subtitle using [ffsubsync](https://github.com/smacke/ffsubsync) or [alass](https://github.com/kaegi/alass). Choose between tools and configure options for optimal results.
