@@ -29,6 +29,7 @@ if platform == "Darwin":  # macOS
 else:  # Windows or Linux
     from tkinter import Button as TkButton
 
+
 def get_base_dir():
     if getattr(sys, "frozen", False):
         # Running as PyInstaller executable
@@ -43,6 +44,7 @@ def get_base_dir():
         # Running as Python script
         base_dir = os.path.dirname(os.path.abspath(__file__))
     return base_dir
+
 
 base_dir = get_base_dir()
 program_dir = os.path.dirname(os.path.abspath(__file__))
@@ -3451,12 +3453,16 @@ def start_batch_sync():
             # Get the current scroll position
             current_scroll = log_window.yview()
             # Check if the user is at the bottom
-            user_at_bottom = current_scroll[1] == 1.0  # 1.0 means the scrollbar is at the bottom
+            user_at_bottom = (
+                current_scroll[1] == 1.0
+            )  # 1.0 means the scrollbar is at the bottom
             # Show or hide the "Go to Bottom" button
             if user_at_bottom:
                 scroll_to_bottom_button.place_forget()  # Hide the button
             else:
-                scroll_to_bottom_button.place(relx=1, rely=1, anchor="se")  # Show the button
+                scroll_to_bottom_button.place(
+                    relx=1, rely=1, anchor="se"
+                )  # Show the button
             # Pass valid scroll arguments to the yview method
             if args[0] in ("moveto", "scroll"):
                 log_window.yview(*args)
@@ -5838,12 +5844,16 @@ def start_automatic_sync():
             # Get the current scroll position
             current_scroll = log_window.yview()
             # Check if the user is at the bottom
-            user_at_bottom = current_scroll[1] == 1.0  # 1.0 means the scrollbar is at the bottom
+            user_at_bottom = (
+                current_scroll[1] == 1.0
+            )  # 1.0 means the scrollbar is at the bottom
             # Show or hide the "Go to Bottom" button
             if user_at_bottom:
                 scroll_to_bottom_button.place_forget()  # Hide the button
             else:
-                scroll_to_bottom_button.place(relx=1, rely=1, anchor="se")  # Show the button
+                scroll_to_bottom_button.place(
+                    relx=1, rely=1, anchor="se"
+                )  # Show the button
             # Pass valid scroll arguments to the yview method
             if args[0] in ("moveto", "scroll"):
                 log_window.yview(*args)
