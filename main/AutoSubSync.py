@@ -20,6 +20,7 @@ import charset_normalizer
 import chardet
 import requests
 import psutil
+import signal
 import texts
 
 platform = platform.system()
@@ -2619,7 +2620,10 @@ def kill_process_tree(pid):
             try:
                 child.kill()
             except Exception:
-                pass
+                try:
+                    os.kill(child.pid, signal.SIGKILL)  # Force kill as a fallback
+                except Exception:
+                    pass
         # Kill parent process
         try:
             parent.terminate()
@@ -2628,7 +2632,10 @@ def kill_process_tree(pid):
             try:
                 parent.kill()
             except Exception:
-                pass
+                try:
+                    os.kill(parent.pid, signal.SIGKILL)  # Force kill as a fallback
+                except Exception:
+                    pass
     except psutil.NoSuchProcess:
         pass
 
@@ -3410,11 +3417,52 @@ def start_batch_sync():
             row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2
         )
 
-        # See the end when the log window is modified
+        # Add a flag to track whether the user is at the bottom of the log window
+        user_at_bottom = True
+
         def on_log_window_modified(event):
-            log_window.see(tk.END)
+            global user_at_bottom
+            # Check if the user is at the bottom of the log window
+            if user_at_bottom:
+                log_window.see(tk.END)
             log_window.edit_modified(False)  # Reset the modified flag
 
+        # Add a button to scroll to the bottom
+        scroll_to_bottom_button = tk.Button(
+            log_window,
+            text="↓",
+            command=lambda: log_window.see(tk.END),
+            bg=DEFAULT_BUTTON_COLOR,
+            fg=COLOR_WB,
+            activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+            activeforeground=COLOR_WB,
+            relief=tk.RAISED,
+            borderwidth=2,
+            padx=7,
+            pady=2,
+            cursor="hand2",
+            highlightthickness=0,
+            takefocus=0,
+        )
+        scroll_to_bottom_button.lower()  # Initially hide the button
+
+        def on_log_window_scroll(*args):
+            global user_at_bottom
+            # Get the current scroll position
+            current_scroll = log_window.yview()
+            # Check if the user is at the bottom
+            user_at_bottom = current_scroll[1] == 1.0  # 1.0 means the scrollbar is at the bottom
+            # Show or hide the "Go to Bottom" button
+            if user_at_bottom:
+                scroll_to_bottom_button.place_forget()  # Hide the button
+            else:
+                scroll_to_bottom_button.place(relx=1, rely=1, anchor="se")  # Show the button
+            # Pass valid scroll arguments to the yview method
+            if args[0] in ("moveto", "scroll"):
+                log_window.yview(*args)
+
+        # Bind the scroll event to track user scrolling
+        log_window.config(yscrollcommand=on_log_window_scroll)
         log_window.bind("<<Modified>>", on_log_window_modified)
         log_window.edit_modified(False)
         progress_bar = ttk.Progressbar(
@@ -5756,10 +5804,52 @@ def start_automatic_sync():
             row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2
         )
 
-        # See the end when the log window is modified
+        # Add a flag to track whether the user is at the bottom of the log window
+        user_at_bottom = True
+
         def on_log_window_modified(event):
-            log_window.see(tk.END)
+            global user_at_bottom
+            # Check if the user is at the bottom of the log window
+            if user_at_bottom:
+                log_window.see(tk.END)
             log_window.edit_modified(False)  # Reset the modified flag
+
+        # Add a button to scroll to the bottom
+        scroll_to_bottom_button = tk.Button(
+            log_window,
+            text="↓",
+            command=lambda: log_window.see(tk.END),
+            bg=DEFAULT_BUTTON_COLOR,
+            fg=COLOR_WB,
+            activebackground=DEFAULT_BUTTON_COLOR_ACTIVE,
+            activeforeground=COLOR_WB,
+            relief=tk.RAISED,
+            borderwidth=2,
+            padx=7,
+            pady=2,
+            cursor="hand2",
+            highlightthickness=0,
+            takefocus=0,
+        )
+        scroll_to_bottom_button.lower()  # Initially hide the button
+
+        def on_log_window_scroll(*args):
+            global user_at_bottom
+            # Get the current scroll position
+            current_scroll = log_window.yview()
+            # Check if the user is at the bottom
+            user_at_bottom = current_scroll[1] == 1.0  # 1.0 means the scrollbar is at the bottom
+            # Show or hide the "Go to Bottom" button
+            if user_at_bottom:
+                scroll_to_bottom_button.place_forget()  # Hide the button
+            else:
+                scroll_to_bottom_button.place(relx=1, rely=1, anchor="se")  # Show the button
+            # Pass valid scroll arguments to the yview method
+            if args[0] in ("moveto", "scroll"):
+                log_window.yview(*args)
+
+        # Bind the scroll event to track user scrolling
+        log_window.config(yscrollcommand=on_log_window_scroll)
 
         log_window.bind("<<Modified>>", on_log_window_modified)
         log_window.edit_modified(False)
