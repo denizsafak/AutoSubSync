@@ -508,6 +508,7 @@ ERROR_PARSING_TIME_STRING_DETAILED = texts.ERROR_PARSING_TIME_STRING_DETAILED[LA
 NO_FILES_TO_SYNC = texts.NO_FILES_TO_SYNC[LANGUAGE]
 NO_VALID_FILE_PAIRS = texts.NO_VALID_FILE_PAIRS[LANGUAGE]
 ERROR_PROCESS_TERMINATION = texts.ERROR_PROCESS_TERMINATION[LANGUAGE]
+BATCH_SYNC_CANCEL_CONFIRMATION = texts.BATCH_SYNC_CANCEL_CONFIRMATION[LANGUAGE]
 AUTO_SYNC_CANCELLED = texts.AUTO_SYNC_CANCELLED[LANGUAGE]
 BATCH_SYNC_CANCELLED = texts.BATCH_SYNC_CANCELLED[LANGUAGE]
 NO_SYNC_PROCESS = texts.NO_SYNC_PROCESS[LANGUAGE]
@@ -2734,20 +2735,24 @@ def start_batch_sync():
 
     def cancel_batch_sync():
         global cancel_flag_batch, process
-        cancel_flag_batch = True
-        if process:
-            try:
-                kill_process_tree(process.pid)
-                process = None
-            except Exception as e:
-                log_message(
-                    ERROR_PROCESS_TERMINATION.format(error_message=str(e)),
-                    "error",
-                    tab="auto",
-                )
-        log_message(BATCH_SYNC_CANCELLED, "error", tab="auto")
-        root.update_idletasks()
-        restore_window()
+        response = messagebox.askyesno(
+            WARNING, BATCH_SYNC_CANCEL_CONFIRMATION, icon="warning"
+        )
+        if response:
+            cancel_flag_batch = True
+            if process:
+                try:
+                    kill_process_tree(process.pid)
+                    process = None
+                except Exception as e:
+                    log_message(
+                        ERROR_PROCESS_TERMINATION.format(error_message=str(e)),
+                        "error",
+                        tab="auto",
+                    )
+            log_message(BATCH_SYNC_CANCELLED, "error", tab="auto")
+            root.update_idletasks()
+            restore_window()
 
     def restore_window():
         batch_input.grid()
@@ -2984,7 +2989,9 @@ def start_batch_sync():
             for sub in subtitles:
                 values = treeview.item(sub, "values")
                 subtitle_file = values[0] if len(values) > 0 else ""
-                original_subtitle_file = subtitle_file  # Store the original subtitle file name
+                original_subtitle_file = (
+                    subtitle_file  # Store the original subtitle file name
+                )
                 if not video_file:
                     continue
                 if not subtitle_file:
@@ -2995,7 +3002,7 @@ def start_batch_sync():
                         f"{SKIPPING_ALREADY_SYNCED.format(filename=os.path.basename(subtitle_file))}\n\n",
                     )
                     continue
-                    
+
                 # Determine base output directory for EACH file pair - moved inside the loop
                 if action_var_auto.get() == OPTION_SAVE_TO_DESKTOP:
                     desktop_path = get_desktop_path()
@@ -3004,14 +3011,19 @@ def start_batch_sync():
                     base_output_dir = os.path.dirname(subtitle_file)
                 elif action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO:
                     base_output_dir = os.path.dirname(video_file)
-                elif action_var_auto.get() == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME:
+                elif (
+                    action_var_auto.get()
+                    == OPTION_SAVE_NEXT_TO_VIDEO_WITH_SAME_FILENAME
+                ):
                     base_output_dir = os.path.dirname(video_file)
                 elif action_var_auto.get() == OPTION_SELECT_DESTINATION_FOLDER:
                     base_output_dir = selected_destination_folder
                 else:
                     base_output_dir = os.path.dirname(subtitle_file)
-                    
-                original_base_name = os.path.splitext(os.path.basename(subtitle_file))[0]
+
+                original_base_name = os.path.splitext(os.path.basename(subtitle_file))[
+                    0
+                ]
                 video_file_converted = None
                 subtitle_file_converted = None
                 closest_subtitle = None

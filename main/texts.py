@@ -3515,6 +3515,27 @@ ERROR_PROCESS_TERMINATION = {
     "th": "เกิดข้อผิดพลาดระหว่างการสิ้นสุดกระบวนการ: {error_message}",
     "ur": "عمل ختم کرتے وقت خرابی واقع ہوئی: {error_message}",
 }
+BATCH_SYNC_CANCEL_CONFIRMATION = {
+    "en": "Are you sure you want to cancel batch synchronization?",
+    "es": "¿Está seguro de que desea cancelar la sincronización por lotes?",
+    "fr": "Êtes-vous sûr de vouloir annuler la synchronisation par lots ?",
+    "de": "Sind Sie sicher, dass Sie die Batch-Synchronisierung abbrechen möchten?",
+    "it": "Sei sicuro di voler annullare la sincronizzazione batch?",
+    "pt": "Tem certeza de que deseja cancelar a sincronização em lote?",
+    "zh": "您确定要取消批量同步吗？",
+    "ja": "バッチ同期をキャンセルしてもよろしいですか？",
+    "ko": "배치 동기화를 취소하시겠습니까?",
+    "ru": "Вы уверены, что хотите отменить пакетную синхронизацию?",
+    "ar": "هل أنت متأكد أنك تريد إلغاء مزامنة الدُفعات؟",
+    "hi": "क्या आप वाकई बैच सिंक्रनाइज़ेशन रद्द करना चाहते हैं?",
+    "nl": "Weet u zeker dat u de batchsynchronisatie wilt annuleren?",
+    "sv": "Är du säker på att du vill avbryta batchsynkroniseringen?",
+    "pl": "Czy na pewno chcesz anulować synchronizację wsadową?",
+    "tr": "Toplu senkronizasyonu iptal etmek istediğinizden emin misiniz?",
+    "vi": "Bạn có chắc chắn muốn hủy đồng bộ hóa hàng loạt không?",
+    "th": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการซิงโครไนซ์แบบกลุ่ม?",
+    "id": "Apakah Anda yakin ingin membatalkan sinkronisasi batch?"
+}
 AUTO_SYNC_CANCELLED = {
     "en": "Automatic synchronization cancelled.",
     "es": "Sincronización automática cancelada.",
