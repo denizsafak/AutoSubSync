@@ -1,4 +1,1 @@
-- All subtitle files with different language tags or file extensions are now paired with their matching videos in batch mode, mentioned https://github.com/denizsafak/AutoSubSync/issues/32 by @Stooovie.
-- You can now scroll through the log window while a process is running. Also a button has been added to quickly navigate to the bottom.
-- Fixed ffsubsync keeps running at background.
-- Fixed subtitles not saving to the correct folders.
+- Added a warning dialog when canceling batch sync.
