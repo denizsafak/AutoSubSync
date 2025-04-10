@@ -3033,6 +3033,16 @@ def start_batch_sync():
                     for ext in SUBTITLE_EXTENSIONS
                     if ext not in SUPPORTED_SUBTITLE_EXTENSIONS
                 ]
+                log_window.insert(
+                    tk.END,
+                    SYNCING_LOG_TEXT.format(
+                        completed_items + 1,
+                        total_items,
+                        os.path.basename(original_subtitle_file),
+                        os.path.basename(video_file),
+                    ),
+                )
+                completed_items += 1
                 if subtitle_file.lower().endswith(tuple(unsupported_extensions)):
                     subtitle_file_converted = convert_to_srt(
                         subtitle_file, base_output_dir, log_window
@@ -3044,16 +3054,10 @@ def start_batch_sync():
                             tk.END,
                             f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n",
                         )
-                        return False
-                log_window.insert(
-                    tk.END,
-                    SYNCING_LOG_TEXT.format(
-                        completed_items + 1,
-                        total_items,
-                        os.path.basename(original_subtitle_file),
-                        os.path.basename(video_file),
-                    ),
-                )
+                        failure_count += 1  # Increment failure count
+                        failed_syncs.append((subtitle_file, video_file))  # Log the failed sync
+                        continue  # Skip to the next file pair
+                
                 original_video_file = video_file
                 if sync_tool == SYNC_TOOL_ALASS:
                     # if it is a video file, extract subtitle streams
@@ -3079,7 +3083,9 @@ def start_batch_sync():
                             tk.END,
                             f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n",
                         )
-                        return False
+                        failure_count += 1  # Increment failure count
+                        failed_syncs.append((video_file, subtitle_file))  # Log the failed sync
+                        continue  # Skip to the next file pair
                 if not original_base_name:
                     continue
                 # Update base_name for each subtitle file
@@ -3323,7 +3329,6 @@ def start_batch_sync():
                     failure_count += 1
                     failed_syncs.append((video_file, subtitle_file))
                     log_window.insert(tk.END, error_msg)
-                completed_items += 1
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
         if not cancel_flag_batch:
