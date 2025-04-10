@@ -3485,7 +3485,7 @@ def start_batch_sync():
                 scroll_to_bottom_button.place_forget()  # Hide the button
             else:
                 scroll_to_bottom_button.place(
-                    relx=1, rely=1, anchor="se"
+                    relx=0.99, rely=0.99, anchor="se"
                 )  # Show the button
             # Pass valid scroll arguments to the yview method
             if args[0] in ("moveto", "scroll"):
@@ -5876,7 +5876,7 @@ def start_automatic_sync():
                 scroll_to_bottom_button.place_forget()  # Hide the button
             else:
                 scroll_to_bottom_button.place(
-                    relx=1, rely=1, anchor="se"
+                    relx=0.99, rely=0.99, anchor="se"
                 )  # Show the button
             # Pass valid scroll arguments to the yview method
             if args[0] in ("moveto", "scroll"):
