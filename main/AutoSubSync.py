@@ -454,6 +454,7 @@ CONTEXT_MENU_ADD_PAIR = texts.CONTEXT_MENU_ADD_PAIR[LANGUAGE]
 CONTEXT_MENU_ADD_PAIRS = texts.CONTEXT_MENU_ADD_PAIRS[LANGUAGE]
 CONTEXT_MENU_CLEAR_ALL = texts.CONTEXT_MENU_CLEAR_ALL[LANGUAGE]
 CONTEXT_MENU_SHOW_PATH = texts.CONTEXT_MENU_SHOW_PATH[LANGUAGE]
+CONTEXT_MENU_COPY = texts.CONTEXT_MENU_COPY[LANGUAGE]
 BUTTON_ADD_FILES = texts.BUTTON_ADD_FILES[LANGUAGE]
 MENU_ADD_FOLDER = texts.MENU_ADD_FOLDER[LANGUAGE]
 MENU_ADD_MULTIPLE_FILES = texts.MENU_ADD_MULTIPLE_FILES[LANGUAGE]
@@ -3054,12 +3055,11 @@ def start_batch_sync():
                     else:
                         log_window.insert(
                             tk.END,
-                            f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n",
+                            f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n\n",
                         )
                         failure_count += 1  # Increment failure count
-                        failed_syncs.append(
-                            (subtitle_file, video_file)
-                        )  # Log the failed sync
+                        failed_syncs.append((video_file, subtitle_file, completed_items))
+                        # Log the failed sync
                         continue  # Skip to the next file pair
 
                 original_video_file = video_file
@@ -3085,12 +3085,11 @@ def start_batch_sync():
                     else:
                         log_window.insert(
                             tk.END,
-                            f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n",
+                            f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n\n",
                         )
                         failure_count += 1  # Increment failure count
-                        failed_syncs.append(
-                            (video_file, subtitle_file)
-                        )  # Log the failed sync
+                        failed_syncs.append((video_file, subtitle_file, completed_items))
+                        # Log the failed sync
                         continue  # Skip to the next file pair
                 if not original_base_name:
                     continue
@@ -3324,16 +3323,16 @@ def start_batch_sync():
                     else:
                         log_window.insert(
                             tk.END,
-                            f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n",
+                            f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n\n",
                         )
                         failure_count += 1
-                        failed_syncs.append((video_file, subtitle_file))
+                        failed_syncs.append((video_file, subtitle_file, completed_items))
                 except Exception as e:
                     error_msg = (
-                        "\n" + ERROR_OCCURRED.format(error_message=str(e)) + "\n"
+                        "\n" + ERROR_OCCURRED.format(error_message=str(e)) + "\n\n"
                     )
                     failure_count += 1
-                    failed_syncs.append((video_file, subtitle_file))
+                    failed_syncs.append((video_file, subtitle_file, completed_items))
                     log_window.insert(tk.END, error_msg)
                 progress_bar["value"] = (completed_items / total_items) * 100
                 root.update_idletasks()
@@ -3347,11 +3346,11 @@ def start_batch_sync():
                     tk.END,
                     f"{SYNC_FAILURE_COUNT_BATCH.format(failure_count=failure_count)}\n",
                 )
-                failcount = 0
-                for pair in failed_syncs:
-                    failcount += 1
+                for _, pair in enumerate(failed_syncs):
+                    video_file, subtitle_file, item_index = pair
                     log_window.insert(
-                        tk.END, f'{failcount}) "{pair[0]}" - "{pair[1]}"\n'
+                        tk.END,
+                        f'[{item_index}/{total_items}] "{video_file}" - "{subtitle_file}"\n'
                     )
             log_message(BATCH_SYNC_COMPLETED, "success", tab="auto")
             button_cancel_batch_sync.grid_remove()
@@ -3449,10 +3448,24 @@ def start_batch_sync():
             ),
             bg=COLOR_WB,
             fg=COLOR_BW,
+            insertbackground=COLOR_BW,
         )
         log_window.grid(
             row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2
         )
+                # Create a context menu for the log window
+        log_window_context_menu = tk.Menu(log_window, tearoff=0)
+        log_window_context_menu.add_command(label=CONTEXT_MENU_COPY, command=lambda: log_window.event_generate("<<Copy>>"))
+
+        # Function to show the context menu
+        def show_log_window_context_menu(event):
+            log_window_context_menu.post(event.x_root, event.y_root)
+
+        # Bind the right-click event to the log window
+        if platform == "Darwin":
+            log_window.bind("<Button-2>", show_log_window_context_menu)
+        else:
+            log_window.bind("<Button-3>", show_log_window_context_menu)
 
         # Add a flag to track whether the user is at the bottom of the log window
         user_at_bottom = True
@@ -5840,10 +5853,24 @@ def start_automatic_sync():
             ),
             bg=COLOR_WB,
             fg=COLOR_BW,
+            insertbackground=COLOR_BW,
         )
         log_window.grid(
             row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2
         )
+        # Create a context menu for the log window
+        log_window_context_menu = tk.Menu(log_window, tearoff=0)
+        log_window_context_menu.add_command(label=CONTEXT_MENU_COPY, command=lambda: log_window.event_generate("<<Copy>>"))
+
+        # Function to show the context menu
+        def show_log_window_context_menu(event):
+            log_window_context_menu.post(event.x_root, event.y_root)
+
+        # Bind the right-click event to the log window
+        if platform == "Darwin":
+            log_window.bind("<Button-2>", show_log_window_context_menu)
+        else:
+            log_window.bind("<Button-3>", show_log_window_context_menu)
 
         # Add a flag to track whether the user is at the bottom of the log window
         user_at_bottom = True

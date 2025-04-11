@@ -1,1 +1,4 @@
-- Fixed an issue where the program failed to operate correctly when located in directories with non-Latin characters. 
+- Added a 'Copy' option to the right-click menu in the log window, enabling users to copy the log content to their clipboard.
+- Fixed an issue where the program failed to operate correctly when located in directories with non-Latin characters.
+- During batch synchronization, pairs that failed are now assigned their original sequence numbers from the synchronization process, instead of being re-numbered from 1.
+- Improvements in code and translations.
