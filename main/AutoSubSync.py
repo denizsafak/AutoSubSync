@@ -491,6 +491,7 @@ BOLD_TEXT = texts.BOLD_TEXT[LANGUAGE]
 ITALIC_TEXT = texts.ITALIC_TEXT[LANGUAGE]
 UNDERLINE_TEXT = texts.UNDERLINE_TEXT[LANGUAGE]
 STRIKETHROUGH_TEXT = texts.STRIKETHROUGH_TEXT[LANGUAGE]
+FONT_INFORMATION_TEXT = texts.FONT_INFORMATION_TEXT[LANGUAGE]
 APPLY_TEXT = texts.APPLY_TEXT[LANGUAGE]
 SELECT_SUBTITLE = texts.SELECT_SUBTITLE[LANGUAGE]
 SELECT_VIDEO = texts.SELECT_VIDEO[LANGUAGE]
@@ -1595,10 +1596,17 @@ def change_log_window_font():
         takefocus=0,
         state="normal",
     )
+    font_information_label = tk.Label(
+        font_style_frame,
+        text=FONT_INFORMATION_TEXT,
+        bg=COLOR_BACKGROUND,
+        fg=COLOR_BW,
+    )
     bold_checkbox.grid(row=1, column=0, padx=(10, 5), pady=(0, 5), sticky="w")
     italic_checkbox.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="w")
     underline_checkbox.grid(row=1, column=2, padx=5, pady=(0, 5), sticky="w")
     strikethrough_checkbox.grid(row=1, column=3, padx=5, pady=(0, 5), sticky="w")
+    font_information_label.grid(row=2, column=0, columnspan=5, padx=10, pady=(0, 5), sticky="ew")
     # Apply and Cancel Buttons
     button_frame = tk.Frame(font_dialog, background=COLOR_BACKGROUND)
     button_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
