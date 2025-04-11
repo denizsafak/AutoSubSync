@@ -1807,8 +1807,7 @@ def open_logs_folder():
     logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
     # Ensure logs directory exists
     os.makedirs(logs_folder, exist_ok=True)
-    if not os.path.exists(logs_folder):
-        os.makedirs(logs_folder, exist_ok=True)
+    
     if platform == "Windows":
         os.startfile(logs_folder)
     elif platform == "Darwin":  # macOS
@@ -1823,16 +1822,21 @@ def open_logs_folder():
             "thunar",
             "pcmanfm",
         ]
+        success = False
         for fm in file_managers:
             if shutil.which(fm):
                 try:
                     subprocess.call([fm, logs_folder])
-                    return
+                    success = True
+                    break  # Exit loop if successful
                 except Exception:
-                    continue
-        messagebox.showinfo(
-            "Info", NOT_FIND_COMPATIBLE_FILE_MANAGER.format(directory=logs_folder)
-        )
+                    continue  # Try the next file manager
+        
+        if not success:
+            # This will now be reached if no file manager succeeds
+            messagebox.showinfo(
+                "Info", NOT_FIND_COMPATIBLE_FILE_MANAGER.format(directory=logs_folder)
+            )
 
 
 def check_logs_exist():
