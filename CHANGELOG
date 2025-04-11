@@ -1,4 +1,1 @@
-- Fixed freezing batch sync when giving conversion errors, mentioned in https://github.com/denizsafak/AutoSubSync/issues/33 by @Stooovie
-- Fixed completed/total items is not displaying correctly in batch sync.
-- Added a warning dialog when canceling batch sync.
-- Added padding for scroll to bottom button.
+- Fixed an issue where the program failed to operate correctly when located in directories with non-Latin characters. 

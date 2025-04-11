@@ -53,9 +53,11 @@ program_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Define paths to the executables - FIXED
-ffmpeg_bin = os.path.join(program_dir, "resources", "ffmpeg-bin")
-alass_bin = os.path.join(program_dir, "resources", "alass-bin")
-ffsubsync_bin = os.path.join(program_dir, "resources", "ffsubsync-bin")
+ffmpeg_bin = os.path.normpath(os.path.join(program_dir, "resources", "ffmpeg-bin"))
+alass_bin = os.path.normpath(os.path.join(program_dir, "resources", "alass-bin"))
+ffsubsync_bin = os.path.normpath(
+    os.path.join(program_dir, "resources", "ffsubsync-bin")
+)
 
 # Add the paths to the system PATH environment variable
 os.environ["PATH"] = (
@@ -3055,9 +3057,11 @@ def start_batch_sync():
                             f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n",
                         )
                         failure_count += 1  # Increment failure count
-                        failed_syncs.append((subtitle_file, video_file))  # Log the failed sync
+                        failed_syncs.append(
+                            (subtitle_file, video_file)
+                        )  # Log the failed sync
                         continue  # Skip to the next file pair
-                
+
                 original_video_file = video_file
                 if sync_tool == SYNC_TOOL_ALASS:
                     # if it is a video file, extract subtitle streams
@@ -3084,7 +3088,9 @@ def start_batch_sync():
                             f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n",
                         )
                         failure_count += 1  # Increment failure count
-                        failed_syncs.append((video_file, subtitle_file))  # Log the failed sync
+                        failed_syncs.append(
+                            (video_file, subtitle_file)
+                        )  # Log the failed sync
                         continue  # Skip to the next file pair
                 if not original_base_name:
                     continue
@@ -3151,7 +3157,7 @@ def start_batch_sync():
                     suffix += 1
                 subtitle_file = os.path.abspath(subtitle_file)
                 if sync_tool == SYNC_TOOL_FFSUBSYNC:
-                    cmd = f'{CALL_FFSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+                    cmd = f'"{CALL_FFSUBSYNC}" "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
                     if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                         if (
                             vad_option_map.get(ffsubsync_option_vad_var.get(), "")
@@ -5458,7 +5464,7 @@ def start_automatic_sync():
 
     def build_cmd():
         if sync_tool == SYNC_TOOL_FFSUBSYNC:
-            cmd = f'{CALL_FFSUBSYNC} "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
+            cmd = f'"{CALL_FFSUBSYNC}" "{video_file}" -i "{subtitle_file}" -o "{output_subtitle_file}"'
             if not video_file.lower().endswith(tuple(SUBTITLE_EXTENSIONS)):
                 if vad_option_map.get(ffsubsync_option_vad_var.get(), "") != "default":
                     cmd += f" --vad={vad_option_map.get(ffsubsync_option_vad_var.get(), '')}"
