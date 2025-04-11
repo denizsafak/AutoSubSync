@@ -1606,7 +1606,9 @@ def change_log_window_font():
     italic_checkbox.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="w")
     underline_checkbox.grid(row=1, column=2, padx=5, pady=(0, 5), sticky="w")
     strikethrough_checkbox.grid(row=1, column=3, padx=5, pady=(0, 5), sticky="w")
-    font_information_label.grid(row=2, column=0, columnspan=5, padx=10, pady=(0, 5), sticky="ew")
+    font_information_label.grid(
+        row=2, column=0, columnspan=5, padx=10, pady=(0, 5), sticky="ew"
+    )
     # Apply and Cancel Buttons
     button_frame = tk.Frame(font_dialog, background=COLOR_BACKGROUND)
     button_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
@@ -1815,7 +1817,7 @@ def open_logs_folder():
     logs_folder = os.path.join(base_dir, f"{PROGRAM_NAME}_logs")
     # Ensure logs directory exists
     os.makedirs(logs_folder, exist_ok=True)
-    
+
     if platform == "Windows":
         os.startfile(logs_folder)
     elif platform == "Darwin":  # macOS
@@ -1839,7 +1841,7 @@ def open_logs_folder():
                     break  # Exit loop if successful
                 except Exception:
                     continue  # Try the next file manager
-        
+
         if not success:
             # This will now be reached if no file manager succeeds
             messagebox.showinfo(
@@ -3070,7 +3072,9 @@ def start_batch_sync():
                             f"{FAILED_CONVERT_SUBTITLE.format(subtitle_file=subtitle_file)}\n\n",
                         )
                         failure_count += 1  # Increment failure count
-                        failed_syncs.append((video_file, subtitle_file, completed_items))
+                        failed_syncs.append(
+                            (video_file, subtitle_file, completed_items)
+                        )
                         # Log the failed sync
                         continue  # Skip to the next file pair
 
@@ -3100,7 +3104,9 @@ def start_batch_sync():
                             f"{FAILED_CONVERT_VIDEO.format(video_file=video_file)}\n\n",
                         )
                         failure_count += 1  # Increment failure count
-                        failed_syncs.append((video_file, subtitle_file, completed_items))
+                        failed_syncs.append(
+                            (video_file, subtitle_file, completed_items)
+                        )
                         # Log the failed sync
                         continue  # Skip to the next file pair
                 if not original_base_name:
@@ -3338,7 +3344,9 @@ def start_batch_sync():
                             f"{SYNC_ERROR.format(filename=os.path.basename(subtitle_file))}\n\n",
                         )
                         failure_count += 1
-                        failed_syncs.append((video_file, subtitle_file, completed_items))
+                        failed_syncs.append(
+                            (video_file, subtitle_file, completed_items)
+                        )
                 except Exception as e:
                     error_msg = (
                         "\n" + ERROR_OCCURRED.format(error_message=str(e)) + "\n\n"
@@ -3362,7 +3370,7 @@ def start_batch_sync():
                     video_file, subtitle_file, item_index = pair
                     log_window.insert(
                         tk.END,
-                        f'[{item_index}/{total_items}] "{video_file}" - "{subtitle_file}"\n'
+                        f'[{item_index}/{total_items}] "{video_file}" - "{subtitle_file}"\n',
                     )
             log_message(BATCH_SYNC_COMPLETED, "success", tab="auto")
             button_cancel_batch_sync.grid_remove()
@@ -3465,9 +3473,12 @@ def start_batch_sync():
         log_window.grid(
             row=0, column=0, padx=10, pady=(10, 5), sticky="nsew", columnspan=2
         )
-                # Create a context menu for the log window
+        # Create a context menu for the log window
         log_window_context_menu = tk.Menu(log_window, tearoff=0)
-        log_window_context_menu.add_command(label=CONTEXT_MENU_COPY, command=lambda: log_window.event_generate("<<Copy>>"))
+        log_window_context_menu.add_command(
+            label=CONTEXT_MENU_COPY,
+            command=lambda: log_window.event_generate("<<Copy>>"),
+        )
 
         # Function to show the context menu
         def show_log_window_context_menu(event):
@@ -5872,7 +5883,10 @@ def start_automatic_sync():
         )
         # Create a context menu for the log window
         log_window_context_menu = tk.Menu(log_window, tearoff=0)
-        log_window_context_menu.add_command(label=CONTEXT_MENU_COPY, command=lambda: log_window.event_generate("<<Copy>>"))
+        log_window_context_menu.add_command(
+            label=CONTEXT_MENU_COPY,
+            command=lambda: log_window.event_generate("<<Copy>>"),
+        )
 
         # Function to show the context menu
         def show_log_window_context_menu(event):
