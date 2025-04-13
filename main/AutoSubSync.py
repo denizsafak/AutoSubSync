@@ -1137,17 +1137,22 @@ def open_directory(filepath, tab="both"):
                 "thunar",
                 "pcmanfm",
             ]
+            success = False
             for fm in file_managers:
                 if shutil.which(fm):
                     try:
                         subprocess.call([fm, directory])
-                        return None
+                        success = True
+                        break  # Exit loop if successful
                     except Exception:
-                        continue
-            messagebox.showinfo(
-                "Info", NOT_FIND_COMPATIBLE_FILE_MANAGER.format(directory=directory)
-            )
-        return None
+                        continue  # Try the next file manager
+
+            if not success:
+                # This will now be reached if no file manager succeeds
+                messagebox.showinfo(
+                    "Info", NOT_FIND_COMPATIBLE_FILE_MANAGER.format(directory=directory)
+                )
+                return None
     except Exception as e:
         if tab != "ref":
             log_message(
