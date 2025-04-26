@@ -227,7 +227,7 @@ if THEME == "system":
     THEME = "dark" if is_dark_mode() else "light"
 
 # File extensions
-FFSUBSYNC_SUPPORTED_EXTENSIONS = [".srt", ".ass", ".ssa"]
+FFSUBSYNC_SUPPORTED_EXTENSIONS = [".srt", ".ass", ".ssa", ".vtt"]
 ALASS_SUPPORTED_EXTENSIONS = [".srt", ".ass", ".ssa", ".sub", ".idx"]
 ALASS_EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt"}
 SUBTITLE_EXTENSIONS = [
