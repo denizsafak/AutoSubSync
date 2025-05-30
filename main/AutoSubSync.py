@@ -71,7 +71,7 @@ os.environ["PATH"] = (
 )
 
 # Determine correct alass executable based on platform
-if platform in ("Windows", "Darwin"):
+if platform == "Windows":
     CALL_ALASS = os.path.join(alass_bin, "alass-cli")
 elif platform == "Linux":
     CALL_ALASS = os.path.join(alass_bin, "alass-linux64")
