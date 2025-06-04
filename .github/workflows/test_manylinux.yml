@@ -57,18 +57,14 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Build in manylinux container
+      - name: Build in pyinstaller-manylinux container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            quay.io/pypa/manylinux_2_28_x86_64 \
+            ghcr.io/oleksis/pyinstaller-manylinux2014_x86_64:python3.12 \
             bash -c "
               yum install -y tk-devel tcl-devel gcc which && \
-              PYTHON_DIR=\$(find /opt/python -name 'cp312*' | sort | head -n 1) && \
-              export PATH=\"\$PYTHON_DIR/bin:\$PATH\" && \
-              export LD_LIBRARY_PATH=\"\$PYTHON_DIR/lib:\$LD_LIBRARY_PATH\" && \
-              python -m pip install --upgrade pip && \
-              python -m pip install setuptools wheel && \
-              python build.py
+              python3.12 -m pip install --upgrade pip setuptools wheel && \
+              python3.12 build.py
             "
 
       - name: Upload build artifacts
