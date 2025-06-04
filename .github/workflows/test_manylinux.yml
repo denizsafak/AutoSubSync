@@ -63,7 +63,7 @@ jobs:
             quay.io/pypa/manylinux2014_x86_64 \
             bash -c "
               yum update -y && \
-              yum install -y tk-devel tcl-devel && \
+              yum install -y tk-devel tcl-devel python3-devel && \
               # Set up Python 3.12 from the manylinux installation
               export PATH=\"/opt/python/cp312-cp312/bin:\$PATH\" && \
               export LD_LIBRARY_PATH=\"/opt/python/cp312-cp312/lib:\$LD_LIBRARY_PATH\" && \
