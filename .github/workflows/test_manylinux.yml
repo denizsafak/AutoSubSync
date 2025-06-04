@@ -63,17 +63,15 @@ jobs:
             quay.io/pypa/manylinux2014_x86_64 \
             bash -c "
               yum update -y && \
-              yum install -y tk-devel tcl-devel && \
-              # Install Python development package
-              cd /opt/python/cp312-cp312 && \
-              ln -sf lib/libpython3.12.so.1.0 lib/libpython3.12.so && \
-              export LD_LIBRARY_PATH=\"/opt/python/cp312-cp312/lib:\$LD_LIBRARY_PATH\" && \
+              yum install -y tk-devel tcl-devel python3-devel python3.12 python3.12-devel && \
+              # Make sure the shared lib is available for PyInstaller
+              ln -sf /usr/lib64/libpython3.12.so.1.0 /usr/lib64/libpython3.12.so && \
+              export LD_LIBRARY_PATH=\"/usr/lib64:\$LD_LIBRARY_PATH\" && \
               export PATH=\"/opt/python/cp312-cp312/bin:\$PATH\" && \
-              python3.12 -m pip install --upgrade pip && \
-              python3.12 -m pip install requests && \
+              python3.12 -m pip install --upgrade pip requests && \
               cd /workspace && \
               python3.12 build.py && \
-              find ./main/resources -type f -exec chmod +x {} \; 2>/dev/null || true
+              find ./main/resources -type f -exec chmod +x {} \\; 2>/dev/null || true
             "
 
       - name: Upload build artifacts
