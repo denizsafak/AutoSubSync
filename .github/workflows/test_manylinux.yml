@@ -56,10 +56,14 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Build using build.py in PyInstaller Manylinux Action
-        uses: oleksis/pyinstaller-manylinux@v2.3.0
-        with:
-          pyinstaller-params: "['build.py']"
+      - name: Build using build.py in pyinstaller-manylinux container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            ghcr.io/oleksis/pyinstaller-manylinux:latest \
+            bash -c "
+              python3.12 -m pip install --upgrade pip setuptools wheel && \
+              python3.12 build.py
+            "
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
