@@ -52,20 +52,22 @@ jobs:
 
   build-linux-manylinux:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Build in pyinstaller-manylinux container
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            ghcr.io/oleksis/pyinstaller-manylinux2014_x86_64:python3.12 \
-            bash -c "
-              yum install -y tk-devel tcl-devel gcc which && \
-              python3.12 -m pip install --upgrade pip setuptools wheel && \
-              python3.12 build.py
-            "
+      - name: Build using build.py in PyInstaller Manylinux Action
+        uses: oleksis/pyinstaller-manylinux@v2.3.0
+        with:
+          pyinstaller-params: "['build.py']"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-manylinux_amd64
+          path: |
+            AutoSubSync-v*.zip
+            AutoSubSync-v*.tar.gz
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
