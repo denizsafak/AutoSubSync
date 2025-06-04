@@ -242,6 +242,7 @@ def create_archive():
                     arcname = os.path.relpath(file_path, dist_dir)
                     tar.add(file_path, arcname=arcname)
         print("Tar.gz archive created: " + tar_name)
+        print("Full path: " + os.path.abspath(tar_name))
     elif platform_name == "darwin":
         platform_name = "macos"
         zip_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".zip"
@@ -254,6 +255,7 @@ def create_archive():
                     )
                     zipf.write(file_path, arcname)
         print("Zip archive created: " + zip_name)
+        print("Full path: " + os.path.abspath(zip_name))
     else:
         zip_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".zip"
         with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -263,6 +265,7 @@ def create_archive():
                     arcname = os.path.relpath(file_path, dist_dir)
                     zipf.write(file_path, arcname)
         print("Zip archive created: " + zip_name)
+        print("Full path: " + os.path.abspath(zip_name))
 
 
 if __name__ == "__main__":
