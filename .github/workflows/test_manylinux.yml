@@ -63,22 +63,33 @@ jobs:
             quay.io/pypa/manylinux2014_x86_64 \
             bash -c "
               yum update -y && \
-              yum install -y tk-devel tcl-devel python3-devel && \
-              # Set up Python 3.12 from the manylinux installation
-              export PATH=\"/opt/python/cp312-cp312/bin:\$PATH\" && \
-              export LD_LIBRARY_PATH=\"/opt/python/cp312-cp312/lib:\$LD_LIBRARY_PATH\" && \
-              # Create symlinks for PyInstaller to find the shared library
-              cd /opt/python/cp312-cp312/lib && \
-              ln -sf libpython3.12.so.1.0 libpython3.12.so && \
-              # Also create system-wide symlinks
+              yum install -y tk-devel tcl-devel gcc && \
+              # Set up Python environment with proper linking
+              cd /opt/python/cp312-cp312 && \
+              ln -sf lib/libpython3.12.so.1.0 lib/libpython3.12.so && \
+              # Create additional symlinks in standard locations
               ln -sf /opt/python/cp312-cp312/lib/libpython3.12.so.1.0 /usr/lib64/libpython3.12.so.1.0 && \
               ln -sf /opt/python/cp312-cp312/lib/libpython3.12.so.1.0 /usr/lib64/libpython3.12.so && \
-              # Install packages and build
+              # Set environment variables
+              export LD_LIBRARY_PATH=\"/opt/python/cp312-cp312/lib:/usr/lib64:\$LD_LIBRARY_PATH\" && \
+              export PATH=\"/opt/python/cp312-cp312/bin:\$PATH\" && \
+              export PYTHONHOME=\"/opt/python/cp312-cp312\" && \
+              # Create custom PyInstaller configuration if needed
+              mkdir -p /root/.pyinstaller && \
+              echo -e \"import os\\nos.environ['LD_LIBRARY_PATH'] = '/opt/python/cp312-cp312/lib:/usr/lib64:' + os.environ.get('LD_LIBRARY_PATH', '')\" > /root/.pyinstaller/config.py && \
+              # Install required packages
               python3.12 -m pip install --upgrade pip && \
               python3.12 -m pip install requests && \
               cd /workspace && \
+              # Debug information
+              echo \"Python library location:\" && \
+              find /opt/python/cp312-cp312 -name 'libpython*.so*' && \
+              echo \"Symlinks created:\" && \
+              ls -la /usr/lib64/libpython* && \
+              # Run build script
               python3.12 build.py && \
-              find ./main/resources -type f -exec chmod +x {} \\; 2>/dev/null || true
+              find ./main/resources -type f -exec chmod +x {} \; 2>/dev/null || true
+            "
             "
 
       - name: Upload build artifacts

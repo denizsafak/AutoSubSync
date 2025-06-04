@@ -69,25 +69,6 @@ def create_virtualenv():
             print("Error creating virtual environment.")
             sys.exit(completed_process.returncode)
         print("Virtual environment created.")
-        
-        # Fix for manylinux PyInstaller shared library issue
-        if platform.system() == "Linux":
-            manylinux_lib = "/opt/python/cp312-cp312/lib/libpython3.12.so.1.0"
-            # Only apply this fix if we're in a manylinux container
-            if os.path.exists(manylinux_lib):
-                import shutil
-                venv_lib_dir = "venv/lib"
-                os.makedirs(venv_lib_dir, exist_ok=True)
-                
-                # Copy the shared library
-                shutil.copy2(manylinux_lib, venv_lib_dir)
-                
-                # Create symlink for PyInstaller
-                venv_so_path = os.path.join(venv_lib_dir, "libpython3.12.so")
-                if not os.path.exists(venv_so_path):
-                    os.symlink("libpython3.12.so.1.0", venv_so_path)
-                
-                print("Copied Python shared library for manylinux compatibility.")
     else:
         print("Virtual environment already exists. Skipping creation.")
 
