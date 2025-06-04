@@ -47,8 +47,8 @@ jobs:
         with:
           name: build-artifacts-${{ matrix.file_name }}
           path: |
-            dist/*.zip
-            dist/*.tar.gz
+            AutoSubSync-v*.zip
+            AutoSubSync-v*.tar.gz
 
   build-linux-manylinux:
     runs-on: ubuntu-latest
