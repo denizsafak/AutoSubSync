@@ -1,0 +1,80 @@
+name: AutoSubSync Test
+
+on:
+  workflow_dispatch:
+
+env:
+  DIST_DIR: /tmp/builds
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            build: win-x64
+            file_name: win_amd64
+          - os: macos-latest
+            build: osx-arm64
+            file_name: macos_arm64
+          - os: macos-13
+            build: macos-amd64
+            file_name: macos_amd64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.8
+          cache: "pip"
+
+      - name: Install required modules globally
+        run: |
+          pip install requests
+
+      - name: Run build script
+        run: |
+          python build.py
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.file_name }}
+          path: |
+            *.zip
+            *.tar.gz
+
+  build-linux-manylinux:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build in manylinux container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            quay.io/pypa/manylinux2014_x86_64 \
+            bash -c "
+              yum update -y && \
+              yum install -y tk-devel tcl-devel && \
+              export PATH=\"/opt/python/cp312-cp312/bin:\$PATH\" && \
+              python3.12 -m pip install --upgrade pip && \
+              python3.12 -m pip install requests && \
+              python3.12 build.py && \
+              find ./main/resources -type f -exec chmod +x {} \; 2>/dev/null || true
+            "
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-manylinux_amd64
+          path: |
+            *.zip
+            *.tar.gz
