@@ -73,16 +73,23 @@ jobs:
               export PATH=\"\${PYTHON_DIR}/bin:\$PATH\" && \
               export LD_LIBRARY_PATH=\"\${PYTHON_DIR}/lib:\$LD_LIBRARY_PATH\" && \
               
-              # Find where the Python library actually is and copy it
-              PYTHON_LIB=\$(find /opt -name 'libpython3.12*.so*' | head -n 1) && \
-              echo \"Found Python library: \${PYTHON_LIB}\" && \
+              # Install PyInstaller's dependencies first
+              python -m pip install --upgrade pip && \
+              python -m pip install setuptools wheel && \
               
-              # Create lib directory and copy Python shared library
-              mkdir -p /workspace/lib && \
-              cp -L \${PYTHON_LIB} /workspace/lib/libpython3.12.so.1.0 && \
+              # Create PyInstaller runtime hooks to handle Python loading
+              mkdir -p /workspace/hooks && \
+              echo 'import os
+              import sys
               
-              # Add the library to PyInstaller spec file
-              sed -i '/^a = Analysis/a binaries=[(\"lib/libpython3.12.so.1.0\", \".\")], ' build.spec && \
+              # Add the current directory to PATH so Python can find libraries at runtime
+              os.environ[\"PATH\"] = os.path.dirname(sys.executable) + os.pathsep + os.environ.get(\"PATH\", \"\")
+              ' > /workspace/hooks/hook-app_runtime.py && \
+              
+              # Modify build spec if it exists to use the hook
+              if [ -f build.spec ]; then
+                sed -i '/^a = Analysis/s/$/\\n    hookspath=[\"hooks\"],/' build.spec
+              fi && \
               
               # Run the build script
               python build.py
