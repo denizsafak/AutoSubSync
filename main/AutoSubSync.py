@@ -98,7 +98,6 @@ if platform in ["Darwin", "Linux"]:
         messagebox.showerror("Permission Error", "\n".join(errors))
 
 
-
 default_encoding = sys.getfilesystemencoding()
 
 def create_process(cmd):
@@ -109,6 +108,7 @@ def create_process(cmd):
         "universal_newlines": True,
         "encoding": default_encoding,
         "errors": "replace",
+        "env": {**os.environ, "TERM": "dumb"} 
     }
 
     if platform == "Windows":
