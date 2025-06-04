@@ -62,36 +62,12 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             quay.io/pypa/manylinux_2_28_x86_64 \
             bash -c "
-              # Install system dependencies
               yum install -y tk-devel tcl-devel gcc which && \
-              
-              # Find Python 3.12 in the container
               PYTHON_DIR=\$(find /opt/python -name 'cp312*' | sort | head -n 1) && \
-              echo \"Using Python directory: \${PYTHON_DIR}\" && \
-              
-              # Set environment variables for Python and PyInstaller
-              export PATH=\"\${PYTHON_DIR}/bin:\$PATH\" && \
-              export LD_LIBRARY_PATH=\"\${PYTHON_DIR}/lib:\$LD_LIBRARY_PATH\" && \
-              
-              # Install PyInstaller's dependencies first
+              export PATH=\"\$PYTHON_DIR/bin:\$PATH\" && \
+              export LD_LIBRARY_PATH=\"\$PYTHON_DIR/lib:\$LD_LIBRARY_PATH\" && \
               python -m pip install --upgrade pip && \
               python -m pip install setuptools wheel && \
-              
-              # Create PyInstaller runtime hooks to handle Python loading
-              mkdir -p /workspace/hooks && \
-              echo 'import os
-              import sys
-              
-              # Add the current directory to PATH so Python can find libraries at runtime
-              os.environ[\"PATH\"] = os.path.dirname(sys.executable) + os.pathsep + os.environ.get(\"PATH\", \"\")
-              ' > /workspace/hooks/hook-app_runtime.py && \
-              
-              # Modify build spec if it exists to use the hook
-              if [ -f build.spec ]; then
-                sed -i '/^a = Analysis/s/$/\\n    hookspath=[\"hooks\"],/' build.spec
-              fi && \
-              
-              # Run the build script
               python build.py
             "
 
