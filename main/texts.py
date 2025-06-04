@@ -2,6 +2,8 @@
 # All translations are made by AI. If you find any errors, feel free to contribute. #
 # You can contribute in GitHub by forking the repository and making a pull request. #
 #####################################################################################
+from functions.get_platform import platform
+
 PROGRAM_NAME = "AutoSubSync"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
@@ -14,9 +16,7 @@ ARABIC_LANGUAGES = {
     "sd",  # Sindhi
     "ug",  # Uyghur
 }
-import platform
 
-platform = platform.system()
 if platform != "Darwin":
     from bidi.algorithm import get_display
     import arabic_reshaper

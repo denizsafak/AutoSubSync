@@ -1,1 +1,3 @@
+- Switched to platformdirs for finding paths in different operating systems.
+- Separated some utility functions and configurations into different files.
 - Added `.vtt` to supported extensions for ffsubsync.
