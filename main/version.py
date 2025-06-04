@@ -1,8 +1,10 @@
 import os
+import sys
 import platform
 from datetime import datetime
-
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # Add parent directory
+sys.path.append((os.path.dirname(__file__)))  # Add current directory
 
 from texts import PROGRAM_NAME
 
