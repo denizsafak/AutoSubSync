@@ -2,6 +2,9 @@
 # All translations are made by AI. If you find any errors, feel free to contribute. #
 # You can contribute in GitHub by forking the repository and making a pull request. #
 #####################################################################################
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 from functions.get_platform import platform
 
 PROGRAM_NAME = "AutoSubSync"

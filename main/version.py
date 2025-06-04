@@ -1,7 +1,10 @@
 import os
 import platform
 from datetime import datetime
-from .texts import PROGRAM_NAME
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+from texts import PROGRAM_NAME
 
 # Only import Windows-specific modules on Windows
 if platform.system() == "Windows":
