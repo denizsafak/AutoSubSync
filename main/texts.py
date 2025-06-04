@@ -2,6 +2,14 @@
 # All translations are made by AI. If you find any errors, feel free to contribute. #
 # You can contribute in GitHub by forking the repository and making a pull request. #
 #####################################################################################
+import os
+import sys
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # Add parent directory
+sys.path.append((os.path.dirname(__file__)))  # Add current directory
+
+from functions.get_platform import platform
+
 PROGRAM_NAME = "AutoSubSync"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
@@ -14,9 +22,7 @@ ARABIC_LANGUAGES = {
     "sd",  # Sindhi
     "ug",  # Uyghur
 }
-import platform
 
-platform = platform.system()
 if platform != "Darwin":
     from bidi.algorithm import get_display
     import arabic_reshaper
@@ -2207,6 +2213,126 @@ MENU_ADD_REFERENCE_SUBITLE_SUBTITLE_PAIRIS = {
     "ms": "Auto-Pairing dengan Musim/Episode",
     "th": "การจับคู่โดยอัตโนมัติด้วยซีซั่น/ตอน",
     "ur": "سیزن/ایپی سوڈ کے ساتھ خودکار جوڑنا",
+}
+OUTPUT_SUBTITLE_ENCODING = {
+    "en": "Output subtitle encoding",
+    "es": "Codificación de subtítulos de salida",
+    "tr": "Çıktı altyazı kodlaması",
+    "zh": "输出字幕编码",
+    "ru": "Кодировка выходных субтитров",
+    "pl": "Kodowanie napisów wyjściowych",
+    "uk": "Кодування вихідних субтитрів",
+    "ja": "出力字幕のエンコーディング",
+    "ko": "출력 자막 인코딩",
+    "hi": "आउटपुट उपशीर्षक एनकोडिंग",
+    "bn": "আউটপুট সাবটাইটেল এনকোডিং",
+    "it": "Codifica sottotitoli di output",
+    "fr": "Encodage des sous-titres de sortie",
+    "de": "Ausgabe-Untertitel-Kodierung",
+    "pt": "Codificação de legendas de saída",
+    "ar": "ترميز العناوين الفرعية المخرجة",
+    "vi": "Mã hóa phụ đề đầu ra",
+    "fa": "رمزگذاری زیرنویس خروجی",
+    "id": "Encoding subtitle keluaran",
+    "ms": "Pengekodan subtitle keluaran",
+    "th": "การเข้ารหัสคำบรรยายเอาต์พุต",
+    "ur": "آؤٹ پٹ زیرنویس انکوڈنگ",
+}
+DEFAULT_AUTO_DETECT = {
+    "en": "Default (Auto-Detect)",
+    "es": "Predeterminado (Auto-Detectar)",
+    "tr": "Varsayılan (Otomatik Algılama)",
+    "zh": "默认（自动检测）",
+    "ru": "По умолчанию (Автоопределение)",
+    "pl": "Domyślne (Auto-Wykrywanie)",
+    "uk": "За замовчуванням (Автовиявлення)",
+    "ja": "デフォルト (自動検出)",
+    "ko": "기본값 (자동 감지)",
+    "hi": "डिफ़ॉल्ट (स्वत: पहचान)",
+    "bn": "ডিফল্ট (স্বয়ংক্রিয় সনাক্তকরণ)",
+    "it": "Predefinito (Auto-Rilevamento)",
+    "fr": "Par Défaut (Auto-Détection)",
+    "de": "Standard (Auto-Erkennung)",
+    "pt": "Padrão (Auto-Detecção)",
+    "ar": "افتراضي (كشف تلقائي)",
+    "vi": "Mặc định (Tự động phát hiện)",
+    "fa": "پیش‌فرض (تشخیص خودکار)",
+    "id": "Default (Deteksi Otomatis)",
+    "ms": "Default (Deteksi Automatik)",
+    "th": "ค่าเริ่มต้น (ตรวจสอบอัตโนมัติ)",
+    "ur": "ڈیفالٹ (خود کار تشخیص)"
+}
+OVERRIDE_ENCODING = {
+    "en": "Override Encoding",
+    "es": "Anular codificación",
+    "tr": "Kodlamayı geçersiz kıl",
+    "zh": "覆盖编码",
+    "ru": "Переопределить кодировку",
+    "pl": "Nadpisz kodowanie",
+    "uk": "Перевизначити кодування",
+    "ja": "エンコーディングを上書き",
+    "ko": "인코딩 재정의",
+    "hi": "एनकोडिंग ओवरराइड करें",
+    "bn": "এনকোডিং ওভাররাইড করুন",
+    "it": "Sovrascrivi codifica",
+    "fr": "Remplacer l'encodage",
+    "de": "Kodierung überschreiben",
+    "pt": "Substituir codificação",
+    "ar": "تجاوز الترميز",
+    "vi": "Ghi đè mã hóa",
+    "fa": "پیش‌فرض رمزگذاری",
+    "id": "Timpa Encoding",
+    "ms": "Ubah Pengekodan",
+    "th": "เขียนทับการเข้ารหัส",
+    "ur": "انکوڈنگ مسترد کریں",
+}
+AUTOMATIC_ENCODING_TEXT = {
+    "en": "Automatic encoding detection will be used.",
+    "es": "Se utilizará la detección automática de codificación.",
+    "tr": "Otomatik kodlama tespiti kullanılacak.",
+    "zh": "将使用自动编码检测。",
+    "ru": "Будет использоваться автоматическое определение кодировки.",
+    "pl": "Zostanie użyte automatyczne wykrywanie kodowania.",
+    "uk": "Буде використано автоматичне визначення кодування.",
+    "ja": "自動エンコーディング検出が使用されます。",
+    "ko": "자동 인코딩 감지가 사용됩니다.",
+    "hi": "स्वचालित एनकोडिंग का पता लगाना उपयोग किया जाएगा।",
+    "bn": "স্বয়ংক্রিয় এনকোডিং সনাক্তকরণ ব্যবহার করা হবে।",
+    "it": "Verrà utilizzato il rilevamento automatico della codifica.",
+    "fr": "La détection automatique d'encodage sera utilisée.",
+    "de": "Automatische Erkennung der Kodierung wird verwendet.",
+    "pt": "A detecção automática de codificação será usada.",
+    "ar": "سيتم استخدام الكشف التلقائي عن الترميز.",
+    "vi": "Phát hiện mã hóa tự động sẽ được sử dụng.",
+    "fa": "تشخیص خودکار کدگذاری استفاده خواهد شد.",
+    "id": "Deteksi encoding otomatis akan digunakan.",
+    "ms": "Pengesanan encoding automatik akan digunakan.",
+    "th": "จะใช้การตรวจหาการเข้ารหัสโดยอัตโนมัติ",
+    "ur": "خودکار انکوڈنگ کا پتہ لگانا استعمال کیا جائے گا۔",
+}
+ENCODING_WILL_BE_FORCED_TEXT = {
+    "en": "Output subtitle encoding will be forced to {encoding}.",
+    "es": "La codificación del subtítulo de salida será forzada a {encoding}.",
+    "tr": "Çıktı altyazı kodlaması {encoding} olarak zorlanacak.",
+    "zh": "输出字幕编码将被强制为 {encoding}。",
+    "ru": "Кодировка выходных субтитров будет принудительно установлена на {encoding}.",
+    "pl": "Kodowanie napisów wyjściowych zostanie wymuszone na {encoding}.",
+    "uk": "Кодування вихідних субтитрів буде примусово встановлено на {encoding}.",
+    "ja": "出力字幕のエンコーディングは {encoding} に強制されます。",
+    "ko": "출력 자막 인코딩이 {encoding}로 강제 설정됩니다.",
+    "hi": "आउटपुट उपशीर्षक एनकोडिंग {encoding} पर मजबूर किया जाएगा।",
+    "bn": "আউটপুট সাবটাইটেল এনকোডিং {encoding} হিসাবে বাধ্যতামূলক করা হবে।",
+    "it": "La codifica dei sottotitoli di output sarà forzata a {encoding}.",
+    "fr": "L'encodage des sous-titres de sortie sera forcé à {encoding}.",
+    "de": "Ausgabe-Untertitel-Kodierung wird auf {encoding} gezwungen.",
+    "pt": "A codificação da legenda de saída será forçada para {encoding}.",
+    "ar": "سيتم فرض ترميز العناوين الفرعية المخرجة على {encoding}.",
+    "vi": "Mã hóa phụ đề đầu ra sẽ bị buộc là {encoding}.",
+    "fa": "کدگذاری زیرنویس خروجی به {encoding} اجباری خواهد شد.",
+    "id": "Encoding subtitle keluaran akan dipaksa ke {encoding}.",
+    "ms": "Pengekodan subtitle keluaran akan dipaksa ke {encoding}.",
+    "th": "การเข้ารหัสคำบรรยายเอาต์พุตจะถูกบังคับให้เป็น {encoding}",
+    "ur": "آؤٹ پٹ زیرنویس انکوڈنگ {encoding} پر مجبور کیا جائے گا۔",
 }
 ALASS_SPEED_OPTIMIZATION_TEXT = {
     "en": "Disable speed optimization",
@@ -5196,28 +5322,28 @@ ALASS_DISABLE_FPS_GUESSING_LOG = {
     "ur": "غیرفعال: FPS قیاس نہیں کیا جا رہا ہے...",
 }
 CHANGING_ENCODING_MSG = {
-    "en": "The synchronized subtitle's encoding does not match the input subtitle's encoding. Changing from {synced_subtitle_encoding} encoding to {encoding_inc} encoding...",
-    "es": "La codificación del subtítulo sincronizado no coincide con la codificación del subtítulo de entrada. Cambiando de codificación {synced_subtitle_encoding} a codificación {encoding_inc}...",
-    "tr": "Senkronize altyazının kodlaması, girdi altyazının kodlamasıyla eşleşmiyor. {synced_subtitle_encoding} kodlamasından {encoding_inc} kodlamasına geçiliyor...",
-    "zh": "同步字幕的编码与输入字幕的编码不匹配。正在从 {synced_subtitle_encoding} 编码更改为 {encoding_inc} 编码...",
-    "ru": "Кодировка синхронизированных субтитров не совпадает с кодировкой входных субтитров. Изменение кодировки с {synced_subtitle_encoding} на {encoding_inc}...",
-    "pl": "Kodowanie zsynchronizowanych napisów nie pasuje do kodowania napisów wejściowych. Zmiana kodowania z {synced_subtitle_encoding} na {encoding_inc}...",
-    "uk": "Кодування синхронізованих субтитрів не збігається з кодуванням вхідних субтитрів. Зміна кодування з {synced_subtitle_encoding} на {encoding_inc}...",
-    "ja": "同期した字幕のエンコーディングが入力字幕のエンコーディングと一致しません。エンコーディングを {synced_subtitle_encoding} から {encoding_inc} に変更しています...",
-    "ko": "동기화된 자막의 인코딩이 입력 자막의 인코딩과 일치하지 않습니다. 인코딩을 {synced_subtitle_encoding}에서 {encoding_inc}로 변경 중...",
-    "hi": "सिंक्रनाइज़ किए गए उपशीर्षक का एन्कोडिंग इनपुट उपशीर्षक के एन्कोडिंग से मेल नहीं खाता। एन्कोडिंग को {synced_subtitle_encoding} से {encoding_inc} में बदल रहा है...",
-    "bn": "সিঙ্ক্রোনাইজড সাবটাইটেলের এনকোডিং ইনপুট সাবটাইটেলের এনকোডিং এর সাথে মেলে না। {synced_subtitle_encoding} এনকোডিং থেকে {encoding_inc} এনকোডিং এ পরিবর্তন করা হচ্ছে...",
-    "it": "La codifica del sottotitolo sincronizzato non corrisponde alla codifica del sottotitolo di input. Cambio da codifica {synced_subtitle_encoding} a codifica {encoding_inc}...",
-    "fr": "L'encodage du sous-titre synchronisé ne correspond pas à l'encodage du sous-titre d'entrée. Changement de l'encodage {synced_subtitle_encoding} à l'encodage {encoding_inc}...",
-    "de": "Die Kodierung des synchronisierten Untertitels stimmt nicht mit der Kodierung des Eingabeuntertitels überein. Änderung der Kodierung von {synced_subtitle_encoding} zu {encoding_inc}...",
-    "pt": "A codificação da legenda sincronizada não corresponde à codificação da legenda de entrada. Mudando de codificação {synced_subtitle_encoding} para codificação {encoding_inc}...",
-    "ar": "ترميز الترجمة المتزامنة لا يتطابق مع ترميز الترجمة المدخلة. جاري التغيير من ترميز {synced_subtitle_encoding} إلى ترميز {encoding_inc}...",
-    "vi": "Bộ mã hóa của phụ đề đã đồng bộ không khớp với bộ mã hóa của phụ đề đầu vào. Đang thay đổi từ bộ mã hóa {synced_subtitle_encoding} sang bộ mã hóa {encoding_inc}...",
-    "fa": "رمزگذاری زیرنویس همگام شده با رمزگذاری زیرنویس ورودی مطابقت ندارد. از رمزگذاری {synced_subtitle_encoding} به رمزگذاری {encoding_inc} تغییر داده می‌شود...",
-    "id": "Pengodean subtitle yang disinkronkan tidak sesuai dengan pengodean subtitle masukan. Mengubah dari pengodean {synced_subtitle_encoding} ke pengodean {encoding_inc}...",
-    "ms": "Pengekodan sari kata yang diselaraskan tidak sepadan dengan pengekodan sari kata input. Menukar daripada pengekodan {synced_subtitle_encoding} kepada pengekodan {encoding_inc}...",
-    "th": "การเข้ารหัสคำบรรยายที่ซิงค์ไม่ตรงกับการเข้ารหัสของคำบรรยายที่ป้อน กำลังเปลี่ยนจากการเข้ารหัส {synced_subtitle_encoding} เป็นการเข้ารหัส {encoding_inc}...",
-    "ur": "ہم آہنگ شدہ سب ٹائٹل کی اینکوڈنگ ان پٹ سب ٹائٹل کی اینکوڈنگ سے مطابقت نہیں رکھتی۔ {synced_subtitle_encoding} اینکوڈنگ سے {encoding_inc} اینکوڈنگ میں تبدیل کیا جا رہا ہے...",
+    "en": "The synchronized subtitle's encoding does not match the input subtitle or desired encoding. Switching from {synced_subtitle_encoding} to {encoding_inc}...",
+    "es": "La codificación del subtítulo sincronizado no coincide con el subtítulo de entrada o la codificación deseada. Cambiando de {synced_subtitle_encoding} a {encoding_inc}...",
+    "tr": "Senkronize edilmiş altyazının kodlaması, giriş altyazısı veya istenen kodlama ile eşleşmiyor. {synced_subtitle_encoding} kodlamasından {encoding_inc} kodlamasına geçiliyor...",
+    "zh": "同步字幕的编码与输入字幕或所需编码不匹配。正在从 {synced_subtitle_encoding} 切换到 {encoding_inc}...",
+    "ru": "Кодировка синхронизированных субтитров не соответствует кодировке входных субтитров или желаемой кодировке. Переключение с {synced_subtitle_encoding} на {encoding_inc}...",
+    "pl": "Kodowanie zsynchronizowanego napisu nie jest zgodne z napisem wejściowym lub żądanym kodowaniem. Przełączanie z {synced_subtitle_encoding} na {encoding_inc}...",
+    "uk": "Кодування синхронізованих субтитрів не відповідає кодуванню вхідних субтитрів або бажаному кодуванню. Перемикання з {synced_subtitle_encoding} на {encoding_inc}...",
+    "ja": "同期された字幕のエンコーディングが入力字幕または希望するエンコーディングと一致しません。{synced_subtitle_encoding} から {encoding_inc} に切り替えています...",
+    "ko": "동기화된 자막의 인코딩이 입력 자막 또는 원하는 인코딩과 일치하지 않습니다. {synced_subtitle_encoding}에서 {encoding_inc}으로 전환 중...",
+    "hi": "सिंक्रनाइज़ किए गए उपशीर्षक की एन्कोडिंग इनपुट उपशीर्षक या वांछित एन्कोडिंग से मेल नहीं खाती। {synced_subtitle_encoding} से {encoding_inc} पर स्विच किया जा रहा है...",
+    "bn": "সিঙ্ক্রোনাইজড সাবটাইটেলের এনকোডিং ইনপুট সাবটাইটেল বা কাঙ্ক্ষিত এনকোডিংয়ের সাথে মিলে না। {synced_subtitle_encoding} থেকে {encoding_inc} এ পরিবর্তন করা হচ্ছে...",
+    "it": "La codifica del sottotitolo sincronizzato non corrisponde al sottotitolo di input o alla codifica desiderata. Passaggio da {synced_subtitle_encoding} a {encoding_inc}...",
+    "fr": "L'encodage du sous-titre synchronisé ne correspond pas à celui du sous-titre d'entrée ou à l'encodage souhaité. Passage de {synced_subtitle_encoding} à {encoding_inc}...",
+    "de": "Die Kodierung der synchronisierten Untertitel stimmt nicht mit der Eingabeuntertitel oder der gewünschten Kodierung überein. Wechsle von {synced_subtitle_encoding} zu {encoding_inc}...",
+    "pt": "A codificação da legenda sincronizada não corresponde à legenda de entrada ou à codificação desejada. Alternando de {synced_subtitle_encoding} para {encoding_inc}...",
+    "ar": "ترميز الترجمة المتزامنة لا يتطابق مع ترميز الإدخال أو الترميز المطلوب. التبديل من {synced_subtitle_encoding} إلى {encoding_inc}...",
+    "vi": "Mã hóa của phụ đề đã đồng bộ hóa không khớp với phụ đề đầu vào hoặc mã hóa mong muốn. Chuyển từ {synced_subtitle_encoding} sang {encoding_inc}...",
+    "fa": "رمزگذاری زیرنویس همگام شده با زیرنویس ورودی یا رمزگذاری موردنظر مطابقت ندارد. در حال تغییر از {synced_subtitle_encoding} به {encoding_inc}...",
+    "id": "Pengkodean subtitle yang disinkronkan tidak cocok dengan subtitle input atau pengkodean yang diinginkan. Beralih dari {synced_subtitle_encoding} ke {encoding_inc}...",
+    "ms": "Pengekodan subtitle yang disegerakkan tidak sepadan dengan subtitle input atau pengekodan yang dikehendaki. Beralih dari {synced_subtitle_encoding} ke {encoding_inc}...",
+    "th": "การเข้ารหัสของคำบรรยายที่ซิงค์แล้วไม่ตรงกับคำบรรยายอินพุตหรือการเข้ารหัสที่ต้องการ กำลังเปลี่ยนจาก {synced_subtitle_encoding} เป็น {encoding_inc}...",
+    "ur": "ہم آہنگ شدہ سب ٹائٹل کی انکوڈنگ ان پٹ سب ٹائٹل یا مطلوبہ انکوڈنگ سے مطابقت نہیں رکھتی ہے۔ {synced_subtitle_encoding} سے {encoding_inc} پر سوئچ کیا جا رہا ہے...",
 }
 ENCODING_CHANGED_MSG = {
     "en": "Encoding changed successfully.",

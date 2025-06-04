@@ -1,1 +1,6 @@
+- Added `Output subtitle encoding` option to allow users to force the encoding of the output subtitle file, mentioned in #36 by @babywin
+- Added `.smi` subtitle format support, mentioned in #40 by @SHRIMP159
 - Added `.vtt` to supported extensions for ffsubsync.
+- Switched to platformdirs for finding paths in different operating systems.
+- Separated some utility functions and configurations into different files.
+- Fixed alass not working in MacOS, fixes #38

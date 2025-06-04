@@ -8,3 +8,4 @@ tkmacosx
 requests
 pyinstaller
 psutil
+platformdirs

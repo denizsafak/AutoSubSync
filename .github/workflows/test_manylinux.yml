@@ -1,4 +1,4 @@
-name: AutoSubSync Test
+name: AutoSubSync Test Manylinux
 
 on:
   workflow_dispatch:
@@ -11,14 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-22.04, macos-latest, macos-13]
         include:
           - os: windows-latest
             build: win-x64
             file_name: win_amd64
-          - os: ubuntu-22.04
-            build: linux-x64
-            file_name: linux_amd64
           - os: macos-latest
             build: osx-arm64
             file_name: macos_arm64
@@ -27,12 +23,6 @@ jobs:
             file_name: macos_amd64
 
     runs-on: ${{ matrix.os }}
-
-    outputs:
-      version: ${{ steps.set-version.outputs.version }}
-      ffmpeg_version: ${{ steps.set-version.outputs.ffmpeg_version }}
-      ffsubsync_version: ${{ steps.set-version.outputs.ffsubsync_version }}
-      alass_version: ${{ steps.set-version.outputs.alass_version }}
 
     steps:
       - name: Check out the repository
@@ -44,20 +34,9 @@ jobs:
           python-version: 3.12.8
           cache: "pip"
 
-      - name: Install system dependencies (Linux)
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-venv python3-tk
-
       - name: Install required modules globally
         run: |
           pip install requests
-
-      - name: Check GLIBC version (Linux)
-        if: matrix.os == 'ubuntu-22.04'
-        run: |
-          ldd --version
 
       - name: Run build script
         run: |
@@ -67,6 +46,35 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ matrix.file_name }}
+          path: |
+            *.zip
+            *.tar.gz
+
+  build-linux-manylinux:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build in manylinux container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            quay.io/pypa/manylinux2014_x86_64 \
+            bash -c "
+              yum update -y && \
+              yum install -y tk-devel tcl-devel && \
+              export PATH=\"/opt/python/cp312-cp312/bin:\$PATH\" && \
+              python3.12 -m pip install --upgrade pip && \
+              python3.12 -m pip install requests && \
+              python3.12 build.py && \
+              find ./main/resources -type f -exec chmod +x {} \; 2>/dev/null || true
+            "
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-manylinux_amd64
           path: |
             *.zip
             *.tar.gz
