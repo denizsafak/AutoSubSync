@@ -1,4 +1,4 @@
-name: AutoSubSync Test
+name: AutoSubSync Test Manylinux
 
 on:
   workflow_dispatch:
