@@ -11,12 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-20.04, macos-latest, macos-13]
+        os: [windows-latest, ubuntu-22.04, macos-latest, macos-13]
         include:
           - os: windows-latest
             build: win-x64
             file_name: win_amd64
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             build: linux-x64
             file_name: linux_amd64
           - os: macos-latest
@@ -45,7 +45,7 @@ jobs:
           cache: "pip"
 
       - name: Install system dependencies (Linux)
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-venv python3-tk
@@ -55,7 +55,7 @@ jobs:
           pip install requests
 
       - name: Check GLIBC version (Linux)
-        if: matrix.os == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           ldd --version
 
@@ -87,7 +87,7 @@ jobs:
 
   release:
     needs: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Check out the repository
