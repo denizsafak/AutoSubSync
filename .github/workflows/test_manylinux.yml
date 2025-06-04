@@ -73,41 +73,18 @@ jobs:
               export PATH=\"\${PYTHON_DIR}/bin:\$PATH\" && \
               export LD_LIBRARY_PATH=\"\${PYTHON_DIR}/lib:\$LD_LIBRARY_PATH\" && \
               
-              # Find where the Python library actually is
+              # Find where the Python library actually is and copy it
               PYTHON_LIB=\$(find /opt -name 'libpython3.12*.so*' | head -n 1) && \
               echo \"Found Python library: \${PYTHON_LIB}\" && \
               
-              # If we found the library, create symbolic links
-              if [ ! -z \"\${PYTHON_LIB}\" ]; then
-                # Create directory if it doesn't exist
-                mkdir -p \${PYTHON_DIR}/lib && \
-                # Create the symbolic link with the full path
-                ln -sf \${PYTHON_LIB} \${PYTHON_DIR}/lib/libpython3.12.so && \
-                # Create additional symlinks in system directories
-                mkdir -p /usr/lib64 && \
-                ln -sf \${PYTHON_LIB} /usr/lib64/libpython3.12.so
-              else
-                # If we couldn't find it, try alternative approach for statically compiled Python
-                echo \"Python library not found, trying alternative approach...\" && \
-                # Make a dummy libpython so PyInstaller doesn't exit early
-                touch \${PYTHON_DIR}/lib/libpython3.12.so && \
-                # Create PyInstaller configuration to use staticlib
-                mkdir -p ~/.pyinstaller && \
-                echo 'import PyInstaller.compat' > ~/.pyinstaller/config.py && \
-                echo 'PyInstaller.compat.is_linux = False  # Bypass Linux shared library check' >> ~/.pyinstaller/config.py
-              fi && \
+              # Create lib directory and copy Python shared library
+              mkdir -p /workspace/lib && \
+              cp -L \${PYTHON_LIB} /workspace/lib/libpython3.12.so.1.0 && \
               
-              # Debug info before build
-              echo \"Python version:\" && python --version && \
-              echo \"Python executable:\" && which python && \
-              echo \"Looking for Python libraries:\" && \
-              find /opt -name 'libpython3.12*.so*' | xargs ls -la 2>/dev/null || echo \"No libraries found\" && \
+              # Add the library to PyInstaller spec file
+              sed -i '/^a = Analysis/a binaries=[(\"lib/libpython3.12.so.1.0\", \".\")], ' build.spec && \
               
-              # Install basic pip packages to ensure system has what it needs
-              python -m pip install --upgrade pip setuptools wheel && \
-              python -m pip install requests && \
-              
-              # Run the build script which creates its own venv
+              # Run the build script
               python build.py
             "
 
