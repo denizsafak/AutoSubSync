@@ -83,6 +83,7 @@ This is an example use case of AutoSubSync. In this scenario, the tool automatic
 - **Log records and options:** `Keep log records`, `Open logs folder`, and `Clear all logs`
 - **Additional arguments for ffsubsync:** Configure additional arguments for ffsubsync.
 - **Additional arguments for alass:** Configure additional arguments for alass.
+- **Output subtitle encoding:** Force the encoding for the output subtitle file. Options include `UTF-8`, `UTF-16`, `ISO-8859-1`, and more.
 - **Check video for subtitle stream in alass:** Toggle for checking the subtitle streams in video for alass.
 - **Backup subtitles before overwriting:** Toggle for creating a backup of subtitles before overwriting them.
 - **Add "autosync_" prefix to subtitles:** Toggle for adding a prefix to the synchronized subtitles.

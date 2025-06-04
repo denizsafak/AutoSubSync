@@ -16,13 +16,14 @@ from tkinterdnd2 import DND_FILES, TkinterDnD
 import requests
 import psutil
 import signal
+import ctypes
+import cchardet, charset_normalizer, chardet
 from alass_encodings import enc_list
 from functions.get_platform import platform
 from constants import *
 from theme import *
 from texts_constants import *
-from utils import *
-from config import VERSION, config
+from config import VERSION, config, default_settings
 from functions.get_config import config_dir, config_path
 from functions.get_desktop_path import desktop_path
 
@@ -95,6 +96,167 @@ if platform in ["Darwin", "Linux"]:
                     )
     if errors:
         messagebox.showerror("Permission Error", "\n".join(errors))
+
+
+
+default_encoding = sys.getfilesystemencoding()
+
+def create_process(cmd):
+    kwargs = {
+        "shell": True,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.STDOUT,
+        "universal_newlines": True,
+        "encoding": default_encoding,
+        "errors": "replace",
+    }
+
+    if platform == "Windows":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        kwargs.update(
+            {"startupinfo": startupinfo, "creationflags": subprocess.CREATE_NO_WINDOW}
+        )
+
+    return subprocess.Popen(cmd, **kwargs)
+
+
+def update_config(key, value):
+    global config
+    if config.get("remember_the_changes", True) or key == "remember_the_changes":
+        try:
+            with open(config_path, "r", encoding="utf-8") as config_file:
+                config = json.load(config_file)
+        except FileNotFoundError:
+            config = {}
+            messagebox.showerror("Error", CONFIG_FILE_NOT_FOUND)
+        config[key] = value
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            json.dump(config, config_file, indent=4)
+
+
+def reset_to_default_settings():
+    if messagebox.askyesno(WARNING, CONFIRM_RESET_MESSAGE):
+        for key, value in default_settings.items():
+            update_config(key, value)
+        restart_program()
+        
+
+def restart_program():
+    python = sys.executable
+    if getattr(sys, "frozen", False):
+        # Running as an executable
+        os.execl(python, python)
+    else:
+        # Running as a script
+        script_path = os.path.abspath(__file__)
+        os.execl(python, python, script_path)
+
+
+def detect_encoding(file_path):
+    with open(file_path, "rb") as f:
+        raw_data = f.read()
+    detected_encoding = None
+    for detectors in (cchardet, charset_normalizer, chardet):
+        try:
+            result = detectors.detect(raw_data)["encoding"]
+        except Exception:
+            continue
+        if result is not None:
+            detected_encoding = result
+            break
+    encoding = detected_encoding if detected_encoding else "utf-8"
+    return encoding.lower()
+
+
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tooltip = None
+        self.widget.bind("<Enter>", self.show_tooltip)
+        self.widget.bind("<Leave>", self.hide_tooltip)
+        self.widget.bind("<Button-1>", self.hide_tooltip)
+
+    def show_tooltip(self, event=None):
+        if self.tooltip is None:
+            # Get the position of the widget
+            x_pos = self.widget.winfo_rootx()
+            y_pos = (
+                self.widget.winfo_rooty() + self.widget.winfo_height()
+            )  # Adjust tooltip position below the widget
+            # Calculate the screen dimensions
+            screen_width = self.widget.winfo_screenwidth()
+            screen_height = self.widget.winfo_screenheight()
+            # Create a temporary label to calculate the width based on content
+            temp_label = tk.Label(text=self.text)
+            # removed font=("tahoma", "8", "normal") from label
+            temp_label.update_idletasks()
+            content_width = (
+                temp_label.winfo_reqwidth()
+            )  # Get the required width of the content
+            # Set the tooltip width based on content width, limited to a maximum of 200
+            tooltip_width = min(content_width, 200)
+            # Calculate wraplength dynamically
+            wraplength = min(content_width, 200)
+            # Create the tooltip at the calculated position
+            self.tooltip = tk.Toplevel(self.widget)
+            self.tooltip.wm_overrideredirect(True)
+            self.tooltip.attributes("-topmost", True)  # Make the tooltip window topmost
+            # Adjust tooltip position to stay within the screen bounds
+            if x_pos + tooltip_width > screen_width:
+                x_pos = screen_width - tooltip_width
+            if y_pos + self.widget.winfo_height() > screen_height:
+                y_pos = screen_height - self.widget.winfo_height() - 3
+            # Adjust tooltip position to avoid covering the button
+            y_pos = max(y_pos, 0)
+            # Adjust tooltip position if too far to the left
+            x_pos = max(x_pos, 0)
+            self.tooltip.wm_geometry("+%d+%d" % (x_pos, y_pos))
+            label = tk.Label(
+                self.tooltip,
+                text=self.text,
+                justify=tk.LEFT,
+                wraplength=wraplength,
+                background="#ffffe0",
+                foreground="black",
+                relief=tk.SOLID,
+                borderwidth=1,
+            )
+            # removed font=("tahoma", "8", "normal") from label
+            label.pack(ipadx=1)
+
+    def hide_tooltip(self, event=None):
+        if self.tooltip:
+            self.tooltip.destroy()
+            self.tooltip = None
+
+
+def dark_title_bar(window):
+    if platform == "Windows" and THEME == "dark":
+        try:
+            window.update()
+            DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+            set_window_attribute = ctypes.windll.dwmapi.DwmSetWindowAttribute
+            get_parent = ctypes.windll.user32.GetParent
+            hwnd = get_parent(window.winfo_id())
+            rendering_policy = DWMWA_USE_IMMERSIVE_DARK_MODE
+            value = 2
+            value = ctypes.c_int(value)
+            set_window_attribute(
+                hwnd, rendering_policy, ctypes.byref(value), ctypes.sizeof(value)
+            )
+        except Exception:
+            pass
+    elif platform == "Linux":
+        # No direct equivalent for Linux, but you could set window properties
+        try:
+            window.attributes("-type", "normal")
+            if THEME == "dark":
+                window.attributes("-alpha", 0.95)  # Slightly transparent for dark theme
+        except Exception:
+            pass
 
 # Save the updated configuration
 try:
@@ -1240,6 +1402,169 @@ def open_settings(event):
     settings_menu.entryconfig(LABEL_CLEAR_ALL_LOGS, state=log_state)
     settings_menu.post(event.x_root, event.y_root)
 
+def get_available_encodings():
+    """Get a sorted list of available encodings with user-friendly names."""
+    # Dictionary mapping Python codec names to their display names
+    codec_display_names = {
+        # Most common encodings listed first for easy access
+        'utf_8': 'UTF-8',
+        'latin_1': 'ISO-8859-1 (Latin-1)',
+        'ascii': 'ASCII',
+        'cp1252': 'Windows-1252',
+        'utf_8_sig': 'UTF-8 with BOM',
+        'utf_16': 'UTF-16',
+        'utf_16_le': 'UTF-16 LE',
+        'utf_16_be': 'UTF-16 BE',
+        'utf_32': 'UTF-32',
+        'utf_32_le': 'UTF-32 LE',
+        'utf_32_be': 'UTF-32 BE',
+        
+        # East Asian encodings
+        'big5': 'Big5 (Chinese)',
+        'big5hkscs': 'Big5-HKSCS (Chinese)',
+        'gb2312': 'GB2312 (Chinese)',
+        'gbk': 'GBK (Chinese)',
+        'gb18030': 'GB18030 (Chinese)',
+        'hz': 'HZ (Chinese)',
+        'cp932': 'CP932 (Japanese)',
+        'euc_jp': 'EUC-JP (Japanese)',
+        'shift_jis': 'Shift-JIS (Japanese)',
+        'shift_jis_2004': 'Shift-JIS-2004 (Japanese)',
+        'shift_jisx0213': 'Shift-JISX0213 (Japanese)',
+        'euc_jis_2004': 'EUC-JIS-2004 (Japanese)',
+        'euc_jisx0213': 'EUC-JISX0213 (Japanese)',
+        'iso2022_jp': 'ISO-2022-JP (Japanese)',
+        'iso2022_jp_1': 'ISO-2022-JP-1 (Japanese)',
+        'iso2022_jp_2': 'ISO-2022-JP-2 (Japanese)',
+        'iso2022_jp_2004': 'ISO-2022-JP-2004 (Japanese)',
+        'iso2022_jp_3': 'ISO-2022-JP-3 (Japanese)',
+        'iso2022_jp_ext': 'ISO-2022-JP-EXT (Japanese)',
+        'cp949': 'CP949 (Korean)',
+        'euc_kr': 'EUC-KR (Korean)',
+        'johab': 'Johab (Korean)',
+        'iso2022_kr': 'ISO-2022-KR (Korean)',
+        'cp950': 'CP950 (Chinese)',
+        
+        # Cyrillic encodings
+        'cp866': 'CP866 (Cyrillic)',
+        'cp1251': 'Windows-1251 (Cyrillic)',
+        'iso8859_5': 'ISO-8859-5 (Cyrillic)',
+        'koi8_r': 'KOI8-R (Russian)',
+        'koi8_u': 'KOI8-U (Ukrainian)',
+        'koi8_t': 'KOI8-T',
+        'kz1048': 'KZ-1048',
+        'cp1125': 'CP1125 (Ukrainian)',
+        'mac_cyrillic': 'Mac Cyrillic',
+        'ptcp154': 'PTCP154 (Cyrillic Asian)',
+        
+        # European encodings
+        'cp437': 'CP437 (DOS)',
+        'cp850': 'CP850 (DOS)',
+        'cp852': 'CP852 (DOS)',
+        'cp857': 'CP857 (DOS Turkish)',
+        'cp858': 'CP858 (DOS with Euro)',
+        'cp1250': 'Windows-1250 (Central Europe)',
+        'cp1253': 'Windows-1253 (Greek)',
+        'cp1254': 'Windows-1254 (Turkish)',
+        'cp1257': 'Windows-1257 (Baltic)',
+        'iso8859_2': 'ISO-8859-2 (Central Europe)',
+        'iso8859_3': 'ISO-8859-3 (South Europe)',
+        'iso8859_4': 'ISO-8859-4 (North Europe)',
+        'iso8859_9': 'ISO-8859-9 (Turkish)',
+        'iso8859_10': 'ISO-8859-10 (Nordic)',
+        'iso8859_13': 'ISO-8859-13 (Baltic)',
+        'iso8859_14': 'ISO-8859-14 (Celtic)',
+        'iso8859_15': 'ISO-8859-15 (Western Europe)',
+        'iso8859_16': 'ISO-8859-16 (South-Eastern Europe)',
+        'mac_latin2': 'Mac Latin-2',
+        'mac_roman': 'Mac Roman',
+        'mac_turkish': 'Mac Turkish',
+        'mac_iceland': 'Mac Icelandic',
+        
+        # Middle Eastern encodings
+        'cp856': 'CP856 (Hebrew)',
+        'cp862': 'CP862 (DOS Hebrew)',
+        'cp864': 'CP864 (DOS Arabic)',
+        'cp1255': 'Windows-1255 (Hebrew)',
+        'cp1256': 'Windows-1256 (Arabic)',
+        'iso8859_6': 'ISO-8859-6 (Arabic)',
+        'iso8859_7': 'ISO-8859-7 (Greek)',
+        'iso8859_8': 'ISO-8859-8 (Hebrew)',
+        'mac_greek': 'Mac Greek',
+        
+        # Other encodings
+        'cp037': 'CP037 (IBM EBCDIC)',
+        'cp273': 'CP273 (IBM EBCDIC)',
+        'cp424': 'CP424 (IBM EBCDIC)',
+        'cp500': 'CP500 (IBM EBCDIC)',
+        'cp720': 'CP720 (Arabic)',
+        'cp737': 'CP737 (Greek)',
+        'cp775': 'CP775 (Baltic)',
+        'cp855': 'CP855 (DOS Cyrillic)',
+        'cp860': 'CP860 (Portuguese)',
+        'cp861': 'CP861 (Icelandic)',
+        'cp863': 'CP863 (Canadian)',
+        'cp865': 'CP865 (Nordic)',
+        'cp869': 'CP869 (Greek)',
+        'cp874': 'CP874 (Thai)',
+        'cp875': 'CP875 (EBCDIC Greek)',
+        'cp1006': 'CP1006 (Urdu)',
+        'cp1026': 'CP1026 (IBM EBCDIC)',
+        'cp1140': 'CP1140 (IBM EBCDIC)',
+        'cp1258': 'Windows-1258 (Vietnamese)',
+        'iso8859_11': 'ISO-8859-11 (Thai)',
+        'utf_7': 'UTF-7',
+    }
+    
+    # Define the order of most common encodings
+    common_encodings = [
+        'ascii',
+        'utf_8',
+        'utf_8_sig',
+        'utf_16',
+        'utf_16_le',
+        'utf_16_be',
+        'utf_32',
+        'utf_32_le',
+        'utf_32_be',
+        'cp1252',
+        'latin_1',
+    ]
+    
+    # Build result list with common encodings first, then others alphabetically
+    result = []
+    
+    # Add common encodings in the specified order
+    for enc in common_encodings:
+        if enc in codec_display_names:
+            result.append((enc, codec_display_names[enc]))
+    
+    # Add all other encodings alphabetically by display name
+    for enc, name in sorted(codec_display_names.items(), key=lambda x: x[1]):
+        if enc not in common_encodings:
+            result.append((enc, name))
+    
+    return result
+
+def set_override_encoding(encoding=None):
+    """Set or clear the override encoding."""
+    global override_subtitle_encoding
+    if encoding and encoding.lower() != "none":
+        override_subtitle_encoding = encoding
+        update_config("override_subtitle_encoding", override_subtitle_encoding)
+        messagebox.showinfo(
+            OVERRIDE_ENCODING,
+            ENCODING_WILL_BE_FORCED_TEXT.format(
+                encoding=override_subtitle_encoding
+            )
+        )
+    else:
+        override_subtitle_encoding = None
+        update_config("override_subtitle_encoding", None)
+        messagebox.showinfo(
+            OVERRIDE_ENCODING,
+            AUTOMATIC_ENCODING_TEXT
+        )
 
 logs_exist = check_logs_exist()
 log_state = "normal" if logs_exist > 0 else "disabled"
@@ -1247,6 +1572,7 @@ keep_logs = config.get("keep_logs", True)
 notify_about_updates = config.get("notify_about_updates", True)
 keep_converted_subtitles = config.get("keep_converted_subtitles", False)
 keep_extracted_subtitles = config.get("keep_extracted_subtitles", False)
+override_subtitle_encoding = config.get("override_subtitle_encoding", None)
 additional_ffsubsync_args = config.get("additional_ffsubsync_args", "")
 additional_alass_args = config.get("additional_alass_args", "")
 add_prefix = config.get("add_prefix", True)
@@ -1312,6 +1638,31 @@ settings_menu.add_command(
     label=LABEL_ADDITIONAL_ALASS_ARGS, command=update_additional_alass_args
 )
 settings_menu.add_separator()
+# Add Override subtitle encoding submenu
+encoding_menu = Menu(settings_menu, tearoff=0)
+encodings_list = get_available_encodings()
+# Create a single StringVar to track the selected encoding
+encoding_var = tk.StringVar(value=override_subtitle_encoding or "None")
+# First add the Auto Detect option
+encoding_menu.add_radiobutton(
+    label=DEFAULT_AUTO_DETECT,
+    variable=encoding_var,
+    value="None",
+    command=lambda: set_override_encoding(None)
+)
+encoding_menu.add_separator()
+# Add available encodings to the menu
+for enc_value, enc_display in encodings_list:
+    encoding_menu.add_radiobutton(
+        label=enc_display,
+        variable=encoding_var,
+        value=enc_value,
+        command=lambda e=enc_value: set_override_encoding(e)
+    )
+settings_menu.add_cascade(
+    label=OUTPUT_SUBTITLE_ENCODING,
+    menu=encoding_menu
+)
 settings_menu.add_checkbutton(
     label=LABEL_CHECK_VIDEO_FOR_SUBTITLE_STREAM,
     command=toggle_check_video_for_subtitle_stream_in_alass,
@@ -1363,6 +1714,7 @@ settings_menu.add_command(
 )
 settings_label.bind("<Button-1>", open_settings)
 settings_label.grid(row=0, column=1, sticky="ne", padx=(5, 10), pady=(10, 0))
+
 # settings end
 
 # Customizing the style of the tabs
@@ -2715,10 +3067,12 @@ def start_batch_sync():
                             cmd += f" --encoding-inc={encoding_inc}"
                             returncode, decoding_error_occurred = execute_cmd(cmd)
                         synced_subtitle_encoding = detect_encoding(output_subtitle_file)
-                        if synced_subtitle_encoding != encoding_inc:
+                        if synced_subtitle_encoding != encoding_inc or (override_subtitle_encoding and synced_subtitle_encoding != override_subtitle_encoding):
+                            # Use override_subtitle_encoding if it's set
+                            target_encoding = override_subtitle_encoding if override_subtitle_encoding else encoding_inc
                             change_encoding_msg = CHANGING_ENCODING_MSG.format(
                                 synced_subtitle_encoding=synced_subtitle_encoding,
-                                encoding_inc=encoding_inc,
+                                encoding_inc=target_encoding,
                             )
                             log_window.insert(tk.END, "\n" + change_encoding_msg + "\n")
                             try:
@@ -2732,7 +3086,7 @@ def start_batch_sync():
                                 with open(
                                     output_subtitle_file,
                                     "w",
-                                    encoding=encoding_inc,
+                                    encoding=target_encoding,
                                     errors="replace",
                                 ) as f:
                                     f.write(content)
@@ -2761,6 +3115,42 @@ def start_batch_sync():
                                     tk.END, f"{DELETING_CONVERTED_SUBTITLE}\n\n"
                                 )
                                 os.remove(subtitle_file_converted)
+                    else:
+                        if override_subtitle_encoding:
+                            synced_subtitle_encoding = detect_encoding(output_subtitle_file)
+                            # Only change encoding if the detected encoding differs from the override encoding
+                            if synced_subtitle_encoding != override_subtitle_encoding:
+                                change_encoding_msg = CHANGING_ENCODING_MSG.format(
+                                    synced_subtitle_encoding=detect_encoding(
+                                        output_subtitle_file
+                                    ),
+                                    encoding_inc=override_subtitle_encoding,
+                                )
+                                log_window.insert(tk.END, "\n" + change_encoding_msg + "\n")
+                                try:
+                                    with open(
+                                        output_subtitle_file,
+                                        "r",
+                                        encoding=synced_subtitle_encoding,
+                                        errors="replace",
+                                    ) as f:
+                                        content = f.read()
+                                    with open(
+                                        output_subtitle_file,
+                                        "w",
+                                        encoding=override_subtitle_encoding,
+                                        errors="replace",
+                                    ) as f:
+                                        f.write(content)
+                                    log_window.insert(
+                                        tk.END, "\n" + ENCODING_CHANGED_MSG + "\n"
+                                    )
+                                except Exception as e:
+                                    error_msg = ERROR_CHANGING_ENCODING_MSG.format(
+                                        error_message=str(e)
+                                    )
+                                    log_window.insert(tk.END, "\n" + error_msg + "\n")
+                            
                     if cancel_flag_batch:
                         return False
                     if returncode == 0:
@@ -5131,10 +5521,11 @@ def start_automatic_sync():
                     returncode, decoding_error_occurred = execute_cmd(cmd)
                 synced_subtitle_encoding = detect_encoding(output_subtitle_file)
                 # If the encoding of synced subtitle is not the same as encoding_inc, change it
-                if synced_subtitle_encoding != encoding_inc:
+                if synced_subtitle_encoding != encoding_inc or (override_subtitle_encoding and synced_subtitle_encoding != override_subtitle_encoding):
+                    target_encoding = override_subtitle_encoding if override_subtitle_encoding else encoding_inc
                     change_encoding_msg = CHANGING_ENCODING_MSG.format(
                         synced_subtitle_encoding=synced_subtitle_encoding,
-                        encoding_inc=encoding_inc,
+                        encoding_inc=target_encoding,
                     )
                     log_window.insert(tk.END, "\n" + change_encoding_msg + "\n")
                     try:
@@ -5148,7 +5539,7 @@ def start_automatic_sync():
                         with open(
                             output_subtitle_file,
                             "w",
-                            encoding=encoding_inc,
+                            encoding=target_encoding,
                             errors="replace",
                         ) as f:
                             f.write(content)
@@ -5172,6 +5563,41 @@ def start_automatic_sync():
                     if subtitle_file_converted:
                         log_window.insert(tk.END, f"\n{DELETING_CONVERTED_SUBTITLE}\n")
                         os.remove(subtitle_file_converted)
+            else:
+                if override_subtitle_encoding:
+                    synced_subtitle_encoding = detect_encoding(output_subtitle_file)
+                    # Only change encoding if the detected encoding differs from the override encoding
+                    if synced_subtitle_encoding != override_subtitle_encoding:
+                        change_encoding_msg = CHANGING_ENCODING_MSG.format(
+                            synced_subtitle_encoding=detect_encoding(
+                                output_subtitle_file
+                            ),
+                            encoding_inc=override_subtitle_encoding,
+                        )
+                        log_window.insert(tk.END, "\n" + change_encoding_msg + "\n")
+                        try:
+                            with open(
+                                output_subtitle_file,
+                                "r",
+                                encoding=synced_subtitle_encoding,
+                                errors="replace",
+                            ) as f:
+                                content = f.read()
+                            with open(
+                                output_subtitle_file,
+                                "w",
+                                encoding=override_subtitle_encoding,
+                                errors="replace",
+                            ) as f:
+                                f.write(content)
+                            log_window.insert(
+                                tk.END, "\n" + ENCODING_CHANGED_MSG + "\n"
+                            )
+                        except Exception as e:
+                            error_msg = ERROR_CHANGING_ENCODING_MSG.format(
+                                error_message=str(e)
+                            )
+                            log_window.insert(tk.END, "\n" + error_msg + "\n")
             if cancel_flag:
                 return
             if process:
