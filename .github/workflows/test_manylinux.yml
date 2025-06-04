@@ -64,33 +64,33 @@ jobs:
             bash -c "
               # Install system dependencies
               yum install -y tk-devel tcl-devel gcc which && \
+              
               # Find Python 3.12 in the container
               PYTHON_DIR=\$(find /opt/python -name 'cp312*' | sort | head -n 1) && \
               echo \"Using Python directory: \${PYTHON_DIR}\" && \
-              # Set environment variables
-              export LD_LIBRARY_PATH=\"\${PYTHON_DIR}/lib:\$LD_LIBRARY_PATH\" && \
+              
+              # Set environment variables for Python and PyInstaller
               export PATH=\"\${PYTHON_DIR}/bin:\$PATH\" && \
-              export PYTHONHOME=\"\${PYTHON_DIR}\" && \
-              # Create virtual environment
-              \${PYTHON_DIR}/bin/python -m venv /workspace/venv && \
-              source /workspace/venv/bin/activate && \
-              # Install build dependencies
-              pip install --upgrade pip && \
-              pip install requests pyinstaller==6.14.0 && \
-              # Debug information
-              echo \"Python version:\" && \
-              python --version && \
-              echo \"PyInstaller version:\" && \
-              pyinstaller --version && \
-              echo \"Python library location:\" && \
-              find \${PYTHON_DIR} -name 'libpython*.so*' && \
-              # Set paths for PyInstaller
-              export PYTHONPATH=\"\${PYTHON_DIR}/lib\" && \
-              # Run build script
-              cd /workspace && \
-              python build.py && \
-              # Make sure all files are executable
-              find ./main/resources -type f -exec chmod +x {} \; 2>/dev/null || true
+              export LD_LIBRARY_PATH=\"\${PYTHON_DIR}/lib:\$LD_LIBRARY_PATH\" && \
+              
+              # Create symbolic links for Python shared library
+              PYTHON_LIB=\$(find \${PYTHON_DIR}/lib -name 'libpython3.12*.so.*' | head -n 1) && \
+              echo \"Found Python library: \${PYTHON_LIB}\" && \
+              ln -sf \${PYTHON_LIB} \${PYTHON_DIR}/lib/libpython3.12.so && \
+              
+              # Create additional symlinks in system directories
+              mkdir -p /usr/lib64 && \
+              ln -sf \${PYTHON_LIB} /usr/lib64/\$(basename \${PYTHON_LIB}) && \
+              ln -sf \${PYTHON_LIB} /usr/lib64/libpython3.12.so && \
+              
+              # Debug info before build
+              echo \"Python version:\" && python --version && \
+              echo \"Shared library links:\" && \
+              ls -la \${PYTHON_DIR}/lib/libpython* && \
+              ls -la /usr/lib64/libpython* && \
+              
+              # Run the build script which creates its own venv
+              python build.py
             "
 
       - name: Upload build artifacts
