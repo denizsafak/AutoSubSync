@@ -15,6 +15,9 @@ import charset_normalizer
 import chardet
 from tkinter import messagebox
 
+# Set the working directory to the script's directory
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 default_encoding = sys.getfilesystemencoding()
 
 def create_process(cmd):

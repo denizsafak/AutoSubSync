@@ -3,6 +3,9 @@ import json
 from tkinter import messagebox
 from functions.get_config import config_path
 
+# Set the working directory to the script's directory
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # Config file
 default_settings = {
     "theme": "system",
@@ -47,5 +50,5 @@ try:
     with open("VERSION", "r", encoding="utf-8") as version_file:
         VERSION = version_file.read().strip()
 except FileNotFoundError:
-    VERSION = " UNKNOWN VERSION"
-    messagebox.showerror("Error", '"VERSION" file not found')
+    VERSION = " UNKNOWN"
+    messagebox.showerror("Error", '"VERSION" file not found in: '+ os.getcwd())

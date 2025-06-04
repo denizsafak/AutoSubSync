@@ -210,6 +210,15 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
             r"(\d{1,2}:\d{2}:\d{2}\.\d{2}),(\d{1,2}:\d{2}:\d{2}\.\d{2})", replacer, line
         )
 
+    def shift_time_smi(line):
+        def replacer(match):
+            start_ms = int(match.group(1))
+            shifted_ms = start_ms + milliseconds
+            shifted_ms = max(0, shifted_ms)  # Ensure timestamp doesn't go negative
+            return f"<SYNC Start={shifted_ms}"
+
+        return re.sub(r"<SYNC Start=(\d+)", replacer, line)
+
     # Helper to shift individual timestamps
     def shift_timestamp(timestamp, format_type, original_time_str=None):
         ms = time_to_milliseconds(timestamp, format_type)
@@ -246,6 +255,9 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
                 parts = re.split(r"[:.]", time_str)
                 h, m, s, f = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + (f * 40)  # Assuming 25 fps
+            if format_type == "smi":
+                # SMI format uses milliseconds directly
+                return int(time_str)
             if format_type == "dfxp":
                 parts = re.split(r"[:.,]", time_str)
                 h, m, s = map(int, parts[:3])
@@ -324,6 +336,9 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
             return f"{h:02}:{m:02}:{s:02}:{f:02}"
         if format_type == "dfxp":
             return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
+        if format_type == "smi":
+            # SMI format uses milliseconds directly
+            return str(ms)
         if format_type in ["ttml", "itt"]:
             if original_time_str:
                 if ":" in original_time_str:
@@ -367,6 +382,8 @@ def shift_subtitle(subtitle_file, milliseconds, save_to_desktop, replace_origina
             new_lines.append(shift_time_ttml(line))
         elif file_extension in [".ass", ".ssa"]:
             new_lines.append(shift_time_ass_ssa(line))
+        elif file_extension == ".smi":
+            new_lines.append(shift_time_smi(line))
         else:
             new_lines.append(line)
     # Define file save location and handle existing files
@@ -1846,6 +1863,122 @@ def convert_stl_time(time_str):
     return f"{int(total_seconds)//3600:02}:{(int(total_seconds)%3600)//60:02}:{int(total_seconds)%60:02},{ms:03}"
 
 
+def convert_smi_to_srt(input_file, output_file):
+    encoding = detect_encoding(input_file)
+    
+    try:
+        with open(input_file, "r", encoding=encoding, errors="replace") as smi:
+            content = smi.read()
+            
+        # Extract all SYNC blocks with their timestamps
+        sync_blocks = re.findall(
+            r'<SYNC\s+Start=(\d+)(?:\s+[^>]*)?>(.*?)(?=<SYNC|</BODY|\Z)',
+            content,
+            re.DOTALL | re.IGNORECASE
+        )
+        
+        if not sync_blocks:
+            raise ValueError("No valid SYNC blocks found in SMI file")
+        
+        with open(output_file, "w", encoding="utf-8") as srt:
+            srt_counter = 1
+            
+            for i, (start_ms_str, text_block) in enumerate(sync_blocks):
+                start_ms = int(start_ms_str)
+                
+                # Calculate end time
+                if i < len(sync_blocks) - 1:
+                    end_ms = int(sync_blocks[i+1][0])
+                else:
+                    # Default duration for the last subtitle
+                    end_ms = start_ms + 5000
+                
+                # Skip empty blocks that only serve to clear previous text
+                if not text_block.strip() or text_block.strip() == "&nbsp;":
+                    continue
+                
+                # Extract text from P tags and clean HTML formatting
+                clean_text = ""
+                
+                # Find all P tags in the text block
+                p_tags = re.finditer(r'<P[^>]*>(.*?)(?=</P>|$)', text_block, re.DOTALL | re.IGNORECASE)
+                
+                for match in p_tags:
+                    # Get the content between <P> and </P>
+                    p_content = match.group(1).strip()
+                    
+                    if not p_content or p_content == "&nbsp;":
+                        continue
+                    
+                    # First, handle <br> tags by replacing with a special marker
+                    # This ensures they're preserved during other HTML tag removal
+                    p_content = re.sub(r'<br\s*/?>|<BR\s*/?>', '\n', p_content, flags=re.IGNORECASE)
+                    
+                    # Remove other HTML tags but preserve their content
+                    p_content = re.sub(r'<[^>]*>', '', p_content)
+                    
+                    # Decode HTML entities
+                    html_entities = {
+                        '&nbsp;': ' ',
+                        '&lt;': '<',
+                        '&gt;': '>',
+                        '&amp;': '&',
+                        '&quot;': '"',
+                        '&#39;': "'",
+                        '&hellip;': '...',
+                        '&mdash;': '—',
+                        '&ndash;': '–',
+                        '&lsquo;': ''',
+                        '&rsquo;': ''',
+                        '&ldquo;': '"',
+                        '&rdquo;': '"'
+                    }
+                    
+                    for entity, replacement in html_entities.items():
+                        p_content = p_content.replace(entity, replacement)
+                    
+                    # Clean up whitespace while preserving newlines
+                    lines = p_content.split('\n')
+                    cleaned_lines = []
+                    for line in lines:
+                        # Replace multiple spaces with a single space and trim
+                        cleaned_line = re.sub(r'\s+', ' ', line).strip()
+                        if cleaned_line:  # Only add non-empty lines
+                            cleaned_lines.append(cleaned_line)
+                    
+                    p_content = '\n'.join(cleaned_lines)
+                    
+                    if p_content:
+                        clean_text += p_content + "\n"
+                
+                clean_text = clean_text.strip()
+                
+                # Skip if there's no text content after cleaning
+                if not clean_text:
+                    continue
+                
+                # Format timestamps for SRT
+                start_time = format_ms_to_srt_time(start_ms)
+                end_time = format_ms_to_srt_time(end_ms)
+                
+                # Write SRT entry
+                srt.write(f"{srt_counter}\n")
+                srt.write(f"{start_time} --> {end_time}\n")
+                srt.write(f"{clean_text}\n\n")
+                srt_counter += 1
+                
+    except Exception as e:
+        print(f"Error converting SMI to SRT: {str(e)}")
+        raise
+
+def format_ms_to_srt_time(ms):
+    """Convert milliseconds to SRT time format (HH:MM:SS,mmm)"""
+    s, ms = divmod(ms, 1000)
+    m, s = divmod(s, 60)
+    h, m = divmod(m, 60)
+    return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
+
+
 def strip_namespace(tag):
     if "}" in tag:
         return tag.split("}", 1)[1]
@@ -1872,6 +2005,7 @@ def convert_to_srt(subtitle_file, output_dir, log_window):
         ".ass": convert_ass_to_srt,
         ".ssa": convert_ass_to_srt,
         ".stl": convert_stl_to_srt,
+        ".smi": convert_smi_to_srt,
     }
     converter = converters.get(file_extension)
     if converter:

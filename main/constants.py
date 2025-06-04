@@ -40,6 +40,7 @@ SUBTITLE_EXTENSIONS = [
     ".itt",
     ".stl",
     ".idx",
+    ".smi",
 ]
 VIDEO_EXTENSIONS = [
     ".mp4",

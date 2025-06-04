@@ -1,3 +1,5 @@
 - Switched to platformdirs for finding paths in different operating systems.
 - Separated some utility functions and configurations into different files.
+- Fixed alass not working in MacOS.
+- Added `.smi` subtitle format support, mentioned in #40 by @SHRIMP159
 - Added `.vtt` to supported extensions for ffsubsync.
