@@ -116,5 +116,5 @@ jobs:
         with:
           name: build-artifacts-manylinux_amd64
           path: |
-            dist/*.zip
-            dist/*.tar.gz
+            AutoSubSync-v*.zip
+            AutoSubSync-v*.tar.gz
