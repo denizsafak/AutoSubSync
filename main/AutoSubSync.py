@@ -77,29 +77,23 @@ else:
 if platform in ["Darwin", "Linux"]:
     import stat
 
-    executables = [
-        # Specify the full paths to the executables
-        os.path.join(ffmpeg_bin, "ffmpeg"),
-        os.path.join(ffmpeg_bin, "ffprobe"),
-        os.path.join(ffsubsync_bin, "ffsubsync"),
-        os.path.join(alass_bin, "alass-linux64" if platform == "Linux" else "alass")
-    ]
-    
+    executables = [CALL_FFMPEG, CALL_FFPROBE, CALL_FFSUBSYNC]
     errors = []
     for exe in executables:
-        if os.path.exists(exe):
-            try:
-                current_permissions = os.stat(exe).st_mode
-                # Make sure the file has execute permissions for the user
-                os.chmod(exe, current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                print(f"Set execute permissions for {exe}")
-            except Exception as e:
-                errors.append(f"Failed to set execute permissions for {exe}: {e}")
-                print(f"Error setting permissions: {e}")
-        else:
-            errors.append(f"Executable not found: {exe}")
-            print(f"Executable not found: {exe}")
-            
+        exe_path = (
+            os.path.join(ffmpeg_bin, exe)
+            if exe in ["ffmpeg", "ffprobe"]
+            else os.path.join(ffsubsync_bin, exe)
+        )
+        if os.path.exists(exe_path):
+            current_permissions = os.stat(exe_path).st_mode
+            if not current_permissions & stat.S_IEXEC:
+                try:
+                    os.chmod(exe_path, current_permissions | stat.S_IEXEC)
+                except Exception as e:
+                    errors.append(
+                        f"Failed to set execute permissions for {exe_path}: {e}"
+                    )
     if errors:
         messagebox.showerror("Permission Error", "\n".join(errors))
 
@@ -114,6 +108,7 @@ def create_process(cmd):
         "universal_newlines": True,
         "encoding": default_encoding,
         "errors": "replace",
+        "env": {**os.environ, "TERM": "dumb"} 
     }
 
     if platform == "Windows":
