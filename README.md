@@ -35,7 +35,7 @@ This is an example use case of AutoSubSync. In this scenario, the tool automatic
 - **Manual Subtitle Synchronization:** Shift subtitles manually by specifying the number of milliseconds. Adjust timing using the `+` and `-` buttons and choose to save the changes to the desktop or replace the original file.
 - **Batch Processing:** Efficiently process multiple video, reference subtitle, and subtitle pairs in one go.
 - **Auto-Pairing with Season/Episode:** Automatically pair videos and reference subtitles with subtitle files using patterns like S01E01, 1x01, etc.
-- **Subtitle Formats:** Supports a variety of formats including `.srt`, `.vtt`, `.sbv`, `.sub`, `.ass`, `.ssa`, `.dfxp`, `.ttml`, `.itt`, and `.stl`.
+- **Subtitle Formats:** Supports a variety of formats including `.srt`, `.vtt`, `.sbv`, `.sub`, `.ass`, `.ssa`, `.dfxp`, `.ttml`, `.itt`, `.smi` and `.stl`.
 - **Drag and Drop:** Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
 - **Informative Messages:** Receive clear feedback messages indicating the success or failure of the synchronization process.
 
