@@ -1,4 +1,4 @@
-name: AutoSubSync Test Manylinux
+name: AutoSubSync Test Ubuntu
 
 on:
   workflow_dispatch:
@@ -50,26 +50,26 @@ jobs:
             AutoSubSync-v*.zip
             AutoSubSync-v*.tar.gz
 
-  build-linux-manylinux:
+  build-linux-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y python3-tk
-
-      - name: Build using build.py in pyinstaller-manylinux container
+      - name: Build using build.py in Ubuntu 20.04 container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             --entrypoint bash \
-            ghcr.io/oleksis/pyinstaller-manylinux:latest \
-            -c "python3.12 -m pip install --upgrade pip setuptools wheel && python3.12 build.py"
+            ubuntu:20.04 \
+            -c "apt-get update && \
+                apt-get install -y python3.8 python3-pip python3-tk && \
+                python3 -m pip install --upgrade pip setuptools wheel requests && \
+                python3 build.py"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-manylinux_amd64
+          name: build-artifacts-ubuntu2004_amd64
           path: |
             AutoSubSync-v*.zip
             AutoSubSync-v*.tar.gz
