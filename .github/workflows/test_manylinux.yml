@@ -59,11 +59,14 @@ jobs:
       - name: Build using build.py in Ubuntu 20.04 container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            --env DEBIAN_FRONTEND=noninteractive \
+            --env TZ=Etc/UTC \
             --entrypoint bash \
             ubuntu:20.04 \
             -c "apt-get update && \
-                apt-get install -y python3.8 python3-pip python3-tk && \
-                python3 -m pip install --upgrade pip setuptools wheel requests && \
+                apt-get install -y tzdata && \
+                apt-get install -y python3.8 python3-pip python3-tk python3-venv && \
+                python3 -m pip install --upgrade pip setuptools wheel requests pyinstaller && \
                 python3 build.py"
 
       - name: Upload build artifacts
