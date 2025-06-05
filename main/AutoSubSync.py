@@ -61,7 +61,7 @@ if platform == "Windows":
 elif platform == "Linux":
     CALL_ALASS = os.path.join(alass_bin, "alass-linux64")
 else:
-    CALL_ALASS = os.path.join(alass_bin, "alass")  # fallback
+    CALL_ALASS = "alass"  # fallback
 
 # Determine correct ffmpeg, ffprobe, and ffsubsync executables based on platform
 if platform == "Windows":
