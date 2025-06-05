@@ -56,18 +56,17 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Build using build.py in Ubuntu 20.04 container
+      - name: Build using build.py with Python 3.12
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             --env DEBIAN_FRONTEND=noninteractive \
             --env TZ=Etc/UTC \
             --entrypoint bash \
-            ubuntu:20.04 \
+            python:3.12.8-slim \
             -c "apt-get update && \
-                apt-get install -y tzdata && \
-                apt-get install -y python3.12 python3-pip python3-tk python3-venv && \
-                python3 -m pip install --upgrade pip setuptools wheel requests pyinstaller && \
-                python3 build.py"
+                apt-get install -y tzdata tk-dev && \
+                pip install --upgrade pip setuptools wheel requests pyinstaller && \
+                python build.py"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
