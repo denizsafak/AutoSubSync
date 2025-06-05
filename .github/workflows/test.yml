@@ -1,4 +1,4 @@
-name: AutoSubSync Test Ubuntu
+name: AutoSubSync Test
 
 on:
   workflow_dispatch:

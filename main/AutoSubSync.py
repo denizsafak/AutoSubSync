@@ -1323,23 +1323,31 @@ def open_logs_folder():
     elif platform == "Darwin":  # macOS
         subprocess.call(["open", logs_folder])
     else:  # Linux
+        # Prefer using xdg-open first as it's desktop environment agnostic
         file_managers = [
-            "dolphin",
-            "xdg-open",
-            "gnome-open",
-            "kde-open",
-            "nautilus",
-            "thunar",
-            "pcmanfm",
+            "xdg-open",  # Generic file opener for all desktop environments
+            "kde-open",  # KDE
+            "gnome-open", # GNOME
+            "nautilus",   # GNOME
+            "thunar",     # XFCE
+            "pcmanfm",    # LXDE/LXQt
+            "dolphin",    # KDE (moved to end to avoid the library conflict)
         ]
         success = False
         for fm in file_managers:
             if shutil.which(fm):
                 try:
-                    subprocess.call([fm, logs_folder])
+                    # Create a clean environment without LD_LIBRARY_PATH to avoid library conflicts
+                    env = os.environ.copy()
+                    if 'LD_LIBRARY_PATH' in env:
+                        del env['LD_LIBRARY_PATH']
+                    
+                    # Use a clean subprocess call that doesn't inherit conflicting libraries
+                    subprocess.call([fm, logs_folder], env=env)
                     success = True
                     break  # Exit loop if successful
-                except Exception:
+                except Exception as e:
+                    print(f"Failed to open with {fm}: {e}")
                     continue  # Try the next file manager
 
         if not success:
