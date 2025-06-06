@@ -21,7 +21,7 @@ from PyQt5.QtCore import Qt, QTimer, QProcess
 from PyQt5.QtGui import QIcon, QIntValidator
 import os, sys
 from utils import get_resource_path, load_config, save_config, get_user_config_path
-from constants import PROGRAM_NAME, VERSION, COLORS
+from constants import *
 
 # Import ctypes for Windows-specific taskbar icon
 if platform.system() == "Windows":
@@ -105,6 +105,9 @@ class autosubsync(QWidget):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
                     "autosubsync"
                 )
+        # Check for updates at startup if enabled
+        if self.config.get("check_updates_startup", True):
+            QTimer.singleShot(1000, self.check_for_updates_startup)
         self.initUI()
 
     def update_config(self, key, value):
@@ -176,13 +179,25 @@ class autosubsync(QWidget):
         self.remember_changes_action.setChecked(self.config.get("remember_changes", True))
         self.remember_changes_action.triggered.connect(self.toggle_remember_changes)
         self.settings_menu.addAction(self.remember_changes_action)
-        
+
+        # Add 'Check for updates at startup' option
+        self.check_updates_action = QAction("Check for updates at startup", self)
+        self.check_updates_action.setCheckable(True)
+        self.check_updates_action.setChecked(self.config.get("check_updates_startup", True))
+        self.check_updates_action.triggered.connect(lambda checked: self.update_config("check_updates_startup", checked))
+        self.settings_menu.addAction(self.check_updates_action)
+
         # Add separator and reset option
-        self.settings_menu.addSeparator()
         self.reset_action = QAction("Reset to default settings", self)
         self.reset_action.triggered.connect(self.reset_to_defaults)
         self.settings_menu.addAction(self.reset_action)
-        
+
+        # Add separator and About option
+        self.settings_menu.addSeparator()
+        self.about_action = QAction("About", self)
+        self.about_action.triggered.connect(self.show_about_dialog)
+        self.settings_menu.addAction(self.about_action)
+
         # Connect button click to show menu instead of setting the menu directly
         self.settings_btn.clicked.connect(self.show_settings_menu)
         self.settings_btn.show()
@@ -511,3 +526,114 @@ class autosubsync(QWidget):
         # Show the menu at the right position below the button
         self.settings_menu.popup(self.settings_btn.mapToGlobal(
             self.settings_btn.rect().bottomLeft()))
+
+    def show_about_dialog(self):
+        """Show an About dialog with program information including GitHub link."""
+        from PyQt5.QtWidgets import QDialog
+        from PyQt5.QtCore import QUrl
+        from PyQt5.QtGui import QDesktopServices
+        icon = self.windowIcon()
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"About {PROGRAM_NAME}")
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        dialog.setFixedSize(400, 320)
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(10)
+        header_layout = QHBoxLayout()
+        icon_label = QLabel()
+        if not icon.isNull():
+            icon_label.setPixmap(icon.pixmap(64, 64))
+        else:
+            icon_label.setText("\U0001F4DA")
+            icon_label.setStyleSheet("font-size: 48px;")
+        header_layout.addWidget(icon_label)
+        title_label = QLabel(
+            f"<h1 style='margin-bottom: 0;'>{PROGRAM_NAME} <span style='font-size: 12px; font-weight: normal; color: #666;'>v{VERSION}</span></h1><h3 style='margin-top: 5px;'>{PROGRAM_TAGLINE}</h3>"
+        )
+        title_label.setTextFormat(Qt.RichText)
+        header_layout.addWidget(title_label, 1)
+        layout.addLayout(header_layout)
+        desc_label = QLabel(
+            f"<p>{PROGRAM_DESCRIPTION}</p>"
+            "<p>Visit the GitHub repository for updates, documentation, and to report issues.</p>"
+        )
+        desc_label.setTextFormat(Qt.RichText)
+        desc_label.setWordWrap(True)
+        layout.addWidget(desc_label)
+        github_btn = QPushButton("Visit GitHub Repository")
+        github_btn.setIcon(QIcon(get_resource_path("autosubsync.assets", "github.png")))
+        github_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
+        github_btn.setFixedHeight(32)
+        layout.addWidget(github_btn)
+        update_btn = QPushButton("Check for updates")
+        update_btn.clicked.connect(self.manual_check_for_updates)
+        update_btn.setFixedHeight(32)
+        layout.addWidget(update_btn)
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)
+        close_btn.setFixedHeight(32)
+        layout.addWidget(close_btn)
+        dialog.exec_()
+
+    def manual_check_for_updates(self):
+        """Manually check for updates and always show result"""
+        self._show_update_check_result = True
+        self.check_for_updates_startup()
+
+    def check_for_updates_startup(self):
+        import urllib.request
+        from PyQt5.QtCore import QUrl
+        from PyQt5.QtGui import QDesktopServices
+        def show_update_message(remote_version, local_version):
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setWindowTitle("Update Available")
+            msg_box.setText(
+                f"A new version of {PROGRAM_NAME} is available! ({local_version} > {remote_version})"
+            )
+            msg_box.setInformativeText(
+                "Please visit the GitHub repository and download the latest version. "
+                "Would you like to open the GitHub releases page?"
+            )
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.setDefaultButton(QMessageBox.Yes)
+            if msg_box.exec_() == QMessageBox.Yes:
+                try:
+                    QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
+                except Exception:
+                    pass
+        show_result = (
+            hasattr(self, "_show_update_check_result")
+            and self._show_update_check_result
+        )
+        self._show_update_check_result = False
+        try:
+            update_url = GITHUB_VERSION_URL
+            with urllib.request.urlopen(update_url) as response:
+                remote_raw = response.read().decode().strip()
+            local_raw = VERSION
+            remote_version = remote_raw
+            local_version = local_raw
+            try:
+                remote_num = int("".join(remote_version.split(".")))
+                local_num = int("".join(local_version.split(".")))
+            except ValueError:
+                return
+            if remote_num > local_num:
+                QTimer.singleShot(
+                    1000, lambda: show_update_message(remote_version, local_version)
+                )
+            elif show_result:
+                QMessageBox.information(
+                    self,
+                    "Up to Date",
+                    f"You are running the latest version of {PROGRAM_NAME} ({local_version}).",
+                )
+        except Exception as e:
+            if show_result:
+                QMessageBox.warning(
+                    self,
+                    "Update Check Failed",
+                    f"Could not check for updates:\n{str(e)}",
+                )
+            pass

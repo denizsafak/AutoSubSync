@@ -2,6 +2,8 @@ from utils import get_version
 
 # Program Information
 PROGRAM_NAME = "AutoSubSync"
+PROGRAM_TAGLINE = "Subtitle Synchronizer"
+PROGRAM_DESCRIPTION = "Synchronize subtitle files with video using advanced algorithms."
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
 GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
