@@ -1,0 +1,7 @@
+faust-cchardet
+charset-normalizer
+chardet
+requests
+pyinstaller
+psutil
+platformdirs
