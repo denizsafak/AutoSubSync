@@ -2,9 +2,7 @@ from utils import get_version
 
 # Program Information
 PROGRAM_NAME = "AutoSubSync"
-PROGRAM_DESCRIPTION = (
-    "AutoSubSync is a tool for automatic subtitle synchronization."
-)
+PROGRAM_DESCRIPTION = "AutoSubSync is a tool for automatic subtitle synchronization."
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 VERSION = get_version()
 
@@ -21,5 +19,5 @@ COLORS = {
     "GREEN_BACKGROUND": "rgba(66, 173, 73, 0.1)",
     "GREEN_BACKGROUND_HOVER": "rgba(66, 173, 73, 0.15)",
     "RED_BACKGROUND": "rgba(232, 78, 60, 0.1)",
-    "RED_BACKGROUND_HOVER": "rgba(232, 78, 60, 0.15)"
+    "RED_BACKGROUND_HOVER": "rgba(232, 78, 60, 0.15)",
 }

@@ -1,12 +1,15 @@
 import os
 import platform
 
+
 # Define config path
 def get_user_config_path():
     from platformdirs import user_config_dir
+
     config_dir = user_config_dir("autosubsync", appauthor=False, roaming=True)
     os.makedirs(config_dir, exist_ok=True)
     return os.path.join(config_dir, "config.json")
+
 
 def get_version():
     """Return the current version of the application."""
@@ -15,6 +18,7 @@ def get_version():
             return f.read().strip()
     except Exception:
         return "Unknown"
+
 
 def get_resource_path(package, resource):
     """

@@ -4,10 +4,13 @@
 #####################################################################################
 
 from utils import get_version
+
+
 class TranslationDict(dict):
     def __missing__(self, key):
         return self.get("en", "")
-        
+
+
 PROGRAM_NAME = "AutoSubSync"
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
@@ -2232,7 +2235,7 @@ DEFAULT_AUTO_DETECT = {
     "id": "Default (Deteksi Otomatis)",
     "ms": "Default (Deteksi Automatik)",
     "th": "ค่าเริ่มต้น (ตรวจสอบอัตโนมัติ)",
-    "ur": "ڈیفالٹ (خود کار تشخیص)"
+    "ur": "ڈیفالٹ (خود کار تشخیص)",
 }
 OVERRIDE_ENCODING = {
     "en": "Override Encoding",
