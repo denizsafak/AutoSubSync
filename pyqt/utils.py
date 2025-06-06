@@ -1,6 +1,5 @@
 import os
-import platform
-
+import json
 
 # Define config path
 def get_user_config_path():
@@ -10,6 +9,19 @@ def get_user_config_path():
     os.makedirs(config_dir, exist_ok=True)
     return os.path.join(config_dir, "config.json")
 
+def load_config():
+    try:
+        with open(get_user_config_path(), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+    
+def save_config(config):
+    try:
+        with open(get_user_config_path(), "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+    except Exception:
+        pass
 
 def get_version():
     """Return the current version of the application."""

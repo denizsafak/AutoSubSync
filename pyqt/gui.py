@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon, QIntValidator
-from utils import get_resource_path
+from utils import get_resource_path, load_config, save_config
 from constants import PROGRAM_NAME, VERSION, COLORS
 
 # Import ctypes for Windows-specific taskbar icon
@@ -92,7 +92,8 @@ class autosubsync(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.batch_mode_enabled = False
+        self.config = load_config()
+        self.batch_mode_enabled = self.config.get("batch_mode", False)
         icon_path = get_resource_path("autosubsync.assets", "icon.ico")
         if icon_path:
             self.setWindowIcon(QIcon(icon_path))
@@ -101,6 +102,10 @@ class autosubsync(QWidget):
                     "autosubsync"
                 )
         self.initUI()
+
+    def update_config(self, key, value):
+        self.config[key] = value
+        save_config(self.config)
 
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
@@ -187,14 +192,17 @@ class autosubsync(QWidget):
         controls = QVBoxLayout()
         controls.setContentsMargins(0, 0, 0, 0)
         controls.setSpacing(15)
-        self.sync_options_group = QGroupBox("Sync Tool Options")
+        self.sync_options_group = QGroupBox("Sync tool settings")
         self.sync_options_layout = QVBoxLayout()
         self.sync_options_group.setLayout(self.sync_options_layout)
         controls.addWidget(self.sync_options_group)
         self.sync_tool_combo = self._dropdown(
             controls, "Sync tool:", ["ffsubsync", "alass"]
         )
-        self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
+        idx = self.sync_tool_combo.findText(self.config.get("sync_tool", "ffsubsync"))
+        if idx >= 0:
+            self.sync_tool_combo.setCurrentIndex(idx)
+        self.sync_tool_combo.currentTextChanged.connect(lambda text: (self.update_config("sync_tool", text), self.update_sync_tool_options(text)))
         self.save_combo = self._dropdown(
             controls,
             "Save location:",
@@ -204,6 +212,10 @@ class autosubsync(QWidget):
                 "Replace original file",
             ],
         )
+        idx = self.save_combo.findText(self.config.get("save_location", "Save next to input file"))
+        if idx >= 0:
+            self.save_combo.setCurrentIndex(idx)
+        self.save_combo.currentTextChanged.connect(lambda text: self.update_config("save_location", text))
         btns = QHBoxLayout()
         self.btn_batch_mode = self._button("Batch mode", w=120)
         self.btn_batch_mode.clicked.connect(self.toggle_batch_mode)
@@ -217,6 +229,7 @@ class autosubsync(QWidget):
         cw.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         l.addWidget(cw)
         self.tab_widget.addTab(c, "Automatic Sync")
+        self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
         self.update_sync_tool_options(self.sync_tool_combo.currentText())
 
     def show_auto_sync_inputs(self):
@@ -250,6 +263,7 @@ class autosubsync(QWidget):
 
     def toggle_batch_mode(self):
         self.batch_mode_enabled = not self.batch_mode_enabled
+        self.update_config("batch_mode", self.batch_mode_enabled)
         self.btn_batch_mode.setText(
             "Normal mode" if self.batch_mode_enabled else "Batch mode"
         )
@@ -280,7 +294,6 @@ class autosubsync(QWidget):
         shift_input.addWidget(self.shift_input)
         self.shift_input.textChanged.connect(self._update_shift_input_color)
         self.shift_input.installEventFilter(self)
-        # Clear input on focus if value is '0' (efficient inline lambda)
         self.shift_input.focusInEvent = lambda event: (
             self.shift_input.clear() if self.shift_input.text() == "0" else None
         ) or QLineEdit.focusInEvent(self.shift_input, event)
@@ -290,6 +303,10 @@ class autosubsync(QWidget):
         self.manual_save_combo = self._dropdown(
             opts, "Save location:", ["Save to desktop", "Override input subtitle"]
         )
+        idx = self.manual_save_combo.findText(self.config.get("manual_save_location", "Save to desktop"))
+        if idx >= 0:
+            self.manual_save_combo.setCurrentIndex(idx)
+        self.manual_save_combo.currentTextChanged.connect(lambda text: self.update_config("manual_save_location", text))
         self.btn_manual_sync = self._button("Start")
         opts.addWidget(self.btn_manual_sync)
         ow = QWidget()
@@ -297,10 +314,8 @@ class autosubsync(QWidget):
         ow.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         l.addWidget(ow)
         self.tab_widget.addTab(c, "Manual Sync")
-        # Connect shift +/- buttons
         self.btn_shift_plus.clicked.connect(self._increment_shift)
         self.btn_shift_minus.clicked.connect(self._decrement_shift)
-        # Timers for holding buttons
         self._plus_timer = QTimer(self)
         self._plus_timer.setInterval(150)
         self._plus_timer.timeout.connect(self._increment_shift)
@@ -317,7 +332,6 @@ class autosubsync(QWidget):
             val = int(self.shift_input.text())
         except ValueError:
             val = 0
-        # Add '+' if positive and not already present
         text = self.shift_input.text()
         if val > 0 and not text.startswith("+"):
             self.shift_input.blockSignals(True)
@@ -369,12 +383,15 @@ class autosubsync(QWidget):
 
     def update_sync_tool_options(self, tool):
         self.clear_layout(self.sync_options_layout)
-
         if tool == "ffsubsync":
             self.ffsubsync_dont_fix_framerate = self._checkbox("Don't fix framerate")
+            self.ffsubsync_dont_fix_framerate.setChecked(self.config.get("ffsubsync_dont_fix_framerate", False))
+            self.ffsubsync_dont_fix_framerate.toggled.connect(lambda state: self.update_config("ffsubsync_dont_fix_framerate", state))
             self.ffsubsync_use_golden_section = self._checkbox(
                 "Use golden section search"
             )
+            self.ffsubsync_use_golden_section.setChecked(self.config.get("ffsubsync_use_golden_section", False))
+            self.ffsubsync_use_golden_section.toggled.connect(lambda state: self.update_config("ffsubsync_use_golden_section", state))
             self.sync_options_layout.addWidget(self.ffsubsync_dont_fix_framerate)
             self.sync_options_layout.addWidget(self.ffsubsync_use_golden_section)
             vad_items = [
@@ -389,16 +406,24 @@ class autosubsync(QWidget):
             self.ffsubsync_vad_combo = self._dropdown(
                 self.sync_options_layout, "Voice activity detector:", vad_items
             )
-
+            idx = self.ffsubsync_vad_combo.findText(self.config.get("ffsubsync_vad", "Default"))
+            if idx >= 0:
+                self.ffsubsync_vad_combo.setCurrentIndex(idx)
+            self.ffsubsync_vad_combo.currentTextChanged.connect(lambda text: self.update_config("ffsubsync_vad", text))
         elif tool == "alass":
             self.alass_check_video_subtitles = self._checkbox(
                 "Check video for subtitle streams"
             )
-            self.alass_check_video_subtitles.setChecked(True)
+            self.alass_check_video_subtitles.setChecked(self.config.get("alass_check_video_subtitles", True))
+            self.alass_check_video_subtitles.toggled.connect(lambda state: self.update_config("alass_check_video_subtitles", state))
             self.alass_disable_fps_guessing = self._checkbox("Disable FPS guessing")
+            self.alass_disable_fps_guessing.setChecked(self.config.get("alass_disable_fps_guessing", False))
+            self.alass_disable_fps_guessing.toggled.connect(lambda state: self.update_config("alass_disable_fps_guessing", state))
             self.alass_disable_speed_optim = self._checkbox(
                 "Disable speed optimization"
             )
+            self.alass_disable_speed_optim.setChecked(self.config.get("alass_disable_speed_optim", False))
+            self.alass_disable_speed_optim.toggled.connect(lambda state: self.update_config("alass_disable_speed_optim", state))
             self.sync_options_layout.addWidget(self.alass_check_video_subtitles)
             self.sync_options_layout.addWidget(self.alass_disable_fps_guessing)
             self.sync_options_layout.addWidget(self.alass_disable_speed_optim)
@@ -407,23 +432,21 @@ class autosubsync(QWidget):
                 "Split penalty (Default: 7, Recommended: 5-20, No splits: -1)",
                 -1,
                 100,
-                7,
+                self.config.get("alass_split_penalty", 7),
             )
+            self.alass_split_penalty.valueChanged.connect(lambda value: self.update_config("alass_split_penalty", value))
 
     def eventFilter(self, obj, event):
-        # Unfocus shift_input on Enter or when losing focus (e.g., switching tabs)
         if obj == self.shift_input:
             from PyQt5.QtCore import QEvent
 
             if event.type() == QEvent.KeyPress:
                 if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-                    # If empty, set value to 0
                     if not self.shift_input.text().strip():
                         self.shift_input.setText("0")
                     self.shift_input.clearFocus()
                     return True
             elif event.type() == QEvent.FocusOut:
-                # If empty when focus is lost, set value to 0
                 if not self.shift_input.text().strip():
                     self.shift_input.setText("0")
                 self.shift_input.clearFocus()
