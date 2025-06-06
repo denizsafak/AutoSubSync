@@ -13,10 +13,14 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QSlider,
     QGroupBox,
+    QMenu,
+    QAction,
+    QMessageBox,
 )
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QProcess
 from PyQt5.QtGui import QIcon, QIntValidator
-from utils import get_resource_path, load_config, save_config
+import os, sys
+from utils import get_resource_path, load_config, save_config, get_user_config_path
 from constants import PROGRAM_NAME, VERSION, COLORS
 
 # Import ctypes for Windows-specific taskbar icon
@@ -105,7 +109,41 @@ class autosubsync(QWidget):
 
     def update_config(self, key, value):
         self.config[key] = value
+        # Only save settings if remember_changes is enabled (default: True)
+        if self.config.get("remember_changes", True):
+            save_config(self.config)
+
+    def toggle_remember_changes(self, checked):
+        # Always save this setting to the config file, regardless of the current remember_changes value
+        self.config["remember_changes"] = checked
         save_config(self.config)
+
+    def reset_to_defaults(self):
+        # Show confirmation dialog
+        reply = QMessageBox.question(
+            self, 
+            "Reset Settings", 
+            "Are you sure you want to reset settings to default?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            config_path = get_user_config_path()
+            try:
+                # Remove the config file if it exists
+                if os.path.exists(config_path):
+                    os.remove(config_path)
+                
+                # Restart the application
+                QProcess.startDetached(sys.executable, sys.argv)
+                QApplication.quit()
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to reset settings: {str(e)}"
+                )
 
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
@@ -130,6 +168,23 @@ class autosubsync(QWidget):
         self.settings_btn.setToolTip("Settings")
         self.settings_btn.setFixedSize(36, 36)
         self.settings_btn.move(self.width() - 36 - 15, 15)
+        
+        # Create settings menu
+        self.settings_menu = QMenu(self)
+        self.remember_changes_action = QAction("Remember the changes", self)
+        self.remember_changes_action.setCheckable(True)
+        self.remember_changes_action.setChecked(self.config.get("remember_changes", True))
+        self.remember_changes_action.triggered.connect(self.toggle_remember_changes)
+        self.settings_menu.addAction(self.remember_changes_action)
+        
+        # Add separator and reset option
+        self.settings_menu.addSeparator()
+        self.reset_action = QAction("Reset to default settings", self)
+        self.reset_action.triggered.connect(self.reset_to_defaults)
+        self.settings_menu.addAction(self.reset_action)
+        
+        # Connect button click to show menu instead of setting the menu directly
+        self.settings_btn.clicked.connect(self.show_settings_menu)
         self.settings_btn.show()
         self.setupAutoSyncTab()
         self.setupManualSyncTab()
@@ -451,3 +506,8 @@ class autosubsync(QWidget):
                     self.shift_input.setText("0")
                 self.shift_input.clearFocus()
         return super().eventFilter(obj, event)
+
+    def show_settings_menu(self):
+        # Show the menu at the right position below the button
+        self.settings_menu.popup(self.settings_btn.mapToGlobal(
+            self.settings_btn.rect().bottomLeft()))

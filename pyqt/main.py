@@ -3,12 +3,29 @@ import sys
 import platform
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import qInstallMessageHandler, QtMsgType
 
 # Add the directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from gui import autosubsync
 from utils import get_resource_path
-from texts import PROGRAM_NAME, VERSION
+from constants import PROGRAM_NAME, VERSION
+
+# Custom message handler to filter out specific Qt warnings
+def qt_message_handler(mode, context, message):
+    if "Wayland does not support QWindow::requestActivate()" in message:
+        return  # Suppress this specific message
+    if mode == QtMsgType.QtWarningMsg:
+        print(f"Qt Warning: {message}")
+    elif mode == QtMsgType.QtCriticalMsg:
+        print(f"Qt Critical: {message}")
+    elif mode == QtMsgType.QtFatalMsg:
+        print(f"Qt Fatal: {message}")
+    elif mode == QtMsgType.QtInfoMsg:
+        print(f"Qt Info: {message}")
+
+# Install the custom message handler
+qInstallMessageHandler(qt_message_handler)
 
 # Ensure sys.stdout and sys.stderr are valid in GUI mode
 if sys.stdout is None:
