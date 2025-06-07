@@ -30,12 +30,6 @@ from constants import *
 if platform.system() == "Windows":
     import ctypes
 
-
-class IconProvider(QFileIconProvider):
-    """Custom icon provider to get file icons without resizing"""
-    pass
-
-
 def format_num(size):
     """Format file size in human readable format"""
     for unit in ['B', 'KB', 'MB', 'GB']:
@@ -102,6 +96,14 @@ class InputBox(QLabel):
         self.clear_btn.setCursor(Qt.PointingHandCursor)
         self.clear_btn.clicked.connect(self.reset_to_default)
         self.clear_btn.hide()  # Initially hidden
+
+        # Add Go to folder button
+        self.goto_folder_btn = QPushButton("Go to folder", self)
+        self.goto_folder_btn.setFixedHeight(28)
+        self.goto_folder_btn.setCursor(Qt.PointingHandCursor)
+        self.goto_folder_btn.clicked.connect(self.open_file_folder)
+        self.goto_folder_btn.hide()
+        self.goto_folder_btn.setStyleSheet("font-size: 12px; padding: 2px 10px;")
         
         if label:
             l = QLabel(label, self)
@@ -159,7 +161,7 @@ class InputBox(QLabel):
         size = os.path.getsize(file_path)
         
         # Get icon without resizing using custom provider
-        provider = IconProvider()
+        provider = QFileIconProvider()
         qicon = provider.icon(QFileInfo(file_path))
         size_icon = QSize(32, 32)
         pixmap = qicon.pixmap(size_icon)
@@ -181,7 +183,10 @@ class InputBox(QLabel):
         
         # Show and position the clear button in the top right corner
         self.clear_btn.show()
-        self.clear_btn.move(self.width() - self.clear_btn.width() - 8, 8)
+        self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
+        # Show and position the Go to folder button in the bottom left
+        self.goto_folder_btn.show()
+        self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
 
     def show_error(self, message):
         self.setText(message)
@@ -202,6 +207,25 @@ class InputBox(QLabel):
             f"QLabel#inputBox {{{self.STYLE_DEFAULT}}} QLabel#inputBox:hover {{{self.STYLE_DEFAULT_HOVER}}}"
         )
         self.clear_btn.hide()
+        self.goto_folder_btn.hide()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'clear_btn') and self.clear_btn.isVisible():
+            self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
+        if hasattr(self, 'goto_folder_btn') and self.goto_folder_btn.isVisible():
+            self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
+
+    def open_file_folder(self):
+        if self.file_path and os.path.exists(self.file_path):
+            folder = os.path.dirname(self.file_path)
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+        else:
+            QMessageBox.warning(
+                self,
+                "Error",
+                "File does not exist.",
+            )
 
 
 class autosubsync(QWidget):
