@@ -121,9 +121,12 @@ class InputBox(QLabel):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
-        files = [u.toLocalFile() for u in event.mimeData().urls()]
-        if files:
-            self.set_file(files[0])
+        if self.input_type == "subtitle" or self.input_type == "video_or_subtitle":
+            files = [u.toLocalFile() for u in event.mimeData().urls()]
+            if files:
+                self.set_file(files[0])
+        elif self.input_type == "batch":
+            return  # Don't handle batch mode
 
     def browse_file(self):
         if self.input_type == "subtitle":
@@ -185,7 +188,12 @@ class InputBox(QLabel):
         self.setStyleSheet(
             f"QLabel#inputBox {{{self.STYLE_ERROR}}} QLabel#inputBox:hover {{{self.STYLE_ERROR_HOVER}}}"
         )
-        QTimer.singleShot(3000, self.reset_to_default)
+        # Only reset if file_path is still None after timeout
+        file_path_at_error = self.file_path
+        def maybe_reset():
+            if self.file_path is None or self.file_path == file_path_at_error:
+                self.reset_to_default()
+        QTimer.singleShot(3000, maybe_reset)
 
     def reset_to_default(self):
         self.file_path = None
@@ -441,9 +449,13 @@ class autosubsync(QWidget):
 
     def clear_layout(self, layout):
         """Clear all items from the layout without deleting persistent widgets"""
+        if layout is None:
+            return
         while layout.count():
             item = layout.takeAt(0)
-            if item.layout():
+            if item.widget():
+                item.widget().setParent(None)
+            elif item.layout():
                 self.clear_layout(item.layout())
 
     def setupAutoSyncTab(self):
@@ -457,6 +469,7 @@ class autosubsync(QWidget):
             self,
             "Drag and drop files or folder here or click to browse",
             "Batch mode",
+            input_type="batch",
         )
         
         self.video_ref_input = InputBox(
@@ -506,7 +519,7 @@ class autosubsync(QWidget):
         idx = self.sync_tool_combo.findText(self.config.get("sync_tool", "ffsubsync"))
         if idx >= 0:
             self.sync_tool_combo.setCurrentIndex(idx)
-        self.sync_tool_combo.currentTextChanged.connect(lambda text: (self.update_config("sync_tool", text), self.update_sync_tool_options(text)))
+        self.sync_tool_combo.currentTextChanged.connect(lambda text: self.update_config("sync_tool", text))
         self.save_combo = self._dropdown(
             controls,
             "Save location:",
@@ -527,6 +540,8 @@ class autosubsync(QWidget):
         self.btn_sync = self._button("Start")
         self.btn_sync.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         btns.addWidget(self.btn_sync)
+        # Add input validation for Start button
+        self.btn_sync.clicked.connect(self.validate_auto_sync_inputs)
         controls.addLayout(btns)
         cw = QWidget()
         cw.setLayout(controls)
@@ -535,6 +550,23 @@ class autosubsync(QWidget):
         self.tab_widget.addTab(c, "Automatic Sync")
         self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
         self.update_sync_tool_options(self.sync_tool_combo.currentText())
+
+    def validate_auto_sync_inputs(self):
+        if self.batch_mode_enabled:
+            if not self.batch_input.file_path:
+                self.batch_input.show_error("Please select files or a folder.")
+                return
+        else:
+            missing = False
+            if not self.video_ref_input.file_path:
+                self.video_ref_input.show_error("Please select a video or reference subtitle.")
+                missing = True
+            if not self.subtitle_input.file_path:
+                self.subtitle_input.show_error("Please select a subtitle file.")
+                missing = True
+            if missing:
+                return
+        # ...proceed with sync if all inputs are valid...
 
     def show_add_arguments_dialog(self):
         """Show dialog for additional arguments for the current sync tool"""
@@ -627,6 +659,8 @@ class autosubsync(QWidget):
         self.manual_save_combo.currentTextChanged.connect(lambda text: self.update_config("manual_save_location", text))
         self.btn_manual_sync = self._button("Start")
         opts.addWidget(self.btn_manual_sync)
+        # Add input validation for Manual Sync Start button
+        self.btn_manual_sync.clicked.connect(self.validate_manual_sync_inputs)
         ow = QWidget()
         ow.setLayout(opts)
         ow.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -644,6 +678,19 @@ class autosubsync(QWidget):
         self._minus_timer.timeout.connect(self._decrement_shift)
         self.btn_shift_minus.pressed.connect(self._minus_timer.start)
         self.btn_shift_minus.released.connect(self._minus_timer.stop)
+
+    def validate_manual_sync_inputs(self):
+        if not self.manual_input_box.file_path:
+            self.manual_input_box.show_error("Please select a subtitle file.")
+            return
+        if self.shift_input.text() == "0" or not self.shift_input.text():
+            QMessageBox.warning(
+                self,
+                "Invalid Shift",
+                "Please enter a non-zero value.",
+            )
+            return
+        # ...proceed with manual sync if input is valid...
 
     def _update_shift_input_color(self):
         try:
