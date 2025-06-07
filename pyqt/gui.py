@@ -414,7 +414,7 @@ class autosubsync(QWidget):
         # Create the + button for additional arguments
         self.btn_add_args = QPushButton("+", self)
         self.btn_add_args.setFixedSize(30, 30)
-        self.btn_add_args.setToolTip("Additional arguments")
+        self.update_args_tooltip()
         self.btn_add_args.clicked.connect(self.show_add_arguments_dialog)
 
         # Set the sync options group layout
@@ -513,6 +513,7 @@ class autosubsync(QWidget):
             update_config(self, args_key, args)
             # Update the button color based on whether arguments exist
             self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if args else "")
+            self.update_args_tooltip()
 
     def show_auto_sync_inputs(self):
         self.clear_layout(self.auto_sync_input_layout)
@@ -695,6 +696,7 @@ class autosubsync(QWidget):
         args_key = f"{tool}_arguments"
         has_args = bool(self.config.get(args_key, ""))
         self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if has_args else "")
+        self.update_args_tooltip()
         
         if tool == "ffsubsync":
             self.ffsubsync_dont_fix_framerate = self._checkbox("Don't fix framerate")
@@ -781,3 +783,15 @@ class autosubsync(QWidget):
         # Show the menu at the right position below the button
         self.settings_menu.popup(self.settings_btn.mapToGlobal(
             self.settings_btn.rect().bottomLeft()))
+
+    def update_args_tooltip(self):
+        """Update the tooltip for the additional arguments button to show current arguments"""
+        current_tool = self.sync_tool_combo.currentText() if hasattr(self, "sync_tool_combo") else ""
+        args_key = f"{current_tool}_arguments"
+        current_args = self.config.get(args_key, "")
+        
+        tooltip = "Additional arguments"
+        if current_args:
+            tooltip += f"\n⤷ {current_args}"
+            
+        self.btn_add_args.setToolTip(tooltip)
