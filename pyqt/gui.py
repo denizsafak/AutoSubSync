@@ -173,33 +173,45 @@ class autosubsync(QWidget):
 
     def clear_logs_directory(self):
         """Delete logs directory after user confirmation."""
-        reply = QMessageBox.question(
-            self,
-            "Delete logs directory",
-            "Are you sure you want to delete logs directory?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes:
-            try:
+        try:
+            logs_dir = get_logs_directory()
+            
+            # Count files in the directory
+            total_files = len([f for f in os.listdir(logs_dir) if os.path.isfile(os.path.join(logs_dir, f))])
+            
+            if total_files == 0:
+                QMessageBox.information(
+                    self,
+                    "Logs Directory",
+                    "Logs directory is empty."
+                )
+                return
+            
+            # Ask for confirmation with file count
+            reply = QMessageBox.question(
+                self,
+                "Delete logs directory",
+                f"Are you sure you want to delete logs directory with {total_files} files?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
                 import shutil
-                logs_dir = get_logs_directory()
-                # Remove the entire directory and recreate it
-                if os.path.exists(logs_dir):
-                    shutil.rmtree(logs_dir)
+                # Remove the entire directory
+                shutil.rmtree(logs_dir)
 
                 QMessageBox.information(
                     self,
-                    "logs directory Cleared",
-                    "logs directory have been successfully cleared."
+                    "Logs Directory Cleared",
+                    f"Logs directory has been successfully deleted."
                 )
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Failed to clear logs directory: {str(e)}"
-                )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to clear logs directory: {str(e)}"
+            )
 
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
@@ -340,7 +352,7 @@ class autosubsync(QWidget):
 
         # Create the + button for additional arguments
         self.btn_add_args = QPushButton("+", self)
-        self.btn_add_args.setFixedSize(24, 24)
+        self.btn_add_args.setFixedSize(30, 30)
         self.btn_add_args.setToolTip("Additional arguments")
         self.btn_add_args.clicked.connect(self.show_add_arguments_dialog)
 
@@ -407,6 +419,8 @@ class autosubsync(QWidget):
 
         if ok:
             self.update_config(args_key, args)
+            # Update the button color based on whether arguments exist
+            self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if args else "")
 
     def show_auto_sync_inputs(self):
         self.clear_layout(self.auto_sync_input_layout)
@@ -560,6 +574,12 @@ class autosubsync(QWidget):
 
     def update_sync_tool_options(self, tool):
         self.clear_layout(self.sync_options_layout)
+        
+        # Check if there are arguments for the current tool and update button color
+        args_key = f"{tool}_arguments"
+        has_args = bool(self.config.get(args_key, ""))
+        self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if has_args else "")
+        
         if tool == "ffsubsync":
             self.ffsubsync_dont_fix_framerate = self._checkbox("Don't fix framerate")
             self.ffsubsync_dont_fix_framerate.setChecked(self.config.get("ffsubsync_dont_fix_framerate", False))
