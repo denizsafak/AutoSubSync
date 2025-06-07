@@ -20,24 +20,15 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QFileIconProvider,
 )
-from PyQt5.QtCore import Qt, QTimer, QProcess, QUrl, QSize, QFileInfo, QIODevice, QBuffer
-from PyQt5.QtGui import QIcon, QIntValidator, QDesktopServices, QPixmap, QDragEnterEvent, QDropEvent
-import os, sys, base64
-from utils import get_resource_path, load_config, save_config, get_user_config_path, get_logs_directory
+from PyQt5.QtCore import Qt, QTimer, QUrl, QSize, QFileInfo, QIODevice, QBuffer
+from PyQt5.QtGui import QIcon, QIntValidator, QDesktopServices, QDragEnterEvent, QDropEvent
+import os, base64
+from utils import *
 from constants import *
 
 # Import ctypes for Windows-specific taskbar icon
 if platform.system() == "Windows":
     import ctypes
-
-def format_num(size):
-    """Format file size in human readable format"""
-    for unit in ['B', 'KB', 'MB', 'GB']:
-        if size < 1024.0:
-            return f"{size:.1f} {unit}"
-        size /= 1024.0
-    return f"{size:.1f} TB"
-
 
 class StepOneSlider(QSlider):
     def wheelEvent(self, event):
@@ -251,112 +242,12 @@ class autosubsync(QWidget):
                 )
         # Check for updates at startup if enabled
         if self.config.get("check_updates_startup", True):
-            QTimer.singleShot(1000, self.check_for_updates_startup)
+            QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
         self.initUI()
 
-    def update_config(self, key, value):
-        self.config[key] = value
-        # Only save settings if remember_changes is enabled (default: True)
-        if self.config.get("remember_changes", True):
-            save_config(self.config)
-
-    def toggle_remember_changes(self, checked):
-        # Always save this setting to the config file, regardless of the current remember_changes value
-        self.config["remember_changes"] = checked
-        save_config(self.config)
-
-    def reset_to_defaults(self):
-        # Show confirmation dialog
-        reply = QMessageBox.question(
-            self, 
-            "Reset Settings", 
-            "Are you sure you want to reset settings to default?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
-        
-        if reply == QMessageBox.Yes:
-            config_path = get_user_config_path()
-            try:
-                # Remove the config file if it exists
-                if os.path.exists(config_path):
-                    os.remove(config_path)
-                
-                # Restart the application
-                QProcess.startDetached(sys.executable, sys.argv)
-                QApplication.quit()
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Failed to reset settings: {str(e)}"
-                )
-
-    def open_config_directory(self):
-        """Open the config directory in the system file manager"""
-
-        try:
-            config_path = get_user_config_path()
-            # Open the directory containing the config file
-            QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(config_path)))
-        except Exception as e:
-            QMessageBox.critical(
-                self, "Config Error", f"Could not open config location:\n{e}"
-            )
-
-    def open_logs_directory(self):
-        """Open the logs directory used by the program."""
-        try:
-            # Open the directory in file explorer
-            QDesktopServices.openUrl(QUrl.fromLocalFile(get_logs_directory()))
-        except Exception as e:
-            QMessageBox.critical(
-                self, "logs directory Error", f"Could not open logs directory:\n{e}"
-            )
-
-    def clear_logs_directory(self):
-        """Delete logs directory after user confirmation."""
-        try:
-            logs_dir = get_logs_directory()
-            
-            # Count files in the directory
-            total_files = len([f for f in os.listdir(logs_dir) if os.path.isfile(os.path.join(logs_dir, f))])
-            
-            if total_files == 0:
-                QMessageBox.information(
-                    self,
-                    "Logs Directory",
-                    "Logs directory is empty."
-                )
-                return
-            
-            # Ask for confirmation with file count
-            reply = QMessageBox.question(
-                self,
-                "Delete logs directory",
-                f"Are you sure you want to delete logs directory with {total_files} files?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
-            )
-            
-            if reply == QMessageBox.Yes:
-                import shutil
-                # Remove the entire directory
-                shutil.rmtree(logs_dir)
-
-                QMessageBox.information(
-                    self,
-                    "Logs Directory Cleared",
-                    f"Logs directory has been successfully deleted."
-                )
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to clear logs directory: {str(e)}"
-            )
 
     def initUI(self):
+
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
         screen = QApplication.primaryScreen().geometry()
         width, height = 500, 800
@@ -385,17 +276,17 @@ class autosubsync(QWidget):
 
         # Add 'Open config directory' option at the top
         self.open_config_dir_action = QAction("Open config directory", self)
-        self.open_config_dir_action.triggered.connect(self.open_config_directory)
+        self.open_config_dir_action.triggered.connect(lambda: open_config_directory(self))
         self.settings_menu.addAction(self.open_config_dir_action)
 
         # Add 'Open logs directory' option at the top
         self.open_logs_directory_action = QAction("Open logs directory", self)
-        self.open_logs_directory_action.triggered.connect(self.open_logs_directory)
+        self.open_logs_directory_action.triggered.connect(lambda: open_logs_directory(self))
         self.settings_menu.addAction(self.open_logs_directory_action)
 
         # Add 'Clear logs directory' option
         self.clear_logs_directory_action = QAction("Clear all logs", self)
-        self.clear_logs_directory_action.triggered.connect(self.clear_logs_directory)
+        self.clear_logs_directory_action.triggered.connect(lambda: clear_logs_directory(self))
         self.settings_menu.addAction(self.clear_logs_directory_action)
 
         self.settings_menu.addSeparator()
@@ -403,26 +294,26 @@ class autosubsync(QWidget):
         self.remember_changes_action = QAction("Remember the changes", self)
         self.remember_changes_action.setCheckable(True)
         self.remember_changes_action.setChecked(self.config.get("remember_changes", True))
-        self.remember_changes_action.triggered.connect(self.toggle_remember_changes)
+        self.remember_changes_action.triggered.connect(lambda checked: toggle_remember_changes(self, checked))
         self.settings_menu.addAction(self.remember_changes_action)
 
         # Add 'Check for updates at startup' option
         self.check_updates_action = QAction("Check for updates at startup", self)
         self.check_updates_action.setCheckable(True)
         self.check_updates_action.setChecked(self.config.get("check_updates_startup", True))
-        self.check_updates_action.triggered.connect(lambda checked: self.update_config("check_updates_startup", checked))
+        self.check_updates_action.triggered.connect(lambda checked: update_config(self, "check_updates_startup", checked))
         self.settings_menu.addAction(self.check_updates_action)
 
         # Add separator and reset option
         self.reset_action = QAction("Reset to default settings", self)
-        self.reset_action.triggered.connect(self.reset_to_defaults)
+        self.reset_action.triggered.connect(lambda: reset_to_defaults(self))
         self.settings_menu.addAction(self.reset_action)
 
         self.settings_menu.addSeparator()
 
         # Add separator and About option
         self.about_action = QAction("About", self)
-        self.about_action.triggered.connect(self.show_about_dialog)
+        self.about_action.triggered.connect(lambda: show_about_dialog(self))
         self.settings_menu.addAction(self.about_action)
 
         # Connect button click to show menu instead of setting the menu directly
@@ -543,20 +434,32 @@ class autosubsync(QWidget):
         idx = self.sync_tool_combo.findText(self.config.get("sync_tool", "ffsubsync"))
         if idx >= 0:
             self.sync_tool_combo.setCurrentIndex(idx)
-        self.sync_tool_combo.currentTextChanged.connect(lambda text: self.update_config("sync_tool", text))
+        self.sync_tool_combo.currentTextChanged.connect(lambda text: update_config(self, "sync_tool", text))
+        save_map = {
+            "Save next to input file": "save_next_to_input_file",
+            "Save to custom location": "save_to_custom_location",
+            "Replace original file": "replace_original_file"
+        }
+        save_items = list(save_map.keys())
         self.save_combo = self._dropdown(
             controls,
             "Save location:",
-            [
-                "Save next to input file",
-                "Save to custom location",
-                "Replace original file",
-            ],
+            save_items
         )
-        idx = self.save_combo.findText(self.config.get("save_location", "Save next to input file"))
+        
+        # Handle display vs actual value mapping
+        saved_location = self.config.get("save_location", "save_next_to_input_file")
+        # Reverse lookup to find display value
+        display_value = next((k for k, v in save_map.items() if v == saved_location), save_items[0])
+        
+        idx = self.save_combo.findText(display_value)
         if idx >= 0:
             self.save_combo.setCurrentIndex(idx)
-        self.save_combo.currentTextChanged.connect(lambda text: self.update_config("save_location", text))
+            
+        # Convert display text to storage value
+        self.save_combo.currentTextChanged.connect(
+            lambda text: update_config(self, "save_location", save_map.get(text, "save_next_to_input_file"))
+        )
         btns = QHBoxLayout()
         self.btn_batch_mode = self._button("Batch mode", w=120)
         self.btn_batch_mode.clicked.connect(self.toggle_batch_mode)
@@ -607,7 +510,7 @@ class autosubsync(QWidget):
         )
 
         if ok:
-            self.update_config(args_key, args)
+            update_config(self, args_key, args)
             # Update the button color based on whether arguments exist
             self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if args else "")
 
@@ -635,7 +538,7 @@ class autosubsync(QWidget):
     def toggle_batch_mode(self):
         # Update mode and config
         self.batch_mode_enabled = not self.batch_mode_enabled
-        self.update_config("batch_mode", self.batch_mode_enabled)
+        update_config(self, "batch_mode", self.batch_mode_enabled)
         self.btn_batch_mode.setText(
             "Normal mode" if self.batch_mode_enabled else "Batch mode"
         )
@@ -674,13 +577,28 @@ class autosubsync(QWidget):
         self.btn_shift_plus = self._button("+", h=35, w=35)
         shift_input.addWidget(self.btn_shift_plus)
         opts.addLayout(shift_input)
+        manual_save_map = {
+            "Save to desktop": "save_to_desktop",
+            "Override input subtitle": "override_input_subtitle"
+        }
+        manual_save_items = list(manual_save_map.keys())
         self.manual_save_combo = self._dropdown(
-            opts, "Save location:", ["Save to desktop", "Override input subtitle"]
+            opts, "Save location:", manual_save_items
         )
-        idx = self.manual_save_combo.findText(self.config.get("manual_save_location", "Save to desktop"))
+        
+        # Handle display vs actual value mapping
+        manual_saved_location = self.config.get("manual_save_location", "save_to_desktop")
+        # Reverse lookup to find display value
+        manual_display_value = next((k for k, v in manual_save_map.items() if v == manual_saved_location), manual_save_items[0])
+        
+        idx = self.manual_save_combo.findText(manual_display_value)
         if idx >= 0:
             self.manual_save_combo.setCurrentIndex(idx)
-        self.manual_save_combo.currentTextChanged.connect(lambda text: self.update_config("manual_save_location", text))
+            
+        # Convert display text to storage value
+        self.manual_save_combo.currentTextChanged.connect(
+            lambda text: update_config(self, "manual_save_location", manual_save_map.get(text, "save_to_desktop"))
+        )
         self.btn_manual_sync = self._button("Start")
         opts.addWidget(self.btn_manual_sync)
         # Add input validation for Manual Sync Start button
@@ -781,44 +699,46 @@ class autosubsync(QWidget):
         if tool == "ffsubsync":
             self.ffsubsync_dont_fix_framerate = self._checkbox("Don't fix framerate")
             self.ffsubsync_dont_fix_framerate.setChecked(self.config.get("ffsubsync_dont_fix_framerate", False))
-            self.ffsubsync_dont_fix_framerate.toggled.connect(lambda state: self.update_config("ffsubsync_dont_fix_framerate", state))
+            self.ffsubsync_dont_fix_framerate.toggled.connect(lambda state: update_config(self, "ffsubsync_dont_fix_framerate", state))
             self.ffsubsync_use_golden_section = self._checkbox(
                 "Use golden section search"
             )
             self.ffsubsync_use_golden_section.setChecked(self.config.get("ffsubsync_use_golden_section", False))
-            self.ffsubsync_use_golden_section.toggled.connect(lambda state: self.update_config("ffsubsync_use_golden_section", state))
+            self.ffsubsync_use_golden_section.toggled.connect(lambda state: update_config(self, "ffsubsync_use_golden_section", state))
             self.sync_options_layout.addWidget(self.ffsubsync_dont_fix_framerate)
             self.sync_options_layout.addWidget(self.ffsubsync_use_golden_section)
-            vad_items = [
-                "Default",
-                "subs_then_webrtc",
-                "webrtc",
-                "subs_then_auditok",
-                "auditok",
-                "subs_then_silero",
-                "silero",
-            ]
+            vad_map = {"Default": "default"}
+            vad_items = ["Default"] + FFSUBSYNC_VAD_OPTIONS
             self.ffsubsync_vad_combo = self._dropdown(
                 self.sync_options_layout, "Voice activity detector:", vad_items
             )
-            idx = self.ffsubsync_vad_combo.findText(self.config.get("ffsubsync_vad", "Default"))
+            
+            # Handle display vs actual value mapping
+            saved_vad = self.config.get("ffsubsync_vad", "default")
+            display_value = saved_vad if saved_vad in vad_items else "Default"
+            
+            idx = self.ffsubsync_vad_combo.findText(display_value)
             if idx >= 0:
                 self.ffsubsync_vad_combo.setCurrentIndex(idx)
-            self.ffsubsync_vad_combo.currentTextChanged.connect(lambda text: self.update_config("ffsubsync_vad", text))
+                
+            # Map "Default" to "default" but keep others as is
+            self.ffsubsync_vad_combo.currentTextChanged.connect(
+                lambda text: update_config(self, "ffsubsync_vad", vad_map.get(text, text))
+            )
         elif tool == "alass":
             self.alass_check_video_subtitles = self._checkbox(
                 "Check video for subtitle streams"
             )
             self.alass_check_video_subtitles.setChecked(self.config.get("alass_check_video_subtitles", True))
-            self.alass_check_video_subtitles.toggled.connect(lambda state: self.update_config("alass_check_video_subtitles", state))
+            self.alass_check_video_subtitles.toggled.connect(lambda state: update_config(self, "alass_check_video_subtitles", state))
             self.alass_disable_fps_guessing = self._checkbox("Disable FPS guessing")
             self.alass_disable_fps_guessing.setChecked(self.config.get("alass_disable_fps_guessing", False))
-            self.alass_disable_fps_guessing.toggled.connect(lambda state: self.update_config("alass_disable_fps_guessing", state))
+            self.alass_disable_fps_guessing.toggled.connect(lambda state: update_config(self, "alass_disable_fps_guessing", state))
             self.alass_disable_speed_optim = self._checkbox(
                 "Disable speed optimization"
             )
             self.alass_disable_speed_optim.setChecked(self.config.get("alass_disable_speed_optim", False))
-            self.alass_disable_speed_optim.toggled.connect(lambda state: self.update_config("alass_disable_speed_optim", state))
+            self.alass_disable_speed_optim.toggled.connect(lambda state: update_config(self, "alass_disable_speed_optim", state))
             self.sync_options_layout.addWidget(self.alass_check_video_subtitles)
             self.sync_options_layout.addWidget(self.alass_disable_fps_guessing)
             self.sync_options_layout.addWidget(self.alass_disable_speed_optim)
@@ -829,7 +749,7 @@ class autosubsync(QWidget):
                 100,
                 self.config.get("alass_split_penalty", 7),
             )
-            self.alass_split_penalty.valueChanged.connect(lambda value: self.update_config("alass_split_penalty", value))
+            self.alass_split_penalty.valueChanged.connect(lambda value: update_config(self, "alass_split_penalty", value))
         
         # Ensure the + button stays on top
         if hasattr(self, 'btn_add_args'):
@@ -861,114 +781,3 @@ class autosubsync(QWidget):
         # Show the menu at the right position below the button
         self.settings_menu.popup(self.settings_btn.mapToGlobal(
             self.settings_btn.rect().bottomLeft()))
-
-    def show_about_dialog(self):
-        """Show an About dialog with program information including GitHub link."""
-        from PyQt5.QtWidgets import QDialog
-        from PyQt5.QtCore import QUrl
-        from PyQt5.QtGui import QDesktopServices
-        icon = self.windowIcon()
-        dialog = QDialog(self)
-        dialog.setWindowTitle(f"About {PROGRAM_NAME}")
-        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        dialog.setFixedSize(400, 320)
-        layout = QVBoxLayout(dialog)
-        layout.setSpacing(10)
-        header_layout = QHBoxLayout()
-        icon_label = QLabel()
-        if not icon.isNull():
-            icon_label.setPixmap(icon.pixmap(64, 64))
-        else:
-            icon_label.setText("\U0001F4DA")
-            icon_label.setStyleSheet("font-size: 48px;")
-        header_layout.addWidget(icon_label)
-        title_label = QLabel(
-            f"<h1 style='margin-bottom: 0;'>{PROGRAM_NAME} <span style='font-size: 12px; font-weight: normal; color: {COLORS['GREY']};'>v{VERSION}</span></h1><h3 style='margin-top: 5px;'>{PROGRAM_TAGLINE}</h3>"
-        )
-        title_label.setTextFormat(Qt.RichText)
-        header_layout.addWidget(title_label, 1)
-        layout.addLayout(header_layout)
-        desc_label = QLabel(
-            f"<p>{PROGRAM_DESCRIPTION}</p>"
-            "<p>Visit the GitHub repository for updates, documentation, and to report issues.</p>"
-        )
-        desc_label.setTextFormat(Qt.RichText)
-        desc_label.setWordWrap(True)
-        layout.addWidget(desc_label)
-        github_btn = QPushButton("Visit GitHub Repository")
-        github_btn.setIcon(QIcon(get_resource_path("autosubsync.assets", "github.png")))
-        github_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
-        github_btn.setFixedHeight(32)
-        layout.addWidget(github_btn)
-        update_btn = QPushButton("Check for updates")
-        update_btn.clicked.connect(self.manual_check_for_updates)
-        update_btn.setFixedHeight(32)
-        layout.addWidget(update_btn)
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(dialog.accept)
-        close_btn.setFixedHeight(32)
-        layout.addWidget(close_btn)
-        dialog.exec_()
-
-    def manual_check_for_updates(self):
-        """Manually check for updates and always show result"""
-        self._show_update_check_result = True
-        self.check_for_updates_startup()
-
-    def check_for_updates_startup(self):
-        import urllib.request
-        from PyQt5.QtCore import QUrl
-        from PyQt5.QtGui import QDesktopServices
-        def show_update_message(remote_version, local_version):
-            msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Information)
-            msg_box.setWindowTitle("Update Available")
-            msg_box.setText(
-                f"A new version of {PROGRAM_NAME} is available! ({local_version} > {remote_version})"
-            )
-            msg_box.setInformativeText(
-                "Please visit the GitHub repository and download the latest version. "
-                "Would you like to open the GitHub releases page?"
-            )
-            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msg_box.setDefaultButton(QMessageBox.Yes)
-            if msg_box.exec_() == QMessageBox.Yes:
-                try:
-                    QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
-                except Exception:
-                    pass
-        show_result = (
-            hasattr(self, "_show_update_check_result")
-            and self._show_update_check_result
-        )
-        self._show_update_check_result = False
-        try:
-            update_url = GITHUB_VERSION_URL
-            with urllib.request.urlopen(update_url) as response:
-                remote_raw = response.read().decode().strip()
-            local_raw = VERSION
-            remote_version = remote_raw
-            local_version = local_raw
-            try:
-                remote_num = int("".join(remote_version.split(".")))
-                local_num = int("".join(local_version.split(".")))
-            except ValueError:
-                return
-            if remote_num > local_num:
-                QTimer.singleShot(
-                    1000, lambda: show_update_message(remote_version, local_version)
-                )
-            elif show_result:
-                QMessageBox.information(
-                    self,
-                    "Up to Date",
-                    f"You are running the latest version of {PROGRAM_NAME} ({local_version}).",
-                )
-        except Exception as e:
-            if show_result:
-                QMessageBox.warning(
-                    self,
-                    "Update Check Failed",
-                    f"Could not check for updates:\n{str(e)}",
-                )
-            pass

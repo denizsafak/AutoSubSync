@@ -6,7 +6,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import qInstallMessageHandler, QtMsgType
 
 # Add the directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+#sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+
 from gui import autosubsync
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION

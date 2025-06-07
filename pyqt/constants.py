@@ -39,6 +39,7 @@ SUBTITLE_EXTENSIONS = [
     ".idx",
     ".smi",
 ]
+
 VIDEO_EXTENSIONS = [
     ".mp4",
     ".mkv",
@@ -54,4 +55,13 @@ VIDEO_EXTENSIONS = [
     ".h264",
     ".h265",
     ".hevc",
+]
+
+FFSUBSYNC_VAD_OPTIONS = [
+    "subs_then_webrtc",
+    "webrtc",
+    "subs_then_auditok",
+    "auditok",
+    "subs_then_silero",
+    "silero",
 ]

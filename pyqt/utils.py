@@ -1,9 +1,12 @@
 import os
+import sys
 import json
 import tempfile
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import QUrl, QProcess
+from PyQt5.QtGui import QDesktopServices
 
 
-# Define config path
 def get_user_config_path():
     from constants import PROGRAM_NAME
     from platformdirs import user_config_dir
@@ -88,3 +91,234 @@ def get_resource_path(package, resource):
         pass
 
     return None
+
+
+def format_num(size):
+    """Format file size in human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024.0:
+            return f"{size:.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} TB"
+
+
+# Settings menu
+
+def update_config(obj, key, value):
+    obj.config[key] = value
+    # Only save settings if remember_changes is enabled (default: True)
+    if obj.config.get("remember_changes", True):
+        save_config(obj.config)
+
+def toggle_remember_changes(obj, checked):
+    # Always save this setting to the config file, regardless of the current remember_changes value
+    obj.config["remember_changes"] = checked
+    save_config(obj.config)
+
+def reset_to_defaults(parent):
+    # Show confirmation dialog
+    reply = QMessageBox.question(
+        parent, 
+        "Reset Settings", 
+        "Are you sure you want to reset settings to default?",
+        QMessageBox.Yes | QMessageBox.No,
+        QMessageBox.No
+    )
+    
+    if reply == QMessageBox.Yes:
+        config_path = get_user_config_path()
+        try:
+            # Remove the config file if it exists
+            if os.path.exists(config_path):
+                os.remove(config_path)
+            
+            # Restart the application
+            QProcess.startDetached(sys.executable, sys.argv)
+            QApplication.quit()
+        except Exception as e:
+            QMessageBox.critical(
+                parent,
+                "Error",
+                f"Failed to reset settings: {str(e)}"
+            )
+
+def open_config_directory(parent=None):
+    """Open the config directory in the system file manager"""
+
+    try:
+        config_path = get_user_config_path()
+        # Open the directory containing the config file
+        QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(config_path)))
+    except Exception as e:
+        QMessageBox.critical(
+            parent, "Config Error", f"Could not open config location:\n{e}"
+        )
+
+def open_logs_directory(parent=None):
+    """Open the logs directory used by the program."""
+    try:
+        # Open the directory in file explorer
+        QDesktopServices.openUrl(QUrl.fromLocalFile(get_logs_directory()))
+    except Exception as e:
+        QMessageBox.critical(
+            parent, "logs directory Error", f"Could not open logs directory:\n{e}"
+        )
+
+def clear_logs_directory(parent=None):
+    """Delete logs directory after user confirmation."""
+    try:
+        logs_dir = get_logs_directory()
+        
+        # Count files in the directory
+        total_files = len([f for f in os.listdir(logs_dir) if os.path.isfile(os.path.join(logs_dir, f))])
+        
+        if total_files == 0:
+            QMessageBox.information(
+                parent,
+                "Logs Directory",
+                "Logs directory is empty."
+            )
+            return
+        
+        # Ask for confirmation with file count
+        reply = QMessageBox.question(
+            parent,
+            "Delete logs directory",
+            f"Are you sure you want to delete logs directory with {total_files} files?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            import shutil
+            # Remove the entire directory
+            shutil.rmtree(logs_dir)
+
+            QMessageBox.information(
+                parent,
+                "Logs Directory Cleared",
+                f"Logs directory has been successfully deleted."
+            )
+    except Exception as e:
+        QMessageBox.critical(
+            parent,
+            "Error",
+            f"Failed to clear logs directory: {str(e)}"
+        )
+
+def show_about_dialog(parent):
+    """Show an About dialog with program information including GitHub link."""
+    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QIcon
+    from constants import PROGRAM_NAME, VERSION, PROGRAM_TAGLINE, PROGRAM_DESCRIPTION, COLORS, GITHUB_URL
+    
+    icon = parent.windowIcon()
+    dialog = QDialog(parent)
+    dialog.setWindowTitle(f"About {PROGRAM_NAME}")
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+    dialog.setFixedSize(400, 320)
+    layout = QVBoxLayout(dialog)
+    layout.setSpacing(10)
+    header_layout = QHBoxLayout()
+    icon_label = QLabel()
+    if not icon.isNull():
+        icon_label.setPixmap(icon.pixmap(64, 64))
+    else:
+        icon_label.setText("\U0001F4DA")
+        icon_label.setStyleSheet("font-size: 48px;")
+    header_layout.addWidget(icon_label)
+    title_label = QLabel(
+        f"<h1 style='margin-bottom: 0;'>{PROGRAM_NAME} <span style='font-size: 12px; font-weight: normal; color: {COLORS['GREY']};'>v{VERSION}</span></h1><h3 style='margin-top: 5px;'>{PROGRAM_TAGLINE}</h3>"
+    )
+    title_label.setTextFormat(Qt.RichText)
+    header_layout.addWidget(title_label, 1)
+    layout.addLayout(header_layout)
+    desc_label = QLabel(
+        f"<p>{PROGRAM_DESCRIPTION}</p>"
+        "<p>Visit the GitHub repository for updates, documentation, and to report issues.</p>"
+    )
+    desc_label.setTextFormat(Qt.RichText)
+    desc_label.setWordWrap(True)
+    layout.addWidget(desc_label)
+    github_btn = QPushButton("Visit GitHub Repository")
+    github_btn.setIcon(QIcon(get_resource_path("autosubsync.assets", "github.png")))
+    github_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
+    github_btn.setFixedHeight(32)
+    layout.addWidget(github_btn)
+    update_btn = QPushButton("Check for updates")
+    update_btn.clicked.connect(lambda: manual_check_for_updates(parent))
+    update_btn.setFixedHeight(32)
+    layout.addWidget(update_btn)
+    close_btn = QPushButton("Close")
+    close_btn.clicked.connect(dialog.accept)
+    close_btn.setFixedHeight(32)
+    layout.addWidget(close_btn)
+    dialog.exec_()
+
+def manual_check_for_updates(parent):
+    """Manually check for updates and always show result"""
+    parent._show_update_check_result = True
+    check_for_updates_startup(parent)
+
+def check_for_updates_startup(parent):
+    import urllib.request
+    from PyQt5.QtCore import QTimer
+    from constants import GITHUB_VERSION_URL, GITHUB_LATEST_RELEASE_URL, PROGRAM_NAME, VERSION
+    
+    def show_update_message(remote_version, local_version):
+        msg_box = QMessageBox(parent)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("Update Available")
+        msg_box.setText(
+            f"A new version of {PROGRAM_NAME} is available! ({local_version} > {remote_version})"
+        )
+        msg_box.setInformativeText(
+            "Please visit the GitHub repository and download the latest version. "
+            "Would you like to open the GitHub releases page?"
+        )
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.Yes)
+        if msg_box.exec_() == QMessageBox.Yes:
+            try:
+                QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
+            except Exception:
+                pass
+                
+    show_result = (
+        hasattr(parent, "_show_update_check_result")
+        and parent._show_update_check_result
+    )
+    parent._show_update_check_result = False
+    
+    try:
+        update_url = GITHUB_VERSION_URL
+        with urllib.request.urlopen(update_url) as response:
+            remote_raw = response.read().decode().strip()
+        local_raw = VERSION
+        remote_version = remote_raw
+        local_version = local_raw
+        try:
+            remote_num = int("".join(remote_version.split(".")))
+            local_num = int("".join(local_version.split(".")))
+        except ValueError:
+            return
+        if remote_num > local_num:
+            QTimer.singleShot(
+                1000, lambda: show_update_message(remote_version, local_version)
+            )
+        elif show_result:
+            QMessageBox.information(
+                parent,
+                "Up to Date",
+                f"You are running the latest version of {PROGRAM_NAME} ({local_version}).",
+            )
+    except Exception as e:
+        if show_result:
+            QMessageBox.warning(
+                parent,
+                "Update Check Failed",
+                f"Could not check for updates:\n{str(e)}",
+            )
+        pass
+    
