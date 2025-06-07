@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QAction,
     QMessageBox,
+    QInputDialog,
 )
 from PyQt5.QtCore import Qt, QTimer, QProcess
 from PyQt5.QtGui import QIcon, QIntValidator
@@ -262,10 +263,27 @@ class autosubsync(QWidget):
         controls = QVBoxLayout()
         controls.setContentsMargins(0, 0, 0, 0)
         controls.setSpacing(15)
+
+        # Create a horizontal layout for the sync options group title and the + button
         self.sync_options_group = QGroupBox("Sync tool settings")
+
+        # Create the + button for additional arguments
+        self.btn_add_args = QPushButton("+", self)
+        self.btn_add_args.setFixedSize(24, 24)
+        self.btn_add_args.setToolTip("Additional arguments")
+        self.btn_add_args.clicked.connect(self.show_add_arguments_dialog)
+
+        # Set the sync options group layout
         self.sync_options_layout = QVBoxLayout()
         self.sync_options_group.setLayout(self.sync_options_layout)
         controls.addWidget(self.sync_options_group)
+
+        # Position the + button in the top right of the group box
+        self.btn_add_args.setParent(self.sync_options_group)
+        self.sync_options_group.resizeEvent = lambda event: self.btn_add_args.move(
+            self.sync_options_group.width() - self.btn_add_args.width() - 10, 30
+        )
+
         self.sync_tool_combo = self._dropdown(
             controls, "Sync tool:", ["ffsubsync", "alass"]
         )
@@ -301,6 +319,23 @@ class autosubsync(QWidget):
         self.tab_widget.addTab(c, "Automatic Sync")
         self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
         self.update_sync_tool_options(self.sync_tool_combo.currentText())
+
+    def show_add_arguments_dialog(self):
+        """Show dialog for additional arguments for the current sync tool"""
+        current_tool = self.sync_tool_combo.currentText()
+        args_key = f"{current_tool}_arguments"
+        current_args = self.config.get(args_key, "")
+
+        args, ok = QInputDialog.getText(
+            self,
+            f"Additional arguments for {current_tool}",
+            f"Enter additional arguments for {current_tool}:",
+            QLineEdit.Normal,
+            current_args
+        )
+
+        if ok:
+            self.update_config(args_key, args)
 
     def show_auto_sync_inputs(self):
         self.clear_layout(self.auto_sync_input_layout)
@@ -367,6 +402,7 @@ class autosubsync(QWidget):
         self.shift_input.focusInEvent = lambda event: (
             self.shift_input.clear() if self.shift_input.text() == "0" else None
         ) or QLineEdit.focusInEvent(self.shift_input, event)
+        self.shift_input.wheelEvent = self._shift_input_wheel_event
         self.btn_shift_plus = self._button("+", h=35, w=35)
         shift_input.addWidget(self.btn_shift_plus)
         opts.addLayout(shift_input)
@@ -505,6 +541,10 @@ class autosubsync(QWidget):
                 self.config.get("alass_split_penalty", 7),
             )
             self.alass_split_penalty.valueChanged.connect(lambda value: self.update_config("alass_split_penalty", value))
+        
+        # Ensure the + button stays on top
+        if hasattr(self, 'btn_add_args'):
+            self.btn_add_args.raise_()
 
     def eventFilter(self, obj, event):
         if obj == self.shift_input:
@@ -521,6 +561,12 @@ class autosubsync(QWidget):
                     self.shift_input.setText("0")
                 self.shift_input.clearFocus()
         return super().eventFilter(obj, event)
+
+    def _shift_input_wheel_event(self, event):
+        if event.angleDelta().y() > 0:
+            self._increment_shift()
+        else:
+            self._decrement_shift()
 
     def show_settings_menu(self):
         # Show the menu at the right position below the button
