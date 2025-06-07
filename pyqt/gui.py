@@ -18,10 +18,10 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QInputDialog,
 )
-from PyQt5.QtCore import Qt, QTimer, QProcess
-from PyQt5.QtGui import QIcon, QIntValidator
+from PyQt5.QtCore import Qt, QTimer, QProcess, QUrl
+from PyQt5.QtGui import QIcon, QIntValidator, QDesktopServices
 import os, sys
-from utils import get_resource_path, load_config, save_config, get_user_config_path
+from utils import get_resource_path, load_config, save_config, get_user_config_path, get_logs_directory
 from constants import *
 
 # Import ctypes for Windows-specific taskbar icon
@@ -149,6 +149,58 @@ class autosubsync(QWidget):
                     f"Failed to reset settings: {str(e)}"
                 )
 
+    def open_config_directory(self):
+        """Open the config directory in the system file manager"""
+
+        try:
+            config_path = get_user_config_path()
+            # Open the directory containing the config file
+            QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(config_path)))
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Config Error", f"Could not open config location:\n{e}"
+            )
+
+    def open_logs_directory(self):
+        """Open the logs directory used by the program."""
+        try:
+            # Open the directory in file explorer
+            QDesktopServices.openUrl(QUrl.fromLocalFile(get_logs_directory()))
+        except Exception as e:
+            QMessageBox.critical(
+                self, "logs directory Error", f"Could not open logs directory:\n{e}"
+            )
+
+    def clear_logs_directory(self):
+        """Delete logs directory after user confirmation."""
+        reply = QMessageBox.question(
+            self,
+            "Delete logs directory",
+            "Are you sure you want to delete logs directory?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            try:
+                import shutil
+                logs_dir = get_logs_directory()
+                # Remove the entire directory and recreate it
+                if os.path.exists(logs_dir):
+                    shutil.rmtree(logs_dir)
+
+                QMessageBox.information(
+                    self,
+                    "logs directory Cleared",
+                    "logs directory have been successfully cleared."
+                )
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to clear logs directory: {str(e)}"
+                )
+
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
         screen = QApplication.primaryScreen().geometry()
@@ -175,6 +227,24 @@ class autosubsync(QWidget):
         
         # Create settings menu
         self.settings_menu = QMenu(self)
+
+        # Add 'Open config directory' option at the top
+        self.open_config_dir_action = QAction("Open config directory", self)
+        self.open_config_dir_action.triggered.connect(self.open_config_directory)
+        self.settings_menu.addAction(self.open_config_dir_action)
+
+        # Add 'Open logs directory' option at the top
+        self.open_logs_directory_action = QAction("Open logs directory", self)
+        self.open_logs_directory_action.triggered.connect(self.open_logs_directory)
+        self.settings_menu.addAction(self.open_logs_directory_action)
+
+        # Add 'Clear logs directory' option
+        self.clear_logs_directory_action = QAction("Clear all logs", self)
+        self.clear_logs_directory_action.triggered.connect(self.clear_logs_directory)
+        self.settings_menu.addAction(self.clear_logs_directory_action)
+
+        self.settings_menu.addSeparator()
+
         self.remember_changes_action = QAction("Remember the changes", self)
         self.remember_changes_action.setCheckable(True)
         self.remember_changes_action.setChecked(self.config.get("remember_changes", True))
@@ -193,8 +263,9 @@ class autosubsync(QWidget):
         self.reset_action.triggered.connect(self.reset_to_defaults)
         self.settings_menu.addAction(self.reset_action)
 
-        # Add separator and About option
         self.settings_menu.addSeparator()
+
+        # Add separator and About option
         self.about_action = QAction("About", self)
         self.about_action.triggered.connect(self.show_about_dialog)
         self.settings_menu.addAction(self.about_action)
@@ -594,7 +665,7 @@ class autosubsync(QWidget):
             icon_label.setStyleSheet("font-size: 48px;")
         header_layout.addWidget(icon_label)
         title_label = QLabel(
-            f"<h1 style='margin-bottom: 0;'>{PROGRAM_NAME} <span style='font-size: 12px; font-weight: normal; color: #666;'>v{VERSION}</span></h1><h3 style='margin-top: 5px;'>{PROGRAM_TAGLINE}</h3>"
+            f"<h1 style='margin-bottom: 0;'>{PROGRAM_NAME} <span style='font-size: 12px; font-weight: normal; color: {COLORS['GREY']};'>v{VERSION}</span></h1><h3 style='margin-top: 5px;'>{PROGRAM_TAGLINE}</h3>"
         )
         title_label.setTextFormat(Qt.RichText)
         header_layout.addWidget(title_label, 1)

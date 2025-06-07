@@ -1,13 +1,27 @@
 import os
 import json
+import tempfile
+
 
 # Define config path
 def get_user_config_path():
+    from constants import PROGRAM_NAME
     from platformdirs import user_config_dir
 
-    config_dir = user_config_dir("autosubsync", appauthor=False, roaming=True)
+    config_dir = user_config_dir(PROGRAM_NAME, appauthor=False, roaming=True)
     os.makedirs(config_dir, exist_ok=True)
+    
     return os.path.join(config_dir, "config.json")
+
+def get_logs_directory():
+    from constants import PROGRAM_NAME
+
+    logs_dir = os.path.join(tempfile.gettempdir(), PROGRAM_NAME)
+    # Create the directory if it doesn't exist
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+
+    return logs_dir
 
 def load_config():
     try:
