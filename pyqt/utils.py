@@ -2,8 +2,10 @@ import os
 import sys
 import json
 import tempfile
+import urllib.request
+import threading
 from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QUrl, QProcess
+from PyQt5.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt5.QtGui import QDesktopServices
 
 
@@ -256,69 +258,63 @@ def show_about_dialog(parent):
     layout.addWidget(close_btn)
     dialog.exec_()
 
+# Update checking functionality
+class UpdateSignals(QObject):
+    update_available = pyqtSignal(str, str)
+    up_to_date = pyqtSignal(str)
+    check_failed = pyqtSignal(str)
+
+def _show_update_message(parent, remote_version, local_version):
+    from constants import GITHUB_LATEST_RELEASE_URL, PROGRAM_NAME
+    msg_box = QMessageBox(parent)
+    msg_box.setIcon(QMessageBox.Information)
+    msg_box.setWindowTitle("Update Available")
+    msg_box.setText(f"A new version of {PROGRAM_NAME} is available! ({local_version} → {remote_version})")
+    msg_box.setInformativeText("Please visit the GitHub repository and download the latest version. Would you like to open the GitHub releases page?")
+    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    msg_box.setDefaultButton(QMessageBox.Yes)
+    if msg_box.exec_() == QMessageBox.Yes:
+        try:
+            QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
+        except Exception:
+            pass
+
+def _show_up_to_date(parent, version):
+    from constants import PROGRAM_NAME
+    QMessageBox.information(parent, "Up to Date", f"You are running the latest version of {PROGRAM_NAME} ({version}).")
+
+def _show_check_failed(parent, error_message):
+    QMessageBox.warning(parent, "Update Check Failed", f"Could not check for updates:\n{error_message}")
+
 def manual_check_for_updates(parent):
     """Manually check for updates and always show result"""
     parent._show_update_check_result = True
     check_for_updates_startup(parent)
 
 def check_for_updates_startup(parent):
-    import urllib.request
-    from PyQt5.QtCore import QTimer
-    from constants import GITHUB_VERSION_URL, GITHUB_LATEST_RELEASE_URL, PROGRAM_NAME, VERSION
+    from constants import GITHUB_VERSION_URL, VERSION
     
-    def show_update_message(remote_version, local_version):
-        msg_box = QMessageBox(parent)
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setWindowTitle("Update Available")
-        msg_box.setText(
-            f"A new version of {PROGRAM_NAME} is available! ({local_version} > {remote_version})"
-        )
-        msg_box.setInformativeText(
-            "Please visit the GitHub repository and download the latest version. "
-            "Would you like to open the GitHub releases page?"
-        )
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg_box.setDefaultButton(QMessageBox.Yes)
-        if msg_box.exec_() == QMessageBox.Yes:
-            try:
-                QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
-            except Exception:
-                pass
-                
-    show_result = (
-        hasattr(parent, "_show_update_check_result")
-        and parent._show_update_check_result
-    )
+    signals = UpdateSignals()
+    show_result = getattr(parent, "_show_update_check_result", False)
     parent._show_update_check_result = False
     
-    try:
-        update_url = GITHUB_VERSION_URL
-        with urllib.request.urlopen(update_url) as response:
-            remote_raw = response.read().decode().strip()
-        local_raw = VERSION
-        remote_version = remote_raw
-        local_version = local_raw
+    signals.update_available.connect(lambda r, l: _show_update_message(parent, r, l))
+    signals.up_to_date.connect(lambda v: _show_up_to_date(parent, v) if show_result else None)
+    signals.check_failed.connect(lambda e: _show_check_failed(parent, e) if show_result else None)
+    
+    def worker():
         try:
-            remote_num = int("".join(remote_version.split(".")))
-            local_num = int("".join(local_version.split(".")))
-        except ValueError:
-            return
-        if remote_num > local_num:
-            QTimer.singleShot(
-                1000, lambda: show_update_message(remote_version, local_version)
-            )
-        elif show_result:
-            QMessageBox.information(
-                parent,
-                "Up to Date",
-                f"You are running the latest version of {PROGRAM_NAME} ({local_version}).",
-            )
-    except Exception as e:
-        if show_result:
-            QMessageBox.warning(
-                parent,
-                "Update Check Failed",
-                f"Could not check for updates:\n{str(e)}",
-            )
-        pass
+            with urllib.request.urlopen(GITHUB_VERSION_URL, timeout=5) as response:
+                remote = response.read().decode().strip()
+            try:
+                if int("".join(remote.split("."))) > int("".join(VERSION.split("."))):
+                    signals.update_available.emit(remote, VERSION)
+                elif show_result:
+                    signals.up_to_date.emit(VERSION)
+            except ValueError:
+                pass
+        except Exception as e:
+            signals.check_failed.emit(str(e))
+    
+    threading.Thread(target=worker, daemon=True).start()
     
