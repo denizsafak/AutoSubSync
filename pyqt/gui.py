@@ -17,16 +17,32 @@ from PyQt5.QtWidgets import (
     QAction,
     QMessageBox,
     QInputDialog,
+    QFileDialog,
+    QFileIconProvider,
 )
-from PyQt5.QtCore import Qt, QTimer, QProcess, QUrl
-from PyQt5.QtGui import QIcon, QIntValidator, QDesktopServices
-import os, sys
+from PyQt5.QtCore import Qt, QTimer, QProcess, QUrl, QSize, QFileInfo, QIODevice, QBuffer
+from PyQt5.QtGui import QIcon, QIntValidator, QDesktopServices, QPixmap, QDragEnterEvent, QDropEvent
+import os, sys, base64
 from utils import get_resource_path, load_config, save_config, get_user_config_path, get_logs_directory
 from constants import *
 
 # Import ctypes for Windows-specific taskbar icon
 if platform.system() == "Windows":
     import ctypes
+
+
+class IconProvider(QFileIconProvider):
+    """Custom icon provider to get file icons without resizing"""
+    pass
+
+
+def format_num(size):
+    """Format file size in human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024.0:
+            return f"{size:.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} TB"
 
 
 class StepOneSlider(QSlider):
@@ -64,6 +80,7 @@ class InputBox(QLabel):
         parent=None,
         text="Drag and drop your file here or click to browse.",
         label=None,
+        input_type=None,
     ):
         super().__init__(parent)
         self.setAlignment(Qt.AlignCenter)
@@ -75,6 +92,17 @@ class InputBox(QLabel):
         )
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setCursor(Qt.PointingHandCursor)
+        self.file_path = None
+        self.input_type = input_type
+        self.default_text = text
+        
+        # Add clear button
+        self.clear_btn = QPushButton("✕", self)
+        self.clear_btn.setFixedSize(25, 25)
+        self.clear_btn.setCursor(Qt.PointingHandCursor)
+        self.clear_btn.clicked.connect(self.reset_to_default)
+        self.clear_btn.hide()  # Initially hidden
+        
         if label:
             l = QLabel(label, self)
             l.setObjectName("boxLabel")
@@ -83,6 +111,89 @@ class InputBox(QLabel):
             )
             l.move(10, 8)
             l.show()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.browse_file()
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        files = [u.toLocalFile() for u in event.mimeData().urls()]
+        if files:
+            self.set_file(files[0])
+
+    def browse_file(self):
+        if self.input_type == "subtitle":
+            file_filter = f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+        elif self.input_type == "video_or_subtitle":
+            file_filter = f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+        else:
+            return  # Don't handle batch mode
+            
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select File", "", file_filter)
+        if file_path:
+            self.set_file(file_path)
+
+    def set_file(self, file_path):
+        if not os.path.exists(file_path):
+            self.show_error("File does not exist")
+            return
+            
+        # Validate file type
+        ext = os.path.splitext(file_path)[1].lower()
+        if self.input_type == "subtitle" and ext not in SUBTITLE_EXTENSIONS:
+            self.show_error("Invalid subtitle file")
+            return
+        elif self.input_type == "video_or_subtitle" and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS:
+            self.show_error("Invalid video or subtitle file")
+            return
+        
+        self.file_path = file_path
+        name = os.path.basename(file_path)
+        size = os.path.getsize(file_path)
+        
+        # Get icon without resizing using custom provider
+        provider = IconProvider()
+        qicon = provider.icon(QFileInfo(file_path))
+        size_icon = QSize(32, 32)
+        pixmap = qicon.pixmap(size_icon)
+        
+        # Convert to base64 PNG
+        buffer = QBuffer()
+        buffer.open(QIODevice.WriteOnly)
+        pixmap.save(buffer, "PNG")
+        img_data = base64.b64encode(buffer.data()).decode()
+        
+        # Update display
+        self.setText(
+            f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%; word-break: break-all;"><b>{name}</b></span><br>Size: {format_num(size)}'
+        )
+        self.setWordWrap(True)
+        self.setStyleSheet(
+            f"QLabel#inputBox {{{self.STYLE_ACTIVE}}} QLabel#inputBox:hover {{{self.STYLE_ACTIVE_HOVER}}}"
+        )
+        
+        # Show and position the clear button in the top right corner
+        self.clear_btn.show()
+        self.clear_btn.move(self.width() - self.clear_btn.width() - 8, 8)
+
+    def show_error(self, message):
+        self.setText(message)
+        self.setStyleSheet(
+            f"QLabel#inputBox {{{self.STYLE_ERROR}}} QLabel#inputBox:hover {{{self.STYLE_ERROR_HOVER}}}"
+        )
+        QTimer.singleShot(3000, self.reset_to_default)
+
+    def reset_to_default(self):
+        self.file_path = None
+        self.setText(self.default_text)
+        self.setStyleSheet(
+            f"QLabel#inputBox {{{self.STYLE_DEFAULT}}} QLabel#inputBox:hover {{{self.STYLE_DEFAULT_HOVER}}}"
+        )
+        self.clear_btn.hide()
 
 
 class autosubsync(QWidget):
@@ -329,11 +440,10 @@ class autosubsync(QWidget):
         return combo
 
     def clear_layout(self, layout):
+        """Clear all items from the layout without deleting persistent widgets"""
         while layout.count():
             item = layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-            elif item.layout():
+            if item.layout():
                 self.clear_layout(item.layout())
 
     def setupAutoSyncTab(self):
@@ -341,6 +451,29 @@ class autosubsync(QWidget):
         self.auto_sync_input_layout = QVBoxLayout()
         self.auto_sync_input_layout.setSpacing(15)
         self.auto_sync_input_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Create the input boxes
+        self.batch_input = InputBox(
+            self,
+            "Drag and drop files or folder here or click to browse",
+            "Batch mode",
+        )
+        
+        self.video_ref_input = InputBox(
+            self,
+            "Drag and drop video/reference subtitle here or click to browse",
+            "Video/Reference subtitle",
+            input_type="video_or_subtitle",
+        )
+        
+        self.subtitle_input = InputBox(
+            self,
+            "Drag and drop subtitle file here or click to browse",
+            "Input Subtitle",
+            input_type="subtitle",
+        )
+        
+        # Simply add layout to container
         l.addLayout(self.auto_sync_input_layout, 1)
         self.show_auto_sync_inputs()
         controls = QVBoxLayout()
@@ -424,34 +557,27 @@ class autosubsync(QWidget):
 
     def show_auto_sync_inputs(self):
         self.clear_layout(self.auto_sync_input_layout)
+        
+        # Shorthand references to input boxes
+        inputs = [self.batch_input, self.video_ref_input, self.subtitle_input]
+        
+        # Hide all and ensure correct parent
+        for input_box in inputs:
+            input_box.hide()
+            input_box.setParent(self)
+        
+        # Show only the appropriate widgets based on mode
         if self.batch_mode_enabled:
-            self.auto_sync_input_layout.addWidget(
-                InputBox(
-                    self,
-                    "Drag and drop files or folder here or click to browse",
-                    "Batch mode",
-                ),
-                1,
-            )
+            self.batch_input.show()
+            self.auto_sync_input_layout.addWidget(self.batch_input, 1)
         else:
-            self.auto_sync_input_layout.addWidget(
-                InputBox(
-                    self,
-                    "Drag and drop video/reference subtitle here or click to browse",
-                    "Video/Reference subtitle",
-                ),
-                1,
-            )
-            self.auto_sync_input_layout.addWidget(
-                InputBox(
-                    self,
-                    "Drag and drop subtitle file here or click to browse",
-                    "Input Subtitle",
-                ),
-                1,
-            )
+            self.video_ref_input.show()
+            self.subtitle_input.show()
+            self.auto_sync_input_layout.addWidget(self.video_ref_input, 1)
+            self.auto_sync_input_layout.addWidget(self.subtitle_input, 1)
 
     def toggle_batch_mode(self):
+        # Update mode and config
         self.batch_mode_enabled = not self.batch_mode_enabled
         self.update_config("batch_mode", self.batch_mode_enabled)
         self.btn_batch_mode.setText(
@@ -465,6 +591,7 @@ class autosubsync(QWidget):
             self,
             "Drag and drop subtitle file here or click to browse",
             "Input Subtitle",
+            input_type="subtitle",
         )
         l.addWidget(self.manual_input_box, 1)
         opts = QVBoxLayout()

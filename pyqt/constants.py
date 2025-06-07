@@ -24,3 +24,34 @@ COLORS = {
     "RED_BACKGROUND": "rgba(232, 78, 60, 0.1)",
     "RED_BACKGROUND_HOVER": "rgba(232, 78, 60, 0.15)",
 }
+
+SUBTITLE_EXTENSIONS = [
+    ".srt",
+    ".vtt",
+    ".sbv",
+    ".sub",
+    ".ass",
+    ".ssa",
+    ".dfxp",
+    ".ttml",
+    ".itt",
+    ".stl",
+    ".idx",
+    ".smi",
+]
+VIDEO_EXTENSIONS = [
+    ".mp4",
+    ".mkv",
+    ".avi",
+    ".webm",
+    ".flv",
+    ".mov",
+    ".wmv",
+    ".mpg",
+    ".mpeg",
+    ".m4v",
+    ".3gp",
+    ".h264",
+    ".h265",
+    ".hevc",
+]
