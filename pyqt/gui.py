@@ -114,8 +114,46 @@ class InputBox(QLabel):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent):
+        files = [u.toLocalFile() for u in event.mimeData().urls()]
+        
+        # Get the parent autosubsync instance first
+        parent = self
+        while parent and not isinstance(parent, autosubsync):
+            parent = parent.parent()
+            
+        # Special handling for exactly 2 files
+        if len(files) == 2 and parent and not parent.batch_mode_enabled:
+            # Get extensions of both files
+            ext1 = os.path.splitext(files[0])[1].lower()
+            ext2 = os.path.splitext(files[1])[1].lower()
+            
+            video_file = None
+            subtitle_file = None
+            
+            # Determine which is video and which is subtitle
+            if ext1 in VIDEO_EXTENSIONS and ext2 in SUBTITLE_EXTENSIONS:
+                video_file = files[0]
+                subtitle_file = files[1]
+            elif ext1 in SUBTITLE_EXTENSIONS and ext2 in VIDEO_EXTENSIONS:
+                video_file = files[1]
+                subtitle_file = files[0]
+                
+            # If we have one of each file type, set them appropriately
+            if video_file and subtitle_file and parent:
+                # If in auto sync tab inputs
+                if self == parent.video_ref_input or self == parent.subtitle_input:
+                    # Set the video input
+                    parent.video_ref_input.set_file(video_file)
+                    # Set the subtitle input
+                    parent.subtitle_input.set_file(subtitle_file)
+                    return
+                # If in manual sync tab input, use only the subtitle
+                elif self == parent.manual_input_box:
+                    self.set_file(subtitle_file)
+                    return
+                
+        # Standard single-file handling
         if self.input_type == "subtitle" or self.input_type == "video_or_subtitle":
-            files = [u.toLocalFile() for u in event.mimeData().urls()]
             if files:
                 self.set_file(files[0])
         elif self.input_type == "batch":
@@ -141,12 +179,12 @@ class InputBox(QLabel):
         # Validate file type
         ext = os.path.splitext(file_path)[1].lower()
         if self.input_type == "subtitle" and ext not in SUBTITLE_EXTENSIONS:
-            self.show_error("Invalid subtitle file")
+            self.show_error(f'"{ext}" is not a supported subtitle format.')
             return
         elif self.input_type == "video_or_subtitle" and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS:
-            self.show_error("Invalid video or subtitle file")
+            self.show_error(f'"{ext}" is not a supported video or subtitle format.')
             return
-        
+
         self.file_path = file_path
         name = os.path.basename(file_path)
         size = os.path.getsize(file_path)
@@ -736,14 +774,14 @@ class autosubsync(QWidget):
             self.alass_disable_fps_guessing = self._checkbox("Disable FPS guessing")
             self.alass_disable_fps_guessing.setChecked(self.config.get("alass_disable_fps_guessing", False))
             self.alass_disable_fps_guessing.toggled.connect(lambda state: update_config(self, "alass_disable_fps_guessing", state))
-            self.alass_disable_speed_optim = self._checkbox(
+            self.alass_disable_speed_optimization = self._checkbox(
                 "Disable speed optimization"
             )
-            self.alass_disable_speed_optim.setChecked(self.config.get("alass_disable_speed_optim", False))
-            self.alass_disable_speed_optim.toggled.connect(lambda state: update_config(self, "alass_disable_speed_optim", state))
+            self.alass_disable_speed_optimization.setChecked(self.config.get("alass_disable_speed_optimization", False))
+            self.alass_disable_speed_optimization.toggled.connect(lambda state: update_config(self, "alass_disable_speed_optimization", state))
             self.sync_options_layout.addWidget(self.alass_check_video_subtitles)
             self.sync_options_layout.addWidget(self.alass_disable_fps_guessing)
-            self.sync_options_layout.addWidget(self.alass_disable_speed_optim)
+            self.sync_options_layout.addWidget(self.alass_disable_speed_optimization)
             self.alass_split_penalty, _ = self._create_slider(
                 self.sync_options_layout,
                 "Split penalty (Default: 7, Recommended: 5-20, No splits: -1)",
