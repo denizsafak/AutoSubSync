@@ -9,8 +9,16 @@ from PyQt5.QtCore import qInstallMessageHandler, QtMsgType
 #sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from gui import autosubsync
+from gui_automatic_tab import attach_functions_to_autosubsync as attach_auto_functions
+from gui_manual_tab import attach_functions_to_autosubsync as attach_manual_functions
+from gui_batch_mode import attach_functions_to_autosubsync as attach_batch_functions
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION
+
+# Attach tab module functions to the autosubsync class
+attach_auto_functions(autosubsync)
+attach_manual_functions(autosubsync)
+attach_batch_functions(autosubsync)
 
 # Custom message handler to filter out specific Qt warnings
 def qt_message_handler(mode, context, message):
