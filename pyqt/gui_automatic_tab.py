@@ -1,4 +1,3 @@
-# filepath: /run/media/laptop/A25E56C85E56953F/Projects/AutoSubSync/pyqt/gui_automatic_tab.py
 """
 This module provides the automatic synchronization tab functionality for AutoSubSync.
 It's designed to be imported and attached to the main application at runtime.
@@ -17,11 +16,13 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QInputDialog,
     QLineEdit,
-    QSizePolicy
+    QSizePolicy,
+    QFileDialog,  # Added for folder selection
+    QLabel
 )
 from PyQt5.QtCore import Qt
 from constants import COLORS, FFSUBSYNC_VAD_OPTIONS
-from utils import update_config
+from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 # Import directly from gui_batch_mode for cleaner integration
 import gui_batch_mode
 
@@ -118,9 +119,12 @@ def setup_auto_sync_tab(self):
         self.sync_tool_combo.setCurrentIndex(idx)
     self.sync_tool_combo.currentTextChanged.connect(lambda text: update_config(self, "sync_tool", text))
     save_map = {
-        "Save next to input file": "save_next_to_input_file",
-        "Save to custom location": "save_to_custom_location",
-        "Replace original file": "replace_original_file"
+        "Save next to input subtitle": "save_next_to_input_subtitle",
+        "Overwrite input subtitle": "overwrite_input_subtitle",
+        "Save next to video": "save_next_to_video",
+        "Save next to video with same filename": "save_next_to_video_with_same_filename",
+        "Save to desktop": "save_to_desktop",
+        "Select destination folder": "select_destination_folder",
     }
     save_items = list(save_map.keys())
     self.save_combo = self._dropdown(
@@ -128,9 +132,14 @@ def setup_auto_sync_tab(self):
         "Save location:",
         save_items
     )
+    # Add label to display selected folder
+    self.selected_folder_label = QLabel("", self)
+    self.selected_folder_label.setWordWrap(True)
+    self.selected_folder_label.hide()  # Hide initially
+    controls.addWidget(self.selected_folder_label)
     
     # Handle display vs actual value mapping
-    saved_location = self.config.get("save_location", "save_next_to_input_file")
+    saved_location = self.config.get("automatic_save_location", "save_next_to_input_subtitle")
     # Reverse lookup to find display value
     display_value = next((k for k, v in save_map.items() if v == saved_location), save_items[0])
     
@@ -138,10 +147,25 @@ def setup_auto_sync_tab(self):
     if idx >= 0:
         self.save_combo.setCurrentIndex(idx)
         
-    # Convert display text to storage value
     self.save_combo.currentTextChanged.connect(
-        lambda text: update_config(self, "save_location", save_map.get(text, "save_next_to_input_file"))
+        lambda: handle_save_location_dropdown(
+            self,
+            self.save_combo,
+            save_map,
+            "automatic_save_location",
+            "automatic_save_folder",
+            self.selected_folder_label,
+            "save_next_to_input_subtitle"
+        )
     )
+    
+    # Initialize folder label on startup
+    if saved_location == "select_destination_folder":
+        folder = self.config.get("automatic_save_folder", "")
+        update_folder_label(self.selected_folder_label, folder)
+    else:
+        update_folder_label(self.selected_folder_label)
+    
     btns = QHBoxLayout()
     self.btn_batch_mode = self._button("Batch mode", w=120)
     self.btn_batch_mode.clicked.connect(lambda: gui_batch_mode.toggle_batch_mode(self))

@@ -1,4 +1,3 @@
-# filepath: /run/media/laptop/A25E56C85E56953F/Projects/AutoSubSync/pyqt/gui_manual_tab.py
 """
 This module provides the manual subtitle synchronization tab functionality for AutoSubSync.
 It's designed to be imported and attached to the main application at runtime.
@@ -15,12 +14,13 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QHBoxLayout,
     QMessageBox,
-    QSizePolicy
+    QSizePolicy,
+    QFileDialog  # Added for folder selection
 )
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtCore import Qt, QTimer
 from constants import COLORS
-from utils import update_config
+from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach manual tab functions to the autosubsync class"""
@@ -71,16 +71,23 @@ def setup_manual_sync_tab(self):
     # Install event filter on main window to catch global mouse clicks
     self.installEventFilter(self)
     manual_save_map = {
+        "Save next to input subtitle": "save_next_to_input_subtitle",
+        "Overwrite input subtitle": "overwrite_input_subtitle",
         "Save to desktop": "save_to_desktop",
-        "Override input subtitle": "override_input_subtitle"
+        "Select destination folder": "select_destination_folder",
     }
     manual_save_items = list(manual_save_map.keys())
     self.manual_save_combo = self._dropdown(
         opts, "Save location:", manual_save_items
     )
+    # Add label to display selected folder
+    self.manual_selected_folder_label = QLabel("", self)
+    self.manual_selected_folder_label.setWordWrap(True)
+    self.manual_selected_folder_label.hide()  # Hide initially
+    opts.addWidget(self.manual_selected_folder_label)
     
     # Handle display vs actual value mapping
-    manual_saved_location = self.config.get("manual_save_location", "save_to_desktop")
+    manual_saved_location = self.config.get("manual_save_location", "save_next_to_input_subtitle")
     # Reverse lookup to find display value
     manual_display_value = next((k for k, v in manual_save_map.items() if v == manual_saved_location), manual_save_items[0])
     
@@ -88,10 +95,25 @@ def setup_manual_sync_tab(self):
     if idx >= 0:
         self.manual_save_combo.setCurrentIndex(idx)
         
-    # Convert display text to storage value
     self.manual_save_combo.currentTextChanged.connect(
-        lambda text: update_config(self, "manual_save_location", manual_save_map.get(text, "save_to_desktop"))
+        lambda: handle_save_location_dropdown(
+            self,
+            self.manual_save_combo,
+            manual_save_map,
+            "manual_save_location",
+            "manual_save_folder",
+            self.manual_selected_folder_label,
+            "save_next_to_input_subtitle"
+        )
     )
+    
+    # Initialize folder label on startup
+    if manual_saved_location == "select_destination_folder":
+        folder = self.config.get("manual_save_folder", "")
+        update_folder_label(self.manual_selected_folder_label, folder)
+    else:
+        update_folder_label(self.manual_selected_folder_label)
+    
     self.btn_manual_sync = self._button("Start")
     opts.addWidget(self.btn_manual_sync)
     # Add input validation for Manual Sync Start button

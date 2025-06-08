@@ -104,6 +104,13 @@ def format_num(size):
     return f"{size:.1f} TB"
 
 
+def shorten_path(path, maxlen=50):
+    if len(path) <= maxlen:
+        return path
+    else:
+        return path[:maxlen//2-2] + '…' + path[-maxlen//2+1:]
+
+
 # Settings menu
 
 def update_config(obj, key, value):
@@ -317,4 +324,55 @@ def check_for_updates_startup(parent):
             signals.check_failed.emit(str(e))
     
     threading.Thread(target=worker, daemon=True).start()
+
+def update_folder_label(label, folder_path=""):
+    """Helper function to update the folder label consistently"""
+    if folder_path:
+        # Check if label supports rich text (has setTextFormat method)
+        if hasattr(label, 'setTextFormat'):
+            from constants import COLORS
+            from PyQt5.QtCore import Qt
+            label.setText(f'Selected folder: <span style="color:{COLORS["GREEN"]}">{shorten_path(folder_path)}</span>')
+            label.setTextFormat(Qt.RichText)
+        else:
+            label.setText(f"Selected folder: {shorten_path(folder_path)}")
+        # Set tooltip to show full path
+        label.setToolTip(folder_path)
+        label.show()
+    else:
+        label.setToolTip("")  # Clear tooltip when no folder
+        label.hide()
+
+def handle_save_location_dropdown(obj, dropdown, save_map, config_key, folder_key, label, default_value, skip_dialog=False):
+    """
+    Generic handler for save location dropdowns with folder selection and label update.
+    """
+    from PyQt5.QtWidgets import QFileDialog
     
+    text = dropdown.currentText()
+    
+    # Handle folder selection case
+    if save_map.get(text) == "select_destination_folder" and not skip_dialog:
+        folder = QFileDialog.getExistingDirectory(obj, "Select Destination Folder")
+        if folder:
+            update_config(obj, folder_key, folder)
+            update_folder_label(label, folder)
+        else:
+            # Revert to previous selection if cancelled
+            prev = obj.config.get(config_key, default_value)
+            display = next((k for k, v in save_map.items() if v == prev), list(save_map.keys())[0])
+            idx = dropdown.findText(display)
+            if idx >= 0:
+                dropdown.setCurrentIndex(idx)
+            update_folder_label(label)
+            return
+    
+    # Update config for any selection
+    update_config(obj, config_key, save_map.get(text, default_value))
+    
+    # Update label based on current selection
+    if save_map.get(text) == "select_destination_folder":
+        folder = obj.config.get(folder_key, "")
+        update_folder_label(label, folder)
+    else:
+        update_folder_label(label)
