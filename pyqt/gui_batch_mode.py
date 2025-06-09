@@ -122,13 +122,14 @@ def calculate_file_similarity(video_name, sub_name):
         
     return max(0, similarity)  # Ensure non-negative score
 
-def create_tree_widget_item(file_path, parent=None, icon_provider=None):
+def create_tree_widget_item(file_path, parent=None, icon_provider=None, item_id=None):
     """Create a QTreeWidgetItem for a file path.
     
     Args:
         file_path: Path to the file
         parent: Optional parent item
         icon_provider: Optional QFileIconProvider for file icons
+        item_id: Optional ID for the item
         
     Returns:
         A configured QTreeWidgetItem
@@ -140,6 +141,8 @@ def create_tree_widget_item(file_path, parent=None, icon_provider=None):
         item = QTreeWidgetItem([basename])
     
     item.setData(0, Qt.UserRole, file_path)
+    if item_id is not None:
+        item.setData(0, BatchTreeView.ITEM_ID_ROLE, item_id)
     
     # Add icon if provider is available
     if icon_provider:
@@ -200,6 +203,7 @@ def select_files_with_directory_update(parent_instance, dialog_type, title, file
 
 class BatchTreeView(QTreeWidget):
     VALID_STATE_ROLE = Qt.UserRole + 10  # Role to store parent item's validity state
+    ITEM_ID_ROLE = Qt.UserRole + 11  # Role to store the item's unique ID
 
     def _is_parent_item_valid(self, item):
         """Helper to determine if a parent item is valid (has exactly one child, and that child has no children and is not a video file)."""
@@ -225,6 +229,7 @@ class BatchTreeView(QTreeWidget):
     def __init__(self, parent_app=None):  # parent_app is the autosubsync instance
         super().__init__(parent_app)
         self.app_parent = parent_app
+        self._next_item_id = 1  # Initialize the ID counter
         self.setColumnCount(1)
         self.setHeaderHidden(False)  # Show header to display pair counts
         #self.headerItem().setTextAlignment(0, Qt.AlignCenter)
@@ -252,6 +257,12 @@ class BatchTreeView(QTreeWidget):
         model.rowsInserted.connect(self._schedule_ui_update)
         model.rowsRemoved.connect(self._schedule_ui_update)
         model.modelReset.connect(self._schedule_ui_update)
+
+    def _get_next_id(self):
+        """Get the next available unique ID for a tree item."""
+        current_id = self._next_item_id
+        self._next_item_id += 1
+        return current_id
 
     def _schedule_ui_update(self, *args): # Accept any arguments from signals
         self._update_ui_timer.start()
@@ -356,19 +367,22 @@ class BatchTreeView(QTreeWidget):
         if not item:
             return
 
-        # Child items get an empty tooltip
+        item_id = item.data(0, self.ITEM_ID_ROLE)
+        id_text = f"(#{item_id})" if item_id is not None else ""
+
+        # Child items get an empty tooltip with ID
         if item.parent():
-            item.setToolTip(0, "")
+            item.setToolTip(0, f"{id_text}")
             return
             
         # Handle only parent (top-level) items below
         status_string = item.data(0, self.VALID_STATE_ROLE)
         if not status_string:
-            item.setToolTip(0, "")
+            item.setToolTip(0, f"{id_text}")
             return
             
         status_display = status_string.capitalize()
-        tooltip_text = f"Status: {status_display}"
+        tooltip_text = f"{id_text} Status: {status_display}"
         
         # Only generate detailed messages for invalid items
         if status_string != "invalid":
@@ -678,9 +692,8 @@ class BatchTreeView(QTreeWidget):
 
     def _create_tree_item(self, file_path):
         """Helper to create a new tree item for a file."""
-        item = QTreeWidgetItem([os.path.basename(file_path)])
-        item.setData(0, Qt.UserRole, file_path)
-        item.setIcon(0, self._get_file_icon(file_path))
+        item_id = self._get_next_id()
+        item = create_tree_widget_item(file_path, icon_provider=self.icon_provider, item_id=item_id)
         return item
         
     def _pair_videos_with_subtitles(self, videos, subs):
@@ -735,15 +748,14 @@ class BatchTreeView(QTreeWidget):
         pairs, paired_videos, paired_subs = self._pair_videos_with_subtitles(videos, subs)
         
         # Create tree items for each video-sub pair
-        for video, sub in pairs:
-            if video == sub or self.is_duplicate_pair(video, sub):
+        for video, sub_file_path in pairs: # Renamed sub to sub_file_path for clarity
+            if video == sub_file_path or self.is_duplicate_pair(video, sub_file_path):
                 skipped += 1
                 continue
                 
             parent_item = self._create_tree_item(video)
-            child_item = QTreeWidgetItem(parent_item, [os.path.basename(sub)])
-            child_item.setData(0, Qt.UserRole, sub)
-            child_item.setIcon(0, self._get_file_icon(sub))
+            # Ensure child gets an ID
+            child_item = create_tree_widget_item(sub_file_path, parent=parent_item, icon_provider=self.icon_provider, item_id=self._get_next_id())
             parent_item.setExpanded(True)
             newly_created_items.append(parent_item)
         
@@ -761,13 +773,12 @@ class BatchTreeView(QTreeWidget):
                 and len(paired_videos) == 0 and len(subs) > 0):
             target_path = drop_target_item.data(0, Qt.UserRole)
             if target_path and os.path.splitext(target_path)[1].lower() in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
-                for sub in subs:
-                    if sub not in paired_subs:
-                        child_item = QTreeWidgetItem(drop_target_item, [os.path.basename(sub)])
-                        child_item.setData(0, Qt.UserRole, sub)
-                        child_item.setIcon(0, self._get_file_icon(sub))
+                for sub_path_to_add in subs: 
+                    if sub_path_to_add not in paired_subs:
+                        # Ensure child gets an ID
+                        child_item = create_tree_widget_item(sub_path_to_add, parent=drop_target_item, icon_provider=self.icon_provider, item_id=self._get_next_id())
                         drop_target_item.setExpanded(True)
-                        paired_subs.add(sub)
+                        paired_subs.add(sub_path_to_add)
         
         # Add all newly created items to the tree
         if newly_created_items:
@@ -793,8 +804,11 @@ class BatchTreeView(QTreeWidget):
             video_ref_path: Path to video or reference subtitle file
             sub_path: Path to subtitle file to synchronize
         """
-        parent_item = create_tree_widget_item(video_ref_path, None, self.icon_provider)
-        child_item = create_tree_widget_item(sub_path, parent_item, self.icon_provider)
+        parent_item_id = self._get_next_id()
+        parent_item = create_tree_widget_item(video_ref_path, None, self.icon_provider, item_id=parent_item_id)
+        
+        child_item_id = self._get_next_id()
+        child_item = create_tree_widget_item(sub_path, parent_item, self.icon_provider, item_id=child_item_id)
         
         parent_item.setExpanded(True)
         self.insertTopLevelItem(0, parent_item) # Insert the configured parent item at the top
@@ -825,7 +839,8 @@ class BatchTreeView(QTreeWidget):
                 if self.is_duplicate_pair(parent_item.data(0, Qt.UserRole), file_path):
                     skipped += 1
                     continue
-                child_item = create_tree_widget_item(file_path, parent_item, self.icon_provider)
+                # Ensure child gets an ID
+                child_item = create_tree_widget_item(file_path, parent_item, self.icon_provider, item_id=self._get_next_id())
                 any_subtitle_added = True
             
             if skipped:
@@ -871,8 +886,15 @@ class BatchTreeView(QTreeWidget):
         if sub_index == -1:
             return  # Item not found, should not happen
 
-        # Create new video parent item
-        video_item = create_tree_widget_item(video_path, None, self.icon_provider)
+        # Create new video parent item with an ID
+        video_item_id = self._get_next_id()
+        video_item = create_tree_widget_item(video_path, None, self.icon_provider, item_id=video_item_id)
+
+        # Preserve subtitle's existing ID or assign a new one if it doesn't have one
+        subtitle_item_id = subtitle_item.data(0, self.ITEM_ID_ROLE)
+        if subtitle_item_id is None:
+            subtitle_item_id = self._get_next_id()
+            subtitle_item.setData(0, self.ITEM_ID_ROLE, subtitle_item_id)
 
         # Take the subtitle item from its current position
         root.removeChild(subtitle_item)
