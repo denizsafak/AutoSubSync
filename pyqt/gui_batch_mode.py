@@ -25,6 +25,7 @@ from PyQt5.QtGui import QCursor, QColor, QDesktopServices
 
 import os
 import re
+import collections  # Added import
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
 from utils import update_config
 
@@ -217,14 +218,9 @@ class BatchTreeView(QTreeWidget):
     def is_duplicate_pair(self, video_path, sub_path):
         """Return True if (video_path, sub_path) matches an existing valid top-level pair."""
         norm_v, norm_s = os.path.normpath(video_path), os.path.normpath(sub_path)
-        for i in range(self.topLevelItemCount()):
-            parent = self.topLevelItem(i)
-            if self._is_parent_item_valid(parent):
-                pv = os.path.normpath(parent.data(0, Qt.UserRole))
-                child = parent.child(0).data(0, Qt.UserRole)
-                if os.path.normpath(child) == norm_s and pv == norm_v:
-                    return True
-        return False
+        # Use the cached counts. If this pair_id is already in the counts with a value > 0,
+        # it means it exists in the tree. Adding it again would make it a duplicate.
+        return self._current_pair_id_counts.get((norm_v, norm_s), 0) > 0
 
     def __init__(self, parent_app=None):  # parent_app is the autosubsync instance
         super().__init__(parent_app)
@@ -247,6 +243,10 @@ class BatchTreeView(QTreeWidget):
 
         self._items_to_re_expand_paths = set() # For preserving expansion state during moves
 
+        # Cache for performance optimization
+        self._current_pair_id_counts = collections.Counter()
+        self._item_to_pair_id_map = {}
+
         # Connect model signals to schedule UI update
         model = self.model()
         model.rowsInserted.connect(self._schedule_ui_update)
@@ -257,6 +257,30 @@ class BatchTreeView(QTreeWidget):
         self._update_ui_timer.start()
 
     def _perform_actual_ui_update(self):
+        # Phase 1: Rebuild pair ID counts and item-to-pair_id map for efficient validation
+        self._current_pair_id_counts.clear()
+        self._item_to_pair_id_map.clear()
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item and item.childCount() == 1: # Potential pair structure
+                parent_path = item.data(0, Qt.UserRole)
+                child_item = item.child(0)
+                child_path = child_item.data(0, Qt.UserRole)
+                
+                if parent_path and child_path and \
+                   not child_item.childCount() and \
+                   is_subtitle_file(child_path):
+                    
+                    norm_parent = os.path.normpath(parent_path)
+                    norm_child = os.path.normpath(child_path)
+                    
+                    if norm_parent != norm_child: # Ensure parent and child are not the same file
+                        pair_id = (norm_parent, norm_child)
+                        self._current_pair_id_counts[pair_id] += 1
+                        # Use item's id (memory address) as key since QTreeWidgetItem is not hashable
+                        self._item_to_pair_id_map[id(item)] = pair_id
+        
+        # Continue with existing UI update logic
         if self.app_parent and hasattr(self.app_parent, 'update_auto_sync_ui_for_batch'):
             self.app_parent.update_auto_sync_ui_for_batch()
 
@@ -267,7 +291,7 @@ class BatchTreeView(QTreeWidget):
         
         self._update_parent_item_style() # Update styles for all parent items
         self._update_header_pair_counts() # Update header with valid/invalid pair counts
-        self._sort_top_level_items() # Sort items after updates
+        self._sort_top_level_items() # Sort/expand items after updates
 
     def _sort_top_level_items(self):
         # Expand all top-level items
@@ -361,40 +385,32 @@ class BatchTreeView(QTreeWidget):
         elif child_count == 1:
             first_child = item.child(0)
             
-            # Check for nested items
             if first_child and first_child.childCount() > 0:
                 tooltip_text += "\nNested items not allowed - remove extra levels"
-            # Check for video files as children
             elif first_child and is_video_file(first_child.data(0, Qt.UserRole)):
                 tooltip_text += "\nVideo files cannot be children - add a subtitle instead"
                 
-            # Check for same file used as both parent and child
             parent_path = item.data(0, Qt.UserRole)
             child_path = first_child.data(0, Qt.UserRole) if first_child else None
             
-            if parent_path and child_path and os.path.normpath(parent_path) == os.path.normpath(child_path):
-                tooltip_text += "\nParent and subtitle cannot be the same file."
-            # Check for duplicate pairs if parent and child are different files
-            elif parent_path and child_path:
-                pair_id = (os.path.normpath(parent_path), os.path.normpath(child_path))
-                dup_count = sum(1 for i in range(self.topLevelItemCount()) 
-                              if self._is_pair_match(self.topLevelItem(i), pair_id))
-                              
-                if dup_count > 1:
-                    tooltip_text += f"\nDuplicate pairs are not allowed ({dup_count} instances)."
+            if parent_path and child_path:
+                norm_parent_path = os.path.normpath(parent_path)
+                norm_child_path = os.path.normpath(child_path)
 
+                if norm_parent_path == norm_child_path:
+                    tooltip_text += "\nParent and subtitle cannot be the same file."
+                else:
+                    # Use cached counts for duplicate information
+                    current_pair_id = self._item_to_pair_id_map.get(id(item))
+                    if current_pair_id:
+                        dup_count = self._current_pair_id_counts.get(current_pair_id, 0)
+                        if dup_count > 1:
+                            tooltip_text += f"\nDuplicate pairs are not allowed ({dup_count} instances)."
         item.setToolTip(0, tooltip_text)
 
     def _validate_item(self, item):
         """Validate an item and return its validity state.
-        
-        Args:
-            item: QTreeWidgetItem to validate
-            
-        Returns:
-            tuple: (is_valid, validity_reason)
-            is_valid: bool indicating if the item is valid
-            validity_reason: str explaining why the item is valid/invalid
+        Uses precomputed _current_pair_id_counts for duplicate checks.
         """
         # Quick validation checks, ordered by likelihood of failure
         if not item or item.parent():
@@ -423,25 +439,16 @@ class BatchTreeView(QTreeWidget):
         if not is_subtitle_file(child_path):
             return False, "Child must be a subtitle file"
             
-        # Check for duplicates
-        pair_id = (norm_parent, norm_child)
-        dup_count = sum(1 for i in range(self.topLevelItemCount()) 
-                        if self._is_pair_match(self.topLevelItem(i), pair_id))
-        
-        if dup_count > 1:
-            return False, f"Duplicate pair ({dup_count} instances)"
+        # Check for duplicates using the precomputed counts
+        # The item's pair_id should have been mapped if it's structurally a pair candidate
+        current_item_pair_id = self._item_to_pair_id_map.get(id(item))
+
+        if current_item_pair_id: # This item forms a structural pair
+            dup_count = self._current_pair_id_counts.get(current_item_pair_id, 0)
+            if dup_count > 1:
+                return False, f"Duplicate pair ({dup_count} instances)"
             
         return True, "Valid"
-        
-    def _is_pair_match(self, item, pair_id):
-        """Check if an item matches a parent-child path pair."""
-        if not self._is_parent_item_valid(item) or item.childCount() != 1:
-            return False
-            
-        norm_parent, norm_child = pair_id
-        parent_path = os.path.normpath(item.data(0, Qt.UserRole))
-        child_path = os.path.normpath(item.child(0).data(0, Qt.UserRole))
-        return parent_path == norm_parent and child_path == norm_child
 
     def _apply_item_styles(self, item, is_valid):
         """Apply styling to an item based on its validity.
