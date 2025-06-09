@@ -28,6 +28,37 @@ import re
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
 from utils import update_config
 
+# Constants for file dialogs
+VIDEO_SUBTITLE_FILTER = f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+VIDEO_FILTER = f"Video Files (*{' *'.join(VIDEO_EXTENSIONS)})"
+SUBTITLE_FILTER = f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+
+# Helper functions for file operations
+def get_file_extension(file_path):
+    """Get the lowercase extension of a file path."""
+    return os.path.splitext(file_path)[1].lower() if file_path else ""
+
+def is_video_file(file_path):
+    """Check if a file is a video file based on its extension."""
+    return get_file_extension(file_path) in VIDEO_EXTENSIONS
+
+def is_subtitle_file(file_path):
+    """Check if a file is a subtitle file based on its extension."""
+    return get_file_extension(file_path) in SUBTITLE_EXTENSIONS
+
+def is_media_file(file_path):
+    """Check if a file is either a video or subtitle file."""
+    ext = get_file_extension(file_path)
+    return ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS
+
+def update_last_dir(app_instance, dir_path):
+    """Update the last used directory in app config."""
+    update_config(app_instance, "last_used_dir", dir_path)
+    
+def get_basename(file_path):
+    """Get the basename of a file path."""
+    return os.path.basename(file_path) if file_path else ""
+
 def effective_basename(file_path):
     """Extract effective basename from file path, handling language tags.
     
@@ -90,6 +121,31 @@ def calculate_file_similarity(video_name, sub_name):
         
     return max(0, similarity)  # Ensure non-negative score
 
+def create_tree_widget_item(file_path, parent=None, icon_provider=None):
+    """Create a QTreeWidgetItem for a file path.
+    
+    Args:
+        file_path: Path to the file
+        parent: Optional parent item
+        icon_provider: Optional QFileIconProvider for file icons
+        
+    Returns:
+        A configured QTreeWidgetItem
+    """
+    basename = get_basename(file_path)
+    if parent:
+        item = QTreeWidgetItem(parent, [basename])
+    else:
+        item = QTreeWidgetItem([basename])
+    
+    item.setData(0, Qt.UserRole, file_path)
+    
+    # Add icon if provider is available
+    if icon_provider:
+        item.setIcon(0, icon_provider.icon(QFileInfo(file_path)))
+        
+    return item
+
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach batch mode functions to the autosubsync class"""
     autosubsync_class.show_batch_add_menu = show_batch_add_menu
@@ -102,8 +158,64 @@ def attach_functions_to_autosubsync(autosubsync_class):
     autosubsync_class.toggle_batch_mode = toggle_batch_mode
     autosubsync_class.validate_batch_inputs = validate_batch_inputs
 
+
+def select_files_with_directory_update(parent_instance, dialog_type, title, file_filter=None, initial_dir=None, multiple=False):
+    """Helper function for file selection dialogs that update the last used directory.
+    
+    Args:
+        parent_instance: The parent widget/window for the dialog
+        dialog_type: 'file-open', 'files-open', or 'directory' for different QFileDialog types
+        title: Title for the dialog
+        file_filter: Optional filter for file types
+        initial_dir: Initial directory to open the dialog at
+        multiple: Whether to allow multiple selection
+        
+    Returns:
+        Selected file path(s) or None if canceled
+    """
+    config_dir = parent_instance.config.get("last_used_dir", "") if hasattr(parent_instance, "config") else ""
+    start_dir = initial_dir or config_dir or ""
+    
+    result = None
+    
+    if dialog_type == 'file-open':
+        result, _ = QFileDialog.getOpenFileName(parent_instance, title, start_dir, file_filter or "")
+    elif dialog_type == 'files-open':
+        result, _ = QFileDialog.getOpenFileNames(parent_instance, title, start_dir, file_filter or "")
+    elif dialog_type == 'directory':
+        result = QFileDialog.getExistingDirectory(parent_instance, title, start_dir)
+    
+    # Update the last used directory if a file/directory was selected
+    if result:
+        if isinstance(result, list) and result:  # Multiple files selected
+            update_config(parent_instance, "last_used_dir", os.path.dirname(result[0]))
+        elif isinstance(result, str) and result:  # Single file or directory
+            if dialog_type == 'directory':
+                update_config(parent_instance, "last_used_dir", result)
+            else:
+                update_config(parent_instance, "last_used_dir", os.path.dirname(result))
+    
+    return result
+
 class BatchTreeView(QTreeWidget):
     VALID_STATE_ROLE = Qt.UserRole + 10  # Role to store parent item's validity state
+
+    def _is_parent_item_valid(self, item):
+        """Helper to determine if a parent item is valid (has exactly one child, and that child has no children and is not a video file)."""
+        if not item or item.parent(): # Must be a top-level item
+            return False
+        if item.childCount() == 1:
+            first_child = item.child(0)
+            if first_child and first_child.childCount() > 0: # Child must not have children
+                return False
+            elif first_child: # Child exists and has no children
+                child_file_path = first_child.data(0, Qt.UserRole)
+                if child_file_path:
+                    child_ext = get_file_extension(child_file_path)
+                    if child_ext in VIDEO_EXTENSIONS: # Child must not be a video file
+                        return False
+            return True # Valid: one child, no grandchildren, child is not a video
+        return False # Not exactly one child
 
     def __init__(self, parent_app=None):  # parent_app is the autosubsync instance
         super().__init__(parent_app)
@@ -157,20 +269,8 @@ class BatchTreeView(QTreeWidget):
 
     def _get_provisional_validity(self, item):
         # This method determines 'validity' based on the item's current children structure.
-        # It's a simplified check similar to _update_parent_item_style's logic.
-        is_valid = True 
-        if item.childCount() == 1:
-            first_child = item.child(0)
-            if first_child and first_child.childCount() > 0: # Has grandchildren
-                is_valid = False
-            elif first_child: # Check if the single child is a video file
-                child_file_path = first_child.data(0, Qt.UserRole)
-                if child_file_path:
-                    child_ext = os.path.splitext(child_file_path)[1].lower()
-                    if child_ext in VIDEO_EXTENSIONS: # A child cannot be a video file for a valid pair
-                        is_valid = False
-        else: # Not exactly one child (0 or >1)
-            is_valid = False
+        # Use the helper function for validity
+        is_valid = self._is_parent_item_valid(item)
         return "valid" if is_valid else "invalid"
 
     def _update_header_pair_counts(self):
@@ -265,19 +365,8 @@ class BatchTreeView(QTreeWidget):
             is_stylable_parent = not bool(item_to_style.parent())
 
             if is_stylable_parent:
-                is_valid = True # Assume valid initially
-                if item_to_style.childCount() == 1:
-                    first_child = item_to_style.child(0)
-                    if first_child and first_child.childCount() > 0: # Has grandchildren
-                        is_valid = False
-                    elif first_child: # Check if the single child is a video file
-                        child_file_path = first_child.data(0, Qt.UserRole)
-                        if child_file_path:
-                            child_ext = os.path.splitext(child_file_path)[1].lower()
-                            if child_ext in VIDEO_EXTENSIONS:
-                                is_valid = False
-                else: # Not exactly one child (0 or >1)
-                    is_valid = False
+                # Use the helper function to determine validity
+                is_valid = self._is_parent_item_valid(item_to_style)
                 
                 item_to_style.setData(0, self.VALID_STATE_ROLE, "valid" if is_valid else "invalid")
                 item_to_style.setBackground(0, green_qcolor if is_valid else red_qcolor)
@@ -435,6 +524,7 @@ class BatchTreeView(QTreeWidget):
         super().mousePressEvent(event)
 
     def _get_file_icon(self, file_path):
+        """Get the icon for a file using the QFileIconProvider."""
         return self.icon_provider.icon(QFileInfo(file_path))
 
     def add_files_or_folders(self, paths, drop_target_item=None):
@@ -597,13 +687,14 @@ class BatchTreeView(QTreeWidget):
                 self.insertTopLevelItem(0, item)
 
     def add_explicit_pair(self, video_ref_path, sub_path):
-        parent_item = QTreeWidgetItem([os.path.basename(video_ref_path)]) # Create item without parent
-        parent_item.setData(0, Qt.UserRole, video_ref_path)
-        parent_item.setIcon(0, self._get_file_icon(video_ref_path))
-
-        child_item = QTreeWidgetItem(parent_item, [os.path.basename(sub_path)])
-        child_item.setData(0, Qt.UserRole, sub_path)
-        child_item.setIcon(0, self._get_file_icon(sub_path))
+        """Add an explicit video-subtitle pair to the tree.
+        
+        Args:
+            video_ref_path: Path to video or reference subtitle file
+            sub_path: Path to subtitle file to synchronize
+        """
+        parent_item = create_tree_widget_item(video_ref_path, None, self.icon_provider)
+        child_item = create_tree_widget_item(sub_path, parent_item, self.icon_provider)
         
         parent_item.setExpanded(True)
         self.insertTopLevelItem(0, parent_item) # Insert the configured parent item at the top
@@ -614,18 +705,23 @@ class BatchTreeView(QTreeWidget):
             QMessageBox.warning(self.app_parent, "Selection Error", "Please select a video or reference subtitle (a top-level item) to add a subtitle to.")
             return
 
-        file_paths, _ = QFileDialog.getOpenFileNames(self.app_parent, "Select Subtitle File(s)", "", f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})")
+        file_paths = select_files_with_directory_update(
+            self.app_parent,
+            'files-open',
+            "Select Subtitle File(s)",
+            SUBTITLE_FILTER
+        )
+        
         if file_paths:
             any_subtitle_added = False
             for file_path in file_paths:
-                ext = os.path.splitext(file_path)[1].lower()
-                if ext not in SUBTITLE_EXTENSIONS:
-                    QMessageBox.warning(self.app_parent, "Invalid File", f"'{os.path.basename(file_path)}' is not a subtitle file. Skipping.")
+                if not is_subtitle_file(file_path):
+                    QMessageBox.warning(self.app_parent, "Invalid File", f"'{get_basename(file_path)}' is not a subtitle file. Skipping.")
                     continue
-                child_item = QTreeWidgetItem(parent_item, [os.path.basename(file_path)])
-                child_item.setData(0, Qt.UserRole, file_path)
-                child_item.setIcon(0, self._get_file_icon(file_path))
+                
+                child_item = create_tree_widget_item(file_path, parent_item, self.icon_provider)
                 any_subtitle_added = True
+            
             if any_subtitle_added:
                 parent_item.setExpanded(True)
 
@@ -634,15 +730,15 @@ class BatchTreeView(QTreeWidget):
 
         # Verify the item is actually a subtitle
         item_path = subtitle_item.data(0, Qt.UserRole)
-        if not item_path or os.path.splitext(item_path)[1].lower() not in SUBTITLE_EXTENSIONS:
+        if not item_path or not is_subtitle_file(item_path):
             QMessageBox.warning(self.app_parent, "Invalid Item", "Selected item is not a subtitle file.")
             return
 
-        video_path, _ = QFileDialog.getOpenFileName(
+        video_path = select_files_with_directory_update(
             self.app_parent, 
+            'file-open', 
             "Select Video File", 
-            "", 
-            f"Video Files (*{' *'.join(VIDEO_EXTENSIONS)})"
+            VIDEO_FILTER
         )
         
         if not video_path:
@@ -660,9 +756,7 @@ class BatchTreeView(QTreeWidget):
             return  # Item not found, should not happen
 
         # Create new video parent item
-        video_item = QTreeWidgetItem([os.path.basename(video_path)])
-        video_item.setData(0, Qt.UserRole, video_path)
-        video_item.setIcon(0, self._get_file_icon(video_path))
+        video_item = create_tree_widget_item(video_path, None, self.icon_provider)
 
         # Take the subtitle item from its current position
         root.removeChild(subtitle_item)
@@ -699,10 +793,10 @@ class BatchTreeView(QTreeWidget):
         is_parent = not item.parent()
         
         if is_parent:
-            file_filter = f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+            file_filter = VIDEO_SUBTITLE_FILTER
             dialog_title = "Select Replacement Video or Reference Subtitle"
         else: 
-            file_filter = f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+            file_filter = SUBTITLE_FILTER
             dialog_title = "Select Replacement Subtitle File"
 
         new_file_path, _ = QFileDialog.getOpenFileName(self.app_parent, dialog_title, os.path.dirname(current_file_path) if current_file_path and os.path.exists(os.path.dirname(current_file_path)) else "", file_filter)
@@ -828,54 +922,67 @@ def show_batch_add_menu(self, source_widget=None, position=None):
 
 def handle_add_pair(self):
     """Show dialogs to add a video/subtitle pair."""
-    video_ref_path, _ = QFileDialog.getOpenFileName(self, "Select Video or Reference Subtitle File", self.config.get("last_used_dir", ""), f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})")
+    video_ref_path = select_files_with_directory_update(
+        self, 
+        'file-open', 
+        "Select Video or Reference Subtitle File", 
+        VIDEO_SUBTITLE_FILTER
+    )
     if not video_ref_path:
         return
-    self.config["last_used_dir"] = os.path.dirname(video_ref_path)
     
-    sub_path, _ = QFileDialog.getOpenFileName(self, "Select Input Subtitle File", self.config.get("last_used_dir", ""), f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})")
+    sub_path = select_files_with_directory_update(
+        self, 
+        'file-open', 
+        "Select Input Subtitle File", 
+        SUBTITLE_FILTER
+    )
     if not sub_path:
         return
-    self.config["last_used_dir"] = os.path.dirname(sub_path)
     
     self.batch_tree_view.add_explicit_pair(video_ref_path, sub_path)
 
 def handle_add_folder(self):
     """Add all supported files from a folder to the batch."""
-    folder_path = QFileDialog.getExistingDirectory(self, "Select Folder Containing Media Files", self.config.get("last_used_dir", ""))
+    folder_path = select_files_with_directory_update(
+        self, 
+        'directory', 
+        "Select Folder Containing Media Files"
+    )
     if folder_path:
-        update_config(self, "last_used_dir", folder_path)
         self.batch_tree_view.add_files_or_folders([folder_path])
 
 def handle_add_multiple_files(self):
     """Allow selection of multiple files to add to the batch."""
-    files_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files", self.config.get("last_used_dir", ""), f"All Supported Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)});;Video Files (*{' *'.join(VIDEO_EXTENSIONS)});;Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})")
+    files_paths = select_files_with_directory_update(
+        self, 
+        'files-open', 
+        "Select Files", 
+        VIDEO_SUBTITLE_FILTER
+    )
     if files_paths:
-        update_config(self, "last_used_dir", os.path.dirname(files_paths[0]))
         self.batch_tree_view.add_files_or_folders(files_paths)
 
 def handle_add_pairs_continuously(self):
     """Continuously prompt for video/subtitle pairs until canceled."""
     while True:
-        video_ref_path, _ = QFileDialog.getOpenFileName(
+        video_ref_path = select_files_with_directory_update(
             self, 
+            'file-open', 
             "Select Video or Reference Subtitle File (or Cancel to Stop)", 
-            self.config.get("last_used_dir", ""), 
-            f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+            VIDEO_SUBTITLE_FILTER
         )
         if not video_ref_path:
             break  # User cancelled video selection
-        update_config(self, "last_used_dir", os.path.dirname(video_ref_path))
 
-        sub_path, _ = QFileDialog.getOpenFileName(
+        sub_path = select_files_with_directory_update(
             self, 
+            'file-open', 
             f"Select Input Subtitle for '{os.path.basename(video_ref_path)}' (or Cancel to Stop)", 
-            self.config.get("last_used_dir", ""), 
-            f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+            SUBTITLE_FILTER
         )
         if not sub_path:
             break  # User cancelled subtitle selection
-        update_config(self, "last_used_dir", os.path.dirname(sub_path))
         
         self.batch_tree_view.add_explicit_pair(video_ref_path, sub_path)
 

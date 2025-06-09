@@ -197,6 +197,10 @@ class InputBox(QLabel):
             
         # Validate file type
         ext = os.path.splitext(file_path)[1].lower()
+        if not ext:
+            self.show_error("This is not a supported subtitle format.")
+            return
+        # if ext is empty, treat it as an invalid file
         if self.input_type == "subtitle" and ext not in SUBTITLE_EXTENSIONS:
             self.show_error(f'"{ext}" is not a supported subtitle format.')
             return
