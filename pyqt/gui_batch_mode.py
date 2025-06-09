@@ -20,13 +20,75 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QWidget
 )
-from PyQt5.QtCore import Qt, QTimer, QFileInfo, QPoint
-from PyQt5.QtGui import QCursor, QColor
+from PyQt5.QtCore import Qt, QTimer, QFileInfo, QPoint, QUrl
+from PyQt5.QtGui import QCursor, QColor, QDesktopServices
 
 import os
 import re
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
 from utils import update_config
+
+def effective_basename(file_path):
+    """Extract effective basename from file path, handling language tags.
+    
+    Removes potential language tags that are often 2-4 characters and 
+    preceded by a separator character like '_', '.', or '-'.
+    
+    Args:
+        file_path: Path to a file
+        
+    Returns:
+        Base filename without extension or language tags
+    """
+    base = os.path.splitext(os.path.basename(file_path))[0]
+    for tag_length in [4, 3, 2]:
+        if len(base) > tag_length and base[-(tag_length + 1)] in ["_", ".", "-"]:
+            return base[: -(tag_length + 1)]
+    return base
+
+def calculate_file_similarity(video_name, sub_name):
+    """Calculate similarity score between video and subtitle filenames.
+    
+    This function uses multiple methods to determine the similarity:
+    1. Uses effective_basename to remove language tags
+    2. Calculates common prefix length
+    3. Uses a string similarity ratio
+    
+    Args:
+        video_name: Basename of a video file
+        sub_name: Basename of a subtitle file
+        
+    Returns:
+        Similarity score (higher is more similar)
+    """
+    # Clean and prepare names
+    video_base = effective_basename(video_name).lower().strip('.-_ [](){}')
+    sub_base = effective_basename(sub_name).lower().strip('.-_ [](){}')
+    
+    # Calculate common prefix length
+    common_len = 0
+    for i in range(min(len(video_base), len(sub_base))):
+        if video_base[i] == sub_base[i]:
+            common_len += 1
+        else:
+            break
+            
+    # Calculate similarity score - weight by:
+    # 1. Common prefix length (heavily weighted)
+    # 2. Length difference (penalty for very different lengths)
+    # 3. Bonus for exact match after processing
+    
+    similarity = common_len * 10  # Base score from common prefix
+    
+    # Penalty for length difference
+    length_diff = abs(len(video_base) - len(sub_base))
+    similarity -= min(length_diff * 2, similarity // 2)  # Don't let penalty exceed half the score
+    
+    # Exact match bonus
+    if video_base == sub_base:
+        similarity += 50
+        
+    return max(0, similarity)  # Ensure non-negative score
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach batch mode functions to the autosubsync class"""
@@ -326,10 +388,14 @@ class BatchTreeView(QTreeWidget):
             if item_path and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS:
                 menu.addAction("Add video to this item", lambda: self.add_video_to_subtitle_dialog(item_at_pos))
 
+        # Add 'Go to folder' option for any item
+        if item_at_pos:
+            menu.addAction("Go to folder", lambda: self.open_item_folder(item_at_pos))
+
         if selected_items:  # Operations for selected items
-            menu.addAction(f"Remove selected ({len(selected_items)})", self.remove_selected_items)
             if len(selected_items) == 1 and item_at_pos:  # Change only makes sense for a single item
                 menu.addAction("Change", lambda: self.change_file_for_item(item_at_pos))
+            menu.addAction(f"Remove selected ({len(selected_items)})", self.remove_selected_items)
         elif item_at_pos:  # Fallback if no selection but right-clicked on an item
             menu.addAction("Remove", lambda: self.remove_item(item_at_pos))
             menu.addAction("Change", lambda: self.change_file_for_item(item_at_pos))
@@ -406,94 +472,117 @@ class BatchTreeView(QTreeWidget):
     def add_paired_files(self, file_paths, drop_target_item=None):
         newly_created_top_level_items = [] # Collect new items here
 
-        # Group files by basename (without extension, and common suffixes removed)
-        potential_groups = {}
-        for fp in file_paths:
-            base = os.path.splitext(os.path.basename(fp))[0]
-            normalized_base = base.lower()
-            common_suffixes = [
-                '.en', '.eng', '.english', '.es', '.spa', '.spanish', '.fr', '.fre', '.french',
-                '.forced', '.default', '.sdh', '.cc', '.hi',  # Hearing Impaired
-                '.srt', '.ass', '.vtt', '.sub', '.idx', '.ssa', '.smi', '.txt'  # Common sub extensions
-            ] 
-            for suffix in sorted(common_suffixes, key=len, reverse=True):  # Process longer suffixes first
-                if normalized_base.endswith(suffix):
-                    normalized_base = normalized_base[:-len(suffix)]
+        # First separate videos and subtitles
+        videos = sorted([f for f in file_paths if os.path.splitext(f)[1].lower() in VIDEO_EXTENSIONS])
+        subs = sorted([f for f in file_paths if os.path.splitext(f)[1].lower() in SUBTITLE_EXTENSIONS])
+        
+        # Store which files have been paired already
+        paired_videos = set()
+        paired_subs = set()
+        
+        # Create video-subtitle pairs based on basename similarity
+        video_sub_pairs = []
+        
+        # First pass: Try exact basename matching (without language tags)
+        for video in videos:
+            video_base = effective_basename(video).lower().strip('.-_ [](){}')
             
-            normalized_base = normalized_base.strip('.-_ [](){}')  # Further cleanup
-
-            if normalized_base not in potential_groups:
-                potential_groups[normalized_base] = []
-            potential_groups[normalized_base].append(fp)
-
-        for base_key, files_in_group in potential_groups.items():
-            videos = sorted([f for f in files_in_group if os.path.splitext(f)[1].lower() in VIDEO_EXTENSIONS])
-            subs = sorted([f for f in files_in_group if os.path.splitext(f)[1].lower() in SUBTITLE_EXTENSIONS])
-
-            # current_parent_qwidgetitem = self.invisibleRootItem() # Not needed here for new items
-            processed_as_subs_to_target = False
-
-            # Check if dropping subtitles onto an existing valid top-level item
-            if drop_target_item and subs: 
-                first_file_in_group_path = files_in_group[0]
-                first_file_in_group_ext = os.path.splitext(first_file_in_group_path)[1].lower()
+            best_match = None
+            for sub in subs:
+                if sub in paired_subs:
+                    continue
+                    
+                sub_base = effective_basename(sub).lower().strip('.-_ [](){}')
                 
-                target_item_path = drop_target_item.data(0, Qt.UserRole)
-                target_is_valid_top_level_media = (
-                    target_item_path and
-                    not drop_target_item.parent() and 
-                    os.path.splitext(target_item_path)[1].lower() in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
-                )
-
-                if first_file_in_group_ext in SUBTITLE_EXTENSIONS and target_is_valid_top_level_media:
-                    # This is adding children to an existing item, not creating new top-level items.
-                    # The existing logic for this case is preserved.
-                    parent_for_subs = drop_target_item 
-                    added_subs_to_this_parent = False
-                    for sub_file in subs:
-                        child_item = QTreeWidgetItem(parent_for_subs, [os.path.basename(sub_file)])
-                        child_item.setData(0, Qt.UserRole, sub_file)
-                        child_item.setIcon(0, self._get_file_icon(sub_file))
-                        added_subs_to_this_parent = True
-                    
-                    if added_subs_to_this_parent:
-                        parent_for_subs.setExpanded(True)
-                    processed_as_subs_to_target = True 
-
-            if not processed_as_subs_to_target: 
-                parent_to_add = None
-                if videos:
-                    parent_file = videos[0] 
-                    parent_to_add = QTreeWidgetItem([os.path.basename(parent_file)])
-                    parent_to_add.setData(0, Qt.UserRole, parent_file)
-                    parent_to_add.setIcon(0, self._get_file_icon(parent_file))
-                    
-                    children_added_to_parent = False
-                    for sub_file in subs: 
-                        child_item = QTreeWidgetItem(parent_to_add, [os.path.basename(sub_file)])
-                        child_item.setData(0, Qt.UserRole, sub_file)
-                        child_item.setIcon(0, self._get_file_icon(sub_file))
-                        children_added_to_parent = True
-                    if children_added_to_parent:
-                        parent_to_add.setExpanded(True)
-
-                elif subs: 
-                    parent_file = subs[0]
-                    parent_to_add = QTreeWidgetItem([os.path.basename(parent_file)])
-                    parent_to_add.setData(0, Qt.UserRole, parent_file)
-                    parent_to_add.setIcon(0, self._get_file_icon(parent_file))
-                    
-                    children_added_to_parent = False
-                    for sub_file in subs[1:]: 
-                        child_item = QTreeWidgetItem(parent_to_add, [os.path.basename(sub_file)])
-                        child_item.setData(0, Qt.UserRole, sub_file)
-                        child_item.setIcon(0, self._get_file_icon(sub_file))
-                        children_added_to_parent = True
-                    if children_added_to_parent:
-                        parent_to_add.setExpanded(True)
+                # If bases match exactly
+                if video_base == sub_base:
+                    best_match = sub
+                    break
+            
+            if best_match:
+                video_sub_pairs.append((video, best_match))
+                paired_videos.add(video)
+                paired_subs.add(best_match)
+        
+        # Second pass: Try to match remaining videos/subs with more flexible matching
+        for video in videos:
+            if video in paired_videos:
+                continue
                 
-                if parent_to_add:
-                    newly_created_top_level_items.append(parent_to_add)
+            video_base = effective_basename(video).lower().strip('.-_ [](){}')
+            best_match = None
+            best_score = 0
+            
+            for sub in subs:
+                if sub in paired_subs:
+                    continue
+                    
+                sub_base = effective_basename(sub).lower().strip('.-_ [](){}')
+                
+                # Calculate similarity score
+                similarity_score = calculate_file_similarity(video_base, sub_base)
+                
+                if similarity_score > best_score:
+                    best_score = similarity_score
+                    best_match = sub
+            
+            # If we found a match with a reasonable score (at least 30)
+            if best_match and best_score >= 30:
+                video_sub_pairs.append((video, best_match))
+                paired_videos.add(video)
+                paired_subs.add(best_match)
+        
+        # Handle any videos or subs that couldn't be paired
+        # Create individual entries for unpaired videos
+        for video in videos:
+            if video not in paired_videos:
+                parent_item = QTreeWidgetItem([os.path.basename(video)])
+                parent_item.setData(0, Qt.UserRole, video)
+                parent_item.setIcon(0, self._get_file_icon(video))
+                newly_created_top_level_items.append(parent_item)
+        
+        # Create individual entries for unpaired subs
+        for sub in subs:
+            if sub not in paired_subs:
+                parent_item = QTreeWidgetItem([os.path.basename(sub)])
+                parent_item.setData(0, Qt.UserRole, sub)
+                parent_item.setIcon(0, self._get_file_icon(sub))
+                newly_created_top_level_items.append(parent_item)
+        
+        # Now create tree items for each video-sub pair
+        for video, sub in video_sub_pairs:
+            # Create a new parent item for the video
+            parent_item = QTreeWidgetItem([os.path.basename(video)])
+            parent_item.setData(0, Qt.UserRole, video)
+            parent_item.setIcon(0, self._get_file_icon(video))
+            
+            # Add the subtitle as a child
+            child_item = QTreeWidgetItem(parent_item, [os.path.basename(sub)])
+            child_item.setData(0, Qt.UserRole, sub)
+            child_item.setIcon(0, self._get_file_icon(sub))
+            
+            # Expand the parent item and add to our collection
+            parent_item.setExpanded(True)
+            newly_created_top_level_items.append(parent_item)
+            
+        # Special case: Handle dropping subtitles onto an existing item
+        if drop_target_item and drop_target_item.parent() is None and len(paired_videos) == 0 and len(subs) > 0:
+            target_item_path = drop_target_item.data(0, Qt.UserRole)
+            target_is_valid_top_level_media = (
+                target_item_path and
+                os.path.splitext(target_item_path)[1].lower() in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
+            )
+            
+            if target_is_valid_top_level_media:
+                # Add any subtitles that weren't paired as children to the drop target
+                for sub in subs:
+                    if sub not in paired_subs:  # Only add unpaired subtitles
+                        child_item = QTreeWidgetItem(drop_target_item, [os.path.basename(sub)])
+                        child_item.setData(0, Qt.UserRole, sub)
+                        child_item.setIcon(0, self._get_file_icon(sub))
+                        drop_target_item.setExpanded(True)
+                        # Mark this subtitle as paired so it doesn't get added as a standalone item
+                        paired_subs.add(sub)
         
         if newly_created_top_level_items:
             def sort_key_for_new_items(item):
@@ -637,6 +726,25 @@ class BatchTreeView(QTreeWidget):
     def clear_all_items(self):
         if self.topLevelItemCount() > 0:
             self.clear()
+
+    def open_item_folder(self, item):
+        """Open the folder containing the file for the given item using QDesktopServices."""
+        if not item:
+            return
+        
+        file_path = item.data(0, Qt.UserRole)
+        if not file_path or not os.path.exists(file_path):
+            QMessageBox.warning(self.app_parent, "File Not Found", "The file does not exist or path is invalid.")
+            return
+        
+        folder_path = os.path.dirname(file_path)
+        if not os.path.isdir(folder_path):
+            QMessageBox.warning(self.app_parent, "Folder Not Found", "The folder does not exist.")
+            return
+        
+        # Use QDesktopServices to open the folder
+        folder_url = QUrl.fromLocalFile(folder_path)
+        QDesktopServices.openUrl(folder_url)
 
     def get_all_valid_pairs(self):
         pairs = []
