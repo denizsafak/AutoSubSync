@@ -15,12 +15,11 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QMessageBox,
     QSizePolicy,
-    QFileDialog  # Added for folder selection
 )
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, QTimer
 from constants import COLORS
-from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
+from utils import handle_save_location_dropdown, update_folder_label
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach manual tab functions to the autosubsync class"""

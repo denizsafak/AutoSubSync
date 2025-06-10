@@ -32,17 +32,26 @@ if platform.system() == "Windows":
     import ctypes
 
 class InputBox(QLabel):
-    # Define CSS styles as class constants
-    _BASE = "border:2px dashed {}; border-radius:5px; padding:20px; background:{}; min-height:100px;"
-    _HOVER = "background:{}; border-color:{};"
-    STYLE_DEFAULT = _BASE.format(COLORS["GREY"], COLORS["BLUE_BACKGROUND"])
-    STYLE_DEFAULT_HOVER = _HOVER.format(COLORS["BLUE_BACKGROUND_HOVER"], COLORS["BLUE"])
-    STYLE_ACTIVE = _BASE.format(COLORS["GREEN"], COLORS["GREEN_BACKGROUND"])
-    STYLE_ACTIVE_HOVER = _HOVER.format(
-        COLORS["GREEN_BACKGROUND_HOVER"], COLORS["GREEN"]
-    )
-    STYLE_ERROR = f"{_BASE.format(COLORS['RED'], COLORS['RED_BACKGROUND'])} color:{COLORS['RED']};"
-    STYLE_ERROR_HOVER = _HOVER.format(COLORS["RED_BACKGROUND_HOVER"], COLORS["RED"])
+    _STATE_CONFIG = {
+        'default': {
+            'border': COLORS["GREY"], 'bg': COLORS["BLUE_BACKGROUND"],
+            'hover_border': COLORS["BLUE"], 'hover_bg': COLORS["BLUE_BACKGROUND_HOVER"],
+            'text': None
+        },
+        'active': {
+            'border': COLORS["GREEN"], 'bg': COLORS["GREEN_BACKGROUND"],
+            'hover_border': COLORS["GREEN"], 'hover_bg': COLORS["GREEN_BACKGROUND_HOVER"],
+            'text': None
+        },
+        'error': {
+            'border': COLORS["RED"], 'bg': COLORS["RED_BACKGROUND"],
+            'hover_border': COLORS["RED"], 'hover_bg': COLORS["RED_BACKGROUND_HOVER"],
+            'text': COLORS["RED"]
+        }
+    }
+    BORDER_RADIUS = 5
+    PADDING = 20
+    MIN_HEIGHT = 100
 
     def __init__(
         self,
@@ -56,9 +65,8 @@ class InputBox(QLabel):
         self.setAcceptDrops(True)
         self.setText(text)
         self.setObjectName("inputBox")
-        self.setStyleSheet(
-            f"QLabel#inputBox {{{self.STYLE_DEFAULT}}} QLabel#inputBox:hover {{{self.STYLE_DEFAULT_HOVER}}}"
-        )
+        self._active_state_key = 'default'  # Initialize current state
+        self._apply_style()  # Apply initial style
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.file_path = None
@@ -113,10 +121,14 @@ class InputBox(QLabel):
             # Force a style update
             self.style().unpolish(self)
             self.style().polish(self)
-
+            
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
+            self._apply_style(drag_hover=True) # Apply "hovered" appearance
+            
+    def dragLeaveEvent(self, event):
+        self._apply_style(drag_hover=False) # Restore normal appearance with :hover
 
     def dropEvent(self, event: QDropEvent):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
@@ -228,9 +240,8 @@ class InputBox(QLabel):
             f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%; word-break: break-all;"><b>{name}</b></span><br>Size: {format_num(size)}'
         )
         self.setWordWrap(True)
-        self.setStyleSheet(
-            f"QLabel#inputBox {{{self.STYLE_ACTIVE}}} QLabel#inputBox:hover {{{self.STYLE_ACTIVE_HOVER}}}"
-        )
+        self._active_state_key = 'active'
+        self._apply_style()
         
         # Show and position the clear button in the top right corner
         self.clear_btn.show()
@@ -240,23 +251,33 @@ class InputBox(QLabel):
         self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
 
     def show_error(self, message):
+        prev_file_path = self.file_path
+        prev_text = self.text() if hasattr(self, 'text') else self.default_text
+        prev_state = self._active_state_key
         self.setText(message)
-        self.setStyleSheet(
-            f"QLabel#inputBox {{{self.STYLE_ERROR}}} QLabel#inputBox:hover {{{self.STYLE_ERROR_HOVER}}}"
-        )
-        # Only reset if file_path is still None after timeout
-        file_path_at_error = self.file_path
-        def maybe_reset():
-            if self.file_path is None or self.file_path == file_path_at_error:
+        self._active_state_key = 'error'
+        self._apply_style()
+        self.clear_btn.hide()
+        self.goto_folder_btn.hide()
+        def restore_prev():
+            # Only restore if file_path has not changed during error display
+            if self.file_path == prev_file_path and prev_file_path:
+                self.file_path = prev_file_path
+                self.setText(prev_text)
+                self._active_state_key = prev_state
+                self._apply_style()
+                self.clear_btn.show()
+                self.goto_folder_btn.show()
+            # If file_path changed, do nothing (keep new file and state)
+            elif not self.file_path:
                 self.reset_to_default()
-        QTimer.singleShot(3000, maybe_reset)
+        QTimer.singleShot(3000, restore_prev)
 
     def reset_to_default(self):
         self.file_path = None
         self.setText(self.default_text)
-        self.setStyleSheet(
-            f"QLabel#inputBox {{{self.STYLE_DEFAULT}}} QLabel#inputBox:hover {{{self.STYLE_DEFAULT_HOVER}}}"
-        )
+        self._active_state_key = 'default'
+        self._apply_style()
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
 
@@ -277,6 +298,16 @@ class InputBox(QLabel):
                 "Error",
                 "File does not exist.",
             )
+
+    def _apply_style(self, drag_hover=False):
+        p = self._STATE_CONFIG[self._active_state_key]
+        t = f"color: {p['text']};" if p['text'] else ""
+        base = f"border-radius:{self.BORDER_RADIUS}px;padding:{self.PADDING}px;min-height:{self.MIN_HEIGHT}px;{t}"
+        if drag_hover:
+            s = f"QLabel#inputBox{{border:2px dashed {p['hover_border']};background:{p['hover_bg']};{base}}}"
+        else:
+            s = f"QLabel#inputBox{{border:2px dashed {p['border']};background:{p['bg']};{base}}}QLabel#inputBox:hover{{border-color:{p['hover_border']};background:{p['hover_bg']};}}"
+        self.setStyleSheet(s)
 
 
 class autosubsync(QWidget):

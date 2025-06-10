@@ -234,7 +234,6 @@ class BatchTreeView(QTreeWidget):
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-        self.setStyleSheet("QTreeView::item { height: 32px; }")
         self.icon_provider = QFileIconProvider()
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # Allow multi-selection for removal
 
@@ -248,6 +247,11 @@ class BatchTreeView(QTreeWidget):
         # Cache for performance optimization
         self._current_pair_id_set = set()
         self._item_to_pair_id_map = {}
+
+        # Drag state management
+        self._is_drag_highlighted = False
+        self._base_stylesheet = "QTreeView::item { height: 32px; }"
+        self._update_stylesheet()
 
         # Connect model signals to schedule UI update
         model = self.model()
@@ -501,11 +505,34 @@ class BatchTreeView(QTreeWidget):
                 if top_item := self.topLevelItem(i):
                     process_item_recursive(top_item)
 
+    def _update_stylesheet(self):
+        """Update the stylesheet based on current drag state."""
+        if self._is_drag_highlighted:
+            drag_style = f"""
+                QTreeWidget {{
+                    background-color: {COLORS['BLUE_BACKGROUND_HOVER']};
+                }}
+            """
+            self.setStyleSheet(self._base_stylesheet + drag_style)
+        else:
+            self.setStyleSheet(self._base_stylesheet)
+
+    def _set_drag_highlight(self, enabled):
+        """Enable or disable drag highlighting."""
+        if self._is_drag_highlighted != enabled:
+            self._is_drag_highlighted = enabled
+            self._update_stylesheet()
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
+            self._set_drag_highlight(True)
             event.acceptProposedAction()
         else:
             super().dragEnterEvent(event)
+
+    def dragLeaveEvent(self, event):
+        self._set_drag_highlight(False)
+        super().dragLeaveEvent(event)
 
     def dragMoveEvent(self, event):
         if event.mimeData().hasUrls():
@@ -515,29 +542,16 @@ class BatchTreeView(QTreeWidget):
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
-            files = [u.toLocalFile() for u in event.mimeData().urls()]
-            # Determine drop target
-            target_item = self.itemAt(event.position().toPoint())
-            self.add_files_or_folders(files, drop_target_item=target_item) # Model signals will trigger update
+            self._set_drag_highlight(False)
+            # Process the dropped files/folders
+            urls = event.mimeData().urls()
+            paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
+            if paths:
+                drop_target_item = self.itemAt(event.position().toPoint())
+                self.add_files_or_folders(paths, drop_target_item=drop_target_item)
             event.acceptProposedAction()
         else:
-            # Handle internal move
-            dragged_items = self.selectedItems() # Capture selected items (those being dragged)
-            if not dragged_items: 
-                super().dropEvent(event) # Default handling or ignore
-                return
-
-            self._items_to_re_expand_paths.clear()
-            for item in dragged_items:
-                if item.isExpanded(): 
-                    path = item.data(0, Qt.ItemDataRole.UserRole)
-                    if path:
-                        self._items_to_re_expand_paths.add(path)
-            
-            super().dropEvent(event) # Perform the move. Model signals will fire.
-            
-            if not event.isAccepted(): # If super().dropEvent() did not accept the drop
-                self._items_to_re_expand_paths.clear()
+            super().dropEvent(event)
 
     def contextMenuEvent(self, event):
         menu = QMenu(self)

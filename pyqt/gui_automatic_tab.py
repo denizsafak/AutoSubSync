@@ -17,8 +17,8 @@ from PyQt6.QtWidgets import (
     QInputDialog,
     QLineEdit,
     QSizePolicy,
-    QFileDialog,  # Added for folder selection
-    QLabel
+    QLabel,
+    QMessageBox
 )
 from PyQt6.QtCore import Qt
 from constants import COLORS, FFSUBSYNC_VAD_OPTIONS
@@ -198,6 +198,14 @@ def validate_auto_sync_inputs(self):
         if not self.subtitle_input.file_path:
             self.subtitle_input.show_error("Please select a subtitle file.")
             missing = True
+        # Prevent using the same file for both inputs
+        if (
+            self.video_ref_input.file_path
+            and self.subtitle_input.file_path
+            and self.video_ref_input.file_path == self.subtitle_input.file_path
+        ):
+            QMessageBox.warning(self, "Invalid Input", "Cannot use the same file for both inputs.")
+            return False
         if missing:
             return False
     return True  # Indicate validation passed
