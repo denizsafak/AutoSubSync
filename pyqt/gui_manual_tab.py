@@ -7,7 +7,7 @@ The module exports:
 - All the UI setup and functionality for the manual synchronization tab
 """
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QLabel,
@@ -17,8 +17,8 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QFileDialog  # Added for folder selection
 )
-from PyQt5.QtGui import QIntValidator
-from PyQt5.QtCore import Qt, QTimer
+from PyQt6.QtGui import QIntValidator
+from PyQt6.QtCore import Qt, QTimer
 from constants import COLORS
 from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 
@@ -48,14 +48,14 @@ def setup_manual_sync_tab(self):
     opts.setSpacing(15)
     shift_input = QHBoxLayout()
     shift_label = QLabel("Shift subtitle (ms)", self)
-    shift_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+    shift_label.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
     shift_input.addWidget(shift_label)
     self.btn_shift_minus = self._button("-", h=35, w=35)
     shift_input.addWidget(self.btn_shift_minus)
     self.shift_input = QLineEdit(self)
     self.shift_input.setValidator(QIntValidator(-2147483647, 2147483647, self))
     self.shift_input.setText("0")
-    self.shift_input.setAlignment(Qt.AlignCenter)
+    self.shift_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
     self.shift_input.setFixedHeight(35)
     shift_input.addWidget(self.shift_input)
     self.shift_input.textChanged.connect(self._update_shift_input_color)
@@ -120,7 +120,7 @@ def setup_manual_sync_tab(self):
     self.btn_manual_sync.clicked.connect(self.validate_manual_sync_inputs)
     ow = QWidget()
     ow.setLayout(opts)
-    ow.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+    ow.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
     l.addWidget(ow)
     self.tab_widget.addTab(c, "Manual Sync")
     
@@ -204,19 +204,19 @@ def _shift_input_wheel_event(self, event):
 
 def _handle_shift_input_events(self, obj, event):
     """Handle keyboard events for shift input field"""
-    from PyQt5.QtCore import QEvent
+    from PyQt6.QtCore import QEvent
 
     if obj == self.shift_input:
-        if event.type() == QEvent.KeyPress:
-            if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 if not self.shift_input.text().strip():
                     self.shift_input.setText("0")
                 self.shift_input.clearFocus()
                 return True
-        elif event.type() == QEvent.FocusOut:
+        elif event.type() == QEvent.Type.FocusOut:
             if not self.shift_input.text().strip():
                 self.shift_input.setText("0")
-    elif event.type() == QEvent.MouseButtonPress:
+    elif event.type() == QEvent.Type.MouseButtonPress:
         # Check if click is outside shift_input to unfocus it
         if hasattr(self, 'shift_input') and self.shift_input.hasFocus():
             # Get the widget that was clicked

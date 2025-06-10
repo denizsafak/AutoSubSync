@@ -1,9 +1,9 @@
 import os
 import sys
 import platform
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import qInstallMessageHandler, QtMsgType
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
 
 # Add the directory to Python path
 #sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
@@ -73,13 +73,13 @@ def main():
     # Set the .desktop name on Linux
     if platform.system() == "Linux":
         try:
-            app.setDesktopFileName("autosubsync.desktop")
+            app.setDesktopFileName("autosubsync")
         except AttributeError:
             pass
 
     ex = autosubsync()
     ex.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

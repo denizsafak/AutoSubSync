@@ -7,7 +7,7 @@ The module exports:
 - Helper functions for batch operations that are attached to the main app at runtime
 """
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QTreeWidget,
     QTreeWidgetItem,
     QAbstractItemView,
@@ -20,12 +20,11 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QWidget
 )
-from PyQt5.QtCore import Qt, QTimer, QFileInfo, QPoint, QUrl
-from PyQt5.QtGui import QCursor, QColor, QDesktopServices
+from PyQt6.QtCore import Qt, QTimer, QFileInfo, QPoint, QUrl
+from PyQt6.QtGui import QCursor, QColor, QDesktopServices
 
 import os
 import re
-import collections  # Added import
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
 from utils import update_config
 
@@ -140,7 +139,7 @@ def create_tree_widget_item(file_path, parent=None, icon_provider=None, item_id=
     else:
         item = QTreeWidgetItem([basename])
     
-    item.setData(0, Qt.UserRole, file_path)
+    item.setData(0, Qt.ItemDataRole.UserRole, file_path)
     if item_id is not None:
         item.setData(0, BatchTreeView.ITEM_ID_ROLE, item_id)
     
@@ -202,8 +201,8 @@ def select_files_with_directory_update(parent_instance, dialog_type, title, file
     return result
 
 class BatchTreeView(QTreeWidget):
-    VALID_STATE_ROLE = Qt.UserRole + 10  # Role to store parent item's validity state
-    ITEM_ID_ROLE = Qt.UserRole + 11  # Role to store the item's unique ID
+    VALID_STATE_ROLE = Qt.ItemDataRole.UserRole + 10  # Role to store parent item's validity state
+    ITEM_ID_ROLE = Qt.ItemDataRole.UserRole + 11  # Role to store the item's unique ID
 
     def _is_parent_item_valid(self, item):
         """Helper to determine if a parent item is valid (has exactly one child, and that child has no children and is not a video file)."""
@@ -216,7 +215,7 @@ class BatchTreeView(QTreeWidget):
             return False
             
         # Check if child is a subtitle (not a video)
-        child_file_path = first_child.data(0, Qt.UserRole)
+        child_file_path = first_child.data(0, Qt.ItemDataRole.UserRole)
         return child_file_path and get_file_extension(child_file_path) not in VIDEO_EXTENSIONS
 
     def is_duplicate_pair(self, video_path, sub_path):
@@ -234,10 +233,10 @@ class BatchTreeView(QTreeWidget):
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
-        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setStyleSheet("QTreeView::item { height: 32px; }")
         self.icon_provider = QFileIconProvider()
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)  # Allow multi-selection for removal
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # Allow multi-selection for removal
 
         self._update_ui_timer = QTimer(self)
         self._update_ui_timer.setSingleShot(True)
@@ -272,9 +271,9 @@ class BatchTreeView(QTreeWidget):
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if item and item.childCount() == 1: # Potential pair structure
-                parent_path = item.data(0, Qt.UserRole)
+                parent_path = item.data(0, Qt.ItemDataRole.UserRole)
                 child_item = item.child(0)
-                child_path = child_item.data(0, Qt.UserRole)
+                child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
                 
                 if parent_path and child_path and \
                    not child_item.childCount() and \
@@ -337,7 +336,7 @@ class BatchTreeView(QTreeWidget):
         for i in range(child_count):
             if item := get_child(i):
                 # Re-expand if needed
-                if path := item.data(0, Qt.UserRole):
+                if path := item.data(0, Qt.ItemDataRole.UserRole):
                     if path in self._items_to_re_expand_paths:
                         item.setExpanded(True)
                 # Process children recursively
@@ -355,7 +354,7 @@ class BatchTreeView(QTreeWidget):
             return QColor(r, g, b, a_int)
         # Fallback if parsing fails (e.g., return transparent or a default error color)
         # For now, returning transparent, but you might want to log an error.
-        return Qt.transparent
+        return Qt.GlobalColor.transparent
 
     def _set_item_tooltip(self, item, message=None):
         """Set tooltip for items - only show validity status for parent items."""
@@ -395,12 +394,12 @@ class BatchTreeView(QTreeWidget):
             return False, "Nested items not allowed - remove extra levels"
         
         # Check if the child is a video file
-        if is_video_file(child_item.data(0, Qt.UserRole)):
+        if is_video_file(child_item.data(0, Qt.ItemDataRole.UserRole)):
             return False, "Video files cannot be children - add a subtitle instead"
         
         # Path validation
-        parent_path = item.data(0, Qt.UserRole)
-        child_path = child_item.data(0, Qt.UserRole)
+        parent_path = item.data(0, Qt.ItemDataRole.UserRole)
+        child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
         
         if not parent_path or not child_path:
             return False, "Missing file path"
@@ -422,8 +421,8 @@ class BatchTreeView(QTreeWidget):
             for i in range(self.topLevelItemCount()):
                 top = self.topLevelItem(i)
                 if top.childCount() == 1:
-                    p = os.path.normpath(top.data(0, Qt.UserRole))
-                    c = os.path.normpath(top.child(0).data(0, Qt.UserRole))
+                    p = os.path.normpath(top.data(0, Qt.ItemDataRole.UserRole))
+                    c = os.path.normpath(top.child(0).data(0, Qt.ItemDataRole.UserRole))
                     if (p, c) == current_item_pair_id:
                         duplicate_ids.append(top.data(0, self.ITEM_ID_ROLE))
             if len(duplicate_ids) > 1:
@@ -442,7 +441,7 @@ class BatchTreeView(QTreeWidget):
         """
         green_qcolor = self._parse_rgba_to_qcolor(COLORS['GREEN_BACKGROUND_HOVER'])
         red_qcolor = self._parse_rgba_to_qcolor(COLORS['RED_BACKGROUND_HOVER'])
-        default_qcolor = QColor(Qt.transparent)
+        default_qcolor = QColor(Qt.GlobalColor.transparent)
         
         if not item.parent():  # Top-level item
             item.setData(0, self.VALID_STATE_ROLE, "valid" if is_valid else "invalid")
@@ -518,7 +517,7 @@ class BatchTreeView(QTreeWidget):
         if event.mimeData().hasUrls():
             files = [u.toLocalFile() for u in event.mimeData().urls()]
             # Determine drop target
-            target_item = self.itemAt(event.pos())
+            target_item = self.itemAt(event.position().toPoint())
             self.add_files_or_folders(files, drop_target_item=target_item) # Model signals will trigger update
             event.acceptProposedAction()
         else:
@@ -531,7 +530,7 @@ class BatchTreeView(QTreeWidget):
             self._items_to_re_expand_paths.clear()
             for item in dragged_items:
                 if item.isExpanded(): 
-                    path = item.data(0, Qt.UserRole)
+                    path = item.data(0, Qt.ItemDataRole.UserRole)
                     if path:
                         self._items_to_re_expand_paths.add(path)
             
@@ -561,7 +560,7 @@ class BatchTreeView(QTreeWidget):
         if item_at_pos and not item_at_pos.parent():  # Right-clicked a top-level item
             menu.addAction("Add subtitle to this item", lambda: self.add_subtitle_to_item_dialog(item_at_pos))
             # Check if the top-level item is a subtitle file
-            item_path = item_at_pos.data(0, Qt.UserRole)
+            item_path = item_at_pos.data(0, Qt.ItemDataRole.UserRole)
             if item_path and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS:
                 menu.addAction("Add video to this item", lambda: self.add_video_to_subtitle_dialog(item_at_pos))
 
@@ -593,7 +592,7 @@ class BatchTreeView(QTreeWidget):
 
     def keyPressEvent(self, event):
         """Handle keyboard events."""
-        if event.key() == Qt.Key_Delete:
+        if event.key() == Qt.Key.Key_Delete:
             # Delete key pressed - remove selected items
             self.remove_selected_items()
         else:
@@ -602,7 +601,7 @@ class BatchTreeView(QTreeWidget):
 
     def mousePressEvent(self, event):
         """Handle mouse press events to clear selection when clicking empty area."""
-        item = self.itemAt(event.pos())
+        item = self.itemAt(event.position().toPoint())
         if item is None:
             # Clicked on empty area - clear selection
             self.clearSelection()
@@ -740,7 +739,7 @@ class BatchTreeView(QTreeWidget):
         # Special case: Handle dropping subtitles onto an existing item
         if (drop_target_item and drop_target_item.parent() is None 
                 and len(paired_videos) == 0 and len(subs) > 0):
-            target_path = drop_target_item.data(0, Qt.UserRole)
+            target_path = drop_target_item.data(0, Qt.ItemDataRole.UserRole)
             if target_path and os.path.splitext(target_path)[1].lower() in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
                 for sub_path_to_add in subs: 
                     if sub_path_to_add not in paired_subs:
@@ -754,7 +753,7 @@ class BatchTreeView(QTreeWidget):
             # Sort by validity and name
             newly_created_items.sort(key=lambda item: (
                 0 if self._get_provisional_validity(item) == "invalid" else 1,
-                os.path.basename(item.data(0, Qt.UserRole)).lower())
+                os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)).lower())
             )
             
             # Add to tree
@@ -799,13 +798,13 @@ class BatchTreeView(QTreeWidget):
             skipped = 0
             any_subtitle_added = False
             for file_path in file_paths:
-                if file_path == parent_item.data(0, Qt.UserRole):
+                if file_path == parent_item.data(0, Qt.ItemDataRole.UserRole):
                     skipped += 1
                     continue
                 if not is_subtitle_file(file_path):
                     QMessageBox.warning(self.app_parent, "Invalid File", f"'{get_basename(file_path)}' is not a subtitle file. Skipping.")
                     continue
-                if self.is_duplicate_pair(parent_item.data(0, Qt.UserRole), file_path):
+                if self.is_duplicate_pair(parent_item.data(0, Qt.ItemDataRole.UserRole), file_path):
                     skipped += 1
                     continue
                 # Ensure child gets an ID
@@ -821,7 +820,7 @@ class BatchTreeView(QTreeWidget):
         """Add a video file as parent to an existing subtitle item, maintaining item position."""
 
         # Verify the item is actually a subtitle
-        item_path = subtitle_item.data(0, Qt.UserRole)
+        item_path = subtitle_item.data(0, Qt.ItemDataRole.UserRole)
         if not item_path or not is_subtitle_file(item_path):
             QMessageBox.warning(self.app_parent, "Invalid Item", "Selected item is not a subtitle file.")
             return
@@ -836,11 +835,11 @@ class BatchTreeView(QTreeWidget):
         if not video_path:
             return
 
-        if video_path == subtitle_item.data(0, Qt.UserRole):
+        if video_path == subtitle_item.data(0, Qt.ItemDataRole.UserRole):
             QMessageBox.warning(self.app_parent, "Invalid Pair", "Cannot pair file with itself.")
             return
 
-        if self.is_duplicate_pair(video_path, subtitle_item.data(0, Qt.UserRole)):
+        if self.is_duplicate_pair(video_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)):
             QMessageBox.warning(self.app_parent, "Duplicate Pair", "This pair already exists.")
             return
 
@@ -896,10 +895,10 @@ class BatchTreeView(QTreeWidget):
                 self.app_parent,
                 "Confirm Remove Selected",
                 f"Are you sure you want to remove {len(selected)} items?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
             )
-            if reply != QMessageBox.Yes:
+            if reply != QMessageBox.StandardButton.Yes:
                 return
 
         root = self.invisibleRootItem()
@@ -909,7 +908,7 @@ class BatchTreeView(QTreeWidget):
     def change_file_for_item(self, item):
         if not item: return
 
-        current_file_path = item.data(0, Qt.UserRole)
+        current_file_path = item.data(0, Qt.ItemDataRole.UserRole)
         is_parent = not item.parent()
         
         if is_parent:
@@ -934,7 +933,7 @@ class BatchTreeView(QTreeWidget):
                 return
 
             item.setText(0, os.path.basename(new_file_path))
-            item.setData(0, Qt.UserRole, new_file_path)
+            item.setData(0, Qt.ItemDataRole.UserRole, new_file_path)
             item.setIcon(0, self._get_file_icon(new_file_path))
 
     def clear_all_items(self):
@@ -944,10 +943,10 @@ class BatchTreeView(QTreeWidget):
                 self.app_parent,
                 "Confirm Clear All",
                 f"Are you sure you want to clear all items?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
             )
-            if reply != QMessageBox.Yes:
+            if reply != QMessageBox.StandardButton.Yes:
                 return
         if pair_count > 0:
             self.clear()
@@ -957,7 +956,7 @@ class BatchTreeView(QTreeWidget):
         if not item:
             return
         
-        file_path = item.data(0, Qt.UserRole)
+        file_path = item.data(0, Qt.ItemDataRole.UserRole)
         if not file_path or not os.path.exists(file_path):
             QMessageBox.warning(self.app_parent, "File Not Found", "The file does not exist or path is invalid.")
             return
@@ -975,7 +974,7 @@ class BatchTreeView(QTreeWidget):
         pairs = []
         for i in range(self.topLevelItemCount()):
             parent_item = self.topLevelItem(i)
-            parent_file = parent_item.data(0, Qt.UserRole)
+            parent_file = parent_item.data(0, Qt.ItemDataRole.UserRole)
             # Ensure parent file exists and is a recognized media or subtitle type
             if not parent_file or not os.path.exists(parent_file): continue
             parent_ext = os.path.splitext(parent_file)[1].lower()
@@ -986,7 +985,7 @@ class BatchTreeView(QTreeWidget):
             if parent_item.childCount() > 0:
                 for j in range(parent_item.childCount()):
                     child_item = parent_item.child(j)
-                    child_file = child_item.data(0, Qt.UserRole)
+                    child_file = child_item.data(0, Qt.ItemDataRole.UserRole)
                     # Ensure child file exists and is a subtitle type
                     if not child_file or not os.path.exists(child_file): continue
                     child_ext = os.path.splitext(child_file)[1].lower()

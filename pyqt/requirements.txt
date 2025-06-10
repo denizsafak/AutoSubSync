@@ -1,3 +1,4 @@
+PyQt6
 faust-cchardet
 charset-normalizer
 chardet

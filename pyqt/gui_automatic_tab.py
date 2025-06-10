@@ -7,7 +7,7 @@ The module exports:
 - All the UI setup and functionality for the automatic synchronization tab
 """
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QWidget, 
     QVBoxLayout, 
     QPushButton,
@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,  # Added for folder selection
     QLabel
 )
-from PyQt5.QtCore import Qt
+from PyQt6.QtCore import Qt
 from constants import COLORS, FFSUBSYNC_VAD_OPTIONS
 from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 # Import directly from gui_batch_mode for cleaner integration
@@ -41,13 +41,13 @@ def attach_functions_to_autosubsync(autosubsync_class):
 class OneStepSlider(QSlider):
     """Enhanced QSlider that responds to single mouse wheel steps and keyboard navigation."""
     def wheelEvent(self, event):
-        if self.orientation() == Qt.Horizontal:
+        if self.orientation() == Qt.Orientation.Horizontal:
             self.setValue(self.value() + event.angleDelta().y() // 120)
         else:
             super().wheelEvent(event)
 
     def keyPressEvent(self, event):
-        delta = {Qt.Key_Left: -1, Qt.Key_Down: -1, Qt.Key_Right: 1, Qt.Key_Up: 1}.get(
+        delta = {Qt.Key.Key_Left: -1, Qt.Key.Key_Down: -1, Qt.Key.Key_Right: 1, Qt.Key.Key_Up: 1}.get(
             event.key()
         )
         if delta:
@@ -171,14 +171,14 @@ def setup_auto_sync_tab(self):
     self.btn_batch_mode.clicked.connect(lambda: gui_batch_mode.toggle_batch_mode(self))
     btns.addWidget(self.btn_batch_mode)
     self.btn_sync = self._button("Start")
-    self.btn_sync.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    self.btn_sync.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
     btns.addWidget(self.btn_sync)
     # Add input validation for Start button
     self.btn_sync.clicked.connect(self.validate_auto_sync_inputs)
     controls.addLayout(btns)
     cw = QWidget()
     cw.setLayout(controls)
-    cw.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+    cw.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
     l.addWidget(cw)
     self.tab_widget.addTab(c, "Automatic Sync")
     self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
@@ -213,7 +213,7 @@ def show_add_arguments_dialog(self):
         self,
         f"Additional arguments for {current_tool}",
         f"Enter additional arguments for {current_tool}:",
-        QLineEdit.Normal,
+        QLineEdit.EchoMode.Normal,
         current_args
     )
 
@@ -362,24 +362,24 @@ def _create_slider(self, parent_layout, title, minv, maxv, default, tick=5):
     Returns:
         tuple: (slider, value_label)
     """
-    from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
+    from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
     
     lay = QVBoxLayout()
     lab_lay = QHBoxLayout()
     lab = QLabel(title, self)
     lab_lay.addWidget(lab)
     val_lab = QLabel(str(default), self)
-    val_lab.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+    val_lab.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
     lab_lay.addWidget(val_lab)
     lay.addLayout(lab_lay)
     
     # Use OneStepSlider for improved keyboard and mouse wheel navigation
-    slider = OneStepSlider(Qt.Horizontal, self)
+    slider = OneStepSlider(Qt.Orientation.Horizontal, self)
         
     slider.setMinimum(minv)
     slider.setMaximum(maxv)
     slider.setValue(default)
-    slider.setTickPosition(QSlider.TicksBelow)
+    slider.setTickPosition(QSlider.TickPosition.TicksBelow)
     slider.setTickInterval(tick)
     slider.setMinimumHeight(30)
     slider.valueChanged.connect(lambda v: val_lab.setText(str(v)))

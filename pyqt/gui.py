@@ -1,5 +1,5 @@
 import platform
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
     QVBoxLayout,
@@ -11,13 +11,12 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QCheckBox,
     QMenu,
-    QAction,
     QMessageBox,
     QFileDialog,
     QFileIconProvider
 )
-from PyQt5.QtCore import Qt, QTimer, QUrl, QSize, QFileInfo, QIODevice, QBuffer
-from PyQt5.QtGui import QIcon, QDesktopServices, QDragEnterEvent, QDropEvent
+from PyQt6.QtCore import Qt, QTimer, QUrl, QSize, QFileInfo, QIODevice, QBuffer
+from PyQt6.QtGui import QIcon, QDesktopServices, QDragEnterEvent, QDropEvent, QAction
 import os, base64
 from utils import *
 from constants import *
@@ -53,15 +52,15 @@ class InputBox(QLabel):
         input_type=None,
     ):
         super().__init__(parent)
-        self.setAlignment(Qt.AlignCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setAcceptDrops(True)
         self.setText(text)
         self.setObjectName("inputBox")
         self.setStyleSheet(
             f"QLabel#inputBox {{{self.STYLE_DEFAULT}}} QLabel#inputBox:hover {{{self.STYLE_DEFAULT_HOVER}}}"
         )
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setCursor(Qt.PointingHandCursor)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.file_path = None
         self.input_type = input_type
         self.default_text = text
@@ -69,14 +68,14 @@ class InputBox(QLabel):
         # Add clear button
         self.clear_btn = QPushButton("✕", self)
         self.clear_btn.setFixedSize(25, 25)
-        self.clear_btn.setCursor(Qt.PointingHandCursor)
+        self.clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.clear_btn.clicked.connect(self.reset_to_default)
         self.clear_btn.hide()  # Initially hidden
 
         # Add Go to folder button
         self.goto_folder_btn = QPushButton("Go to folder", self)
         self.goto_folder_btn.setFixedHeight(28)
-        self.goto_folder_btn.setCursor(Qt.PointingHandCursor)
+        self.goto_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.goto_folder_btn.clicked.connect(self.open_file_folder)
         self.goto_folder_btn.hide()
         self.goto_folder_btn.setStyleSheet("font-size: 12px; padding: 2px 10px;")
@@ -91,17 +90,17 @@ class InputBox(QLabel):
             l.show()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton or event.button() == Qt.RightButton:
+        if event.button() == Qt.MouseButton.LeftButton or event.button() == Qt.MouseButton.RightButton:
             if self.input_type == "batch":
                 main_window = self.window()
                 if isinstance(main_window, autosubsync):
                     # Pass self (InputBox) to position menu correctly and the event position
-                    menu = show_batch_add_menu(main_window, source_widget=self, position=event.globalPos())
+                    menu = show_batch_add_menu(main_window, source_widget=self, position=event.globalPosition().toPoint())
                     # Connect to menu close event to fix hover state
                     if menu:
                         menu.aboutToHide.connect(self._on_menu_closed)
                 return  # Prevent default browse_file for batch mode
-            elif event.button() == Qt.LeftButton:  # Only browse on left click for non-batch
+            elif event.button() == Qt.MouseButton.LeftButton:  # Only browse on left click for non-batch
                 self.browse_file()
 
     def _on_menu_closed(self):
@@ -110,7 +109,7 @@ class InputBox(QLabel):
         cursor_pos = self.mapFromGlobal(self.cursor().pos())
         if not self.rect().contains(cursor_pos):
             # Mouse is not over the widget, ensure we're not in hover state
-            self.setAttribute(Qt.WA_UnderMouse, False)
+            self.setAttribute(Qt.WidgetAttribute.WA_UnderMouse, False)
             # Force a style update
             self.style().unpolish(self)
             self.style().polish(self)
@@ -220,7 +219,7 @@ class InputBox(QLabel):
         
         # Convert to base64 PNG
         buffer = QBuffer()
-        buffer.open(QIODevice.WriteOnly)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
         pixmap.save(buffer, "PNG")
         img_data = base64.b64encode(buffer.data()).decode()
         
@@ -324,7 +323,7 @@ class autosubsync(QWidget):
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(15, 15, 15, 15)
         self.tab_widget = QTabWidget(self)
-        self.tab_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tab_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.tab_widget.setStyleSheet(self.TAB_STYLE)
         outer_layout.addWidget(self.tab_widget)
         self.settings_btn = QPushButton(self)
@@ -417,12 +416,12 @@ class autosubsync(QWidget):
             style = self.COMBO_STYLE
         row = QHBoxLayout()
         lab = QLabel(label, self)
-        lab.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        lab.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         row.addWidget(lab)
         combo = QComboBox(self)
         combo.setStyleSheet(style)
         combo.addItems(items)
-        combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         row.addWidget(combo)
         parent_layout.addLayout(row)
         return combo

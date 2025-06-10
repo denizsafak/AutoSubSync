@@ -4,9 +4,9 @@ import json
 import tempfile
 import urllib.request
 import threading
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QUrl, QProcess, pyqtSignal, QObject
-from PyQt5.QtGui import QDesktopServices
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
+from PyQt6.QtGui import QDesktopServices
 
 
 def get_user_config_path():
@@ -130,11 +130,11 @@ def reset_to_defaults(parent):
         parent, 
         "Reset Settings", 
         "Are you sure you want to reset settings to default?",
-        QMessageBox.Yes | QMessageBox.No,
-        QMessageBox.No
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No
     )
     
-    if reply == QMessageBox.Yes:
+    if reply == QMessageBox.StandardButton.Yes:
         config_path = get_user_config_path()
         try:
             # Remove the config file if it exists
@@ -194,11 +194,11 @@ def clear_logs_directory(parent=None):
             parent,
             "Delete logs directory",
             f"Are you sure you want to delete logs directory with {total_files} files?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
         )
         
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             import shutil
             # Remove the entire directory
             shutil.rmtree(logs_dir)
@@ -217,15 +217,15 @@ def clear_logs_directory(parent=None):
 
 def show_about_dialog(parent):
     """Show an About dialog with program information including GitHub link."""
-    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtGui import QIcon
+    from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QIcon
     from constants import PROGRAM_NAME, VERSION, PROGRAM_TAGLINE, PROGRAM_DESCRIPTION, COLORS, GITHUB_URL
     
     icon = parent.windowIcon()
     dialog = QDialog(parent)
     dialog.setWindowTitle(f"About {PROGRAM_NAME}")
-    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
     dialog.setFixedSize(400, 320)
     layout = QVBoxLayout(dialog)
     layout.setSpacing(10)
@@ -240,14 +240,14 @@ def show_about_dialog(parent):
     title_label = QLabel(
         f"<h1 style='margin-bottom: 0;'>{PROGRAM_NAME} <span style='font-size: 12px; font-weight: normal; color: {COLORS['GREY']};'>v{VERSION}</span></h1><h3 style='margin-top: 5px;'>{PROGRAM_TAGLINE}</h3>"
     )
-    title_label.setTextFormat(Qt.RichText)
+    title_label.setTextFormat(Qt.TextFormat.RichText)
     header_layout.addWidget(title_label, 1)
     layout.addLayout(header_layout)
     desc_label = QLabel(
         f"<p>{PROGRAM_DESCRIPTION}</p>"
         "<p>Visit the GitHub repository for updates, documentation, and to report issues.</p>"
     )
-    desc_label.setTextFormat(Qt.RichText)
+    desc_label.setTextFormat(Qt.TextFormat.RichText)
     desc_label.setWordWrap(True)
     layout.addWidget(desc_label)
     github_btn = QPushButton("Visit GitHub Repository")
@@ -263,7 +263,7 @@ def show_about_dialog(parent):
     close_btn.clicked.connect(dialog.accept)
     close_btn.setFixedHeight(32)
     layout.addWidget(close_btn)
-    dialog.exec_()
+    dialog.exec()
 
 # Update checking functionality
 class UpdateSignals(QObject):
@@ -274,13 +274,13 @@ class UpdateSignals(QObject):
 def _show_update_message(parent, remote_version, local_version):
     from constants import GITHUB_LATEST_RELEASE_URL, PROGRAM_NAME
     msg_box = QMessageBox(parent)
-    msg_box.setIcon(QMessageBox.Information)
+    msg_box.setIcon(QMessageBox.Icon.Information)
     msg_box.setWindowTitle("Update Available")
     msg_box.setText(f"A new version of {PROGRAM_NAME} is available! ({local_version} → {remote_version})")
     msg_box.setInformativeText("Please visit the GitHub repository and download the latest version. Would you like to open the GitHub releases page?")
-    msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-    msg_box.setDefaultButton(QMessageBox.Yes)
-    if msg_box.exec_() == QMessageBox.Yes:
+    msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
+    if msg_box.exec() == QMessageBox.StandardButton.Yes:
         try:
             QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
         except Exception:
@@ -331,9 +331,9 @@ def update_folder_label(label, folder_path=""):
         # Check if label supports rich text (has setTextFormat method)
         if hasattr(label, 'setTextFormat'):
             from constants import COLORS
-            from PyQt5.QtCore import Qt
+            from PyQt6.QtCore import Qt
             label.setText(f'Selected folder: <span style="color:{COLORS["GREEN"]}">{shorten_path(folder_path)}</span>')
-            label.setTextFormat(Qt.RichText)
+            label.setTextFormat(Qt.TextFormat.RichText)
         else:
             label.setText(f"Selected folder: {shorten_path(folder_path)}")
         # Set tooltip to show full path
@@ -347,7 +347,7 @@ def handle_save_location_dropdown(obj, dropdown, save_map, config_key, folder_ke
     """
     Generic handler for save location dropdowns with folder selection and label update.
     """
-    from PyQt5.QtWidgets import QFileDialog
+    from PyQt6.QtWidgets import QFileDialog
     
     text = dropdown.currentText()
     
