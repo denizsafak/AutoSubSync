@@ -362,7 +362,7 @@ class BatchTreeView(QTreeWidget):
         # For now, returning transparent, but you might want to log an error.
         return Qt.transparent
 
-    def _set_item_tooltip(self, item):
+    def _set_item_tooltip(self, item, message=None):
         """Set tooltip for items - only show validity status for parent items."""
         if not item:
             return
@@ -370,57 +370,16 @@ class BatchTreeView(QTreeWidget):
         item_id = item.data(0, self.ITEM_ID_ROLE)
         id_text = f"(#{item_id})" if item_id is not None else ""
 
-        # Child items get an empty tooltip with ID
+        # If it has a parent, it is a child item, so we don't show validity status
         if item.parent():
             item.setToolTip(0, f"{id_text}")
             return
-            
-        # Handle only parent (top-level) items below
-        status_string = item.data(0, self.VALID_STATE_ROLE)
-        if not status_string:
-            item.setToolTip(0, f"{id_text}")
-            return
-            
-        status_display = status_string.capitalize()
-        tooltip_text = f"{id_text} Status: {status_display}"
-        
-        # Only generate detailed messages for invalid items
-        if status_string != "invalid":
-            item.setToolTip(0, tooltip_text)
-            return
-            
-        # Add informative message based on the type of invalidity
-        child_count = item.childCount()
-        
-        if child_count == 0:
-            tooltip_text += "\nAdd a subtitle file to this item"
-        elif child_count > 1:
-            tooltip_text += "\nToo many files - keep only one subtitle per item"
-        elif child_count == 1:
-            first_child = item.child(0)
-            
-            if first_child and first_child.childCount() > 0:
-                tooltip_text += "\nNested items not allowed - remove extra levels"
-            elif first_child and is_video_file(first_child.data(0, Qt.UserRole)):
-                tooltip_text += "\nVideo files cannot be children - add a subtitle instead"
-                
-            parent_path = item.data(0, Qt.UserRole)
-            child_path = first_child.data(0, Qt.UserRole) if first_child else None
-            
-            if parent_path and child_path:
-                norm_parent_path = os.path.normpath(parent_path)
-                norm_child_path = os.path.normpath(child_path)
 
-                if norm_parent_path == norm_child_path:
-                    tooltip_text += "\nParent and subtitle cannot be the same file."
-                else:
-                    # Use cached counts for duplicate information
-                    current_pair_id = self._item_to_pair_id_map.get(id(item))
-                    if current_pair_id:
-                        dup_count = self._current_pair_id_counts.get(current_pair_id, 0)
-                        if dup_count > 1:
-                            tooltip_text += f"\nDuplicate pairs are not allowed ({dup_count} instances)."
-        item.setToolTip(0, tooltip_text)
+        if message:
+            item.setToolTip(0, f"{id_text} Status: Invalid\n{message}")
+            return
+        
+        item.setToolTip(0, f"{id_text} Status: Valid")
 
     def _validate_item(self, item):
         """Validate an item and return its validity state.
@@ -430,12 +389,22 @@ class BatchTreeView(QTreeWidget):
         if not item or item.parent():
             return False, "Not a top-level item"
         
-        if item.childCount() != 1:
-            return False, f"Must have exactly one subtitle file (has {item.childCount()})"
+        # Check if item has exactly one child
+        if item.childCount() == 0:
+            return False, "Add a subtitle file to this item"
         
+        # Check if item has more than one child
+        if item.childCount() > 1:
+            return False, f"Too many files - keep only one subtitle per item"
+        
+        # Check if the child has no children
         child_item = item.child(0)
         if child_item.childCount() > 0:
-            return False, "Subtitle item cannot have children"
+            return False, "Nested items not allowed - remove extra levels"
+        
+        # Check if the child is a video file
+        if is_video_file(child_item.data(0, Qt.UserRole)):
+            return False, "Video files cannot be children - add a subtitle instead"
         
         # Path validation
         parent_path = item.data(0, Qt.UserRole)
@@ -460,9 +429,9 @@ class BatchTreeView(QTreeWidget):
         if current_item_pair_id: # This item forms a structural pair
             dup_count = self._current_pair_id_counts.get(current_item_pair_id, 0)
             if dup_count > 1:
-                return False, f"Duplicate pair ({dup_count} instances)"
+                return False, f"Duplicate pairs are not allowed ({dup_count} instances)."
             
-        return True, "Valid"
+        return True, None
 
     def _apply_item_styles(self, item, is_valid):
         """Apply styling to an item based on its validity.
@@ -500,14 +469,14 @@ class BatchTreeView(QTreeWidget):
             
             # Apply appropriate styling based on item type
             if is_top_level:
-                is_valid, _ = self._validate_item(item_to_process)
+                is_valid, message = self._validate_item(item_to_process)
                 self._apply_item_styles(item_to_process, is_valid)
             else:
                 self._apply_item_styles(item_to_process, False)
             
             # Update tooltip
-            self._set_item_tooltip(item_to_process)
-            
+            self._set_item_tooltip(item_to_process, message if is_top_level and not is_valid else None)
+
             # Process all children
             for i in range(item_to_process.childCount()):
                 if child := item_to_process.child(i):
