@@ -222,9 +222,7 @@ class BatchTreeView(QTreeWidget):
     def is_duplicate_pair(self, video_path, sub_path):
         """Return True if (video_path, sub_path) matches an existing valid top-level pair."""
         norm_v, norm_s = os.path.normpath(video_path), os.path.normpath(sub_path)
-        # Use the cached counts. If this pair_id is already in the counts with a value > 0,
-        # it means it exists in the tree. Adding it again would make it a duplicate.
-        return self._current_pair_id_counts.get((norm_v, norm_s), 0) > 0
+        return (norm_v, norm_s) in self._current_pair_id_set
 
     def __init__(self, parent_app=None):  # parent_app is the autosubsync instance
         super().__init__(parent_app)
@@ -249,7 +247,7 @@ class BatchTreeView(QTreeWidget):
         self._items_to_re_expand_paths = set() # For preserving expansion state during moves
 
         # Cache for performance optimization
-        self._current_pair_id_counts = collections.Counter()
+        self._current_pair_id_set = set()
         self._item_to_pair_id_map = {}
 
         # Connect model signals to schedule UI update
@@ -268,8 +266,8 @@ class BatchTreeView(QTreeWidget):
         self._update_ui_timer.start()
 
     def _perform_actual_ui_update(self):
-        # Phase 1: Rebuild pair ID counts and item-to-pair_id map for efficient validation
-        self._current_pair_id_counts.clear()
+        # Phase 1: Rebuild pair ID set and item-to-pair_id map for efficient validation
+        self._current_pair_id_set.clear()
         self._item_to_pair_id_map.clear()
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
@@ -281,14 +279,11 @@ class BatchTreeView(QTreeWidget):
                 if parent_path and child_path and \
                    not child_item.childCount() and \
                    is_subtitle_file(child_path):
-                    
                     norm_parent = os.path.normpath(parent_path)
                     norm_child = os.path.normpath(child_path)
-                    
                     if norm_parent != norm_child: # Ensure parent and child are not the same file
                         pair_id = (norm_parent, norm_child)
-                        self._current_pair_id_counts[pair_id] += 1
-                        # Use item's id (memory address) as key since QTreeWidgetItem is not hashable
+                        self._current_pair_id_set.add(pair_id)
                         self._item_to_pair_id_map[id(item)] = pair_id
         
         # Continue with existing UI update logic
@@ -383,11 +378,8 @@ class BatchTreeView(QTreeWidget):
 
     def _validate_item(self, item):
         """Validate an item and return its validity state.
-        Uses precomputed _current_pair_id_counts for duplicate checks.
+        Uses precomputed _current_pair_id_set for duplicate checks.
         """
-        # Quick validation checks, ordered by likelihood of failure
-        if not item or item.parent():
-            return False, "Not a top-level item"
         
         # Check if item has exactly one child
         if item.childCount() == 0:
@@ -422,15 +414,23 @@ class BatchTreeView(QTreeWidget):
         if not is_subtitle_file(child_path):
             return False, "Child must be a subtitle file"
             
-        # Check for duplicates using the precomputed counts
-        # The item's pair_id should have been mapped if it's structurally a pair candidate
+        # Check for duplicates using the precomputed set
         current_item_pair_id = self._item_to_pair_id_map.get(id(item))
-
-        if current_item_pair_id: # This item forms a structural pair
-            dup_count = self._current_pair_id_counts.get(current_item_pair_id, 0)
-            if dup_count > 1:
-                return False, f"Duplicate pairs are not allowed ({dup_count} instances)."
-            
+        if current_item_pair_id:
+            # Only invalidate the newest duplicate (highest ITEM_ID_ROLE)
+            duplicate_ids = []
+            for i in range(self.topLevelItemCount()):
+                top = self.topLevelItem(i)
+                if top.childCount() == 1:
+                    p = os.path.normpath(top.data(0, Qt.UserRole))
+                    c = os.path.normpath(top.child(0).data(0, Qt.UserRole))
+                    if (p, c) == current_item_pair_id:
+                        duplicate_ids.append(top.data(0, self.ITEM_ID_ROLE))
+            if len(duplicate_ids) > 1:
+                current_id = item.data(0, self.ITEM_ID_ROLE)
+                if current_id == max(duplicate_ids):
+                    return False, "This pair already exists"
+        
         return True, None
 
     def _apply_item_styles(self, item, is_valid):
