@@ -7,6 +7,7 @@ The module exports:
 - All the UI setup and functionality for the manual synchronization tab
 """
 
+import logging
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -21,6 +22,14 @@ from PyQt6.QtCore import Qt, QTimer
 from constants import COLORS
 from utils import handle_save_location_dropdown, update_folder_label
 
+logger = logging.getLogger("ManualTab")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[MANUAL] %(asctime)s %(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach manual tab functions to the autosubsync class"""
     autosubsync_class.setupManualSyncTab = setup_manual_sync_tab
@@ -34,6 +43,7 @@ def attach_functions_to_autosubsync(autosubsync_class):
 
 def setup_manual_sync_tab(self):
     """Setup the Manual Sync tab in the main window"""
+    logger.info("Setting up Manual Sync tab UI.")
     c, l = self._container()
     self.manual_input_box = self.InputBox(
         self,
@@ -137,22 +147,25 @@ def setup_manual_sync_tab(self):
     self._minus_timer.timeout.connect(self._decrement_shift)
     self.btn_shift_minus.pressed.connect(self._minus_timer.start)
     self.btn_shift_minus.released.connect(self._minus_timer.stop)
-
+    logger.info("Manual Sync tab UI setup complete.")
 
 def validate_manual_sync_inputs(self):
     """Validate manual sync inputs before processing"""
+    logger.info("Validating manual sync inputs.")
     if not self.manual_input_box.file_path:
+        logger.warning("No subtitle file selected for manual sync.")
         self.manual_input_box.show_error("Please select a subtitle file.")
         return False
     if self.shift_input.text() == "0" or not self.shift_input.text():
+        logger.warning("Invalid shift value for manual sync.")
         QMessageBox.warning(
             self,
             "Invalid Shift",
             "Please enter a non-zero value.",
         )
         return False
+    logger.info("Manual sync input validation passed.")
     return True  # Indicate validation passed
-
 
 def _update_shift_input_color(self):
     """Update the color of the shift input based on its value"""
@@ -171,7 +184,7 @@ def _update_shift_input_color(self):
         self.shift_input.setStyleSheet(f"QLineEdit {{ color: {COLORS['RED']}; }}")
     else:
         self.shift_input.setStyleSheet("")
-
+    logger.debug(f"Shift input color updated: {self.shift_input.text()}")
 
 def _increment_shift(self):
     """Increment the shift value by 50ms"""
@@ -180,8 +193,8 @@ def _increment_shift(self):
     except ValueError:
         val = 0
     val += 50
+    logger.info(f"Incremented shift value to {val} ms.")
     self.shift_input.setText(f"+{val}" if val > 0 else str(val))
-
 
 def _decrement_shift(self):
     """Decrement the shift value by 50ms"""
@@ -190,16 +203,16 @@ def _decrement_shift(self):
     except ValueError:
         val = 0
     val -= 50
+    logger.info(f"Decremented shift value to {val} ms.")
     self.shift_input.setText(f"+{val}" if val > 0 else str(val))
-
 
 def _shift_input_wheel_event(self, event):
     """Handle mouse wheel events on the shift input"""
+    logger.debug("Shift input wheel event triggered.")
     if event.angleDelta().y() > 0:
         self._increment_shift()
     else:
         self._decrement_shift()
-
 
 def _handle_shift_input_events(self, obj, event):
     """Handle keyboard events for shift input field"""

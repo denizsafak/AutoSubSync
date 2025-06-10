@@ -1,4 +1,5 @@
 import platform
+import logging
 from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
@@ -30,6 +31,14 @@ from gui_batch_mode import (
 # Import ctypes for Windows-specific taskbar icon
 if platform.system() == "Windows":
     import ctypes
+
+logger = logging.getLogger("MainGUI")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[GUI] %(asctime)s %(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 class InputBox(QLabel):
     _STATE_CONFIG = {
@@ -202,6 +211,7 @@ class InputBox(QLabel):
             self.set_file(file_path)
 
     def set_file(self, file_path):
+        logger.info(f"Setting file in InputBox: {file_path}")
         if not os.path.exists(file_path):
             self.show_error("File does not exist")
             return
@@ -251,6 +261,7 @@ class InputBox(QLabel):
         self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
 
     def show_error(self, message):
+        logger.warning(f"InputBox error: {message}")
         prev_file_path = self.file_path
         prev_text = self.text() if hasattr(self, 'text') else self.default_text
         prev_state = self._active_state_key
@@ -274,6 +285,7 @@ class InputBox(QLabel):
         QTimer.singleShot(3000, restore_prev)
 
     def reset_to_default(self):
+        logger.info("Resetting InputBox to default state.")
         self.file_path = None
         self.setText(self.default_text)
         self._active_state_key = 'default'
@@ -289,6 +301,7 @@ class InputBox(QLabel):
             self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
 
     def open_file_folder(self):
+        logger.info(f"Opening file folder for: {self.file_path}")
         if self.file_path and os.path.exists(self.file_path):
             folder = os.path.dirname(self.file_path)
             QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
@@ -324,6 +337,7 @@ class autosubsync(QWidget):
     """
 
     def __init__(self):
+        logger.info("Initializing main window (autosubsync)")
         super().__init__()
         self.config = load_config()
         self.batch_mode_enabled = self.config.get("batch_mode", False)
@@ -339,9 +353,10 @@ class autosubsync(QWidget):
         if self.config.get("check_updates_startup", True):
             QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
         self.initUI()
+        logger.info("Main window initialized.")
 
     def initUI(self):
-
+        logger.info("Setting up main UI.")
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
         screen = QApplication.primaryScreen().geometry()
         width, height = 500, 800
@@ -414,9 +429,12 @@ class autosubsync(QWidget):
         self.settings_btn.clicked.connect(self.show_settings_menu)
         self.settings_btn.show()
         self.setupAutoSyncTab()
+        logger.info("AutoSync tab setup complete.")
         self.setupManualSyncTab()
+        logger.info("ManualSync tab setup complete.")
         self.setLayout(outer_layout)
         self.update_auto_sync_ui_for_batch()  # Ensure correct UI for batch mode on startup
+        logger.info("UI fully initialized.")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -477,6 +495,7 @@ class autosubsync(QWidget):
         return super().eventFilter(obj, event)
 
     def show_settings_menu(self):
+        logger.info("Showing settings menu.")
         # Show the menu at the right position below the button
         self.settings_menu.popup(self.settings_btn.mapToGlobal(
             self.settings_btn.rect().bottomLeft()))

@@ -4,19 +4,36 @@ import json
 import tempfile
 import urllib.request
 import threading
+import logging
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
 
+logger = logging.getLogger("AutoSubSyncUtils")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[UTILS] %(asctime)s %(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+# Module-level cache for config path
+_config_path_cache = None
+_config_path_logged = False
 
 def get_user_config_path():
+    global _config_path_cache, _config_path_logged
+    if _config_path_cache is not None:
+        return _config_path_cache
     from constants import PROGRAM_NAME
     from platformdirs import user_config_dir
-
     config_dir = user_config_dir(PROGRAM_NAME, appauthor=False, roaming=True)
     os.makedirs(config_dir, exist_ok=True)
-    
-    return os.path.join(config_dir, "config.json")
+    _config_path_cache = os.path.join(config_dir, "config.json")
+    if not _config_path_logged:
+        logger.info(f"User config path: {_config_path_cache}")
+        _config_path_logged = True
+    return _config_path_cache
 
 def get_logs_directory():
     from constants import PROGRAM_NAME
@@ -26,21 +43,27 @@ def get_logs_directory():
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
 
+    logger.info(f"Logs directory: {logs_dir}")
     return logs_dir
 
 def load_config():
     try:
+        config = {}
         with open(get_user_config_path(), "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
+            config = json.load(f)
+        logger.info("Loaded config file.")
+        return config
+    except Exception as e:
+        logger.warning(f"Failed to load config: {e}")
         return {}
     
 def save_config(config):
     try:
         with open(get_user_config_path(), "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
-    except Exception:
-        pass
+        logger.info("Saved config file.")
+    except Exception as e:
+        logger.warning(f"Failed to save config: {e}")
 
 def get_version():
     """Return the current version of the application."""
@@ -140,11 +163,13 @@ def reset_to_defaults(parent):
             # Remove the config file if it exists
             if os.path.exists(config_path):
                 os.remove(config_path)
+                logger.info("Config file removed for reset to defaults.")
             
             # Restart the application
             QProcess.startDetached(sys.executable, sys.argv)
             QApplication.quit()
         except Exception as e:
+            logger.error(f"Failed to reset settings: {e}")
             QMessageBox.critical(
                 parent,
                 "Error",
@@ -156,9 +181,11 @@ def open_config_directory(parent=None):
 
     try:
         config_path = get_user_config_path()
+        logger.info(f"Opening config directory: {os.path.dirname(config_path)}")
         # Open the directory containing the config file
         QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(config_path)))
     except Exception as e:
+        logger.error(f"Could not open config location: {e}")
         QMessageBox.critical(
             parent, "Config Error", f"Could not open config location:\n{e}"
         )
@@ -166,9 +193,11 @@ def open_config_directory(parent=None):
 def open_logs_directory(parent=None):
     """Open the logs directory used by the program."""
     try:
+        logger.info(f"Opening logs directory: {get_logs_directory()}")
         # Open the directory in file explorer
         QDesktopServices.openUrl(QUrl.fromLocalFile(get_logs_directory()))
     except Exception as e:
+        logger.error(f"Could not open logs directory: {e}")
         QMessageBox.critical(
             parent, "logs directory Error", f"Could not open logs directory:\n{e}"
         )
@@ -180,6 +209,7 @@ def clear_logs_directory(parent=None):
         
         # Count files in the directory
         total_files = len([f for f in os.listdir(logs_dir) if os.path.isfile(os.path.join(logs_dir, f))])
+        logger.info(f"Attempting to clear logs directory: {logs_dir} ({total_files} files)")
         
         if total_files == 0:
             QMessageBox.information(
@@ -202,6 +232,7 @@ def clear_logs_directory(parent=None):
             import shutil
             # Remove the entire directory
             shutil.rmtree(logs_dir)
+            logger.info("Logs directory cleared.")
 
             QMessageBox.information(
                 parent,
@@ -209,6 +240,7 @@ def clear_logs_directory(parent=None):
                 f"Logs directory has been successfully deleted."
             )
     except Exception as e:
+        logger.error(f"Failed to clear logs directory: {e}")
         QMessageBox.critical(
             parent,
             "Error",
@@ -294,7 +326,7 @@ def _show_check_failed(parent, error_message):
     QMessageBox.warning(parent, "Update Check Failed", f"Could not check for updates:\n{error_message}")
 
 def manual_check_for_updates(parent):
-    """Manually check for updates and always show result"""
+    logger.info("Manual update check triggered.")
     parent._show_update_check_result = True
     check_for_updates_startup(parent)
 
@@ -311,16 +343,20 @@ def check_for_updates_startup(parent):
     
     def worker():
         try:
+            logger.info("Checking for updates...")
             with urllib.request.urlopen(GITHUB_VERSION_URL, timeout=5) as response:
                 remote = response.read().decode().strip()
             try:
                 if int("".join(remote.split("."))) > int("".join(VERSION.split("."))):
+                    logger.info(f"Update available: {VERSION} -> {remote}")
                     signals.update_available.emit(remote, VERSION)
                 elif show_result:
+                    logger.info("Already up to date.")
                     signals.up_to_date.emit(VERSION)
-            except ValueError:
-                pass
+            except ValueError as ve:
+                logger.warning(f"Version comparison failed: {ve}")
         except Exception as e:
+            logger.error(f"Update check failed: {e}")
             signals.check_failed.emit(str(e))
     
     threading.Thread(target=worker, daemon=True).start()

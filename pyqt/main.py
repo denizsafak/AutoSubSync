@@ -1,6 +1,7 @@
 import os
 import sys
 import platform
+import logging
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
@@ -60,27 +61,39 @@ if platform.system() == "Linux":
     ):
         os.environ["QT_QPA_PLATFORM"] = "wayland"
 
+# Set up logging for main entry
+logger = logging.getLogger("MainEntry")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[MAIN] %(asctime)s %(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 def main():
     """Main entry point for console usage."""
+    logger.info("Starting application.")
     app = QApplication(sys.argv)
 
     # Set application icon using get_resource_path from utils
     icon_path = get_resource_path("autosubsync.assets", "icon.ico")
     if icon_path:
+        logger.info(f"Setting application icon: {icon_path}")
         app.setWindowIcon(QIcon(icon_path))
 
     # Set the .desktop name on Linux
     if platform.system() == "Linux":
         try:
             app.setDesktopFileName("autosubsync")
+            logger.info("Set desktop file name to 'autosubsync'.")
         except AttributeError:
-            pass
+            logger.warning("setDesktopFileName not available on this Qt version.")
 
     ex = autosubsync()
+    logger.info("Main window created. Showing window.")
     ex.show()
+    logger.info("Entering Qt event loop.")
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()

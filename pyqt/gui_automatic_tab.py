@@ -7,6 +7,7 @@ The module exports:
 - All the UI setup and functionality for the automatic synchronization tab
 """
 
+import logging
 from PyQt6.QtWidgets import (
     QWidget, 
     QVBoxLayout, 
@@ -25,6 +26,14 @@ from constants import COLORS, FFSUBSYNC_VAD_OPTIONS
 from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 # Import directly from gui_batch_mode for cleaner integration
 import gui_batch_mode
+
+logger = logging.getLogger("AutomaticTab")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[AUTO] %(asctime)s %(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach automatic tab functions to the autosubsync class"""
@@ -56,7 +65,7 @@ class OneStepSlider(QSlider):
             super().keyPressEvent(event)
 
 def setup_auto_sync_tab(self):
-    """Setup the Automatic Sync tab in the main window"""
+    logger.info("Setting up Automatic Sync tab UI.")
     c, l = self._container()
     self.auto_sync_input_layout = QVBoxLayout()
     self.auto_sync_input_layout.setSpacing(15)
@@ -184,18 +193,22 @@ def setup_auto_sync_tab(self):
     self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
     self.update_sync_tool_options(self.sync_tool_combo.currentText())
     self.update_auto_sync_ui_for_batch() # Ensure correct UI for batch mode on startup
+    logger.info("Automatic Sync tab UI setup complete.")
 
 
 def validate_auto_sync_inputs(self):
-    """Validate automatic sync inputs before processing"""
+    logger.info("Validating automatic sync inputs.")
     if self.batch_mode_enabled:
+        logger.info("Batch mode enabled, delegating validation to batch input validator.")
         return gui_batch_mode.validate_batch_inputs(self)
     else:  # Normal mode validation
         missing = False
         if not self.video_ref_input.file_path:
+            logger.warning("No video or reference subtitle selected for auto sync.")
             self.video_ref_input.show_error("Please select a video or reference subtitle.")
             missing = True
         if not self.subtitle_input.file_path:
+            logger.warning("No subtitle file selected for auto sync.")
             self.subtitle_input.show_error("Please select a subtitle file.")
             missing = True
         # Prevent using the same file for both inputs
@@ -204,15 +217,17 @@ def validate_auto_sync_inputs(self):
             and self.subtitle_input.file_path
             and self.video_ref_input.file_path == self.subtitle_input.file_path
         ):
+            logger.warning("Same file selected for both video/reference and subtitle input.")
             QMessageBox.warning(self, "Invalid Input", "Cannot use the same file for both inputs.")
             return False
         if missing:
             return False
+    logger.info("Automatic sync input validation passed.")
     return True  # Indicate validation passed
 
 
 def show_add_arguments_dialog(self):
-    """Show dialog for additional arguments for the current sync tool"""
+    logger.info("Showing add arguments dialog for sync tool.")
     current_tool = self.sync_tool_combo.currentText()
     args_key = f"{current_tool}_arguments"
     current_args = self.config.get(args_key, "")
@@ -226,6 +241,7 @@ def show_add_arguments_dialog(self):
     )
 
     if ok:
+        logger.info(f"Arguments set for {current_tool}: {args}")
         update_config(self, args_key, args)
         # Update the button color based on whether arguments exist
         self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if args else "")
@@ -233,7 +249,7 @@ def show_add_arguments_dialog(self):
 
 
 def show_auto_sync_inputs(self):
-    """Show the appropriate inputs for auto sync tab based on batch mode"""
+    logger.info("Updating auto sync input UI for current mode.")
     # Clear existing widgets from the layout first, but don't delete them
     # as they are member variables.
     self.clear_layout(self.auto_sync_input_layout)
@@ -269,12 +285,12 @@ def show_auto_sync_inputs(self):
 
 
 def update_auto_sync_ui_for_batch(self):
-    """Called when batch tree view items change, to refresh the UI."""
+    logger.info("Updating auto sync UI for batch mode.")
     self.show_auto_sync_inputs()
 
 
 def update_sync_tool_options(self, tool):
-    """Update the sync tool options based on the selected tool"""
+    logger.info(f"Updating sync tool options for: {tool}")
     self.clear_layout(self.sync_options_layout)
     
     # Check if there are arguments for the current tool and update button color
@@ -344,7 +360,7 @@ def update_sync_tool_options(self, tool):
 
 
 def update_args_tooltip(self):
-    """Update the tooltip for the additional arguments button to show current arguments"""
+    logger.debug("Updating arguments tooltip for sync tool.")
     current_tool = self.sync_tool_combo.currentText() if hasattr(self, "sync_tool_combo") else ""
     args_key = f"{current_tool}_arguments"
     current_args = self.config.get(args_key, "")
@@ -357,19 +373,7 @@ def update_args_tooltip(self):
 
 
 def _create_slider(self, parent_layout, title, minv, maxv, default, tick=5):
-    """Create a slider with title and value label
-    
-    Args:
-        parent_layout: Layout to add slider to
-        title: Title text for the slider
-        minv: Minimum value
-        maxv: Maximum value
-        default: Default value
-        tick: Tick interval
-        
-    Returns:
-        tuple: (slider, value_label)
-    """
+    logger.debug(f"Creating slider: {title} (default={default})")
     from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
     
     lay = QVBoxLayout()
