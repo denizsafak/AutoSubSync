@@ -271,6 +271,11 @@ def show_auto_sync_inputs(self):
             self.auto_sync_input_layout.addWidget(self.batch_tree_view, 1) 
             self.batch_buttons_widget.show()
             self.batch_tree_view.show()
+            # Disconnect previous connections to avoid duplicates
+            try:
+                self.batch_tree_view.itemSelectionChanged.disconnect()
+            except Exception:
+                pass
             # Enable/disable buttons based on selection in tree view
             self.batch_tree_view.itemSelectionChanged.connect(lambda: gui_batch_mode.update_batch_buttons_state(self))
             gui_batch_mode.update_batch_buttons_state(self)  # Initial state

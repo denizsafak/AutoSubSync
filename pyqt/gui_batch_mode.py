@@ -281,6 +281,9 @@ class BatchTreeView(QTreeWidget):
         self._update_ui_timer.start()
 
     def _perform_actual_ui_update(self):
+        # Check if this is an internal drag/drop operation
+        is_internal_move = hasattr(self, '_in_internal_drag') and self._in_internal_drag
+        
         # Phase 1: Rebuild pair ID set and item-to-pair_id map for efficient validation
         self._current_pair_id_set.clear()
         self._item_to_pair_id_map.clear()
@@ -301,8 +304,8 @@ class BatchTreeView(QTreeWidget):
                         self._current_pair_id_set.add(pair_id)
                         self._item_to_pair_id_map[id(item)] = pair_id
         
-        # Continue with existing UI update logic
-        if self.app_parent and hasattr(self.app_parent, 'update_auto_sync_ui_for_batch'):
+        # Continue with existing UI update logic - but ONLY trigger app parent updates if not an internal move
+        if self.app_parent and hasattr(self.app_parent, 'update_auto_sync_ui_for_batch') and not is_internal_move:
             self.app_parent.update_auto_sync_ui_for_batch()
 
         # Re-apply expansion state for items that were moved
@@ -314,7 +317,15 @@ class BatchTreeView(QTreeWidget):
         self._update_header_pair_counts() # Update header with valid/invalid pair counts
         self._sort_top_level_items() # Sort/expand items after updates
 
-        logger.info(f"UI update: {self.topLevelItemCount()} top-level items, {len(self._current_pair_id_set)} valid pairs.")
+        # Log appropriate message based on operation type
+        if is_internal_move:
+            logger.debug(f"Internal move - skipping full UI update: {self.topLevelItemCount()} items, {len(self._current_pair_id_set)} valid pairs.")
+        else:
+            logger.info(f"UI update: {self.topLevelItemCount()} top-level items, {len(self._current_pair_id_set)} valid pairs.")
+            
+        # Reset internal move flag
+        if hasattr(self, '_in_internal_drag'):
+            self._in_internal_drag = False
 
     def _sort_top_level_items(self):
         # Expand all top-level items
@@ -502,13 +513,14 @@ class BatchTreeView(QTreeWidget):
         # Determine which items to process
         if specific_items_affected:
             # Get unique root ancestors from affected items and old parents
-            roots_to_process = set()
+            # Use a list instead of a set since QTreeWidgetItem is not hashable
+            roots_to_process = []
             
             for item_list in (specific_items_affected, old_parents_affected or []):
                 for item in item_list:
                     if root := self._find_root_ancestor(item):
-                        if root.treeWidget() == self:
-                            roots_to_process.add(root)
+                        if root.treeWidget() == self and root not in roots_to_process:
+                            roots_to_process.append(root)
             
             # Process identified root items
             for root_item in roots_to_process:
@@ -538,6 +550,12 @@ class BatchTreeView(QTreeWidget):
             self._update_stylesheet()
 
     def dragEnterEvent(self, event):
+        # Check if this is an internal drag operation (from this widget itself)
+        if not event.mimeData().hasUrls() and event.source() == self:
+            # Mark as internal drag operation to optimize updates
+            self._in_internal_drag = True
+            logger.debug("Internal drag operation started")
+            
         if event.mimeData().hasUrls():
             self._set_drag_highlight(True)
             event.acceptProposedAction()
@@ -557,6 +575,8 @@ class BatchTreeView(QTreeWidget):
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
             self._set_drag_highlight(False)
+            # Not an internal operation if we're dropping URLs
+            self._in_internal_drag = False
             # Process the dropped files/folders
             urls = event.mimeData().urls()
             paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
@@ -565,6 +585,7 @@ class BatchTreeView(QTreeWidget):
                 self.add_files_or_folders(paths, drop_target_item=drop_target_item)
             event.acceptProposedAction()
         else:
+            # This is still an internal drop even if we're calling super
             super().dropEvent(event)
 
     def contextMenuEvent(self, event):
@@ -820,8 +841,13 @@ class BatchTreeView(QTreeWidget):
         )
         
         if file_paths:
+            # Set internal operation flag to prevent full UI updates
+            self._in_internal_drag = True
+            
             skipped = 0
             any_subtitle_added = False
+            child_items_added = []
+            
             for file_path in file_paths:
                 if file_path == parent_item.data(0, Qt.ItemDataRole.UserRole):
                     skipped += 1
@@ -834,12 +860,17 @@ class BatchTreeView(QTreeWidget):
                     continue
                 # Ensure child gets an ID
                 child_item = create_tree_widget_item(file_path, parent_item, self.icon_provider, item_id=self._get_next_id())
+                child_items_added.append(child_item)
                 any_subtitle_added = True
             
             if skipped:
                 QMessageBox.warning(self.app_parent, "Duplicate Pairs", f"{skipped} duplicate pair(s) skipped.")
             if any_subtitle_added:
                 parent_item.setExpanded(True)
+                
+                # Only update the specific item that was modified
+                self._update_parent_item_style([parent_item])
+                self._schedule_ui_update()
 
     def add_video_to_subtitle_dialog(self, subtitle_item):
         logger.info(f"Adding video to subtitle item: {subtitle_item.data(0, Qt.ItemDataRole.UserRole) if subtitle_item else None}")
@@ -868,6 +899,9 @@ class BatchTreeView(QTreeWidget):
         if self.is_duplicate_pair(video_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)):
             QMessageBox.warning(self.app_parent, "Duplicate Pair", "This pair already exists.")
             return
+            
+        # Set internal operation flag to prevent full UI updates
+        self._in_internal_drag = True
 
         # Find the index of the subtitle item to preserve position
         root = self.invisibleRootItem()
@@ -901,12 +935,20 @@ class BatchTreeView(QTreeWidget):
         
         # Expand the new video parent
         video_item.setExpanded(True)
+        
+        # Only update this specific item
+        self._update_parent_item_style([video_item])
+        self._schedule_ui_update()
 
     def remove_item(self, item):
         if item:
             logger.info(f"Removing item: {item.data(0, Qt.ItemDataRole.UserRole)}")
+            # Set internal operation flag to prevent full UI updates
+            self._in_internal_drag = True
             root = self.invisibleRootItem()
             (item.parent() or root).removeChild(item)
+            # Only schedule a targeted UI update
+            self._schedule_ui_update()
 
     def remove_selected_items(self):
         selected = self.selectedItems()
@@ -929,9 +971,16 @@ class BatchTreeView(QTreeWidget):
             if reply != QMessageBox.StandardButton.Yes:
                 return
 
+        # Set internal operation flag to prevent full UI updates
+        self._in_internal_drag = True
+        
+        # We'll process as a batch removal
         root = self.invisibleRootItem()
         for item in selected:
             (item.parent() or root).removeChild(item)
+            
+        # Schedule a single UI update after all removals
+        self._schedule_ui_update()
 
     def change_file_for_item(self, item):
         if not item: return
@@ -1232,16 +1281,24 @@ def handle_batch_drop(self, files):
         self.batch_tree_view.add_files_or_folders(files)
 
 def update_batch_buttons_state(self):
-    logger.info("update_batch_buttons_state called.")
     """Update the enabled state of batch buttons based on selection."""
+    # Use debug level for this frequent operation
+    logger.debug("update_batch_buttons_state called.")
+    
     if hasattr(self, 'btn_batch_remove_selected') and hasattr(self, 'btn_batch_change_selected'):
         selected_items = self.batch_tree_view.selectedItems()
         has_selection = bool(selected_items)
         
-        # Remove button only enabled when items are actually selected
-        self.btn_batch_remove_selected.setEnabled(has_selection)
-        # Change button only enabled when exactly one item is selected
-        self.btn_batch_change_selected.setEnabled(len(selected_items) == 1)
+        # Avoid unnecessary UI updates by checking if state actually changed
+        new_remove_state = has_selection
+        new_change_state = len(selected_items) == 1
+        
+        # Only update if state changed
+        if self.btn_batch_remove_selected.isEnabled() != new_remove_state:
+            self.btn_batch_remove_selected.setEnabled(new_remove_state)
+            
+        if self.btn_batch_change_selected.isEnabled() != new_change_state:
+            self.btn_batch_change_selected.setEnabled(new_change_state)
 
 def toggle_batch_mode(self):
     logger.info(f"toggle_batch_mode: now {'enabled' if not getattr(self, 'batch_mode_enabled', False) else 'disabled'}")
