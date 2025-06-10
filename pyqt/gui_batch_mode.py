@@ -766,7 +766,7 @@ class BatchTreeView(QTreeWidget):
         pairs, paired_videos, paired_subs = self._pair_videos_with_subtitles(videos, subs)
         
         # Create tree items for each video-sub pair
-        for video, sub_file_path in pairs: # Renamed sub to sub_file_path for clarity
+        for video, sub_file_path in pairs:
             if video == sub_file_path or self.is_duplicate_pair(video, sub_file_path):
                 skipped += 1
                 continue
@@ -1298,16 +1298,14 @@ def toggle_batch_mode(self):
 def validate_batch_inputs(self):
     """Validate batch mode inputs."""
     if not self.batch_tree_view.has_items():
-        # Try to show error on batch_input if it's visible, otherwise use QMessageBox
-        if self.batch_input.isVisible():  # batch_input is the QLabel
-            self.batch_input.show_error("Please add files or a folder to the batch.")
-        else:  # Should not happen if tree is empty, batch_input should be visible
-            QMessageBox.warning(self, "Batch Empty", "Please add files or folders to the batch.")
-        return False  # Indicate validation failed
+        logger.warning("No items added for batch processing.")
+        QMessageBox.warning(self, "No Items", "Please add files for batch processing.")
+        return False
     
     valid_pairs = self.batch_tree_view.get_all_valid_pairs()
     if not valid_pairs:
-        QMessageBox.warning(self, "No Valid Pairs", "No valid, existing file pairs found in the batch for processing. Ensure each video/reference has at least one subtitle child, and files exist.")
+        logger.warning("No valid pairs found for batch processing.")
+        QMessageBox.warning(self, "No Valid Pairs", "No valid pairs found. Please ensure each video has exactly one subtitle.")
         return False
     
     return True  # Indicate validation passed

@@ -191,15 +191,23 @@ def setup_auto_sync_tab(self):
 def validate_auto_sync_inputs(self):
     """Validate automatic sync inputs before processing"""
     if self.batch_mode_enabled:
-        return gui_batch_mode.validate_batch_inputs(self)
+        # For batch mode, use batch validation but print pairs if successful
+        valid = gui_batch_mode.validate_batch_inputs(self)
+        if valid:
+            pairs = self.batch_tree_view.get_all_valid_pairs()
+            if pairs:
+                print(f"Mode: Batch ({len(pairs)} pairs)")
+                print("Pairs:")
+                for i, (video_path, sub_path) in enumerate(pairs, 1):
+                    print(f"  {i}. Video/Ref: {video_path}")
+                    print(f"     Subtitle: {sub_path}")
+        return valid
     else:  # Normal mode validation
         missing = False
         if not self.video_ref_input.file_path:
-            logger.warning("Please select a video or reference subtitle.")
             self.video_ref_input.show_error("Please select a video or reference subtitle.")
             missing = True
         if not self.subtitle_input.file_path:
-            logger.warning("Please select a subtitle file.")
             self.subtitle_input.show_error("Please select a subtitle file.")
             missing = True
         # Prevent using the same file for both inputs
@@ -213,7 +221,15 @@ def validate_auto_sync_inputs(self):
             return False
         if missing:
             return False
-    return True  # Indicate validation passed
+            
+        # Print pair information for normal mode
+        print("Mode: Normal (1 pair)")
+        print("Pairs:")
+        print(f"  1. Video/Ref: {self.video_ref_input.file_path}")
+        print(f"     Subtitle: {self.subtitle_input.file_path}")
+        
+        logger.info("Automatic sync input validation passed.")
+        return True  # Indicate validation passed
 
 def show_add_arguments_dialog(self):
     """Show dialog for additional arguments for the sync tool"""

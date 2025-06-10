@@ -256,7 +256,7 @@ class InputBox(QLabel):
         self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
 
     def show_error(self, message):
-        logger.warning(f"InputBox error: {message}")
+        logger.warning(f"{message}")
         
         # Cancel any existing error timer to prevent multiple resets
         if self._error_timer is not None:
