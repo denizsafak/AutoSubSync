@@ -1061,7 +1061,6 @@ class BatchTreeView(QTreeWidget):
                     child_ext = os.path.splitext(child_file)[1].lower()
                     if child_ext in SUBTITLE_EXTENSIONS:
                         pairs.append((parent_file, child_file))
-        logger.info(f"Collected {len(pairs)} valid pairs for processing")
         return pairs
             
     def has_items(self):
@@ -1307,5 +1306,8 @@ def validate_batch_inputs(self):
         logger.warning("No valid pairs found for batch processing.")
         QMessageBox.warning(self, "No Valid Pairs", "No valid pairs found. Please ensure each video has exactly one subtitle.")
         return False
+    
+    # Log information about valid pairs for debugging
+    logger.info(f"Batch mode validation passed with {len(valid_pairs)} valid pairs")
     
     return True  # Indicate validation passed

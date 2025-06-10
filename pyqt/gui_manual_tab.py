@@ -157,11 +157,6 @@ def validate_manual_sync_inputs(self):
         )
         return False
     
-    # Print manual sync information
-    print("Mode: Manual")
-    print(f"Input: {self.manual_input_box.file_path}")
-    print(f"Shift: {self.shift_input.text()} ms")
-    
     logger.info("Manual sync input validation passed.")
     return True  # Indicate validation passed
 
