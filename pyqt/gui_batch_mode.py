@@ -886,8 +886,21 @@ class BatchTreeView(QTreeWidget):
         selected = self.selectedItems()
         if not selected:
             current = self.currentItem()
-            if current: selected = [current]
-            else: return
+            if current:
+                selected = [current]
+            else:
+                return
+
+        if len(selected) > 9:
+            reply = QMessageBox.question(
+                self.app_parent,
+                "Confirm Remove Selected",
+                f"Are you sure you want to remove {len(selected)} items?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if reply != QMessageBox.Yes:
+                return
 
         root = self.invisibleRootItem()
         for item in selected:
@@ -925,7 +938,18 @@ class BatchTreeView(QTreeWidget):
             item.setIcon(0, self._get_file_icon(new_file_path))
 
     def clear_all_items(self):
-        if self.topLevelItemCount() > 0:
+        pair_count = self.topLevelItemCount()
+        if pair_count > 9:
+            reply = QMessageBox.question(
+                self.app_parent,
+                "Confirm Clear All",
+                f"Are you sure you want to clear all items?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if reply != QMessageBox.Yes:
+                return
+        if pair_count > 0:
             self.clear()
 
     def open_item_folder(self, item):
