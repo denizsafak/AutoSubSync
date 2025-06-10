@@ -652,6 +652,11 @@ class BatchTreeView(QTreeWidget):
                 if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                     files_to_process.append(path)
         
+        if not files_to_process:
+            QMessageBox.warning(self.app_parent, "No Media Files Found", 
+                              "No supported video or subtitle files were found in the selected files/folders.")
+            return
+        
         if files_to_process:
             skipped = 0
             self.add_paired_files(files_to_process, drop_target_item=drop_target_item)
@@ -735,18 +740,6 @@ class BatchTreeView(QTreeWidget):
         for sub in subs:
             if sub not in paired_subs:
                 newly_created_items.append(self._create_tree_item(sub))
-        
-        # Special case: Handle dropping subtitles onto an existing item
-        if (drop_target_item and drop_target_item.parent() is None 
-                and len(paired_videos) == 0 and len(subs) > 0):
-            target_path = drop_target_item.data(0, Qt.ItemDataRole.UserRole)
-            if target_path and os.path.splitext(target_path)[1].lower() in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
-                for sub_path_to_add in subs: 
-                    if sub_path_to_add not in paired_subs:
-                        # Ensure child gets an ID
-                        child_item = create_tree_widget_item(sub_path_to_add, parent=drop_target_item, icon_provider=self.icon_provider, item_id=self._get_next_id())
-                        drop_target_item.setExpanded(True)
-                        paired_subs.add(sub_path_to_add)
         
         # Add all newly created items to the tree
         if newly_created_items:
@@ -1061,6 +1054,13 @@ def handle_add_pair(self):
     if not video_ref_path:
         return
     
+    # Check if the selected file is a supported media type
+    ext = os.path.splitext(video_ref_path)[1].lower()
+    if ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
+        QMessageBox.warning(self, "Unsupported File Type", 
+                          f"The selected file is not a supported video or subtitle format.")
+        return
+    
     sub_path = select_files_with_directory_update(
         self, 
         'file-open', 
@@ -1068,6 +1068,13 @@ def handle_add_pair(self):
         SUBTITLE_FILTER
     )
     if not sub_path:
+        return
+    
+    # Check if the selected subtitle file is supported
+    ext = os.path.splitext(sub_path)[1].lower()
+    if ext not in SUBTITLE_EXTENSIONS:
+        QMessageBox.warning(self, "Unsupported File Type", 
+                          f"The selected file is not a supported subtitle format.")
         return
     
     if video_ref_path == sub_path:
@@ -1087,6 +1094,22 @@ def handle_add_folder(self):
         "Select Folder Containing Media Files"
     )
     if folder_path:
+        # Check if folder contains any media files before adding
+        media_files_found = False
+        for root, _, filenames in os.walk(folder_path):
+            for filename in filenames:
+                ext = os.path.splitext(filename)[1].lower()
+                if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                    media_files_found = True
+                    break
+            if media_files_found:
+                break
+        
+        if not media_files_found:
+            QMessageBox.warning(self, "No Media Files Found", 
+                              f"No supported video or subtitle files were found in the selected folder.")
+            return
+        
         self.batch_tree_view.add_files_or_folders([folder_path])
 
 def handle_add_multiple_files(self):
@@ -1098,7 +1121,23 @@ def handle_add_multiple_files(self):
         VIDEO_SUBTITLE_FILTER
     )
     if files_paths:
-        self.batch_tree_view.add_files_or_folders(files_paths)
+        # Check if any of the selected files are supported media types
+        supported_files = []
+        for file_path in files_paths:
+            ext = os.path.splitext(file_path)[1].lower()
+            if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                supported_files.append(file_path)
+        
+        if not supported_files:
+            QMessageBox.warning(self, "No Media Files Found", 
+                              "None of the selected files are supported video or subtitle formats.")
+            return
+        elif len(supported_files) < len(files_paths):
+            unsupported_count = len(files_paths) - len(supported_files)
+            QMessageBox.information(self, "Some Files Skipped", 
+                                  f"{unsupported_count} unsupported file(s) were skipped. Only video and subtitle files will be added.")
+        
+        self.batch_tree_view.add_files_or_folders(supported_files)
 
 def handle_add_pairs_continuously(self):
     """Continuously prompt for video/subtitle pairs until canceled."""
@@ -1112,6 +1151,13 @@ def handle_add_pairs_continuously(self):
         if not video_ref_path:
             break  # User cancelled video selection
 
+        # Check if the selected file is a supported media type
+        ext = os.path.splitext(video_ref_path)[1].lower()
+        if ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
+            QMessageBox.warning(self, "Unsupported File Type", 
+                              f"The selected file is not a supported video or subtitle format.")
+            continue
+
         sub_path = select_files_with_directory_update(
             self, 
             'file-open', 
@@ -1120,6 +1166,13 @@ def handle_add_pairs_continuously(self):
         )
         if not sub_path:
             break  # User cancelled subtitle selection
+        
+        # Check if the selected subtitle file is supported
+        ext = os.path.splitext(sub_path)[1].lower()
+        if ext not in SUBTITLE_EXTENSIONS:
+            QMessageBox.warning(self, "Unsupported File Type", 
+                              f"The selected file is not a supported subtitle format.")
+            continue
         
         if video_ref_path == sub_path:
             QMessageBox.warning(self, "Invalid Pair", "Cannot pair file with itself.")
