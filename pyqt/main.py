@@ -16,6 +16,22 @@ from gui_batch_mode import attach_functions_to_autosubsync as attach_batch_funct
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION
 
+# Configure logging - set this to INFO for normal use, DEBUG for development
+DEFAULT_LOG_LEVEL = logging.INFO
+# Setup root logger with basic configuration
+try:
+    from rich.console import Console
+    from rich.logging import RichHandler
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(console=Console(file=sys.stderr))],
+    )
+except:
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+
 # Attach tab module functions to the autosubsync class
 attach_auto_functions(autosubsync)
 attach_manual_functions(autosubsync)
@@ -61,38 +77,28 @@ if platform.system() == "Linux":
     ):
         os.environ["QT_QPA_PLATFORM"] = "wayland"
 
-# Set up logging for main entry
-logger = logging.getLogger("MainEntry")
-if not logger.hasHandlers():
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('[MAIN] %(asctime)s %(levelname)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+# Set up main logger
+logger = logging.getLogger(__name__)
 
 def main():
     """Main entry point for console usage."""
-    logger.info("Starting application.")
+    logger.info("Starting application")
     app = QApplication(sys.argv)
 
     # Set application icon using get_resource_path from utils
     icon_path = get_resource_path("autosubsync.assets", "icon.ico")
     if icon_path:
-        logger.info(f"Setting application icon: {icon_path}")
         app.setWindowIcon(QIcon(icon_path))
 
     # Set the .desktop name on Linux
     if platform.system() == "Linux":
         try:
             app.setDesktopFileName("autosubsync")
-            logger.info("Set desktop file name to 'autosubsync'.")
         except AttributeError:
-            logger.warning("setDesktopFileName not available on this Qt version.")
+            logger.warning("setDesktopFileName not available on this Qt version")
 
     ex = autosubsync()
-    logger.info("Main window created. Showing window.")
     ex.show()
-    logger.info("Entering Qt event loop.")
     sys.exit(app.exec())
 
 if __name__ == "__main__":

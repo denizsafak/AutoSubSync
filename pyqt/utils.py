@@ -9,13 +9,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
 
-logger = logging.getLogger("AutoSubSyncUtils")
-if not logger.hasHandlers():
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('[UTILS] %(asctime)s %(levelname)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Module-level cache for config path
 _config_path_cache = None
@@ -43,7 +37,6 @@ def get_logs_directory():
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
 
-    logger.info(f"Logs directory: {logs_dir}")
     return logs_dir
 
 def load_config():
@@ -51,17 +44,17 @@ def load_config():
         config = {}
         with open(get_user_config_path(), "r", encoding="utf-8") as f:
             config = json.load(f)
-        logger.info("Loaded config file.")
+        logger.info("Config file loaded successfully")
         return config
     except Exception as e:
-        logger.warning(f"Failed to load config: {e}")
+        logger.info(f"Failed to load config: {e}")
         return {}
     
 def save_config(config):
     try:
         with open(get_user_config_path(), "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
-        logger.info("Saved config file.")
+        logger.info("Config file updated")
     except Exception as e:
         logger.warning(f"Failed to save config: {e}")
 
@@ -164,7 +157,7 @@ def reset_to_defaults(parent):
             if os.path.exists(config_path):
                 os.remove(config_path)
                 logger.info("Config file removed for reset to defaults.")
-            
+
             # Restart the application
             QProcess.startDetached(sys.executable, sys.argv)
             QApplication.quit()
@@ -210,7 +203,7 @@ def clear_logs_directory(parent=None):
         # Count files in the directory
         total_files = len([f for f in os.listdir(logs_dir) if os.path.isfile(os.path.join(logs_dir, f))])
         logger.info(f"Attempting to clear logs directory: {logs_dir} ({total_files} files)")
-        
+
         if total_files == 0:
             QMessageBox.information(
                 parent,
@@ -353,6 +346,8 @@ def check_for_updates_startup(parent):
                 elif show_result:
                     logger.info("Already up to date.")
                     signals.up_to_date.emit(VERSION)
+                else:
+                    logger.info(f"Up to date (Remote: {remote}, Local: {VERSION})")
             except ValueError as ve:
                 logger.warning(f"Version comparison failed: {ve}")
         except Exception as e:
