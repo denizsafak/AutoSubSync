@@ -222,7 +222,7 @@ def validate_auto_sync_inputs(self):
         if missing:
             return False
         
-        logger.info("Automatic sync input validation passed.")
+        logger.info("Automatic sync input validation passed. Starting sync...")
         self.show_log_window()
         return True  # Indicate validation passed
 

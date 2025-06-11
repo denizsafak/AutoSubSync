@@ -1278,6 +1278,6 @@ def validate_batch_inputs(self):
         return False
     
     # Log information about valid pairs for debugging
-    logger.info(f"Batch mode validation passed with {len(valid_pairs)} valid pairs")
+    logger.info(f"Batch mode validation passed with {len(valid_pairs)} valid pairs. Starting sync...")
     
     return True  # Indicate validation passed

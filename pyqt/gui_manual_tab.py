@@ -156,8 +156,8 @@ def validate_manual_sync_inputs(self):
             "Please enter a non-zero value.",
         )
         return False
-    
-    logger.info("Manual sync input validation passed.")
+
+    logger.info("Manual sync input validation passed. Starting shift...")
     return True  # Indicate validation passed
 
 def _update_shift_input_color(self):
