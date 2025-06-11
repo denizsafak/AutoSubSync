@@ -34,6 +34,7 @@ COLORS = {
     "BLUE": "#6ab0de",
     "GREEN": "#42ad4a",
     "RED": "#c0392b",
+    "ORANGE": "#e67e22",
     "GREY_BACKGROUND": "rgba(128, 128, 128, 0.15)",
     "GREY_BACKGROUND_HOVER": "rgba(128, 128, 128, 0.3)",
     "BLUE_BACKGROUND": "rgba(0, 102, 255, 0.05)",

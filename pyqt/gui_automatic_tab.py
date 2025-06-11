@@ -8,6 +8,7 @@ The module exports:
 """
 
 import logging
+from gui_log_window import LogWindow, LogWindowHandler
 from PyQt6.QtWidgets import (
     QWidget, 
     QVBoxLayout, 
@@ -40,6 +41,9 @@ def attach_functions_to_autosubsync(autosubsync_class):
     autosubsync_class.update_args_tooltip = update_args_tooltip
     autosubsync_class._create_slider = _create_slider
     autosubsync_class.OneStepSlider = OneStepSlider
+    autosubsync_class.show_log_window = show_log_window
+    autosubsync_class.restore_auto_sync_tab = restore_auto_sync_tab
+    autosubsync_class.show_log_window = show_log_window
 
 class OneStepSlider(QSlider):
     """Enhanced QSlider that responds to single mouse wheel steps and keyboard navigation."""
@@ -183,6 +187,8 @@ def setup_auto_sync_tab(self):
     cw.setLayout(controls)
     cw.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
     l.addWidget(cw)
+    # Set an object name for the tab so we can find it later
+    c.setObjectName("auto_sync_tab")
     self.tab_widget.addTab(c, "Automatic Sync")
     self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
     self.update_sync_tool_options(self.sync_tool_combo.currentText())
@@ -192,7 +198,10 @@ def validate_auto_sync_inputs(self):
     """Validate automatic sync inputs before processing"""
     if self.batch_mode_enabled:
         # Use the batch validation function from gui_batch_mode
-        return gui_batch_mode.validate_batch_inputs(self)
+        validation_result = gui_batch_mode.validate_batch_inputs(self)
+        if validation_result:
+            self.show_log_window()
+        return validation_result
     else:  # Normal mode validation
         missing = False
         if not self.video_ref_input.file_path:
@@ -214,6 +223,7 @@ def validate_auto_sync_inputs(self):
             return False
         
         logger.info("Automatic sync input validation passed.")
+        self.show_log_window()
         return True  # Indicate validation passed
 
 def show_add_arguments_dialog(self):
@@ -388,3 +398,59 @@ def _create_slider(self, parent_layout, title, minv, maxv, default, tick=5):
     lay.addWidget(slider)
     parent_layout.addLayout(lay)
     return slider, val_lab
+
+def show_log_window(self):
+    """Show the log window for displaying sync progress."""
+    # Create log window to display sync progress if it doesn't exist
+    if not hasattr(self, 'log_window'):
+        self.log_window = LogWindow(self)
+        # Connect cancel button to return to the automatic sync tab
+        self.log_window.cancel_clicked.connect(self.restore_auto_sync_tab)
+
+    # Store the current automatic tab widget before we replace it
+    if not hasattr(self, '_stored_auto_tab_widget'):
+        auto_tab_index = self.tab_widget.indexOf(self.tab_widget.findChild(QWidget, "auto_sync_tab"))
+        if auto_tab_index >= 0:
+            # Store the old widget for later restoration
+            self._stored_auto_tab_widget = self.tab_widget.widget(auto_tab_index)
+            self._stored_auto_tab_index = auto_tab_index
+            # Remove the tab but don't delete the widget
+            self.tab_widget.removeTab(auto_tab_index)
+            self._stored_auto_tab_widget.setParent(None)
+            # Insert the log window as a new tab at the same position
+            self.tab_widget.insertTab(auto_tab_index, self.log_window, "Automatic Sync")
+            self.tab_widget.setCurrentIndex(auto_tab_index)
+    
+    # Show the log window and print configuration
+    self.log_window.clear()
+    self.log_window.print_config(self)
+    
+    # Set up logging to redirect to log window
+    log_handler = LogWindowHandler(self.log_window)
+    root_logger = logging.getLogger()
+    root_logger.addHandler(log_handler)
+    
+    # Store handler reference for later removal
+    self._log_handler = log_handler
+    
+def restore_auto_sync_tab(self):
+    """Restore the automatic sync tab after the log window is closed."""
+    if hasattr(self, '_stored_auto_tab_widget') and hasattr(self, '_stored_auto_tab_index'):
+        # First remove the log window tab
+        log_tab_index = self.tab_widget.indexOf(self.log_window)
+        if log_tab_index >= 0:
+            self.tab_widget.removeTab(log_tab_index)
+        
+        # Clean up the log handler
+        if hasattr(self, '_log_handler'):
+            root_logger = logging.getLogger()
+            root_logger.removeHandler(self._log_handler)
+            delattr(self, '_log_handler')
+        
+        # Re-insert the original auto sync tab
+        self.tab_widget.insertTab(self._stored_auto_tab_index, self._stored_auto_tab_widget, "Automatic Sync")
+        self.tab_widget.setCurrentIndex(self._stored_auto_tab_index)
+        
+        # Clear the stored references
+        delattr(self, '_stored_auto_tab_widget')
+        delattr(self, '_stored_auto_tab_index')
