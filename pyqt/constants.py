@@ -1,4 +1,4 @@
-from utils import get_version
+from utils import get_version, get_resource_path
 
 # Program Information
 PROGRAM_NAME = "AutoSubSync"
@@ -9,15 +9,80 @@ GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/r
 GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
 VERSION = get_version()
 
+# ffmpeg and ffprobe paths
+FFMPEG_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", "ffmpeg")
+FFPROBE_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", "ffprobe")
+
+# Synchronization tools
+SYNC_TOOLS = {
+    "ffsubsync": {
+        "description": "Automatic subtitle synchronization tool using audio alignment",
+        "github": "https://github.com/smacke/ffsubsync",
+        "executable": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
+        "options": {
+            "dont_fix_framerate": {
+                "type": "checkbox",
+                "label": "Don't fix framerate",
+                "tooltip": "--no-fix-framerate: Disable automatic frame rate correction",
+                "argument": "--no-fix-framerate",
+                "default": False
+            },
+            "use_golden_section": {
+                "type": "checkbox",
+                "label": "Use golden section search",
+                "tooltip": "--gss: Use golden section search for better alignment",
+                "argument": "--gss",
+                "default": False
+            },
+            "vad": {
+                "type": "dropdown",
+                "label": "Voice activity detector",
+                "tooltip": "--vad: Enable voice activity detection for better alignment",
+                "argument": "--vad",
+                "default": "default",
+                "values": ["default", "subs_then_webrtc", "webrtc", "subs_then_auditok", "auditok", "subs_then_silero", "silero"]
+            }
+        }
+    },
+    "alass": {
+        "description": "Audio-based subtitle synchronization with high accuracy",
+        "github": "https://github.com/kaegi/alass",
+        "executable": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
+        "options": {
+            "check_video_subtitles": {
+                "type": "checkbox",
+                "label": "Check video subtitles",
+                "tooltip": "Check if video already contains subtitles",
+                "default": True
+            },
+            "disable_fps_guessing": {
+                "type": "checkbox",
+                "label": "Disable FPS guessing",
+                "tooltip": "--disable-fps-guessing: Disable automatic frame rate detection",
+                "argument": "--disable-fps-guessing",
+                "default": False
+            },
+            "disable_speed_optimization": {
+                "type": "checkbox",
+                "label": "Disable speed optimization",
+                "tooltip": "--speed-optimization 0: Disable speed optimization algorithms",
+                "argument": "--speed-optimization 0",
+                "default": False
+            },
+            "split_penalty": {
+                "type": "slider",
+                "label": "Split penalty (Default: 7, Recommended: 5-20, No splits: -1)",
+                "tooltip": "--split-penalty: Penalty for splitting subtitles during alignment",
+                "argument": "--split-penalty",
+                "range": [-1, 100],
+                "default": 7
+            }
+        }
+    }
+}
+
 DEFAULT_OPTIONS = {
     "sync_tool": "ffsubsync",
-    "ffsubsync_dont_fix_framerate": False,
-    "ffsubsync_use_golden_section": False,
-    "ffsubsync_vad": "default",
-    "alass_check_video_subtitles": True,
-    "alass_disable_fps_guessing": False,
-    "alass_disable_speed_optimization": False,
-    "alass_split_penalty": 7,
     "automatic_save_location": "save_next_to_input_subtitle",
     "manual_save_location": "save_next_to_input_subtitle",
     "remember_changes": True,

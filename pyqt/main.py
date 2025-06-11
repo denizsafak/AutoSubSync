@@ -14,7 +14,14 @@ from gui_automatic_tab import attach_functions_to_autosubsync as attach_auto_fun
 from gui_manual_tab import attach_functions_to_autosubsync as attach_manual_functions
 from gui_batch_mode import attach_functions_to_autosubsync as attach_batch_functions
 from utils import get_resource_path
-from constants import PROGRAM_NAME, VERSION
+from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
+
+# Set environment variables for ffmpeg and ffprobe
+os.environ["PATH"] = os.pathsep.join([
+    os.path.dirname(FFMPEG_EXECUTABLE),
+    os.path.dirname(FFPROBE_EXECUTABLE),
+    os.environ.get("PATH", "")
+])
 
 # Setup root logger with basic configuration
 try:

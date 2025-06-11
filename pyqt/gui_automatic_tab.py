@@ -9,6 +9,7 @@ The module exports:
 
 import logging
 from gui_log_window import LogWindow, LogWindowHandler
+from sync_auto import start_sync_process
 from PyQt6.QtWidgets import (
     QWidget, 
     QVBoxLayout, 
@@ -23,7 +24,7 @@ from PyQt6.QtWidgets import (
     QMessageBox
 )
 from PyQt6.QtCore import Qt
-from constants import COLORS, FFSUBSYNC_VAD_OPTIONS, DEFAULT_OPTIONS
+from constants import COLORS, FFSUBSYNC_VAD_OPTIONS, DEFAULT_OPTIONS, SYNC_TOOLS
 from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 # Import directly from gui_batch_mode for cleaner integration
 import gui_batch_mode
@@ -119,7 +120,7 @@ def setup_auto_sync_tab(self):
     )
 
     self.sync_tool_combo = self._dropdown(
-        controls, "Sync tool:", ["ffsubsync", "alass"]
+        controls, "Sync tool:", list(SYNC_TOOLS.keys())
     )
     idx = self.sync_tool_combo.findText(self.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"]))
     if idx >= 0:
@@ -201,6 +202,8 @@ def validate_auto_sync_inputs(self):
         validation_result = gui_batch_mode.validate_batch_inputs(self)
         if validation_result:
             self.show_log_window()
+            # Start the batch sync process
+            start_sync_process(self)
         return validation_result
     else:  # Normal mode validation
         missing = False
@@ -224,6 +227,8 @@ def validate_auto_sync_inputs(self):
         
         logger.info("Automatic sync input validation passed. Starting sync...")
         self.show_log_window()
+        # Start the single file sync process
+        start_sync_process(self)
         return True  # Indicate validation passed
 
 def show_add_arguments_dialog(self):
@@ -301,60 +306,70 @@ def update_sync_tool_options(self, tool):
     self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if has_args else "")
     self.update_args_tooltip()
     
-    if tool == "ffsubsync":
-        self.ffsubsync_dont_fix_framerate = self._checkbox("Don't fix framerate")
-        self.ffsubsync_dont_fix_framerate.setChecked(self.config.get("ffsubsync_dont_fix_framerate", DEFAULT_OPTIONS["ffsubsync_dont_fix_framerate"]))
-        self.ffsubsync_dont_fix_framerate.toggled.connect(lambda state: update_config(self, "ffsubsync_dont_fix_framerate", state))
-        self.ffsubsync_use_golden_section = self._checkbox(
-            "Use golden section search"
-        )
-        self.ffsubsync_use_golden_section.setChecked(self.config.get("ffsubsync_use_golden_section", DEFAULT_OPTIONS["ffsubsync_use_golden_section"]))
-        self.ffsubsync_use_golden_section.toggled.connect(lambda state: update_config(self, "ffsubsync_use_golden_section", state))
-        self.sync_options_layout.addWidget(self.ffsubsync_dont_fix_framerate)
-        self.sync_options_layout.addWidget(self.ffsubsync_use_golden_section)
-        vad_map = {"Default": "default"}
-        vad_items = ["Default"] + FFSUBSYNC_VAD_OPTIONS
-        self.ffsubsync_vad_combo = self._dropdown(
-            self.sync_options_layout, "Voice activity detector:", vad_items
-        )
+    # Update the group box title to include the tool description if available
+    tool_info = SYNC_TOOLS.get(tool, {})
+    description = tool_info.get("description", "")
+    self.sync_options_group.setTitle(f"Sync tool settings - {tool}")
+    
+    # If the tool doesn't exist in SYNC_TOOLS, exit early
+    if tool not in SYNC_TOOLS:
+        return
         
-        # Handle display vs actual value mapping
-        saved_vad = self.config.get("ffsubsync_vad", DEFAULT_OPTIONS["ffsubsync_vad"])
-        display_value = saved_vad if saved_vad in vad_items else "Default"
+    # Get the options for the selected tool
+    tool_options = tool_info.get("options", {})
+    
+    # Track created widgets to avoid garbage collection
+    self.tool_option_widgets = {}
+    
+    # Create UI elements for each option
+    for option_name, option_data in tool_options.items():
+        option_type = option_data.get("type")
+        label = option_data.get("label", "")
+        tooltip = option_data.get("tooltip", "")
+        config_key = f"{tool}_{option_name}"
+        default = option_data.get("default", DEFAULT_OPTIONS.get(config_key, None))
         
-        idx = self.ffsubsync_vad_combo.findText(display_value)
-        if idx >= 0:
-            self.ffsubsync_vad_combo.setCurrentIndex(idx)
+        if option_type == "checkbox":
+            # Create checkbox
+            checkbox = self._checkbox(label)
+            checkbox.setToolTip(tooltip)
+            checkbox.setChecked(self.config.get(config_key, default))
+            checkbox.toggled.connect(lambda state, key=config_key: update_config(self, key, state))
+            self.sync_options_layout.addWidget(checkbox)
+            self.tool_option_widgets[option_name] = checkbox
             
-        # Map "Default" to "default" but keep others as is
-        self.ffsubsync_vad_combo.currentTextChanged.connect(
-            lambda text: update_config(self, "ffsubsync_vad", vad_map.get(text, text))
-        )
-    elif tool == "alass":
-        self.alass_check_video_subtitles = self._checkbox(
-            "Check video for subtitle streams"
-        )
-        self.alass_check_video_subtitles.setChecked(self.config.get("alass_check_video_subtitles", DEFAULT_OPTIONS["alass_check_video_subtitles"]))
-        self.alass_check_video_subtitles.toggled.connect(lambda state: update_config(self, "alass_check_video_subtitles", state))
-        self.alass_disable_fps_guessing = self._checkbox("Disable FPS guessing")
-        self.alass_disable_fps_guessing.setChecked(self.config.get("alass_disable_fps_guessing", DEFAULT_OPTIONS["alass_disable_fps_guessing"]))
-        self.alass_disable_fps_guessing.toggled.connect(lambda state: update_config(self, "alass_disable_fps_guessing", state))
-        self.alass_disable_speed_optimization = self._checkbox(
-            "Disable speed optimization"
-        )
-        self.alass_disable_speed_optimization.setChecked(self.config.get("alass_disable_speed_optimization", DEFAULT_OPTIONS["alass_disable_speed_optimization"]))
-        self.alass_disable_speed_optimization.toggled.connect(lambda state: update_config(self, "alass_disable_speed_optimization", state))
-        self.sync_options_layout.addWidget(self.alass_check_video_subtitles)
-        self.sync_options_layout.addWidget(self.alass_disable_fps_guessing)
-        self.sync_options_layout.addWidget(self.alass_disable_speed_optimization)
-        self.alass_split_penalty, _ = self._create_slider(
-            self.sync_options_layout,
-            "Split penalty (Default: 7, Recommended: 5-20, No splits: -1)",
-            -1,
-            100,
-            self.config.get("alass_split_penalty", DEFAULT_OPTIONS["alass_split_penalty"]),
-        )
-        self.alass_split_penalty.valueChanged.connect(lambda value: update_config(self, "alass_split_penalty", value))
+        elif option_type == "dropdown":
+            # Create dropdown
+            values = option_data.get("values", [])
+            dropdown = self._dropdown(self.sync_options_layout, label, values)
+            dropdown.setToolTip(tooltip)
+            
+            # Set the current value from config
+            saved_value = self.config.get(config_key, default)
+            idx = dropdown.findText(saved_value)
+            if idx >= 0:
+                dropdown.setCurrentIndex(idx)
+            
+            # Connect change event
+            dropdown.currentTextChanged.connect(
+                lambda text, key=config_key: update_config(self, key, text)
+            )
+            self.tool_option_widgets[option_name] = dropdown
+            
+        elif option_type == "slider":
+            # Create slider
+            range_min, range_max = option_data.get("range", [0, 100])
+            current_value = self.config.get(config_key, default)
+            slider, _ = self._create_slider(
+                self.sync_options_layout,
+                label,
+                range_min,
+                range_max,
+                current_value
+            )
+            slider.setToolTip(tooltip)
+            slider.valueChanged.connect(lambda value, key=config_key: update_config(self, key, value))
+            self.tool_option_widgets[option_name] = slider
     
     # Ensure the + button stays on top
     if hasattr(self, 'btn_add_args'):
@@ -418,7 +433,7 @@ def show_log_window(self):
             self.tab_widget.removeTab(auto_tab_index)
             self._stored_auto_tab_widget.setParent(None)
             # Insert the log window as a new tab at the same position
-            self.tab_widget.insertTab(auto_tab_index, self.log_window, "Automatic Sync")
+            self.tab_widget.insertTab(auto_tab_index, self.log_window, "Sync Log")
             self.tab_widget.setCurrentIndex(auto_tab_index)
     
     # Show the log window and print configuration
@@ -432,7 +447,7 @@ def show_log_window(self):
     
     # Store handler reference for later removal
     self._log_handler = log_handler
-    
+
 def restore_auto_sync_tab(self):
     """Restore the automatic sync tab after the log window is closed."""
     if hasattr(self, '_stored_auto_tab_widget') and hasattr(self, '_stored_auto_tab_index'):
