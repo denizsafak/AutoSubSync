@@ -9,7 +9,21 @@ GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/r
 GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
 VERSION = get_version()
 
-# Colors
+DEFAULT_OPTIONS = {
+    "ffsubsync_dont_fix_framerate": False,
+    "ffsubsync_use_golden_section": False,
+    "ffsubsync_vad": "default",
+    "alass_check_video_subtitles": True,
+    "alass_disable_fps_guessing": False,
+    "alass_disable_speed_optimization": False,
+    "alass_split_penalty": 7,
+    "automatic_save_location": "save_next_to_input_subtitle",
+    "manual_save_location": "save_next_to_input_subtitle",
+    "remember_changes": True,
+    "check_updates_startup": True,
+    "batch_mode": False,
+}
+
 COLORS = {
     "GREY": "#808080",
     "BLUE": "#6ab0de",

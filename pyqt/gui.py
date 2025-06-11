@@ -332,7 +332,7 @@ class autosubsync(QWidget):
     def __init__(self):
         super().__init__()
         self.config = load_config()
-        self.batch_mode_enabled = self.config.get("batch_mode", False)
+        self.batch_mode_enabled = self.config.get("batch_mode", DEFAULT_OPTIONS["batch_mode"])
         self.batch_tree_view = BatchTreeView(self)
         icon_path = get_resource_path("autosubsync.assets", "icon.ico")
         if icon_path:
@@ -342,7 +342,7 @@ class autosubsync(QWidget):
                     "autosubsync"
                 )
         # Check for updates at startup if enabled
-        if self.config.get("check_updates_startup", True):
+        if self.config.get("check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]):
             QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
         self.initUI()
         logger.info("Main window initialized")
@@ -393,14 +393,14 @@ class autosubsync(QWidget):
 
         self.remember_changes_action = QAction("Remember the changes", self)
         self.remember_changes_action.setCheckable(True)
-        self.remember_changes_action.setChecked(self.config.get("remember_changes", True))
+        self.remember_changes_action.setChecked(self.config.get("remember_changes", DEFAULT_OPTIONS["remember_changes"]))
         self.remember_changes_action.triggered.connect(lambda checked: toggle_remember_changes(self, checked))
         self.settings_menu.addAction(self.remember_changes_action)
 
         # Add 'Check for updates at startup' option
         self.check_updates_action = QAction("Check for updates at startup", self)
         self.check_updates_action.setCheckable(True)
-        self.check_updates_action.setChecked(self.config.get("check_updates_startup", True))
+        self.check_updates_action.setChecked(self.config.get("check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]))
         self.check_updates_action.triggered.connect(lambda checked: update_config(self, "check_updates_startup", checked))
         self.settings_menu.addAction(self.check_updates_action)
 

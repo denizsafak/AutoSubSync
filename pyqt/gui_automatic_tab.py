@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
     QMessageBox
 )
 from PyQt6.QtCore import Qt
-from constants import COLORS, FFSUBSYNC_VAD_OPTIONS
+from constants import COLORS, FFSUBSYNC_VAD_OPTIONS, DEFAULT_OPTIONS
 from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 # Import directly from gui_batch_mode for cleaner integration
 import gui_batch_mode
@@ -142,7 +142,7 @@ def setup_auto_sync_tab(self):
     controls.addWidget(self.selected_folder_label)
     
     # Handle display vs actual value mapping
-    saved_location = self.config.get("automatic_save_location", "save_next_to_input_subtitle")
+    saved_location = self.config.get("automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"])
     # Reverse lookup to find display value
     display_value = next((k for k, v in save_map.items() if v == saved_location), save_items[0])
     
@@ -158,7 +158,7 @@ def setup_auto_sync_tab(self):
             "automatic_save_location",
             "automatic_save_folder",
             self.selected_folder_label,
-            "save_next_to_input_subtitle"
+            DEFAULT_OPTIONS["automatic_save_location"],
         )
     )
     
@@ -293,12 +293,12 @@ def update_sync_tool_options(self, tool):
     
     if tool == "ffsubsync":
         self.ffsubsync_dont_fix_framerate = self._checkbox("Don't fix framerate")
-        self.ffsubsync_dont_fix_framerate.setChecked(self.config.get("ffsubsync_dont_fix_framerate", False))
+        self.ffsubsync_dont_fix_framerate.setChecked(self.config.get("ffsubsync_dont_fix_framerate", DEFAULT_OPTIONS["ffsubsync_dont_fix_framerate"]))
         self.ffsubsync_dont_fix_framerate.toggled.connect(lambda state: update_config(self, "ffsubsync_dont_fix_framerate", state))
         self.ffsubsync_use_golden_section = self._checkbox(
             "Use golden section search"
         )
-        self.ffsubsync_use_golden_section.setChecked(self.config.get("ffsubsync_use_golden_section", False))
+        self.ffsubsync_use_golden_section.setChecked(self.config.get("ffsubsync_use_golden_section", DEFAULT_OPTIONS["ffsubsync_use_golden_section"]))
         self.ffsubsync_use_golden_section.toggled.connect(lambda state: update_config(self, "ffsubsync_use_golden_section", state))
         self.sync_options_layout.addWidget(self.ffsubsync_dont_fix_framerate)
         self.sync_options_layout.addWidget(self.ffsubsync_use_golden_section)
@@ -309,7 +309,7 @@ def update_sync_tool_options(self, tool):
         )
         
         # Handle display vs actual value mapping
-        saved_vad = self.config.get("ffsubsync_vad", "default")
+        saved_vad = self.config.get("ffsubsync_vad", DEFAULT_OPTIONS["ffsubsync_vad"])
         display_value = saved_vad if saved_vad in vad_items else "Default"
         
         idx = self.ffsubsync_vad_combo.findText(display_value)
@@ -324,15 +324,15 @@ def update_sync_tool_options(self, tool):
         self.alass_check_video_subtitles = self._checkbox(
             "Check video for subtitle streams"
         )
-        self.alass_check_video_subtitles.setChecked(self.config.get("alass_check_video_subtitles", True))
+        self.alass_check_video_subtitles.setChecked(self.config.get("alass_check_video_subtitles", DEFAULT_OPTIONS["alass_check_video_subtitles"]))
         self.alass_check_video_subtitles.toggled.connect(lambda state: update_config(self, "alass_check_video_subtitles", state))
         self.alass_disable_fps_guessing = self._checkbox("Disable FPS guessing")
-        self.alass_disable_fps_guessing.setChecked(self.config.get("alass_disable_fps_guessing", False))
+        self.alass_disable_fps_guessing.setChecked(self.config.get("alass_disable_fps_guessing", DEFAULT_OPTIONS["alass_disable_fps_guessing"]))
         self.alass_disable_fps_guessing.toggled.connect(lambda state: update_config(self, "alass_disable_fps_guessing", state))
         self.alass_disable_speed_optimization = self._checkbox(
             "Disable speed optimization"
         )
-        self.alass_disable_speed_optimization.setChecked(self.config.get("alass_disable_speed_optimization", False))
+        self.alass_disable_speed_optimization.setChecked(self.config.get("alass_disable_speed_optimization", DEFAULT_OPTIONS["alass_disable_speed_optimization"]))
         self.alass_disable_speed_optimization.toggled.connect(lambda state: update_config(self, "alass_disable_speed_optimization", state))
         self.sync_options_layout.addWidget(self.alass_check_video_subtitles)
         self.sync_options_layout.addWidget(self.alass_disable_fps_guessing)
@@ -342,7 +342,7 @@ def update_sync_tool_options(self, tool):
             "Split penalty (Default: 7, Recommended: 5-20, No splits: -1)",
             -1,
             100,
-            self.config.get("alass_split_penalty", 7),
+            self.config.get("alass_split_penalty", DEFAULT_OPTIONS["alass_split_penalty"]),
         )
         self.alass_split_penalty.valueChanged.connect(lambda value: update_config(self, "alass_split_penalty", value))
     

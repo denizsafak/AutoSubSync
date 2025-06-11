@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, QTimer
-from constants import COLORS
+from constants import COLORS, DEFAULT_OPTIONS
 from utils import handle_save_location_dropdown, update_folder_label
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ def setup_manual_sync_tab(self):
     opts.addWidget(self.manual_selected_folder_label)
     
     # Handle display vs actual value mapping
-    manual_saved_location = self.config.get("manual_save_location", "save_next_to_input_subtitle")
+    manual_saved_location = self.config.get("manual_save_location", DEFAULT_OPTIONS["manual_save_location"])
     # Reverse lookup to find display value
     manual_display_value = next((k for k, v in manual_save_map.items() if v == manual_saved_location), manual_save_items[0])
     
@@ -106,7 +106,7 @@ def setup_manual_sync_tab(self):
             "manual_save_location",
             "manual_save_folder",
             self.manual_selected_folder_label,
-            "save_next_to_input_subtitle"
+            DEFAULT_OPTIONS["manual_save_location"]
         )
     )
     
