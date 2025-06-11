@@ -184,7 +184,7 @@ def reset_to_defaults(parent):
     reply = QMessageBox.question(
         parent, 
         "Reset Settings", 
-        "Are you sure you want to reset settings to default?",
+        "Are you sure you want to reset settings to default? This will restart the application and remove your current settings.",
         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         QMessageBox.StandardButton.No
     )

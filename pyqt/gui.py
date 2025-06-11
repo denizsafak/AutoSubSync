@@ -399,6 +399,34 @@ class autosubsync(QWidget):
         # Create settings menu
         self.settings_menu = QMenu(self)
 
+        # Add subtitle processing options
+
+        self.backup_subtitles_action = QAction("Backup subtitles before overwriting", self)
+        self.backup_subtitles_action.setCheckable(True)
+        self.backup_subtitles_action.setChecked(self.config.get("backup_subtitles_before_overwriting", DEFAULT_OPTIONS["backup_subtitles_before_overwriting"]))
+        self.backup_subtitles_action.triggered.connect(lambda checked: update_config(self, "backup_subtitles_before_overwriting", checked))
+        self.settings_menu.addAction(self.backup_subtitles_action)
+
+        self.keep_extracted_subtitles_action = QAction("Keep extracted subtitles", self)
+        self.keep_extracted_subtitles_action.setCheckable(True)
+        self.keep_extracted_subtitles_action.setChecked(self.config.get("keep_extracted_subtitles", DEFAULT_OPTIONS["keep_extracted_subtitles"]))
+        self.keep_extracted_subtitles_action.triggered.connect(lambda checked: update_config(self, "keep_extracted_subtitles", checked))
+        self.settings_menu.addAction(self.keep_extracted_subtitles_action)
+
+        self.keep_converted_subtitles_action = QAction("Keep converted subtitles", self)
+        self.keep_converted_subtitles_action.setCheckable(True)
+        self.keep_converted_subtitles_action.setChecked(self.config.get("keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]))
+        self.keep_converted_subtitles_action.triggered.connect(lambda checked: update_config(self, "keep_converted_subtitles", checked))
+        self.settings_menu.addAction(self.keep_converted_subtitles_action)
+
+        self.add_autosync_prefix_action = QAction("Add \"_autosync\" prefix to subtitles", self)
+        self.add_autosync_prefix_action.setCheckable(True)
+        self.add_autosync_prefix_action.setChecked(self.config.get("add_autosync_prefix", DEFAULT_OPTIONS["add_autosync_prefix"]))
+        self.add_autosync_prefix_action.triggered.connect(lambda checked: update_config(self, "add_autosync_prefix", checked))
+        self.settings_menu.addAction(self.add_autosync_prefix_action)
+
+        self.settings_menu.addSeparator()
+
         # Add 'Open config directory' option at the top
         self.open_config_dir_action = QAction("Open config directory", self)
         self.open_config_dir_action.triggered.connect(lambda: open_config_directory(self))
@@ -429,7 +457,7 @@ class autosubsync(QWidget):
         self.check_updates_action.triggered.connect(lambda checked: update_config(self, "check_updates_startup", checked))
         self.settings_menu.addAction(self.check_updates_action)
 
-        # Add separator and reset option
+        # Reset option
         self.reset_action = QAction("Reset to default settings", self)
         self.reset_action.triggered.connect(lambda: reset_to_defaults(self))
         self.settings_menu.addAction(self.reset_action)

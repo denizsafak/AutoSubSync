@@ -22,6 +22,10 @@ DEFAULT_OPTIONS = {
     "remember_changes": True,
     "check_updates_startup": True,
     "batch_mode": False,
+    "add_autosync_prefix": True,
+    "backup_subtitles_before_overwriting": True,
+    "keep_extracted_subtitles": False,
+    "keep_converted_subtitles": False,
 }
 
 COLORS = {
