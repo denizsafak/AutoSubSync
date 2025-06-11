@@ -5,7 +5,7 @@ import tempfile
 import urllib.request
 import threading
 import logging
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
 
@@ -125,6 +125,45 @@ def shorten_path(path, maxlen=50):
         return path
     else:
         return path[:maxlen//2-2] + '…' + path[-maxlen//2+1:]
+
+
+def open_filedialog(parent_instance, dialog_type, title, file_filter=None, initial_dir=None, multiple=False):
+    """Helper function for file selection dialogs that update the last used directory.
+    
+    Args:
+        parent_instance: The parent widget/window for the dialog
+        dialog_type: 'file-open', 'files-open', or 'directory' for different QFileDialog types
+        title: Title for the dialog
+        file_filter: Optional filter for file types
+        initial_dir: Initial directory to open the dialog at
+        multiple: Whether to allow multiple selection
+        
+    Returns:
+        Selected file path(s) or None if canceled
+    """
+    config_dir = parent_instance.config.get("last_used_dir", "") if hasattr(parent_instance, "config") else ""
+    start_dir = initial_dir or config_dir or ""
+    
+    result = None
+    
+    if dialog_type == 'file-open':
+        result, _ = QFileDialog.getOpenFileName(parent_instance, title, start_dir, file_filter or "")
+    elif dialog_type == 'files-open':
+        result, _ = QFileDialog.getOpenFileNames(parent_instance, title, start_dir, file_filter or "")
+    elif dialog_type == 'directory':
+        result = QFileDialog.getExistingDirectory(parent_instance, title, start_dir)
+    
+    # Update the last used directory if a file/directory was selected
+    if result:
+        if isinstance(result, list) and result:  # Multiple files selected
+            update_config(parent_instance, "last_used_dir", os.path.dirname(result[0]))
+        elif isinstance(result, str) and result:  # Single file or directory
+            if dialog_type == 'directory':
+                update_config(parent_instance, "last_used_dir", result)
+            else:
+                update_config(parent_instance, "last_used_dir", os.path.dirname(result))
+    
+    return result
 
 
 # Settings menu
@@ -378,13 +417,15 @@ def handle_save_location_dropdown(obj, dropdown, save_map, config_key, folder_ke
     """
     Generic handler for save location dropdowns with folder selection and label update.
     """
-    from PyQt6.QtWidgets import QFileDialog
-    
     text = dropdown.currentText()
     
     # Handle folder selection case
     if save_map.get(text) == "select_destination_folder" and not skip_dialog:
-        folder = QFileDialog.getExistingDirectory(obj, "Select Destination Folder")
+        folder = open_filedialog(
+            obj, 
+            'directory', 
+            "Select Destination Folder"
+        )
         if folder:
             update_config(obj, folder_key, folder)
             update_folder_label(label, folder)

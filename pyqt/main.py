@@ -16,8 +16,6 @@ from gui_batch_mode import attach_functions_to_autosubsync as attach_batch_funct
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION
 
-# Configure logging - set this to INFO for normal use, DEBUG for development
-DEFAULT_LOG_LEVEL = logging.INFO
 # Setup root logger with basic configuration
 try:
     from rich.console import Console

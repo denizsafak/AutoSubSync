@@ -112,8 +112,6 @@ class InputBox(QLabel):
                     if menu:
                         menu.aboutToHide.connect(self._on_menu_closed)
                 return  # Prevent default browse_file for batch mode
-            elif event.button() == Qt.MouseButton.LeftButton:  # Only browse on left click for non-batch
-                self.browse_file()
 
     def _on_menu_closed(self):
         """Handle menu close event to reset hover state"""
@@ -191,19 +189,7 @@ class InputBox(QLabel):
                 handle_batch_drop(main_window, files)
             return
 
-    def browse_file(self):
-        if self.input_type == "subtitle":
-            file_filter = f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
-        elif self.input_type == "video_or_subtitle":
-            file_filter = f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
-        else:
-            # For "batch" type, file browsing is handled by the menu triggered from mousePressEvent.
-            # For other unknown types, or if this is somehow called for batch, do nothing.
-            return
-            
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select File", "", file_filter)
-        if file_path:
-            self.set_file(file_path)
+
 
     def set_file(self, file_path):
         logger.info(f'Added: "{file_path}"')

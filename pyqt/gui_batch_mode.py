@@ -27,7 +27,7 @@ import os
 import re
 import logging
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
-from utils import update_config
+from utils import update_config, open_filedialog
 
 # Set up logging for batch events
 logger = logging.getLogger(__name__)
@@ -164,45 +164,6 @@ def attach_functions_to_autosubsync(autosubsync_class):
     autosubsync_class.update_batch_buttons_state = update_batch_buttons_state
     autosubsync_class.toggle_batch_mode = toggle_batch_mode
     autosubsync_class.validate_batch_inputs = validate_batch_inputs
-
-
-def select_files_with_directory_update(parent_instance, dialog_type, title, file_filter=None, initial_dir=None, multiple=False):
-    """Helper function for file selection dialogs that update the last used directory.
-    
-    Args:
-        parent_instance: The parent widget/window for the dialog
-        dialog_type: 'file-open', 'files-open', or 'directory' for different QFileDialog types
-        title: Title for the dialog
-        file_filter: Optional filter for file types
-        initial_dir: Initial directory to open the dialog at
-        multiple: Whether to allow multiple selection
-        
-    Returns:
-        Selected file path(s) or None if canceled
-    """
-    config_dir = parent_instance.config.get("last_used_dir", "") if hasattr(parent_instance, "config") else ""
-    start_dir = initial_dir or config_dir or ""
-    
-    result = None
-    
-    if dialog_type == 'file-open':
-        result, _ = QFileDialog.getOpenFileName(parent_instance, title, start_dir, file_filter or "")
-    elif dialog_type == 'files-open':
-        result, _ = QFileDialog.getOpenFileNames(parent_instance, title, start_dir, file_filter or "")
-    elif dialog_type == 'directory':
-        result = QFileDialog.getExistingDirectory(parent_instance, title, start_dir)
-    
-    # Update the last used directory if a file/directory was selected
-    if result:
-        if isinstance(result, list) and result:  # Multiple files selected
-            update_config(parent_instance, "last_used_dir", os.path.dirname(result[0]))
-        elif isinstance(result, str) and result:  # Single file or directory
-            if dialog_type == 'directory':
-                update_config(parent_instance, "last_used_dir", result)
-            else:
-                update_config(parent_instance, "last_used_dir", os.path.dirname(result))
-    
-    return result
 
 class BatchTreeView(QTreeWidget):
     VALID_STATE_ROLE = Qt.ItemDataRole.UserRole + 10  # Role to store parent item's validity state
@@ -824,7 +785,7 @@ class BatchTreeView(QTreeWidget):
             QMessageBox.warning(self.app_parent, "Selection Error", "Please select a video or reference subtitle (a top-level item) to add a subtitle to.")
             return
 
-        file_paths = select_files_with_directory_update(
+        file_paths = open_filedialog(
             self.app_parent,
             'files-open',
             "Select Subtitle File(s)",
@@ -873,7 +834,7 @@ class BatchTreeView(QTreeWidget):
             QMessageBox.warning(self.app_parent, "Invalid Item", "Selected item is not a subtitle file.")
             return
 
-        video_path = select_files_with_directory_update(
+        video_path = open_filedialog(
             self.app_parent, 
             'file-open', 
             "Select Video File", 
@@ -986,7 +947,15 @@ class BatchTreeView(QTreeWidget):
             file_filter = SUBTITLE_FILTER
             dialog_title = "Select Replacement Subtitle File"
 
-        new_file_path, _ = QFileDialog.getOpenFileName(self.app_parent, dialog_title, os.path.dirname(current_file_path) if current_file_path and os.path.exists(os.path.dirname(current_file_path)) else "", file_filter)
+        # Use the centralized function for file selection
+        initial_dir = os.path.dirname(current_file_path) if current_file_path and os.path.exists(os.path.dirname(current_file_path)) else None
+        new_file_path = open_filedialog(
+            self.app_parent,
+            'file-open',
+            dialog_title,
+            file_filter,
+            initial_dir
+        )
         
         if new_file_path:
             new_ext = os.path.splitext(new_file_path)[1].lower()
@@ -1122,7 +1091,7 @@ def show_batch_add_menu(self, source_widget=None, position=None):
 
 def handle_add_pair(self):
     """Show dialogs to add a video/subtitle pair."""
-    video_ref_path = select_files_with_directory_update(
+    video_ref_path = open_filedialog(
         self, 
         'file-open', 
         "Select Video or Reference Subtitle File", 
@@ -1138,7 +1107,7 @@ def handle_add_pair(self):
                           f"The selected file is not a supported video or subtitle format.")
         return
     
-    sub_path = select_files_with_directory_update(
+    sub_path = open_filedialog(
         self, 
         'file-open', 
         "Select Input Subtitle File", 
@@ -1165,7 +1134,7 @@ def handle_add_pair(self):
 
 def handle_add_folder(self):
     """Add all supported files from a folder to the batch."""
-    folder_path = select_files_with_directory_update(
+    folder_path = open_filedialog(
         self, 
         'directory', 
         "Select Folder Containing Media Files"
@@ -1191,7 +1160,7 @@ def handle_add_folder(self):
 
 def handle_add_multiple_files(self):
     """Allow selection of multiple files to add to the batch."""
-    files_paths = select_files_with_directory_update(
+    files_paths = open_filedialog(
         self, 
         'files-open', 
         "Select Files", 
@@ -1219,7 +1188,7 @@ def handle_add_multiple_files(self):
 def handle_add_pairs_continuously(self):
     """Continuously prompt for video/subtitle pairs until canceled."""
     while True:
-        video_ref_path = select_files_with_directory_update(
+        video_ref_path = open_filedialog(
             self, 
             'file-open', 
             "Select Video or Reference Subtitle File (or Cancel to Stop)", 
@@ -1235,7 +1204,7 @@ def handle_add_pairs_continuously(self):
                               f"The selected file is not a supported video or subtitle format.")
             continue
 
-        sub_path = select_files_with_directory_update(
+        sub_path = open_filedialog(
             self, 
             'file-open', 
             f"Select Input Subtitle for '{os.path.basename(video_ref_path)}' (or Cancel to Stop)", 
@@ -1297,14 +1266,15 @@ def toggle_batch_mode(self):
 def validate_batch_inputs(self):
     """Validate batch mode inputs."""
     if not self.batch_tree_view.has_items():
-        logger.warning("No items added for batch processing.")
-        QMessageBox.warning(self, "No Items", "Please add files for batch processing.")
+        # Show error in batch input instead of QMessageBox
+        if hasattr(self, 'batch_input'):
+            self.batch_input.show_error("Please add files for batch processing.")
         return False
     
     valid_pairs = self.batch_tree_view.get_all_valid_pairs()
     if not valid_pairs:
         logger.warning("No valid pairs found for batch processing.")
-        QMessageBox.warning(self, "No Valid Pairs", "No valid pairs found. Please ensure each video has exactly one subtitle.")
+        QMessageBox.warning(self, "No Valid Pairs", "No valid pairs found.")
         return False
     
     # Log information about valid pairs for debugging
