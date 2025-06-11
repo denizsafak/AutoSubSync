@@ -10,6 +10,7 @@ GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/
 VERSION = get_version()
 
 DEFAULT_OPTIONS = {
+    "sync_tool": "ffsubsync",
     "ffsubsync_dont_fix_framerate": False,
     "ffsubsync_use_golden_section": False,
     "ffsubsync_vad": "default",

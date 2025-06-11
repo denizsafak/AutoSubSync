@@ -169,9 +169,10 @@ def open_filedialog(parent_instance, dialog_type, title, file_filter=None, initi
 # Settings menu
 
 def update_config(obj, key, value):
+    from constants import DEFAULT_OPTIONS
     obj.config[key] = value
     # Only save settings if remember_changes is enabled (default: True)
-    if obj.config.get("remember_changes", True):
+    if obj.config.get("remember_changes", DEFAULT_OPTIONS["remember_changes"]):
         save_config(obj.config)
 
 def toggle_remember_changes(obj, checked):

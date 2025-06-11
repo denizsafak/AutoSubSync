@@ -117,7 +117,7 @@ def setup_auto_sync_tab(self):
     self.sync_tool_combo = self._dropdown(
         controls, "Sync tool:", ["ffsubsync", "alass"]
     )
-    idx = self.sync_tool_combo.findText(self.config.get("sync_tool", "ffsubsync"))
+    idx = self.sync_tool_combo.findText(self.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"]))
     if idx >= 0:
         self.sync_tool_combo.setCurrentIndex(idx)
     self.sync_tool_combo.currentTextChanged.connect(lambda text: update_config(self, "sync_tool", text))
