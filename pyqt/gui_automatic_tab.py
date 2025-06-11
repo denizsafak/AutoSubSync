@@ -24,7 +24,7 @@ from PyQt6.QtWidgets import (
     QMessageBox
 )
 from PyQt6.QtCore import Qt
-from constants import COLORS, FFSUBSYNC_VAD_OPTIONS, DEFAULT_OPTIONS, SYNC_TOOLS
+from constants import COLORS, DEFAULT_OPTIONS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
 from utils import update_config, handle_save_location_dropdown, update_folder_label, shorten_path
 # Import directly from gui_batch_mode for cleaner integration
 import gui_batch_mode
@@ -126,15 +126,7 @@ def setup_auto_sync_tab(self):
     if idx >= 0:
         self.sync_tool_combo.setCurrentIndex(idx)
     self.sync_tool_combo.currentTextChanged.connect(lambda text: update_config(self, "sync_tool", text))
-    save_map = {
-        "Save next to input subtitle": "save_next_to_input_subtitle",
-        "Overwrite input subtitle": "overwrite_input_subtitle",
-        "Save next to video": "save_next_to_video",
-        "Save next to video with same filename": "save_next_to_video_with_same_filename",
-        "Save to desktop": "save_to_desktop",
-        "Select destination folder": "select_destination_folder",
-    }
-    save_items = list(save_map.keys())
+    save_items = list(AUTOMATIC_SAVE_MAP.values())  # Use values as display text
     self.save_combo = self._dropdown(
         controls,
         "Save location:",
@@ -148,18 +140,19 @@ def setup_auto_sync_tab(self):
     
     # Handle display vs actual value mapping
     saved_location = self.config.get("automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"])
-    # Reverse lookup to find display value
-    display_value = next((k for k, v in save_map.items() if v == saved_location), save_items[0])
+    # Look up display value from internal value
+    display_value = AUTOMATIC_SAVE_MAP.get(saved_location, save_items[0])
     
     idx = self.save_combo.findText(display_value)
     if idx >= 0:
         self.save_combo.setCurrentIndex(idx)
-        
+    
+    # Connect change handler with lambda to convert display text to internal value
     self.save_combo.currentTextChanged.connect(
-        lambda: handle_save_location_dropdown(
+        lambda text: handle_save_location_dropdown(
             self,
             self.save_combo,
-            save_map,
+            {v: k for k, v in AUTOMATIC_SAVE_MAP.items()},  # Invert mapping for lookup
             "automatic_save_location",
             "automatic_save_folder",
             self.selected_folder_label,
@@ -339,20 +332,18 @@ def update_sync_tool_options(self, tool):
             self.tool_option_widgets[option_name] = checkbox
             
         elif option_type == "dropdown":
-            # Create dropdown
             values = option_data.get("values", [])
-            dropdown = self._dropdown(self.sync_options_layout, label, values)
+            labels = option_data.get("value_labels", {})
+            
+            dropdown = self._dropdown(self.sync_options_layout, label, [labels.get(v, v) for v in values])
             dropdown.setToolTip(tooltip)
             
-            # Set the current value from config
-            saved_value = self.config.get(config_key, default)
-            idx = dropdown.findText(saved_value)
-            if idx >= 0:
+            saved = self.config.get(config_key, default)
+            if (idx := dropdown.findText(labels.get(saved, saved))) >= 0:
                 dropdown.setCurrentIndex(idx)
             
-            # Connect change event
             dropdown.currentTextChanged.connect(
-                lambda text, key=config_key: update_config(self, key, text)
+                lambda text: update_config(self, config_key, next((v for v in values if labels.get(v, v) == text), text))
             )
             self.tool_option_widgets[option_name] = dropdown
             

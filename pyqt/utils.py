@@ -5,6 +5,8 @@ import tempfile
 import urllib.request
 import threading
 import logging
+import subprocess
+import platform
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
@@ -14,6 +16,29 @@ logger = logging.getLogger(__name__)
 # Module-level cache for config path
 _config_path_cache = None
 _config_path_logged = False
+default_encoding = sys.getfilesystemencoding()
+
+def create_process(cmd):
+    logger.info(f"Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+    kwargs = {
+        "shell": False,  # Changed to False to properly handle list arguments
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.STDOUT,
+        "universal_newlines": True,
+        "encoding": default_encoding,
+        "errors": "replace",
+        "env": {**os.environ, "TERM": "dumb"} 
+    }
+
+    if platform.system() == "Windows":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        kwargs.update(
+            {"startupinfo": startupinfo, "creationflags": subprocess.CREATE_NO_WINDOW}
+        )
+
+    return subprocess.Popen(cmd, **kwargs)
 
 def get_user_config_path():
     global _config_path_cache, _config_path_logged

@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, QTimer
-from constants import COLORS, DEFAULT_OPTIONS
+from constants import COLORS, DEFAULT_OPTIONS, MANUAL_SAVE_MAP
 from utils import handle_save_location_dropdown, update_folder_label
 
 logger = logging.getLogger(__name__)
@@ -73,13 +73,7 @@ def setup_manual_sync_tab(self):
     
     # Install event filter on main window to catch global mouse clicks
     self.installEventFilter(self)
-    manual_save_map = {
-        "Save next to input subtitle": "save_next_to_input_subtitle",
-        "Overwrite input subtitle": "overwrite_input_subtitle",
-        "Save to desktop": "save_to_desktop",
-        "Select destination folder": "select_destination_folder",
-    }
-    manual_save_items = list(manual_save_map.keys())
+    manual_save_items = list(MANUAL_SAVE_MAP.values())  # Use values as display text
     self.manual_save_combo = self._dropdown(
         opts, "Save location:", manual_save_items
     )
@@ -91,18 +85,19 @@ def setup_manual_sync_tab(self):
     
     # Handle display vs actual value mapping
     manual_saved_location = self.config.get("manual_save_location", DEFAULT_OPTIONS["manual_save_location"])
-    # Reverse lookup to find display value
-    manual_display_value = next((k for k, v in manual_save_map.items() if v == manual_saved_location), manual_save_items[0])
+    # Look up display value from internal value
+    manual_display_value = MANUAL_SAVE_MAP.get(manual_saved_location, manual_save_items[0])
     
     idx = self.manual_save_combo.findText(manual_display_value)
     if idx >= 0:
         self.manual_save_combo.setCurrentIndex(idx)
-        
+    
+    # Connect change handler with lambda to convert display text to internal value
     self.manual_save_combo.currentTextChanged.connect(
-        lambda: handle_save_location_dropdown(
+        lambda text: handle_save_location_dropdown(
             self,
             self.manual_save_combo,
-            manual_save_map,
+            {v: k for k, v in MANUAL_SAVE_MAP.items()},  # Invert mapping for lookup
             "manual_save_location",
             "manual_save_folder",
             self.manual_selected_folder_label,

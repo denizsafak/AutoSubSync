@@ -19,6 +19,7 @@ SYNC_TOOLS = {
         "description": "Automatic subtitle synchronization tool using audio alignment",
         "github": "https://github.com/smacke/ffsubsync",
         "executable": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
+        "cmd_structure": ["{video}", "-i", "{subtitle}", "-o", "{output}"],
         "options": {
             "dont_fix_framerate": {
                 "type": "checkbox",
@@ -40,7 +41,16 @@ SYNC_TOOLS = {
                 "tooltip": "--vad: Enable voice activity detection for better alignment",
                 "argument": "--vad",
                 "default": "default",
-                "values": ["default", "subs_then_webrtc", "webrtc", "subs_then_auditok", "auditok", "subs_then_silero", "silero"]
+                "values": ["default", "subs_then_webrtc", "subs_then_auditok", "subs_then_silero", "webrtc", "auditok", "silero"],
+                "value_labels": {
+                    "default": "Default",
+                    "subs_then_webrtc": "Subs then WebRTC",
+                    "subs_then_auditok": "Subs then Auditok",
+                    "subs_then_silero": "Subs then Silero",
+                    "webrtc": "WebRTC",
+                    "auditok": "Auditok",
+                    "silero": "Silero"
+                }
             }
         }
     },
@@ -48,6 +58,7 @@ SYNC_TOOLS = {
         "description": "Audio-based subtitle synchronization with high accuracy",
         "github": "https://github.com/kaegi/alass",
         "executable": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
+        "cmd_structure": ["{video}", "{subtitle}", "{output}"],
         "options": {
             "check_video_subtitles": {
                 "type": "checkbox",
@@ -92,6 +103,22 @@ DEFAULT_OPTIONS = {
     "backup_subtitles_before_overwriting": True,
     "keep_extracted_subtitles": False,
     "keep_converted_subtitles": False,
+}
+
+AUTOMATIC_SAVE_MAP = {
+    "save_next_to_input_subtitle": "Save next to input subtitle",
+    "overwrite_input_subtitle": "Overwrite input subtitle",
+    "save_next_to_video": "Save next to video",
+    "save_next_to_video_with_same_filename": "Save next to video with same filename",
+    "save_to_desktop": "Save to desktop",
+    "select_destination_folder": "Select destination folder",
+}
+
+MANUAL_SAVE_MAP = {
+    "save_next_to_input_subtitle": "Save next to input subtitle",
+    "overwrite_input_subtitle": "Overwrite input subtitle",
+    "save_to_desktop": "Save to desktop",
+    "select_destination_folder": "Select destination folder",
 }
 
 COLORS = {
