@@ -26,15 +26,15 @@ class SyncProcess:
                 self.process.terminate()
             except Exception as e:
                 logger.error(f"Error terminating process: {e}")
-    def run_sync(self, video, subtitle, tool="ffsubsync", output=None):
+    def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
         # Print command arguments and append current pair to log window
         if hasattr(self.app, 'log_window'):
-            self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(video, color=COLORS["GREEN"], bold=True)
+            self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(reference, color=COLORS["GREEN"], bold=True)
             self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREEN"], bold=True)
             # add new line
             self.app.log_window.append_message("")
-        threading.Thread(target=self._run, args=(video, subtitle, tool, output), daemon=True).start()
-    def _run(self, video, subtitle, tool, output):
+        threading.Thread(target=self._run, args=(reference, subtitle, tool, output), daemon=True).start()
+    def _run(self, reference, subtitle, tool, output):
         try:
             if tool not in SYNC_TOOLS:
                 self.signals.error.emit(f"Unknown sync tool: {tool}"); return
@@ -42,8 +42,8 @@ class SyncProcess:
             if not exe or not os.path.exists(exe):
                 self.signals.error.emit(f"Executable for {tool} not found"); return
             if not output:
-                output = determine_output_path(self.app, video, subtitle)
-            cmd = self._build_cmd(tool, exe, video, subtitle, output)
+                output = determine_output_path(self.app, reference, subtitle)
+            cmd = self._build_cmd(tool, exe, reference, subtitle, output)
             self.process = create_process(cmd)
             for line in self.process.stdout:
                 if self.should_cancel: break
@@ -58,9 +58,9 @@ class SyncProcess:
                 self.signals.finished.emit(True, output)
         except Exception as e:
             self.signals.error.emit(f"Error: {str(e)}"); self.signals.finished.emit(False, None)
-    def _build_cmd(self, tool, exe, video, subtitle, output):
+    def _build_cmd(self, tool, exe, reference, subtitle, output):
         cmd_structure = SYNC_TOOLS[tool].get("cmd_structure")
-        cmd_parts = [part.format(video=video, subtitle=subtitle, output=output) for part in cmd_structure]
+        cmd_parts = [part.format(reference=reference, subtitle=subtitle, output=output) for part in cmd_structure]
 
         cmd = [exe] + cmd_parts
         cmd = self._append_opts(cmd, tool)
@@ -80,7 +80,7 @@ class SyncProcess:
 
 def start_sync_process(app):
     try:
-        items = ([{"video_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"video_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
+        items = ([{"reference_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"reference_path": app.reference_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
         if not items: return
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         
@@ -90,7 +90,7 @@ def start_sync_process(app):
         batch_success_count = 0
         batch_fail_count = 0
         total_items = len(items)
-        failed_pairs = []  # Will store tuples: (original_idx, video_path, subtitle_path)
+        failed_pairs = []  # Will store tuples: (original_idx, reference_path, subtitle_path)
         
         def process_next_item():
             nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
@@ -132,7 +132,7 @@ def start_sync_process(app):
                         batch_success_count += 1
                     else:
                         batch_fail_count += 1
-                        failed_pairs.append((original_idx, it["video_path"], it["subtitle_path"]))
+                        failed_pairs.append((original_idx, it["reference_path"], it["subtitle_path"]))
                     _handle_batch_completion(app, ok, out, process_next_item)
                 proc.signals.finished.connect(batch_completion_handler)
             else:
@@ -141,22 +141,22 @@ def start_sync_process(app):
             app.log_window.cancel_clicked.disconnect()
             app.log_window.cancel_clicked.connect(proc.cancel)
             app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
-            out = determine_output_path(app, it["video_path"], it["subtitle_path"])
-            proc.run_sync(it["video_path"], it["subtitle_path"], tool, out)
+            out = determine_output_path(app, it["reference_path"], it["subtitle_path"])
+            proc.run_sync(it["reference_path"], it["subtitle_path"], tool, out)
         
         # Start processing the first item
         process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
 
-def determine_output_path(app, video, subtitle):
+def determine_output_path(app, reference, subtitle):
     config = app.config
     save_loc = config.get("automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"])
     add_prefix = config.get("add_autosync_prefix", DEFAULT_OPTIONS["add_autosync_prefix"])
     sub_dir, sub_file = os.path.dirname(subtitle), os.path.basename(subtitle)
     sub_name, sub_ext = os.path.splitext(sub_file)
-    vid_dir, vid_file = os.path.dirname(video), os.path.basename(video)
-    vid_name, _ = os.path.splitext(vid_file)
+    ref_dir, vid_file = os.path.dirname(reference), os.path.basename(reference)
+    ref_name, _ = os.path.splitext(vid_file)
     prefix = "autosync_" if add_prefix else ""
     if save_loc == "save_next_to_input_subtitle":
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
@@ -167,10 +167,10 @@ def determine_output_path(app, video, subtitle):
             except Exception as e:
                 logger.error(f"Failed to create backup: {e}")
         out_dir, out_name = sub_dir, sub_file
-    elif save_loc == "save_next_to_video":
-        out_dir, out_name = vid_dir, f"{prefix}{sub_name}{sub_ext}"
-    elif save_loc == "save_next_to_video_with_same_filename":
-        out_dir, out_name = vid_dir, f"{prefix}{vid_name}{sub_ext}"
+    elif save_loc == "save_next_to_reference":
+        out_dir, out_name = ref_dir, f"{prefix}{sub_name}{sub_ext}"
+    elif save_loc == "save_next_to_reference_with_same_filename":
+        out_dir, out_name = ref_dir, f"{prefix}{ref_name}{sub_ext}"
     elif save_loc == "save_to_desktop":
         out_dir, out_name = platformdirs.user_desktop_path(), f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "select_destination_folder":

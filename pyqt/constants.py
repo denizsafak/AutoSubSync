@@ -19,7 +19,7 @@ SYNC_TOOLS = {
         "description": "Automatic subtitle synchronization tool using audio alignment",
         "github": "https://github.com/smacke/ffsubsync",
         "executable": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
-        "cmd_structure": ["{video}", "-i", "{subtitle}", "-o", "{output}"],
+        "cmd_structure": ["{reference}", "-i", "{subtitle}", "-o", "{output}"],
         "options": {
             "dont_fix_framerate": {
                 "type": "checkbox",
@@ -58,7 +58,7 @@ SYNC_TOOLS = {
         "description": "Audio-based subtitle synchronization with high accuracy",
         "github": "https://github.com/kaegi/alass",
         "executable": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
-        "cmd_structure": ["{video}", "{subtitle}", "{output}"],
+        "cmd_structure": ["{reference}", "{subtitle}", "{output}"],
         "options": {
             "check_video_subtitles": {
                 "type": "checkbox",
@@ -167,13 +167,4 @@ VIDEO_EXTENSIONS = [
     ".h264",
     ".h265",
     ".hevc",
-]
-
-FFSUBSYNC_VAD_OPTIONS = [
-    "subs_then_webrtc",
-    "webrtc",
-    "subs_then_auditok",
-    "auditok",
-    "subs_then_silero",
-    "silero",
 ]

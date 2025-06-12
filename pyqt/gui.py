@@ -177,23 +177,23 @@ class InputBox(QLabel):
             ext1 = os.path.splitext(files[0])[1].lower()
             ext2 = os.path.splitext(files[1])[1].lower()
             
-            video_file = None
+            reference_file = None
             subtitle_file = None
             
             # Determine which is video and which is subtitle
             if ext1 in VIDEO_EXTENSIONS and ext2 in SUBTITLE_EXTENSIONS:
-                video_file = files[0]
+                reference_file = files[0]
                 subtitle_file = files[1]
             elif ext1 in SUBTITLE_EXTENSIONS and ext2 in VIDEO_EXTENSIONS:
-                video_file = files[1]
+                reference_file = files[1]
                 subtitle_file = files[0]
                 
             # If we have one of each file type, set them appropriately
-            if video_file and subtitle_file and parent:
+            if reference_file and subtitle_file and parent:
                 # If in auto sync tab inputs
                 if self == parent.video_ref_input or self == parent.subtitle_input:
                     # Set the video input
-                    parent.video_ref_input.set_file(video_file)
+                    parent.video_ref_input.set_file(reference_file)
                     # Set the subtitle input
                     parent.subtitle_input.set_file(subtitle_file)
                     return

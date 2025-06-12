@@ -81,8 +81,8 @@ def effective_basename(file_path):
             return base[: -(tag_length + 1)]
     return base
 
-def calculate_file_similarity(video_name, sub_name):
-    """Calculate similarity score between video and subtitle filenames.
+def calculate_file_similarity(reference_name, sub_name):
+    """Calculate similarity score between reference and subtitle filenames.
     
     This function uses multiple methods to determine the similarity:
     1. Uses effective_basename to remove language tags
@@ -90,20 +90,20 @@ def calculate_file_similarity(video_name, sub_name):
     3. Uses a string similarity ratio
     
     Args:
-        video_name: Basename of a video file
+        reference_name: Basename of a reference file
         sub_name: Basename of a subtitle file
         
     Returns:
         Similarity score (higher is more similar)
     """
     # Clean and prepare names
-    video_base = effective_basename(video_name).lower().strip('.-_ [](){}')
+    reference_base = effective_basename(reference_name).lower().strip('.-_ [](){}')
     sub_base = effective_basename(sub_name).lower().strip('.-_ [](){}')
     
     # Calculate common prefix length
     common_len = 0
-    for i in range(min(len(video_base), len(sub_base))):
-        if video_base[i] == sub_base[i]:
+    for i in range(min(len(reference_base), len(sub_base))):
+        if reference_base[i] == sub_base[i]:
             common_len += 1
         else:
             break
@@ -116,11 +116,11 @@ def calculate_file_similarity(video_name, sub_name):
     similarity = common_len * 10  # Base score from common prefix
     
     # Penalty for length difference
-    length_diff = abs(len(video_base) - len(sub_base))
+    length_diff = abs(len(reference_base) - len(sub_base))
     similarity -= min(length_diff * 2, similarity // 2)  # Don't let penalty exceed half the score
     
     # Exact match bonus
-    if video_base == sub_base:
+    if reference_base == sub_base:
         similarity += 50
         
     return max(0, similarity)  # Ensure non-negative score
@@ -183,9 +183,9 @@ class BatchTreeView(QTreeWidget):
         child_file_path = first_child.data(0, Qt.ItemDataRole.UserRole)
         return child_file_path and get_file_extension(child_file_path) not in VIDEO_EXTENSIONS
 
-    def is_duplicate_pair(self, video_path, sub_path):
-        """Return True if (video_path, sub_path) matches an existing valid top-level pair."""
-        norm_v, norm_s = os.path.normpath(video_path), os.path.normpath(sub_path)
+    def is_duplicate_pair(self, reference_path, sub_path):
+        """Return True if (reference_path, sub_path) matches an existing valid top-level pair."""
+        norm_v, norm_s = os.path.normpath(reference_path), os.path.normpath(sub_path)
         return (norm_v, norm_s) in self._current_pair_id_set
 
     def __init__(self, parent_app=None):  # parent_app is the autosubsync instance
@@ -629,17 +629,17 @@ class BatchTreeView(QTreeWidget):
                 if self.is_duplicate_pair(paths[0], paths[1]):
                     QMessageBox.warning(self.app_parent, "Duplicate Pair", f"This pair already exists.")
                     return
-                video_path, sub_path = paths[0], paths[1]
-                self.add_explicit_pair(video_path, sub_path)
-                logger.info(f"Added pair: {os.path.basename(video_path)} + {os.path.basename(sub_path)}")
+                reference_path, sub_path = paths[0], paths[1]
+                self.add_explicit_pair(reference_path, sub_path)
+                logger.info(f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}")
                 return
             elif (exts[1] in VIDEO_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS):
                 if self.is_duplicate_pair(paths[1], paths[0]):
                     QMessageBox.warning(self.app_parent, "Duplicate Pair", f"This pair already exists.")
                     return
-                video_path, sub_path = paths[1], paths[0]
-                self.add_explicit_pair(video_path, sub_path)
-                logger.info(f"Added pair: {os.path.basename(video_path)} + {os.path.basename(sub_path)}")
+                reference_path, sub_path = paths[1], paths[0]
+                self.add_explicit_pair(reference_path, sub_path)
+                logger.info(f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}")
                 return
         
         # Standard processing for all other cases
@@ -676,73 +676,73 @@ class BatchTreeView(QTreeWidget):
         item = create_tree_widget_item(file_path, icon_provider=self.icon_provider, item_id=item_id)
         return item
         
-    def _pair_videos_with_subtitles(self, videos, subs):
-        """Match videos with their corresponding subtitles."""
-        paired_videos = set()
+    def _pair_references_with_subtitles(self, references, subs):
+        """Match references with their corresponding subtitles."""
+        paired_references = set()
         paired_subs = set()
-        video_sub_pairs = []
-        
+        reference_sub_pairs = []
+
         # First pass: exact basename matching
-        for video in videos:
-            video_base = effective_basename(video).lower().strip('.-_ [](){}')
+        for reference in references:
+            reference_base = effective_basename(reference).lower().strip('.-_ [](){}')
             for sub in subs:
                 if sub in paired_subs:
                     continue
                 sub_base = effective_basename(sub).lower().strip('.-_ [](){}')
-                if video_base == sub_base:
-                    video_sub_pairs.append((video, sub))
-                    paired_videos.add(video)
+                if reference_base == sub_base:
+                    reference_sub_pairs.append((reference, sub))
+                    paired_references.add(reference)
                     paired_subs.add(sub)
                     break
         
         # Second pass: similarity-based matching
-        for video in videos:
-            if video in paired_videos:
+        for reference in references:
+            if reference in paired_references:
                 continue
             best_match = None
             best_score = 0
             for sub in subs:
                 if sub in paired_subs:
                     continue
-                similarity = calculate_file_similarity(video, sub)
+                similarity = calculate_file_similarity(reference, sub)
                 if similarity > best_score:
                     best_score = similarity
                     best_match = sub
             if best_match and best_score >= 30:
-                video_sub_pairs.append((video, best_match))
-                paired_videos.add(video)
+                reference_sub_pairs.append((reference, best_match))
+                paired_references.add(reference)
                 paired_subs.add(best_match)
-                
-        return video_sub_pairs, paired_videos, paired_subs
-        
+
+        return reference_sub_pairs, paired_references, paired_subs
+
     def add_paired_files(self, file_paths, drop_target_item=None):
         newly_created_items = []
         skipped = 0
 
-        # Separate videos and subtitles
-        videos = sorted([f for f in file_paths if is_video_file(f)])
+        # Separate references and subtitles
+        references = sorted([f for f in file_paths if is_video_file(f)])
         subs = sorted([f for f in file_paths if is_subtitle_file(f)])
         
-        # Match videos with subtitles
-        pairs, paired_videos, paired_subs = self._pair_videos_with_subtitles(videos, subs)
-        
-        # Create tree items for each video-sub pair
-        for video, sub_file_path in pairs:
-            if video == sub_file_path or self.is_duplicate_pair(video, sub_file_path):
+        # Match references with subtitles
+        pairs, paired_references, paired_subs = self._pair_references_with_subtitles(references, subs)
+
+        # Create tree items for each reference-sub pair
+        for reference, sub_file_path in pairs:
+            if reference == sub_file_path or self.is_duplicate_pair(reference, sub_file_path):
                 skipped += 1
                 continue
-                
-            parent_item = self._create_tree_item(video)
+
+            parent_item = self._create_tree_item(reference)
             # Ensure child gets an ID
             child_item = create_tree_widget_item(sub_file_path, parent=parent_item, icon_provider=self.icon_provider, item_id=self._get_next_id())
             parent_item.setExpanded(True)
             newly_created_items.append(parent_item)
         
         # Create items for unpaired files
-        for video in videos:
-            if video not in paired_videos:
-                newly_created_items.append(self._create_tree_item(video))
-                
+        for reference in references:
+            if reference not in paired_references:
+                newly_created_items.append(self._create_tree_item(reference))
+
         for sub in subs:
             if sub not in paired_subs:
                 newly_created_items.append(self._create_tree_item(sub))
@@ -765,7 +765,7 @@ class BatchTreeView(QTreeWidget):
             QMessageBox.information(self.app_parent, "Duplicates Skipped", 
                                     f"{skipped} duplicate pair(s) skipped.")
 
-        logger.info(f"Paired {len(pairs)} video-subtitle pairs. Unpaired videos: {len(videos) - len(paired_videos)}, unpaired subs: {len(subs) - len(paired_subs)}")
+        logger.info(f"Paired {len(pairs)} reference-subtitle pairs. Unpaired references: {len(references) - len(paired_references)}, unpaired subs: {len(subs) - len(paired_subs)}")
 
     def add_explicit_pair(self, video_ref_path, sub_path):
         logger.info(f"Adding pair: {os.path.basename(video_ref_path)} + {os.path.basename(sub_path)}")
@@ -834,21 +834,21 @@ class BatchTreeView(QTreeWidget):
             QMessageBox.warning(self.app_parent, "Invalid Item", "Selected item is not a subtitle file.")
             return
 
-        video_path = open_filedialog(
+        reference_path = open_filedialog(
             self.app_parent, 
             'file-open', 
             "Select Video File", 
             VIDEO_FILTER
         )
         
-        if not video_path:
+        if not reference_path:
             return
 
-        if video_path == subtitle_item.data(0, Qt.ItemDataRole.UserRole):
+        if reference_path == subtitle_item.data(0, Qt.ItemDataRole.UserRole):
             QMessageBox.warning(self.app_parent, "Invalid Pair", "Cannot pair file with itself.")
             return
 
-        if self.is_duplicate_pair(video_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)):
+        if self.is_duplicate_pair(reference_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)):
             QMessageBox.warning(self.app_parent, "Duplicate Pair", "This pair already exists.")
             return
             
@@ -868,7 +868,7 @@ class BatchTreeView(QTreeWidget):
 
         # Create new video parent item with an ID
         video_item_id = self._get_next_id()
-        video_item = create_tree_widget_item(video_path, None, self.icon_provider, item_id=video_item_id)
+        video_item = create_tree_widget_item(reference_path, None, self.icon_provider, item_id=video_item_id)
 
         # Preserve subtitle's existing ID or assign a new one if it doesn't have one
         subtitle_item_id = subtitle_item.data(0, self.ITEM_ID_ROLE)
@@ -1014,11 +1014,11 @@ class BatchTreeView(QTreeWidget):
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if item and item.childCount() == 1 and item.data(0, self.VALID_STATE_ROLE) == "valid":
-                video_path = item.data(0, Qt.ItemDataRole.UserRole)
+                reference_path = item.data(0, Qt.ItemDataRole.UserRole)
                 sub_item = item.child(0)
                 sub_path = sub_item.data(0, Qt.ItemDataRole.UserRole)
-                if video_path and sub_path:
-                    pairs.append((video_path, sub_path))
+                if reference_path and sub_path:
+                    pairs.append((reference_path, sub_path))
         return pairs
             
     def has_items(self):
