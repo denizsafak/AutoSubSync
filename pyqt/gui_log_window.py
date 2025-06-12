@@ -80,6 +80,8 @@ class LogWindow(QWidget):
             self.append_message("Unknown sync tool. No options available.", color=COLORS["ORANGE"])
         self.append_message("Add 'autosync' prefix: ", end=""); self.append_message(str(get("add_autosync_prefix")), bold=True, color=COLORS["GREEN"])
         self.append_message("Backup subtitles before overwriting: ", end=""); self.append_message(str(get("backup_subtitles_before_overwriting")), bold=True, color=COLORS["GREEN"])
+        self.append_message("Keep extracted subtitles: ", end=""); self.append_message(str(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"])
+        self.append_message("Keep converted subtitles: ", end=""); self.append_message(str(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"])
         loc = get("automatic_save_location")
         # Get display text for the save location (mapping is now key:internal -> value:display)
         save_location_message = AUTOMATIC_SAVE_MAP.get(loc, loc)
