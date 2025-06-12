@@ -86,27 +86,55 @@ def start_sync_process(app):
         
         # For batch processing, we'll handle one item at a time (sequentially)
         current_item_idx = 0
+        # Add counters for batch summary
+        batch_success_count = 0
+        batch_fail_count = 0
+        total_items = len(items)
+        failed_pairs = []  # Will store tuples: (original_idx, video_path, subtitle_path)
         
         def process_next_item():
-            nonlocal current_item_idx
+            nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
             if current_item_idx >= len(items):
+                # All done: show batch report if batch mode
+                if app.batch_mode_enabled and total_items > 1:
+                    app.log_window.append_message("Batch sync completed.", bold=True, color=COLORS["BLUE"])
+                    app.log_window.append_message(f"Total pairs: {total_items}", color=COLORS["BLUE"])
+                    app.log_window.append_message(f"Successful: {batch_success_count}", color=COLORS["GREEN"])
+                    if batch_fail_count > 0:
+                        app.log_window.append_message(f"Failed: {batch_fail_count}", color=COLORS["RED"], end="\n\n")
+                        for fail_idx, v, s in failed_pairs:
+                            # Print the pair index in default color, then the rest in red
+                            app.log_window.append_message(f"Failed pair: [{fail_idx+1}/{total_items}]", color=COLORS["RED"])
+                            app.log_window.append_message("Reference: ", end="")
+                            app.log_window.append_message(v, color=COLORS["ORANGE"], end="\n")
+                            app.log_window.append_message("Subtitle: ", end="")
+                            app.log_window.append_message(s, color=COLORS["ORANGE"], end="\n\n")
                 return  # All done
                 
             it = items[current_item_idx]
+            original_idx = current_item_idx  # Save the original index for reporting
             current_item_idx += 1
             
             # Print progress information for batch processing
             if app.batch_mode_enabled and len(items) > 1:
-                app.log_window.append_message(f"\nProcessing pair {current_item_idx}/{len(items)}", bold=True, color=COLORS["BLUE"])
-            
+                app.log_window.append_message(f"Processing pair [{current_item_idx}/{len(items)}]", bold=True, color=COLORS["BLUE"])
+
             proc = SyncProcess(app)
             app._current_sync_process = proc
             proc.signals.progress.connect(lambda msg: app.log_window.append_message(msg))
-            proc.signals.error.connect(lambda msg: app.log_window.append_message(msg, color=COLORS["RED"]))
+            proc.signals.error.connect(lambda msg: app.log_window.append_message(msg, color=COLORS["RED"], end="\n\n"))
 
             # When finished with this item, process the next one
             if app.batch_mode_enabled and len(items) > 1:
-                proc.signals.finished.connect(lambda ok, out: _handle_batch_completion(app, ok, out, process_next_item))
+                def batch_completion_handler(ok, out):
+                    nonlocal batch_success_count, batch_fail_count, failed_pairs
+                    if ok:
+                        batch_success_count += 1
+                    else:
+                        batch_fail_count += 1
+                        failed_pairs.append((original_idx, it["video_path"], it["subtitle_path"]))
+                    _handle_batch_completion(app, ok, out, process_next_item)
+                proc.signals.finished.connect(batch_completion_handler)
             else:
                 proc.signals.finished.connect(lambda ok, out: _handle_sync_completion(app, ok, out))
                 
@@ -163,7 +191,7 @@ def _handle_batch_completion(app, success, output, callback):
         callback: Function to call to process the next item
     """
     if success:
-        app.log_window.append_message(f"Subtitle synchronized successfully.\nSaved to: {output}", color=COLORS["GREEN"], bold=True)
+        app.log_window.append_message(f"Subtitle synchronized successfully.\nSaved to: {output}", color=COLORS["GREEN"], bold=True, end="\n\n")
     else:
         logger.error("Synchronization failed")
     
@@ -173,7 +201,7 @@ def _handle_batch_completion(app, success, output, callback):
 
 def _handle_sync_completion(app, success, output):
     if success:
-        app.log_window.append_message(f"\nSynchronization completed successfully.\nSubtitle saved to: {output}", color=COLORS["GREEN"], bold=True)
+        app.log_window.append_message(f"\nSynchronization completed successfully.\nSubtitle saved to: {output}", color=COLORS["GREEN"], bold=True, end="\n\n")
     else:
         logger.error("Synchronization failed")
     app.log_window.cancel_button.setText("Go back")
