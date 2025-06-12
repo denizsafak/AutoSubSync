@@ -1012,24 +1012,13 @@ class BatchTreeView(QTreeWidget):
     def get_all_valid_pairs(self):
         pairs = []
         for i in range(self.topLevelItemCount()):
-            parent_item = self.topLevelItem(i)
-            parent_file = parent_item.data(0, Qt.ItemDataRole.UserRole)
-            # Ensure parent file exists and is a recognized media or subtitle type
-            if not parent_file or not os.path.exists(parent_file): continue
-            parent_ext = os.path.splitext(parent_file)[1].lower()
-            if parent_ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS): continue
-
-            # To form a pair for processing, the parent_item (video or reference subtitle)
-            # must have at least one child subtitle file that exists.
-            if parent_item.childCount() > 0:
-                for j in range(parent_item.childCount()):
-                    child_item = parent_item.child(j)
-                    child_file = child_item.data(0, Qt.ItemDataRole.UserRole)
-                    # Ensure child file exists and is a subtitle type
-                    if not child_file or not os.path.exists(child_file): continue
-                    child_ext = os.path.splitext(child_file)[1].lower()
-                    if child_ext in SUBTITLE_EXTENSIONS:
-                        pairs.append((parent_file, child_file))
+            item = self.topLevelItem(i)
+            if item and item.childCount() == 1 and item.data(0, self.VALID_STATE_ROLE) == "valid":
+                video_path = item.data(0, Qt.ItemDataRole.UserRole)
+                sub_item = item.child(0)
+                sub_path = sub_item.data(0, Qt.ItemDataRole.UserRole)
+                if video_path and sub_path:
+                    pairs.append((video_path, sub_path))
         return pairs
             
     def has_items(self):

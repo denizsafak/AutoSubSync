@@ -1,7 +1,7 @@
 import os
 import logging
 import threading
-from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject, QTimer
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
 from utils import create_process
 
@@ -41,7 +41,6 @@ class SyncProcess:
             if not output:
                 output = determine_output_path(self.app, video, subtitle)
             cmd = self._build_cmd(tool, exe, video, subtitle, output)
-            logger.info("[Running Command] %s", ' '.join(map(str, cmd)))
             self.process = create_process(cmd)
             for line in self.process.stdout:
                 if self.should_cancel: break
@@ -78,21 +77,44 @@ class SyncProcess:
 
 def start_sync_process(app):
     try:
-        items = ([{"video_path": it["video_path"], "subtitle_path": it["subtitle_path"]} for it in app.batch_tree_view.get_all_items()] if app.batch_mode_enabled else [{"video_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
+        items = ([{"video_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"video_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
         if not items: return
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
-        for idx, it in enumerate(items, 1):
+        
+        # For batch processing, we'll handle one item at a time (sequentially)
+        current_item_idx = 0
+        
+        def process_next_item():
+            nonlocal current_item_idx
+            if current_item_idx >= len(items):
+                return  # All done
+                
+            it = items[current_item_idx]
+            current_item_idx += 1
+            
+            # Print progress information for batch processing
+            if app.batch_mode_enabled and len(items) > 1:
+                app.log_window.append_message(f"\nProcessing pair {current_item_idx}/{len(items)}", bold=True, color=COLORS["BLUE"])
+            
             proc = SyncProcess(app)
             app._current_sync_process = proc
             proc.signals.progress.connect(lambda msg: logger.info(msg))
             proc.signals.error.connect(lambda msg: logger.error(msg))
-            proc.signals.finished.connect(lambda ok, out: _handle_sync_completion(app, ok, out))
+            
+            # When finished with this item, process the next one
+            if app.batch_mode_enabled and len(items) > 1:
+                proc.signals.finished.connect(lambda ok, out: _handle_batch_completion(app, ok, out, process_next_item))
+            else:
+                proc.signals.finished.connect(lambda ok, out: _handle_sync_completion(app, ok, out))
+                
             app.log_window.cancel_clicked.disconnect()
             app.log_window.cancel_clicked.connect(proc.cancel)
             app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
             out = determine_output_path(app, it["video_path"], it["subtitle_path"])
             proc.run_sync(it["video_path"], it["subtitle_path"], tool, out)
-            if not app.batch_mode_enabled: break
+        
+        # Start processing the first item
+        process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
 
@@ -127,6 +149,24 @@ def determine_output_path(app, video, subtitle):
     else:
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
     return os.path.join(out_dir, out_name)
+
+def _handle_batch_completion(app, success, output, callback):
+    """Handle completion of a single item in batch processing
+    
+    Args:
+        app: The main application instance
+        success: Whether the synchronization was successful
+        output: Path to the output file if successful, None otherwise
+        callback: Function to call to process the next item
+    """
+    if success:
+        app.log_window.append_message(f"Subtitle synchronized successfully.\nSaved to: {output}", color=COLORS["GREEN"], bold=True)
+    else:
+        logger.error("Synchronization failed")
+    
+    # Process next item after a short delay
+    # This gives the UI time to update before starting the next process
+    QTimer.singleShot(500, callback)
 
 def _handle_sync_completion(app, success, output):
     if success:

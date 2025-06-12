@@ -41,7 +41,7 @@ class LogWindow(QWidget):
         self.append_message("Configuration:", bold=True)
         if app.batch_mode_enabled:
             pairs = getattr(app, 'batch_tree_view', None)
-            n = len(pairs.get_all_items()) if pairs else 0
+            n = len(pairs.get_all_valid_pairs()) if pairs else 0
             self.append_message("Mode: ", end=""); self.append_message("Batch", bold=True, color=COLORS["GREEN"])
             self.append_message("Total pairs: ", end=""); self.append_message(str(n), bold=True, color=COLORS["GREEN"])
         else:
