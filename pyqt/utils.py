@@ -19,7 +19,7 @@ _config_path_logged = False
 default_encoding = sys.getfilesystemencoding()
 
 def create_process(cmd):
-    logger.info(f"Running: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+    logger.info(f"Executing: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
     kwargs = {
         "shell": False,  # Changed to False to properly handle list arguments
         "stdout": subprocess.PIPE,

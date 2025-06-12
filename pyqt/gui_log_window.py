@@ -1,9 +1,10 @@
 import os
 import logging
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout, QSizePolicy
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy
 from PyQt6.QtCore import Qt, pyqtSignal, QObject
-from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat
+from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
+from utils import get_resource_path
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,28 @@ class LogWindow(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(15)
         self.log_text = QTextEdit(readOnly=True)
+
+        # Set custom font
+        try:
+            font_path = get_resource_path("autosubsync.assets.fonts", "hack.ttf")
+            font_id = QFontDatabase.addApplicationFont(font_path)
+            if font_id != -1:
+                family = QFontDatabase.applicationFontFamilies(font_id)[0]
+                self.log_text.setFont(QFont(family))
+                logger.info(f"Loaded custom font: \"{family}\" for log window.")
+            else:
+                font = QFont()
+                font.setFamilies(["Consolas", "Monospace"])
+                self.log_text.setFont(font)
+                logger.warning(f"Failed to load custom font, using fallback.")
+        except Exception as e:
+            font = QFont()
+            font.setFamilies(["Consolas", "Monospace"])
+            self.log_text.setFont(font)
+            logger.error(f"Exception loading custom font: {e}. Using fallback.")
+
         self.log_text.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.log_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         layout.addWidget(self.log_text, 1)
@@ -49,7 +71,6 @@ class LogWindow(QWidget):
         self.append_message("Sync tool: ", end=""); self.append_message(sync_tool, bold=True, color=COLORS["GREEN"])
         tool_info = SYNC_TOOLS.get(sync_tool)
         if tool_info and "options" in tool_info:
-            self.append_message("Options:", bold=True)
             opts = tool_info["options"]
             for i, (k, v) in enumerate(opts.items()):
                 prefix = "└─ " if i == len(opts)-1 else "├─ "

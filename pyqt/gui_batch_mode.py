@@ -1243,7 +1243,6 @@ def update_batch_buttons_state(self):
             self.btn_batch_change_selected.setEnabled(new_change_state)
 
 def toggle_batch_mode(self):
-    logger.info(f"Batch mode: {'Enabled' if not getattr(self, 'batch_mode_enabled', False) else 'Disabled'}")
     """Toggle between batch mode and normal mode."""
     self.batch_mode_enabled = not self.batch_mode_enabled
     update_config(self, "batch_mode", self.batch_mode_enabled)

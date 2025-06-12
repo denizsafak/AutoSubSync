@@ -8,7 +8,7 @@ The module exports:
 """
 
 import logging
-from gui_log_window import LogWindow, LogWindowHandler
+from gui_log_window import LogWindow
 from sync_auto import start_sync_process
 from PyQt6.QtWidgets import (
     QWidget, 
@@ -430,14 +430,6 @@ def show_log_window(self):
     # Show the log window and print configuration
     self.log_window.clear()
     self.log_window.print_config(self)
-    
-    # Set up logging to redirect to log window
-    log_handler = LogWindowHandler(self.log_window)
-    root_logger = logging.getLogger()
-    root_logger.addHandler(log_handler)
-    
-    # Store handler reference for later removal
-    self._log_handler = log_handler
 
 def restore_auto_sync_tab(self):
     """Restore the automatic sync tab after the log window is closed."""
@@ -447,15 +439,22 @@ def restore_auto_sync_tab(self):
         if log_tab_index >= 0:
             self.tab_widget.removeTab(log_tab_index)
         
-        # Clean up the log handler
-        if hasattr(self, '_log_handler'):
-            root_logger = logging.getLogger()
-            root_logger.removeHandler(self._log_handler)
-            delattr(self, '_log_handler')
-        
         # Re-insert the original auto sync tab
         self.tab_widget.insertTab(self._stored_auto_tab_index, self._stored_auto_tab_widget, "Automatic Sync")
         self.tab_widget.setCurrentIndex(self._stored_auto_tab_index)
+        
+        # Update input box button positions
+        if hasattr(self, 'batch_mode_enabled'):
+            if self.batch_mode_enabled and hasattr(self, 'batch_input'):
+                # Force a resize event to reposition buttons
+                if hasattr(self.batch_input, 'resizeEvent'):
+                    self.batch_input.resizeEvent(None)
+            else:
+                # Normal mode - update positions for both input boxes
+                if hasattr(self, 'video_ref_input') and hasattr(self.video_ref_input, 'resizeEvent'):
+                    self.video_ref_input.resizeEvent(None)
+                if hasattr(self, 'subtitle_input') and hasattr(self.subtitle_input, 'resizeEvent'):
+                    self.subtitle_input.resizeEvent(None)
         
         # Clear the stored references
         delattr(self, '_stored_auto_tab_widget')

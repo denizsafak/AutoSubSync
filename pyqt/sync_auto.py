@@ -1,6 +1,7 @@
 import os
 import logging
 import threading
+import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject, QTimer
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
 from utils import create_process
@@ -30,6 +31,8 @@ class SyncProcess:
         if hasattr(self.app, 'log_window'):
             self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(video, color=COLORS["GREEN"], bold=True)
             self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREEN"], bold=True)
+            # add new line
+            self.app.log_window.append_message("")
         threading.Thread(target=self._run, args=(video, subtitle, tool, output), daemon=True).start()
     def _run(self, video, subtitle, tool, output):
         try:
@@ -98,9 +101,9 @@ def start_sync_process(app):
             
             proc = SyncProcess(app)
             app._current_sync_process = proc
-            proc.signals.progress.connect(lambda msg: logger.info(msg))
-            proc.signals.error.connect(lambda msg: logger.error(msg))
-            
+            proc.signals.progress.connect(lambda msg: app.log_window.append_message(msg))
+            proc.signals.error.connect(lambda msg: app.log_window.append_message(msg, color=COLORS["RED"]))
+
             # When finished with this item, process the next one
             if app.batch_mode_enabled and len(items) > 1:
                 proc.signals.finished.connect(lambda ok, out: _handle_batch_completion(app, ok, out, process_next_item))
@@ -141,7 +144,7 @@ def determine_output_path(app, video, subtitle):
     elif save_loc == "save_next_to_video_with_same_filename":
         out_dir, out_name = vid_dir, f"{prefix}{vid_name}{sub_ext}"
     elif save_loc == "save_to_desktop":
-        out_dir, out_name = os.path.join(os.path.expanduser("~"), "Desktop"), f"{prefix}{sub_name}{sub_ext}"
+        out_dir, out_name = platformdirs.user_desktop_path(), f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "select_destination_folder":
         folder = config.get("automatic_save_folder", "")
         out_dir = folder if folder and os.path.isdir(folder) else sub_dir
@@ -170,7 +173,7 @@ def _handle_batch_completion(app, success, output, callback):
 
 def _handle_sync_completion(app, success, output):
     if success:
-        app.log_window.append_message(f"Synchronization completed successfully.\nSubtitle saved to: {output}", color=COLORS["GREEN"], bold=True)
+        app.log_window.append_message(f"\nSynchronization completed successfully.\nSubtitle saved to: {output}", color=COLORS["GREEN"], bold=True)
     else:
         logger.error("Synchronization failed")
     app.log_window.cancel_button.setText("Go back")
