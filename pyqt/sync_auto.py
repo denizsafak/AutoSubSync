@@ -2,7 +2,7 @@ import os
 import logging
 import threading
 import platformdirs
-from PyQt6.QtCore import pyqtSignal, QObject, QTimer
+from PyQt6.QtCore import pyqtSignal, QObject
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
 from utils import create_process
 
@@ -80,6 +80,8 @@ class SyncProcess:
 
 def start_sync_process(app):
     try:
+        if hasattr(app, 'log_window'):
+            app.log_window.reset_for_new_sync()
         items = ([{"reference_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"reference_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
         if not items: return
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
@@ -133,10 +135,12 @@ def start_sync_process(app):
                     else:
                         batch_fail_count += 1
                         failed_pairs.append((original_idx, it["reference_path"], it["subtitle_path"]))
-                    _handle_batch_completion(app, ok, out, process_next_item)
+                    # Inline _handle_batch_completion logic
+                    app.log_window.handle_batch_completion(ok, out, process_next_item)
                 proc.signals.finished.connect(batch_completion_handler)
             else:
-                proc.signals.finished.connect(lambda ok, out: _handle_sync_completion(app, ok, out))
+                # Inline _handle_sync_completion logic
+                proc.signals.finished.connect(lambda ok, out: app.log_window.handle_sync_completion(ok, out))
                 
             app.log_window.cancel_clicked.disconnect()
             app.log_window.cancel_clicked.connect(proc.cancel)
@@ -180,32 +184,3 @@ def determine_output_path(app, reference, subtitle):
     else:
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
     return os.path.join(out_dir, out_name)
-
-def _handle_batch_completion(app, success, output, callback):
-    """Handle completion of a single item in batch processing
-    
-    Args:
-        app: The main application instance
-        success: Whether the synchronization was successful
-        output: Path to the output file if successful, None otherwise
-        callback: Function to call to process the next item
-    """
-    if success:
-        app.log_window.append_message(f"Subtitle synchronized successfully.\nSaved to: {output}", color=COLORS["GREEN"], bold=True, end="\n\n")
-    else:
-        logger.error("Synchronization failed")
-    
-    # Process next item after a short delay
-    # This gives the UI time to update before starting the next process
-    QTimer.singleShot(500, callback)
-
-def _handle_sync_completion(app, success, output):
-    if success:
-        app.log_window.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
-        app.log_window.append_message("Subtitle saved to:", color=COLORS["GREEN"], bold=True, end="")
-        app.log_window.append_message(f"{output}", color=COLORS["BLUE"], bold=True, end="\n\n")
-    else:
-        logger.error("Synchronization failed")
-    app.log_window.cancel_button.setText("Go back")
-    app.log_window.cancel_clicked.disconnect()
-    app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)

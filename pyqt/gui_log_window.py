@@ -57,11 +57,30 @@ class LogWindow(QWidget):
         self.log_text.verticalScrollBar().rangeChanged.connect(self._update_scroll_button)
 
         self.default_char_format = self.log_text.currentCharFormat()
-        bottom = QHBoxLayout()
+        
+        # Bottom button layout - using vertical layout for buttons in rows
+        bottom = QVBoxLayout()
+        bottom.setSpacing(15)
+
+        self.new_conversion_button = self.parent()._button("New conversion", h=40)
+        self.new_conversion_button.setVisible(False)
+        bottom.addWidget(self.new_conversion_button)
+        
+        # Create additional buttons that will be shown after completion
+        self.go_to_folder_button = self.parent()._button("Go to folder", h=40)
+        self.go_to_folder_button.setVisible(False)
+        bottom.addWidget(self.go_to_folder_button)
+
+        # Create Go back button
+        self.go_back_button = self.parent()._button("Go back", h=40)
+        self.go_back_button.setVisible(False)
+        bottom.addWidget(self.go_back_button)
+
+        # Initially setup with just cancel button
         self.cancel_button = self.parent()._button("Cancel")
-        self.cancel_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.cancel_button.clicked.connect(self.cancel_clicked.emit)
         bottom.addWidget(self.cancel_button)
+        
         layout.addLayout(bottom)
 
     def print_config(self, app):
@@ -70,7 +89,7 @@ class LogWindow(QWidget):
         cfg = app.config
         get = lambda k: cfg.get(k, DEFAULT_OPTIONS.get(k))
         sync_tool = get("sync_tool")
-        self.append_message("Configuration:", bold=True)
+        self.append_message("Configuration:", bold=True, color=COLORS["BLUE"])
         if app.batch_mode_enabled:
             pairs = getattr(app, 'batch_tree_view', None)
             n = len(pairs.get_all_valid_pairs()) if pairs else 0
@@ -101,14 +120,13 @@ class LogWindow(QWidget):
         
         args = cfg.get(f"{sync_tool}_arguments")
         if args:
-            self.append_message("\nAdditional arguments: ", end=""); self.append_message(args, bold=True, color=COLORS["GREEN"])
-        self.append_message("\nSync started:\n", bold=True)
+            self.append_message("Additional arguments: ", end=""); self.append_message(args, bold=True, color=COLORS["GREEN"])
+        self.append_message("\nSync started:", bold=True, color=COLORS["BLUE"])
         self._config_printed = True
     def append_message(self, message, bold=False, color=None, end="\n"):
         txt = self.log_text
         cursor = txt.textCursor()
-        was_at_bottom = txt.verticalScrollBar().value() >= txt.verticalScrollBar().maximum() - 2
-        
+        was_at_bottom = txt.verticalScrollBar().value() >= txt.verticalScrollBar().maximum()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         fmt = QTextCharFormat(self.default_char_format)
         if bold:
@@ -117,7 +135,7 @@ class LogWindow(QWidget):
             fmt.setForeground(QColor(color))
         
         cursor.setCharFormat(fmt)
-        cursor.insertText(str(message or "None") + end)
+        cursor.insertText(str(message or "") + end)
         
         if was_at_bottom:
             txt.verticalScrollBar().setValue(txt.verticalScrollBar().maximum())
@@ -137,7 +155,7 @@ class LogWindow(QWidget):
 
     def _update_scroll_button(self):
         sb = self.log_text.verticalScrollBar()
-        at_bottom = sb.value() >= sb.maximum() - 2
+        at_bottom = sb.value() >= sb.maximum()
         if at_bottom:
             self.scroll_button.hide()
         else:
@@ -147,6 +165,110 @@ class LogWindow(QWidget):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._position_scroll_button()
+
+    def handle_sync_completion(self, success, output):
+        """Handle completion of a synchronization process
+        
+        Args:
+            success: Whether the synchronization was successful
+            output: Path to the output file if successful, None otherwise
+        """
+        # Get the main application instance
+        app = self.window()
+        
+        if success:
+            self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
+            self.append_message("Subtitle saved to:", color=COLORS["GREEN"], bold=True, end="")
+            self.append_message(f"{output}", color=COLORS["BLUE"], bold=True, end="\n\n")
+            
+            # Only show "Go to folder" for single file sync
+            self.go_to_folder_button.setVisible(True)
+            self.go_to_folder_button.clicked.disconnect() if hasattr(self.go_to_folder_button, 'clicked') and self.go_to_folder_button.receivers(self.go_to_folder_button.clicked) > 0 else None
+            self.go_to_folder_button.clicked.connect(lambda: self._open_output_folder(output))
+            
+            # Show and connect the "New conversion" button
+            self.new_conversion_button.setVisible(True)
+            self.new_conversion_button.clicked.disconnect() if hasattr(self.new_conversion_button, 'clicked') and self.new_conversion_button.receivers(self.new_conversion_button.clicked) > 0 else None
+            self.new_conversion_button.clicked.connect(lambda: self._reset_and_go_back(app))
+        else:
+            logger.error("Synchronization failed")
+        
+        # Hide cancel and show go back button
+        self.cancel_button.setVisible(False)
+        self.go_back_button.setVisible(True)
+        self.go_back_button.clicked.disconnect() if hasattr(self.go_back_button, 'clicked') and self.go_back_button.receivers(self.go_back_button.clicked) > 0 else None
+        self.go_back_button.clicked.connect(app.restore_auto_sync_tab)
+        
+        # Force scroll to bottom after buttons are shown
+        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+
+    def handle_batch_completion(self, success, output, callback):
+        """Handle completion of a single item in batch processing
+        
+        Args:
+            success: Whether the synchronization was successful
+            output: Path to the output file if successful, None otherwise
+            callback: Function to call to process the next item
+        """
+        if success:
+            self.append_message(f"Subtitle synchronized successfully.\nSaved to: {output}", color=COLORS["GREEN"], bold=True, end="\n\n")
+        else:
+            logger.error("Synchronization failed")
+        
+        # Force scroll to bottom
+        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+        
+        # Process next item after a short delay
+        # This gives the UI time to update before starting the next process
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(500, callback)
+    
+    def _open_output_folder(self, output_path):
+        """Open the folder containing the output file"""
+        if output_path and os.path.exists(output_path):
+            folder = os.path.dirname(output_path)
+            from PyQt6.QtCore import QUrl
+            from PyQt6.QtGui import QDesktopServices
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+        else:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Error", "Output file does not exist.")
+    
+    def _reset_and_go_back(self, app):
+        """Reset inputs and go back to the automatic sync tab"""
+        app.restore_auto_sync_tab()
+        
+        # Reset inputs based on the mode
+        if app.batch_mode_enabled:
+            # Clear batch tree view
+            if hasattr(app, 'batch_tree_view'):
+                app.batch_tree_view.clear_all_items()
+                # Show the batch input box instead of tree view
+                app.update_auto_sync_ui_for_batch()
+        else:
+            # Reset normal mode inputs
+            if hasattr(app, 'video_ref_input'):
+                app.video_ref_input.reset_to_default()
+            if hasattr(app, 'subtitle_input'):
+                app.subtitle_input.reset_to_default()
+
+    def reset_for_new_sync(self):
+        """Reset UI for a new synchronization"""
+        # Hide action buttons
+        self.go_to_folder_button.setVisible(False)
+        self.new_conversion_button.setVisible(False)
+        # Hide go back and show cancel
+        self.go_back_button.setVisible(False)
+        self.cancel_button.setVisible(True)
+        self.cancel_button.setText("Cancel")
+        # Reset signal handlers to default
+        try:
+            self.cancel_clicked.disconnect()
+        except Exception:
+            pass
+        # Default behavior: restore auto sync tab
+        app = self.window()
+        self.cancel_clicked.connect(app.restore_auto_sync_tab)
 
 class LogWindowHandler(logging.Handler):
     def __init__(self, log_window):

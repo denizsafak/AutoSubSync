@@ -140,7 +140,6 @@ def setup_manual_sync_tab(self):
 def validate_manual_sync_inputs(self):
     """Validate manual sync inputs before processing"""
     if not self.manual_input_box.file_path:
-        logger.warning("No subtitle file selected for manual sync.")
         self.manual_input_box.show_error("Please select a subtitle file.")
         return False
     if self.shift_input.text() == "0" or not self.shift_input.text():
