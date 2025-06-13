@@ -18,6 +18,7 @@ SYNC_TOOLS = {
     "ffsubsync": {
         "description": "Automatic subtitle synchronization tool using audio alignment",
         "github": "https://github.com/smacke/ffsubsync",
+        "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
         "executable": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
         "cmd_structure": ["{reference}", "-i", "{subtitle}", "-o", "{output}"],
         "options": {
@@ -57,6 +58,7 @@ SYNC_TOOLS = {
     "alass": {
         "description": "Audio-based subtitle synchronization with high accuracy",
         "github": "https://github.com/kaegi/alass",
+        "supported_formats": [".srt", ".ass", ".ssa", ".sub", ".idx"],
         "executable": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
         "cmd_structure": ["{reference}", "{subtitle}", "{output}"],
         "options": {
@@ -82,8 +84,8 @@ SYNC_TOOLS = {
             },
             "split_penalty": {
                 "type": "slider",
-                "label": "Split penalty (Default: 7, Recommended: 5-20, No splits: -1)",
-                "tooltip": "--split-penalty: Penalty for splitting subtitles during alignment",
+                "label": "Split penalty",
+                "tooltip": "--split-penalty: Penalty for splitting subtitles during alignment\n(Default: 7, Recommended: 5-20, No splits: -1)",
                 "argument": "--split-penalty",
                 "range": [-1, 100],
                 "default": 7

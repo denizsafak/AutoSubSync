@@ -80,7 +80,7 @@ class SyncProcess:
 
 def start_sync_process(app):
     try:
-        items = ([{"reference_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"reference_path": app.reference_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
+        items = ([{"reference_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"reference_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
         if not items: return
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         
@@ -201,7 +201,9 @@ def _handle_batch_completion(app, success, output, callback):
 
 def _handle_sync_completion(app, success, output):
     if success:
-        app.log_window.append_message(f"\nSynchronization completed successfully.\nSubtitle saved to: {output}", color=COLORS["GREEN"], bold=True, end="\n\n")
+        app.log_window.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
+        app.log_window.append_message("Subtitle saved to:", color=COLORS["GREEN"], bold=True, end="")
+        app.log_window.append_message(f"{output}", color=COLORS["BLUE"], bold=True, end="\n\n")
     else:
         logger.error("Synchronization failed")
     app.log_window.cancel_button.setText("Go back")

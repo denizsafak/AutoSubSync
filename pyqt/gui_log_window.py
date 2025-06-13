@@ -1,7 +1,7 @@
 import os
 import logging
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy
-from PyQt6.QtCore import Qt, pyqtSignal, QObject
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton
+from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
 from utils import get_resource_path
@@ -47,13 +47,23 @@ class LogWindow(QWidget):
         self.log_text.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.log_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         layout.addWidget(self.log_text, 1)
+
+        # floating scroll-to-bottom button
+        self.scroll_button = QPushButton("↓", self.log_text)
+        self.scroll_button.setVisible(False)
+        self.scroll_button.setFixedSize(35, 35)
+        self.scroll_button.clicked.connect(lambda: self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum()))
+        self.log_text.verticalScrollBar().valueChanged.connect(self._update_scroll_button)
+        self.log_text.verticalScrollBar().rangeChanged.connect(self._update_scroll_button)
+
         self.default_char_format = self.log_text.currentCharFormat()
         bottom = QHBoxLayout()
-        self.cancel_button = self.parent()._button("Go back")
+        self.cancel_button = self.parent()._button("Cancel")
         self.cancel_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.cancel_button.clicked.connect(self.cancel_clicked.emit)
         bottom.addWidget(self.cancel_button)
         layout.addLayout(bottom)
+
     def print_config(self, app):
         if self._config_printed: return
         self.log_text.clear()
@@ -95,18 +105,48 @@ class LogWindow(QWidget):
         self.append_message("\nSync started:\n", bold=True)
         self._config_printed = True
     def append_message(self, message, bold=False, color=None, end="\n"):
-        if message is None: message = "None"
-        cursor = self.log_text.textCursor(); cursor.movePosition(QTextCursor.MoveOperation.End)
+        txt = self.log_text
+        cursor = txt.textCursor()
+        was_at_bottom = txt.verticalScrollBar().value() >= txt.verticalScrollBar().maximum() - 2
+        
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         fmt = QTextCharFormat(self.default_char_format)
-        if bold: fmt.setFontWeight(QFont.Weight.Bold)
-        if color: fmt.setForeground(QColor(color))
+        if bold:
+            fmt.setFontWeight(QFont.Weight.Bold)
+        if color:
+            fmt.setForeground(QColor(color))
+        
         cursor.setCharFormat(fmt)
-        cursor.insertText(str(message) + end)
-        cursor.setCharFormat(self.default_char_format)
-        self.log_text.setTextCursor(cursor)
-        self.log_text.ensureCursorVisible()
+        cursor.insertText(str(message or "None") + end)
+        
+        if was_at_bottom:
+            txt.verticalScrollBar().setValue(txt.verticalScrollBar().maximum())
+
     def clear(self):
         self.log_text.clear(); self._config_printed = False
+
+    def _position_scroll_button(self):
+        margin = 10
+        lw = self.log_text.width()
+        lh = self.log_text.height()
+        sw = self.scroll_button.width()
+        sh = self.scroll_button.height()
+        sb = self.log_text.verticalScrollBar()
+        scrollbar_width = sb.sizeHint().width()
+        self.scroll_button.move(lw - sw - margin - scrollbar_width, lh - sh - margin)
+
+    def _update_scroll_button(self):
+        sb = self.log_text.verticalScrollBar()
+        at_bottom = sb.value() >= sb.maximum() - 2
+        if at_bottom:
+            self.scroll_button.hide()
+        else:
+            self._position_scroll_button()
+            self.scroll_button.show()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._position_scroll_button()
 
 class LogWindowHandler(logging.Handler):
     def __init__(self, log_window):
