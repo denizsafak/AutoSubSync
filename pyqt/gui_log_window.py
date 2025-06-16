@@ -18,6 +18,7 @@ class LogWindow(QWidget):
         self._config_printed = False
         self.signal_relay = LogSignalRelay()
         self.signal_relay.append_message_signal.connect(self.append_message)
+        self._last_line_is_update = False  # Initialize state for overwrite logic
         self._setup_ui()
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -123,25 +124,39 @@ class LogWindow(QWidget):
             self.append_message("Additional arguments: ", end=""); self.append_message(args, bold=True, color=COLORS["GREEN"])
         self.append_message("\nSync started:", bold=True, color=COLORS["BLUE"])
         self._config_printed = True
-    def append_message(self, message, bold=False, color=None, end="\n"):
+
+    def append_message(self, message, bold=False, color=None, overwrite=False, end="\n"):
         txt = self.log_text
         cursor = txt.textCursor()
-        was_at_bottom = txt.verticalScrollBar().value() >= txt.verticalScrollBar().maximum()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
+        at_bottom = txt.verticalScrollBar().value() == txt.verticalScrollBar().maximum()
+
+        # Set format
         fmt = QTextCharFormat(self.default_char_format)
-        if bold:
-            fmt.setFontWeight(QFont.Weight.Bold)
-        if color:
-            fmt.setForeground(QColor(color))
+        if bold: fmt.setFontWeight(QFont.Weight.Bold)
+        if color: fmt.setForeground(QColor(color))
         
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.setCharFormat(fmt)
-        cursor.insertText(str(message or "") + end)
+
+        if overwrite:
+            if self._last_line_is_update:
+                # Move to start of current line and select to end
+                cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock)
+                cursor.movePosition(QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor)
+                cursor.removeSelectedText()
+            cursor.insertText(str(message))
+        else:
+            if self._last_line_is_update:
+                cursor.insertText("\n")
+            cursor.insertText(str(message) + end)
         
-        if was_at_bottom:
-            txt.verticalScrollBar().setValue(txt.verticalScrollBar().maximum())
+        self._last_line_is_update = overwrite
+        if at_bottom: txt.ensureCursorVisible()
 
     def clear(self):
-        self.log_text.clear(); self._config_printed = False
+        self.log_text.clear()
+        self._config_printed = False
+        self._last_line_is_update = False # Reset overwrite state
 
     def _position_scroll_button(self):
         margin = 10
@@ -178,8 +193,8 @@ class LogWindow(QWidget):
         
         if success:
             self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
-            self.append_message("Subtitle saved to:", color=COLORS["GREEN"], bold=True, end="")
-            self.append_message(f"{output}", color=COLORS["BLUE"], bold=True, end="\n\n")
+            self.append_message("Subtitle saved to:", color=COLORS["GREEN"], bold=True)
+            self.append_message(f"{output}", color=COLORS["BLUE"], bold=True)
             
             # Only show "Go to folder" for single file sync
             self.go_to_folder_button.setVisible(True)

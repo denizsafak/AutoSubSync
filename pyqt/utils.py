@@ -20,14 +20,14 @@ default_encoding = sys.getfilesystemencoding()
 
 def create_process(cmd):
     logger.info(f"Executing: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+    env = {**os.environ, "TERM": "dumb", "COLUMNS": "70"}
     kwargs = {
         "shell": False,  # Changed to False to properly handle list arguments
         "stdout": subprocess.PIPE,
         "stderr": subprocess.STDOUT,
-        "universal_newlines": True,
-        "encoding": default_encoding,
-        "errors": "replace",
-        "env": {**os.environ, "TERM": "dumb"} 
+        "universal_newlines": False,  # Explicitly request binary streams
+        "bufsize": 0,                # Unbuffered to allow real-time stdout reads
+        "env": env
     }
 
     if platform.system() == "Windows":

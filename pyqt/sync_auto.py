@@ -1,16 +1,17 @@
 import os
+import re
 import logging
 import threading
 import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
-from utils import create_process
+from utils import create_process, default_encoding
 
 logger = logging.getLogger(__name__)
 
 class SyncSignals(QObject):
     finished = pyqtSignal(bool, str)
-    progress = pyqtSignal(str)
+    progress = pyqtSignal(str, bool)  # message, is_overwrite
     error = pyqtSignal(str)
 
 class SyncProcess:
@@ -45,10 +46,28 @@ class SyncProcess:
                 output = determine_output_path(self.app, reference, subtitle)
             cmd = self._build_cmd(tool, exe, reference, subtitle, output)
             self.process = create_process(cmd)
-            for line in self.process.stdout:
-                if self.should_cancel: break
-                line = line.strip()
-                if line: self.signals.progress.emit(line)
+
+            buffer = b""
+            while True:
+                chunk = self.process.stdout.read(4096)
+                if not chunk or self.should_cancel:
+                    break
+                buffer += chunk
+                if b'\r' in buffer:
+                    pieces = buffer.split(b'\r')
+                    # all but last piece are complete overwrite segments
+                    for part in pieces[:-1]:
+                        cleaned_msg = self._clean_progress_message(part.decode(default_encoding, errors='replace'))
+                        if cleaned_msg:  # Only emit if there's content after cleaning
+                            self.signals.progress.emit(cleaned_msg, True)
+                    buffer = pieces[-1]  # remainder for next iterations
+
+            # any remaining buffer is a normal line
+            if buffer and not self.should_cancel:
+                cleaned_msg = self._clean_progress_message(buffer.decode(default_encoding, errors='replace').rstrip('\r\n'))
+                if cleaned_msg:  # Only emit if there's content after cleaning
+                    self.signals.progress.emit(cleaned_msg, False)
+
             rc = self.process.wait()
             if rc != 0 and not self.should_cancel:
                 self.signals.error.emit(f"{tool} failed with code {rc}"); self.signals.finished.emit(False, None)
@@ -58,6 +77,31 @@ class SyncProcess:
                 self.signals.finished.emit(True, output)
         except Exception as e:
             self.signals.error.emit(f"Error: {str(e)}"); self.signals.finished.emit(False, None)
+    def _clean_progress_message(self, message):
+        """Remove [HH:MM:SS] timestamps and align following lines accordingly."""
+        if not message:
+            return ""
+
+        lines = message.split('\n')
+        result = []
+        ts_len = 0
+        
+        for line in lines:
+            # Find and remove timestamp, calculate its length
+            match = re.match(r'^\[\d{2}:\d{2}:\d{2}\]\s?', line)
+            if match:
+                ts_len = len(match.group(0))
+                line = line[ts_len:]
+            elif ts_len > 0 and len(line) >= ts_len and line[:ts_len].isspace():
+                # Remove same number of whitespace characters as timestamp
+                line = line[ts_len:]
+            
+            line = line.rstrip()
+            if line:
+                result.append(line)
+        
+        return '\n'.join(result)
+    
     def _build_cmd(self, tool, exe, reference, subtitle, output):
         cmd_structure = SYNC_TOOLS[tool].get("cmd_structure")
         cmd_parts = [part.format(reference=reference, subtitle=subtitle, output=output) for part in cmd_structure]
@@ -123,7 +167,7 @@ def start_sync_process(app):
 
             proc = SyncProcess(app)
             app._current_sync_process = proc
-            proc.signals.progress.connect(lambda msg: app.log_window.append_message(msg))
+            proc.signals.progress.connect(lambda msg, is_overwrite: app.log_window.append_message(msg, overwrite=is_overwrite))
             proc.signals.error.connect(lambda msg: app.log_window.append_message(msg, color=COLORS["RED"], end="\n\n"))
 
             # When finished with this item, process the next one
