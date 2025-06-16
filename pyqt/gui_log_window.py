@@ -63,15 +63,15 @@ class LogWindow(QWidget):
         bottom = QVBoxLayout()
         bottom.setSpacing(15)
 
-        self.new_conversion_button = self.parent()._button("New conversion", h=40)
-        self.new_conversion_button.setVisible(False)
-        bottom.addWidget(self.new_conversion_button)
-        
         # Create additional buttons that will be shown after completion
         self.go_to_folder_button = self.parent()._button("Go to folder", h=40)
         self.go_to_folder_button.setVisible(False)
         bottom.addWidget(self.go_to_folder_button)
 
+        self.new_conversion_button = self.parent()._button("New conversion", h=40)
+        self.new_conversion_button.setVisible(False)
+        bottom.addWidget(self.new_conversion_button)
+        
         # Create Go back button
         self.go_back_button = self.parent()._button("Go back", h=40)
         self.go_back_button.setVisible(False)
@@ -238,6 +238,23 @@ class LogWindow(QWidget):
         from PyQt6.QtCore import QTimer
         QTimer.singleShot(500, callback)
     
+    def finish_batch_sync(self):
+        """Update buttons for batch sync completion."""
+        app = self.window()
+        # Hide cancel and show go back button
+        self.cancel_button.setVisible(False)
+        self.go_back_button.setVisible(True)
+        self.go_back_button.clicked.disconnect() if hasattr(self.go_back_button, 'clicked') and self.go_back_button.receivers(self.go_back_button.clicked) > 0 else None
+        self.go_back_button.clicked.connect(app.restore_auto_sync_tab)
+
+        # Show and connect the "New conversion" button
+        self.new_conversion_button.setVisible(True)
+        self.new_conversion_button.clicked.disconnect() if hasattr(self.new_conversion_button, 'clicked') and self.new_conversion_button.receivers(self.new_conversion_button.clicked) > 0 else None
+        self.new_conversion_button.clicked.connect(lambda: self._reset_and_go_back(app))
+
+        # Force scroll to bottom after buttons are shown
+        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+
     def _open_output_folder(self, output_path):
         """Open the folder containing the output file"""
         if output_path and os.path.exists(output_path):

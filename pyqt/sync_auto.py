@@ -77,14 +77,14 @@ class SyncProcess:
                     pieces = buffer.split(b'\r')
                     # all but last piece are complete overwrite segments
                     for part in pieces[:-1]:
-                        cleaned_msg = self._clean_progress_message(part.decode(default_encoding, errors='replace'))
+                        cleaned_msg = self._process_output(part.decode(default_encoding, errors='replace'))
                         if cleaned_msg:  # Only emit if there's content after cleaning
                             self.signals.progress.emit(cleaned_msg, True)
                     buffer = pieces[-1]  # remainder for next iterations
 
             # any remaining buffer is a normal line
             if buffer and not self.should_cancel:
-                cleaned_msg = self._clean_progress_message(buffer.decode(default_encoding, errors='replace').rstrip('\r\n'))
+                cleaned_msg = self._process_output(buffer.decode(default_encoding, errors='replace').rstrip('\r\n'))
                 if cleaned_msg:  # Only emit if there's content after cleaning
                     self.signals.progress.emit(cleaned_msg, False)
 
@@ -97,7 +97,7 @@ class SyncProcess:
                 self.signals.finished.emit(True, output)
         except Exception as e:
             self.signals.error.emit(f"Error: {str(e)}"); self.signals.finished.emit(False, None)
-    def _clean_progress_message(self, message):
+    def _process_output(self, message):
         """Remove [HH:MM:SS] timestamps and align following lines accordingly."""
         if not message:
             return ""
@@ -180,6 +180,7 @@ def start_sync_process(app):
                             app.log_window.append_message(v, color=COLORS["ORANGE"], end="\n")
                             app.log_window.append_message("Subtitle: ", end="")
                             app.log_window.append_message(s, color=COLORS["ORANGE"], end="\n\n")
+                    app.log_window.finish_batch_sync()
                 return  # All done
                 
             it = items[current_item_idx]
