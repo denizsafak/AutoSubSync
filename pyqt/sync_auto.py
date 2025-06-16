@@ -14,6 +14,26 @@ class SyncSignals(QObject):
     progress = pyqtSignal(str, bool)  # message, is_overwrite
     error = pyqtSignal(str)
 
+def shorten_progress_bar(line):
+    """Shorten the progress bar to 30 characters"""
+    start = line.find("[")
+    end = line.find("]", start)
+    if start != -1 and end != -1:
+        progress_bar = line[start : end + 1]
+        percent_start = line.find(" ", end) + 1
+        percent_end = line.find("%", percent_start)
+        percent = float(line[percent_start:percent_end])
+        width = 30  # New shorter width
+        filled = int(width * percent / 100)
+        if filled < width:
+            new_progress_bar = (
+                "[" + "=" * (filled - 1) + ">" + "-" * (width - filled) + "]"
+            )
+        else:
+            new_progress_bar = "[" + "=" * width + "]"
+        return line[:start] + new_progress_bar + line[end + 1 :]
+    return line
+
 class SyncProcess:
     def __init__(self, app):
         self.app = app
@@ -87,7 +107,7 @@ class SyncProcess:
         ts_len = 0
         
         for line in lines:
-            # Find and remove timestamp, calculate its length
+            # Find and remove timestamp first, calculate its length
             match = re.match(r'^\[\d{2}:\d{2}:\d{2}\]\s?', line)
             if match:
                 ts_len = len(match.group(0))
@@ -96,9 +116,14 @@ class SyncProcess:
                 # Remove same number of whitespace characters as timestamp
                 line = line[ts_len:]
             
+            # Special handling for ALASS - do this after timestamp removal
+            if self.app.config.get("sync_tool") == "alass":
+                if "[" in line and "]" in line:
+                    line = shorten_progress_bar(line)
+            
             line = line.rstrip()
-            if line:
-                result.append(line)
+            # Always add the line, even if empty, to preserve progress updates
+            result.append(line)
         
         return '\n'.join(result)
     
