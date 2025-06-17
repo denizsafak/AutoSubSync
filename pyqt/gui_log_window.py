@@ -1,6 +1,6 @@
 import os
 import logging
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QLabel, QApplication
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QApplication
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
@@ -19,7 +19,7 @@ class LogWindow(QWidget):
         self.signal_relay = LogSignalRelay()
         self.signal_relay.append_message_signal.connect(self.append_message)
         self._last_line_is_update = False  # Initialize state for overwrite logic
-        self._suppress_scroll_button = False  # Add flag to suppress scroll button update
+        self._user_scrolled_up = False  # Track if user scrolled up
         self._setup_ui()
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -138,22 +138,17 @@ class LogWindow(QWidget):
     def append_message(self, message, bold=False, color=None, overwrite=False, end="\n"):
         txt = self.log_text
         cursor = txt.textCursor()
-        
-        # Check if scrollbar exists and determine if we're at the bottom
         scrollbar = txt.verticalScrollBar()
-        at_bottom = scrollbar.value() >= (scrollbar.maximum() - 10)  # Add some tolerance
-
+        # Only auto-scroll if user is at bottom or hasn't scrolled up
+        at_bottom = scrollbar.value() >= (scrollbar.maximum() - 10)
         # Set format
         fmt = QTextCharFormat(self.default_char_format)
         if bold: fmt.setFontWeight(QFont.Weight.Bold)
         if color: fmt.setForeground(QColor(color))
-        
         cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.setCharFormat(fmt)
-
         if overwrite:
             if self._last_line_is_update:
-                # Move to start of current line and select to end
                 cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock)
                 cursor.movePosition(QTextCursor.MoveOperation.EndOfBlock, QTextCursor.MoveMode.KeepAnchor)
                 cursor.removeSelectedText()
@@ -162,25 +157,17 @@ class LogWindow(QWidget):
             if self._last_line_is_update:
                 cursor.insertText("\n")
             cursor.insertText(str(message) + end)
-        
         self._last_line_is_update = overwrite
-        
-        # Auto-scroll when adding new content if we were at the bottom
-        # or if this is initial content being added
-        if at_bottom or txt.document().blockCount() <= 30:  # Default to auto-scroll for the first few blocks
-            # Process events to ensure scrollbar range is updated
-            QApplication.processEvents()
+        # Always auto-scroll unless user has scrolled up
+        if at_bottom or not self._user_scrolled_up or txt.document().blockCount() <= 30:
             scrollbar.setValue(scrollbar.maximum())
-            # Ensure cursor at end is visible
-            cursor = txt.textCursor()
-            cursor.movePosition(QTextCursor.MoveOperation.End)
-            txt.setTextCursor(cursor)
-            txt.ensureCursorVisible()
+            self._user_scrolled_up = False
 
     def clear(self):
         self.log_text.clear()
         self._config_printed = False
         self._last_line_is_update = False # Reset overwrite state
+        self._user_scrolled_up = False
 
     def _position_scroll_button(self):
         margin = 10
@@ -193,15 +180,15 @@ class LogWindow(QWidget):
         self.scroll_button.move(lw - sw - margin - scrollbar_width, lh - sh - margin)
 
     def _update_scroll_button(self):
-        if getattr(self, '_suppress_scroll_button', False):
-            return
         sb = self.log_text.verticalScrollBar()
-        at_bottom = sb.value() >= (sb.maximum() - 10)  # Use the same tolerance as append_message
+        at_bottom = sb.value() >= (sb.maximum() - 10)
         if at_bottom:
             self.scroll_button.hide()
+            self._user_scrolled_up = False
         else:
             self._position_scroll_button()
             self.scroll_button.show()
+            self._user_scrolled_up = True
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -230,9 +217,8 @@ class LogWindow(QWidget):
         
         if success:
             self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
-            self.append_message("Subtitle saved to:", color=COLORS["GREEN"], bold=True)
-            self.append_message(f"{output}", color=COLORS["BLUE"], bold=True)
-            
+            self.append_message(f"Subtitle saved to: {output}", color=COLORS["GREY"], bold=True)
+
             # Only show "Go to folder" for single file sync
             self.go_to_folder_button.setVisible(True)
             self.go_to_folder_button.clicked.disconnect() if hasattr(self.go_to_folder_button, 'clicked') and self.go_to_folder_button.receivers(self.go_to_folder_button.clicked) > 0 else None
@@ -243,7 +229,7 @@ class LogWindow(QWidget):
             self.new_conversion_button.clicked.disconnect() if hasattr(self.new_conversion_button, 'clicked') and self.new_conversion_button.receivers(self.new_conversion_button.clicked) > 0 else None
             self.new_conversion_button.clicked.connect(lambda: self._reset_and_go_back(app))
         else:
-            logger.error("Synchronization failed")
+            logger.error("Synchronization canceled/failed")
         
         # Hide cancel and show go back button
         self.cancel_button.setVisible(False)
@@ -263,9 +249,10 @@ class LogWindow(QWidget):
             callback: Function to call to process the next item
         """
         if success:
-            self.append_message(f"Subtitle synchronized successfully.\nSaved to: {output}", color=COLORS["GREEN"], bold=True, end="\n\n")
+            self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
+            self.append_message(f"Subtitle saved to: {output}", color=COLORS["GREY"], bold=True, end="\n\n")
         else:
-            logger.error("Synchronization failed")
+            logger.error("Synchronization canceled/failed")
         
         # Force scroll to bottom only if at bottom
         scrollbar = self.log_text.verticalScrollBar()
@@ -297,19 +284,10 @@ class LogWindow(QWidget):
 
     def _scroll_to_bottom(self):
         """Scroll to the bottom of the log text."""
-        self._suppress_scroll_button = True
-        txt = self.log_text
-        # Need to process events to ensure scrollbar range is up-to-date
-        QApplication.processEvents()
-        scrollbar = txt.verticalScrollBar()
+        scrollbar = self.log_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
-        # Ensure cursor at end is visible
-        cursor = txt.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-        txt.setTextCursor(cursor)
-        txt.ensureCursorVisible()
-        self._suppress_scroll_button = False
-        self._update_scroll_button()
+        self.scroll_button.hide()
+        self._user_scrolled_up = False
 
     def _open_output_folder(self, output_path):
         """Open the folder containing the output file"""

@@ -26,7 +26,7 @@ def create_process(cmd):
         "stdout": subprocess.PIPE,
         "stderr": subprocess.STDOUT,
         "universal_newlines": False,  # Explicitly request binary streams
-        "bufsize": 0,                # Unbuffered to allow real-time stdout reads
+        "bufsize": 0,                # For more responsive output
         "env": env
     }
 

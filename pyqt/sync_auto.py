@@ -51,8 +51,8 @@ class SyncProcess:
     def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
         # Print command arguments and append current pair to log window
         if hasattr(self.app, 'log_window'):
-            self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(reference, color=COLORS["GREEN"], bold=True)
-            self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREEN"], bold=True)
+            self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(reference, color=COLORS["GREY"], bold=True)
+            self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREY"], bold=True)
             # add new line
             self.app.log_window.append_message("")
         threading.Thread(target=self._run, args=(reference, subtitle, tool, output), daemon=True).start()
@@ -69,27 +69,45 @@ class SyncProcess:
             self.process = create_process(cmd)
 
             buffer = b""
+            last_was_cr = False  # Track if last processed delimiter was \r
             while True:
-                chunk = self.process.stdout.read(4096)
+                chunk = self.process.stdout.read(128)
                 if not chunk or self.should_cancel:
                     break
                 buffer += chunk
-                if b'\r' in buffer:
-                    pieces = buffer.split(b'\r')
-                    # all but last piece are complete overwrite segments
-                    for part in pieces[:-1]:
-                        cleaned_msg, percent = self._process_output(part.decode(default_encoding, errors='replace'))
-                        if cleaned_msg:  # Only emit if there's content after cleaning
-                            self.signals.progress.emit(cleaned_msg, True)
-                        if percent is not None:
-                            self.signals.progress_percent.emit(percent)
-                    buffer = pieces[-1]  # remainder for next iterations
+                
+                # Process complete lines efficiently
+                while b'\r' in buffer or b'\n' in buffer:
+                    cr_pos = buffer.find(b'\r')
+                    lf_pos = buffer.find(b'\n')
+                    
+                    # Determine which delimiter comes first
+                    if cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
+                        # Carriage return case (overwrite)
+                        part, buffer = buffer[:cr_pos], buffer[cr_pos+1:]
+                        is_overwrite = True
+                        last_was_cr = True
+                    elif lf_pos != -1:
+                        # Newline case - check if this follows a \r
+                        part, buffer = buffer[:lf_pos], buffer[lf_pos+1:]
+                        is_overwrite = last_was_cr  # If last was \r, this content should overwrite
+                        last_was_cr = False
+                    else:
+                        break
+                    
+                    # Process the part even if it's empty (for newlines)
+                    cleaned_msg, percent = self._process_output(part.decode(default_encoding, errors='replace'))
+                    if cleaned_msg or not part:  # Emit empty lines too
+                        self.signals.progress.emit(cleaned_msg, is_overwrite)
+                    if percent is not None:
+                        self.signals.progress_percent.emit(percent)
 
-            # any remaining buffer is a normal line
+            # Process remaining buffer
             if buffer and not self.should_cancel:
                 cleaned_msg, percent = self._process_output(buffer.decode(default_encoding, errors='replace').rstrip('\r\n'))
-                if cleaned_msg:  # Only emit if there's content after cleaning
-                    self.signals.progress.emit(cleaned_msg, False)
+                if cleaned_msg:
+                    # If the last processed delimiter was \r, remaining content should overwrite
+                    self.signals.progress.emit(cleaned_msg, last_was_cr)
                 if percent is not None:
                     self.signals.progress_percent.emit(percent)
 
@@ -103,78 +121,77 @@ class SyncProcess:
         except Exception as e:
             self.signals.error.emit(f"Error: {str(e)}"); self.signals.finished.emit(False, None)
     def _process_output(self, message):
-        """Remove [HH:MM:SS] timestamps and align following lines accordingly."""
+        """Process output message, extract percentage and format for display."""
+        # Handle empty messages (newlines)
         if not message:
             return "", None
 
+        # Extract percentage
         percent_match = re.search(r'(\d{1,2}(?:\.\d{1,2})?)\s*%', message)
         percent = float(percent_match.group(1)) if percent_match else None
 
+        sync_tool = self.app.config.get("sync_tool")
         lines = message.split('\n')
-        result = []
-        ts_len = 0
         
-        for line in lines:
-            # Find and remove timestamp first, calculate its length
-            match = re.match(r'^\[\d{2}:\d{2}:\d{2}\]\s?', line)
-            if match:
-                ts_len = len(match.group(0))
-                line = line[ts_len:]
-            elif ts_len > 0 and len(line) >= ts_len and line[:ts_len].isspace():
-                # Remove same number of whitespace characters as timestamp
-                line = line[ts_len:]
-            
-            # Special handling for ALASS - do this after timestamp removal
-            if self.app.config.get("sync_tool") == "alass":
-                if "[" in line and "]" in line:
-                    line = shorten_progress_bar(line)
-            
-            line = line.rstrip()
-            # Always add the line, even if empty, to preserve progress updates
-            result.append(line)
+        if sync_tool == "ffsubsync":
+            # Optimize ffsubsync processing
+            result = []
+            for line in lines:
+                # Remove timestamps and format
+                line = re.sub(r"\[\d{2}:\d{2}:\d{2}\]\s*", "", line).lstrip()
+                if not re.search(r"\b(INFO|WARNING|CRITICAL|ERROR)\b", line):
+                    # Add only 2 spaces for progress lines (containing %), 9 spaces for others
+                    line = line if "%" in line else "         " + line
+                result.append((" " + line).rstrip())
+        elif sync_tool == "alass":
+            # Optimize ALASS processing
+            result = [shorten_progress_bar(line) if "[" in line and "]" in line else line.rstrip() for line in lines]
+        else:
+            # Default processing
+            result = [line.rstrip() for line in lines]
         
         return '\n'.join(result), percent
     
     def _build_cmd(self, tool, exe, reference, subtitle, output):
         cmd_structure = SYNC_TOOLS[tool].get("cmd_structure")
-        cmd_parts = [part.format(reference=reference, subtitle=subtitle, output=output) for part in cmd_structure]
-
-        cmd = [exe] + cmd_parts
-        cmd = self._append_opts(cmd, tool)
-        return cmd
+        cmd = [exe] + [part.format(reference=reference, subtitle=subtitle, output=output) for part in cmd_structure]
+        return self._append_opts(cmd, tool)
+    
     def _append_opts(self, cmd, tool):
         config = self.app.config
         info = SYNC_TOOLS.get(tool, {})
         for name, opt in info.get("options", {}).items():
-            arg = opt.get("argument"); default = opt.get("default")
+            arg, default = opt.get("argument"), opt.get("default")
             val = config.get(f"{tool}_{name}", default)
             if arg and val != default:
-                if isinstance(default, bool): cmd.append(arg)
-                else: cmd += [arg, str(val)]
+                cmd.append(arg) if isinstance(default, bool) else cmd.extend([arg, str(val)])
         extra = config.get(f"{tool}_arguments", "").strip().split()
-        if extra: cmd += extra
-        return cmd
+        return cmd + extra if extra else cmd
 
 def start_sync_process(app):
     try:
         if hasattr(app, 'log_window'):
             app.log_window.reset_for_new_sync()
-        items = ([{"reference_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] if app.batch_mode_enabled else [{"reference_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
-        if not items: return
+        
+        # Get items to process
+        items = ([{"reference_path": vp, "subtitle_path": sp} for vp, sp in app.batch_tree_view.get_all_valid_pairs()] 
+                if app.batch_mode_enabled else [{"reference_path": app.video_ref_input.file_path, "subtitle_path": app.subtitle_input.file_path}])
+        
+        if not items: 
+            return
+            
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         
-        # For batch processing, we'll handle one item at a time (sequentially)
-        current_item_idx = 0
-        # Add counters for batch summary
-        batch_success_count = 0
-        batch_fail_count = 0
+        # Batch processing state
+        current_item_idx, batch_success_count, batch_fail_count = 0, 0, 0
         total_items = len(items)
-        failed_pairs = []  # Will store tuples: (original_idx, reference_path, subtitle_path)
+        failed_pairs = []
         
         def process_next_item():
             nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
+            
             if current_item_idx >= len(items):
-                # All done: show batch report if batch mode
+                # Batch complete - show summary
                 if app.batch_mode_enabled and total_items > 1:
                     app.log_window.append_message("Batch sync completed.", bold=True, color=COLORS["BLUE"])
                     app.log_window.append_message(f"Total pairs: {total_items}", color=COLORS["BLUE"])
@@ -182,39 +199,37 @@ def start_sync_process(app):
                     if batch_fail_count > 0:
                         app.log_window.append_message(f"Failed: {batch_fail_count}", color=COLORS["RED"], end="\n\n")
                         for fail_idx, v, s in failed_pairs:
-                            # Print the pair index in default color, then the rest in red
                             app.log_window.append_message(f"Failed pair: [{fail_idx+1}/{total_items}]", color=COLORS["RED"])
                             app.log_window.append_message("Reference: ", end="")
                             app.log_window.append_message(v, color=COLORS["ORANGE"], end="\n")
                             app.log_window.append_message("Subtitle: ", end="")
                             app.log_window.append_message(s, color=COLORS["ORANGE"], end="\n\n")
                     app.log_window.finish_batch_sync()
-                return  # All done
+                return
                 
+            # Process current item
             it = items[current_item_idx]
-            original_idx = current_item_idx  # Save the original index for reporting
+            original_idx = current_item_idx
             current_item_idx += 1
             
-            # Print progress information for batch processing
             if app.batch_mode_enabled and len(items) > 1:
                 app.log_window.append_message(f"Processing pair [{current_item_idx}/{len(items)}]", bold=True, color=COLORS["BLUE"])
 
             proc = SyncProcess(app)
             app._current_sync_process = proc
+            
+            # Connect signals
             proc.signals.progress.connect(lambda msg, is_overwrite: app.log_window.append_message(msg, overwrite=is_overwrite))
             proc.signals.error.connect(lambda msg: app.log_window.append_message(msg, color=COLORS["RED"], end="\n\n"))
+            proc.signals.progress_percent.connect(
+                lambda percent: app.log_window.update_progress(
+                    int((current_item_idx - 1) * 100 / total_items + percent / total_items) if app.batch_mode_enabled and total_items > 1 else int(percent),
+                    current_item_idx if app.batch_mode_enabled and total_items > 1 else None,
+                    total_items if app.batch_mode_enabled and total_items > 1 else None
+                )
+            )
 
-            def handle_progress(percent):
-                if app.batch_mode_enabled and total_items > 1:
-                    base_progress = (current_item_idx - 1) * (100 / total_items)
-                    item_progress = percent / total_items
-                    total_progress = base_progress + item_progress
-                    app.log_window.update_progress(int(total_progress), current_item_idx, total_items)
-                else:
-                    app.log_window.update_progress(int(percent))
-            proc.signals.progress_percent.connect(handle_progress)
-
-            # When finished with this item, process the next one
+            # Handle completion
             if app.batch_mode_enabled and len(items) > 1:
                 def batch_completion_handler(ok, out):
                     nonlocal batch_success_count, batch_fail_count, failed_pairs
@@ -224,24 +239,21 @@ def start_sync_process(app):
                         batch_fail_count += 1
                         failed_pairs.append((original_idx, it["reference_path"], it["subtitle_path"]))
                     
-                    # Update progress when a pair finishes to ensure it's at 100% for that segment
-                    base_progress = (original_idx + 1) * (100 / total_items)
-                    app.log_window.update_progress(int(base_progress), original_idx + 1, total_items)
-
-                    # Inline _handle_batch_completion logic
+                    app.log_window.update_progress(int((original_idx + 1) * 100 / total_items), original_idx + 1, total_items)
                     app.log_window.handle_batch_completion(ok, out, process_next_item)
                 proc.signals.finished.connect(batch_completion_handler)
             else:
-                # Inline _handle_sync_completion logic
                 proc.signals.finished.connect(lambda ok, out: app.log_window.handle_sync_completion(ok, out))
                 
+            # Setup cancellation
             app.log_window.cancel_clicked.disconnect()
             app.log_window.cancel_clicked.connect(proc.cancel)
             app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
+            
+            # Start sync
             out = determine_output_path(app, it["reference_path"], it["subtitle_path"])
             proc.run_sync(it["reference_path"], it["subtitle_path"], tool, out)
         
-        # Start processing the first item
         process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
