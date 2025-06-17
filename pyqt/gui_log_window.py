@@ -19,6 +19,7 @@ class LogWindow(QWidget):
         self.signal_relay = LogSignalRelay()
         self.signal_relay.append_message_signal.connect(self.append_message)
         self._last_line_is_update = False  # Initialize state for overwrite logic
+        self._suppress_scroll_button = False  # Add flag to suppress scroll button update
         self._setup_ui()
     def _setup_ui(self):
         layout = QVBoxLayout(self)
@@ -55,7 +56,6 @@ class LogWindow(QWidget):
         self.scroll_button.setFixedSize(35, 35)
         self.scroll_button.clicked.connect(lambda: self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum()))
         self.log_text.verticalScrollBar().valueChanged.connect(self._update_scroll_button)
-        self.log_text.verticalScrollBar().rangeChanged.connect(self._update_scroll_button)
 
         self.default_char_format = self.log_text.currentCharFormat()
         
@@ -193,6 +193,8 @@ class LogWindow(QWidget):
         self.scroll_button.move(lw - sw - margin - scrollbar_width, lh - sh - margin)
 
     def _update_scroll_button(self):
+        if getattr(self, '_suppress_scroll_button', False):
+            return
         sb = self.log_text.verticalScrollBar()
         at_bottom = sb.value() >= (sb.maximum() - 10)  # Use the same tolerance as append_message
         if at_bottom:
@@ -295,6 +297,7 @@ class LogWindow(QWidget):
 
     def _scroll_to_bottom(self):
         """Scroll to the bottom of the log text."""
+        self._suppress_scroll_button = True
         txt = self.log_text
         # Need to process events to ensure scrollbar range is up-to-date
         QApplication.processEvents()
@@ -305,6 +308,8 @@ class LogWindow(QWidget):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         txt.setTextCursor(cursor)
         txt.ensureCursorVisible()
+        self._suppress_scroll_button = False
+        self._update_scroll_button()
 
     def _open_output_folder(self, output_path):
         """Open the folder containing the output file"""
