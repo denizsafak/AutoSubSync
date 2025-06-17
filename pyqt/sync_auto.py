@@ -6,7 +6,7 @@ import time
 import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
-from utils import create_process, default_encoding
+from utils import create_process, create_backup, default_encoding
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +83,14 @@ class SyncProcess:
                 self.signals.error.emit(f"Executable for {tool} not found"); return
             if not output:
                 output = determine_output_path(self.app, reference, subtitle)
+            # Backup output subtitle if needed
+            config = self.app.config
+            backup_enabled = config.get("backup_subtitles_before_overwriting", DEFAULT_OPTIONS["backup_subtitles_before_overwriting"])
+            if backup_enabled and os.path.exists(output):
+                try:
+                    create_backup(output)
+                except Exception as e:
+                    logger.error(f"Failed to create backup: {e}")
             cmd = self._build_cmd(tool, exe, reference, subtitle, output)
             
             with self._process_lock:
@@ -338,11 +346,6 @@ def determine_output_path(app, reference, subtitle):
     if save_loc == "save_next_to_input_subtitle":
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "overwrite_input_subtitle":
-        if config.get("backup_subtitles_before_overwriting", DEFAULT_OPTIONS["backup_subtitles_before_overwriting"]):
-            try:
-                import shutil; shutil.copy2(subtitle, os.path.join(sub_dir, f"{sub_name}.bak{sub_ext}"))
-            except Exception as e:
-                logger.error(f"Failed to create backup: {e}")
         out_dir, out_name = sub_dir, sub_file
     elif save_loc == "save_next_to_reference":
         out_dir, out_name = ref_dir, f"{prefix}{sub_name}{sub_ext}"
@@ -356,4 +359,14 @@ def determine_output_path(app, reference, subtitle):
         out_name = f"{prefix}{sub_name}{sub_ext}"
     else:
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
-    return os.path.join(out_dir, out_name)
+
+    output_path = os.path.join(out_dir, out_name)
+    # Add numeric suffix if file exists and not in excluded save locations
+    if save_loc not in ("save_next_to_reference_with_same_filename", "overwrite_input_subtitle"):
+        base, ext = os.path.splitext(out_name)
+        counter = 2
+        while os.path.exists(output_path):
+            out_name = f"{base}_{counter}{ext}"
+            output_path = os.path.join(out_dir, out_name)
+            counter += 1
+    return output_path

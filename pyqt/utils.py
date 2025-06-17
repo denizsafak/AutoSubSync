@@ -9,6 +9,7 @@ import subprocess
 import platform
 import signal
 import time
+import shutil
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
@@ -88,6 +89,17 @@ def terminate_process_safely(process):
     
     # Run termination in a separate thread to avoid blocking
     threading.Thread(target=_terminate, daemon=True).start()
+
+def create_backup(file_path):
+    base_name, ext = os.path.splitext(os.path.basename(file_path))
+    backup_dir = os.path.dirname(file_path)
+    backup_file = os.path.join(backup_dir, f"backup_{base_name}{ext}")
+    suffix = 2
+    while os.path.exists(backup_file):
+        backup_file = os.path.join(backup_dir, f"backup_{base_name}_{suffix}{ext}")
+        suffix += 1
+    shutil.copy2(file_path, backup_file)
+    return backup_file
 
 def get_user_config_path():
     global _config_path_cache, _config_path_logged
