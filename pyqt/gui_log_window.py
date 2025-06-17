@@ -1,6 +1,6 @@
 import os
 import logging
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QLabel, QApplication
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
@@ -131,11 +131,17 @@ class LogWindow(QWidget):
             self.append_message("Additional arguments: ", end=""); self.append_message(args, bold=True, color=COLORS["GREEN"])
         self.append_message("\nSync started:", bold=True, color=COLORS["BLUE"])
         self._config_printed = True
+        
+        # Force scroll to bottom after initial configuration is printed
+        self._scroll_to_bottom()
 
     def append_message(self, message, bold=False, color=None, overwrite=False, end="\n"):
         txt = self.log_text
         cursor = txt.textCursor()
-        at_bottom = txt.verticalScrollBar().value() == txt.verticalScrollBar().maximum()
+        
+        # Check if scrollbar exists and determine if we're at the bottom
+        scrollbar = txt.verticalScrollBar()
+        at_bottom = scrollbar.value() >= (scrollbar.maximum() - 10)  # Add some tolerance
 
         # Set format
         fmt = QTextCharFormat(self.default_char_format)
@@ -158,7 +164,18 @@ class LogWindow(QWidget):
             cursor.insertText(str(message) + end)
         
         self._last_line_is_update = overwrite
-        if at_bottom: txt.ensureCursorVisible()
+        
+        # Auto-scroll when adding new content if we were at the bottom
+        # or if this is initial content being added
+        if at_bottom or txt.document().blockCount() <= 30:  # Default to auto-scroll for the first few blocks
+            # Process events to ensure scrollbar range is updated
+            QApplication.processEvents()
+            scrollbar.setValue(scrollbar.maximum())
+            # Ensure cursor at end is visible
+            cursor = txt.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            txt.setTextCursor(cursor)
+            txt.ensureCursorVisible()
 
     def clear(self):
         self.log_text.clear()
@@ -177,7 +194,7 @@ class LogWindow(QWidget):
 
     def _update_scroll_button(self):
         sb = self.log_text.verticalScrollBar()
-        at_bottom = sb.value() >= sb.maximum()
+        at_bottom = sb.value() >= (sb.maximum() - 10)  # Use the same tolerance as append_message
         if at_bottom:
             self.scroll_button.hide()
         else:
@@ -233,7 +250,7 @@ class LogWindow(QWidget):
         self.go_back_button.clicked.connect(app.restore_auto_sync_tab)
         
         # Force scroll to bottom after buttons are shown
-        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+        self._scroll_to_bottom()
 
     def handle_batch_completion(self, success, output, callback):
         """Handle completion of a single item in batch processing
@@ -248,8 +265,10 @@ class LogWindow(QWidget):
         else:
             logger.error("Synchronization failed")
         
-        # Force scroll to bottom
-        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+        # Force scroll to bottom only if at bottom
+        scrollbar = self.log_text.verticalScrollBar()
+        if scrollbar.value() == scrollbar.maximum():
+            scrollbar.setValue(scrollbar.maximum())
         
         # Process next item after a short delay
         # This gives the UI time to update before starting the next process
@@ -272,7 +291,20 @@ class LogWindow(QWidget):
         self.new_conversion_button.clicked.connect(lambda: self._reset_and_go_back(app))
 
         # Force scroll to bottom after buttons are shown
-        self.log_text.verticalScrollBar().setValue(self.log_text.verticalScrollBar().maximum())
+        self._scroll_to_bottom()
+
+    def _scroll_to_bottom(self):
+        """Scroll to the bottom of the log text."""
+        txt = self.log_text
+        # Need to process events to ensure scrollbar range is up-to-date
+        QApplication.processEvents()
+        scrollbar = txt.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+        # Ensure cursor at end is visible
+        cursor = txt.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        txt.setTextCursor(cursor)
+        txt.ensureCursorVisible()
 
     def _open_output_folder(self, output_path):
         """Open the folder containing the output file"""
