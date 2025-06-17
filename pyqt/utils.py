@@ -7,6 +7,8 @@ import threading
 import logging
 import subprocess
 import platform
+import signal
+import time
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
@@ -18,27 +20,74 @@ _config_path_cache = None
 _config_path_logged = False
 default_encoding = sys.getfilesystemencoding()
 
+# Thread-safe process creation lock
+_process_lock = threading.Lock()
+
 def create_process(cmd):
-    logger.info(f"Executing: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
-    env = {**os.environ, "TERM": "dumb", "COLUMNS": "70"}
-    kwargs = {
-        "shell": False,  # Changed to False to properly handle list arguments
-        "stdout": subprocess.PIPE,
-        "stderr": subprocess.STDOUT,
-        "universal_newlines": False,  # Explicitly request binary streams
-        "bufsize": 0,                # For more responsive output
-        "env": env
-    }
+    """Create a subprocess with proper threading support and termination handling."""
+    with _process_lock:
+        logger.info(f"Executing: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
+        env = {**os.environ, "TERM": "dumb", "COLUMNS": "70"}
+        kwargs = {
+            "shell": False,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.STDOUT,
+            "universal_newlines": False,
+            "bufsize": 0,
+            "env": env
+        }
 
-    if platform.system() == "Windows":
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        startupinfo.wShowWindow = subprocess.SW_HIDE
-        kwargs.update(
-            {"startupinfo": startupinfo, "creationflags": subprocess.CREATE_NO_WINDOW}
-        )
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+            kwargs.update({
+                "startupinfo": startupinfo, 
+                "creationflags": subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
+            })
+        else:
+            # On Unix-like systems, create a new process group
+            kwargs["preexec_fn"] = os.setsid
 
-    return subprocess.Popen(cmd, **kwargs)
+        return subprocess.Popen(cmd, **kwargs)
+
+def terminate_process_safely(process):
+    """Safely terminate a process and its children using threading."""
+    def _terminate():
+        if not process or process.poll() is not None:
+            return
+        
+        try:
+            if platform.system() == "Windows":
+                # On Windows, terminate the process group
+                process.send_signal(signal.CTRL_BREAK_EVENT)
+                time.sleep(0.5)
+                if process.poll() is None:
+                    process.terminate()
+                    time.sleep(1)
+                    if process.poll() is None:
+                        process.kill()
+            else:
+                # On Unix-like systems, terminate the process group
+                try:
+                    os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                    time.sleep(0.5)
+                    if process.poll() is None:
+                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                except ProcessLookupError:
+                    # Process already terminated
+                    pass
+                except OSError:
+                    # Fallback to direct process termination
+                    process.terminate()
+                    time.sleep(1)
+                    if process.poll() is None:
+                        process.kill()
+        except Exception as e:
+            logger.error(f"Error terminating process: {e}")
+    
+    # Run termination in a separate thread to avoid blocking
+    threading.Thread(target=_terminate, daemon=True).start()
 
 def get_user_config_path():
     global _config_path_cache, _config_path_logged

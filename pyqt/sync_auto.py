@@ -2,6 +2,7 @@ import os
 import re
 import logging
 import threading
+import time
 import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
@@ -41,13 +42,30 @@ class SyncProcess:
         self.signals = SyncSignals()
         self.process = None
         self.should_cancel = False
+        self._process_lock = threading.Lock()
+        
     def cancel(self):
+        """Cancel the current sync process safely using threading."""
         self.should_cancel = True
-        if self.process:
+        
+        def _cancel_process():
             try:
-                self.process.terminate()
+                with self._process_lock:
+                    if self.process and self.process.poll() is None:
+                        logger.info("Terminating sync process...")
+                        from utils import terminate_process_safely
+                        terminate_process_safely(self.process)
+                        # Wait a bit for the process to terminate
+                        for _ in range(10):  # Wait up to 1 second
+                            if self.process.poll() is not None:
+                                break
+                            time.sleep(0.1)
+                        logger.info("Sync process terminated")
             except Exception as e:
-                logger.error(f"Error terminating process: {e}")
+                logger.error(f"Error canceling process: {e}")
+        
+        # Run cancellation in a separate thread to avoid blocking UI
+        threading.Thread(target=_cancel_process, daemon=True).start()
     def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
         # Print command arguments and append current pair to log window
         if hasattr(self.app, 'log_window'):
@@ -66,13 +84,20 @@ class SyncProcess:
             if not output:
                 output = determine_output_path(self.app, reference, subtitle)
             cmd = self._build_cmd(tool, exe, reference, subtitle, output)
-            self.process = create_process(cmd)
+            
+            with self._process_lock:
+                if self.should_cancel:
+                    return
+                self.process = create_process(cmd)
 
             buffer = b""
             last_was_cr = False  # Track if last processed delimiter was \r
             while True:
+                if self.should_cancel:
+                    break
+                    
                 chunk = self.process.stdout.read(128)
-                if not chunk or self.should_cancel:
+                if not chunk:
                     break
                 buffer += chunk
                 
@@ -111,7 +136,7 @@ class SyncProcess:
                 if percent is not None:
                     self.signals.progress_percent.emit(percent)
 
-            rc = self.process.wait()
+            rc = self.process.wait() if not self.should_cancel else 1
             if rc != 0 and not self.should_cancel:
                 self.signals.error.emit(f"{tool} failed with code {rc}"); self.signals.finished.emit(False, None)
             elif self.should_cancel:
@@ -119,7 +144,10 @@ class SyncProcess:
             else:
                 self.signals.finished.emit(True, output)
         except Exception as e:
-            self.signals.error.emit(f"Error: {str(e)}"); self.signals.finished.emit(False, None)
+            if not self.should_cancel:
+                self.signals.error.emit(f"Error: {str(e)}"); self.signals.finished.emit(False, None)
+            else:
+                self.signals.finished.emit(False, None)
     def _process_output(self, message):
         """Process output message, extract percentage and format for display."""
         # Handle empty messages (newlines)
@@ -183,12 +211,25 @@ def start_sync_process(app):
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         
         # Batch processing state
-        current_item_idx, batch_success_count, batch_fail_count = 0, 0, 0
+        current_item_idx = 0
+        batch_success_count = 0
+        batch_fail_count = 0
         total_items = len(items)
         failed_pairs = []
         
+        # Store the batch state to allow cancellation
+        app._batch_state = {
+            'should_cancel': False,
+            'current_process': None
+        }
+        
         def process_next_item():
             nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
+            
+            # Check if batch should be cancelled
+            if hasattr(app, '_batch_state') and app._batch_state.get('should_cancel', False):
+                logger.info("Batch sync cancelled by user")
+                return
             
             if current_item_idx >= len(items):
                 # Batch complete - show summary
@@ -205,6 +246,9 @@ def start_sync_process(app):
                             app.log_window.append_message("Subtitle: ", end="")
                             app.log_window.append_message(s, color=COLORS["ORANGE"], end="\n\n")
                     app.log_window.finish_batch_sync()
+                # Clear batch state
+                if hasattr(app, '_batch_state'):
+                    del app._batch_state
                 return
                 
             # Process current item
@@ -217,6 +261,10 @@ def start_sync_process(app):
 
             proc = SyncProcess(app)
             app._current_sync_process = proc
+            
+            # Store current process in batch state for cancellation
+            if hasattr(app, '_batch_state'):
+                app._batch_state['current_process'] = proc
             
             # Connect signals
             proc.signals.progress.connect(lambda msg, is_overwrite: app.log_window.append_message(msg, overwrite=is_overwrite))
@@ -233,6 +281,11 @@ def start_sync_process(app):
             if app.batch_mode_enabled and len(items) > 1:
                 def batch_completion_handler(ok, out):
                     nonlocal batch_success_count, batch_fail_count, failed_pairs
+                    
+                    # Check if batch was cancelled
+                    if hasattr(app, '_batch_state') and app._batch_state.get('should_cancel', False):
+                        return
+                    
                     if ok:
                         batch_success_count += 1
                     else:
@@ -247,8 +300,20 @@ def start_sync_process(app):
                 
             # Setup cancellation
             app.log_window.cancel_clicked.disconnect()
-            app.log_window.cancel_clicked.connect(proc.cancel)
-            app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
+            if app.batch_mode_enabled and len(items) > 1:
+                # For batch mode, cancel the entire batch
+                def cancel_batch():
+                    if hasattr(app, '_batch_state'):
+                        app._batch_state['should_cancel'] = True
+                        current_proc = app._batch_state.get('current_process')
+                        if current_proc:
+                            current_proc.cancel()
+                    app.restore_auto_sync_tab()
+                app.log_window.cancel_clicked.connect(cancel_batch)
+            else:
+                # For single item, just cancel the process
+                app.log_window.cancel_clicked.connect(proc.cancel)
+                app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
             
             # Start sync
             out = determine_output_path(app, it["reference_path"], it["subtitle_path"])
@@ -257,6 +322,9 @@ def start_sync_process(app):
         process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
+        # Clean up batch state on error
+        if hasattr(app, '_batch_state'):
+            del app._batch_state
 
 def determine_output_path(app, reference, subtitle):
     config = app.config
