@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class SyncSignals(QObject):
     finished = pyqtSignal(bool, str)
     progress = pyqtSignal(str, bool)  # message, is_overwrite
+    progress_percent = pyqtSignal(float)
     error = pyqtSignal(str)
 
 def shorten_progress_bar(line):
@@ -77,16 +78,20 @@ class SyncProcess:
                     pieces = buffer.split(b'\r')
                     # all but last piece are complete overwrite segments
                     for part in pieces[:-1]:
-                        cleaned_msg = self._process_output(part.decode(default_encoding, errors='replace'))
+                        cleaned_msg, percent = self._process_output(part.decode(default_encoding, errors='replace'))
                         if cleaned_msg:  # Only emit if there's content after cleaning
                             self.signals.progress.emit(cleaned_msg, True)
+                        if percent is not None:
+                            self.signals.progress_percent.emit(percent)
                     buffer = pieces[-1]  # remainder for next iterations
 
             # any remaining buffer is a normal line
             if buffer and not self.should_cancel:
-                cleaned_msg = self._process_output(buffer.decode(default_encoding, errors='replace').rstrip('\r\n'))
+                cleaned_msg, percent = self._process_output(buffer.decode(default_encoding, errors='replace').rstrip('\r\n'))
                 if cleaned_msg:  # Only emit if there's content after cleaning
                     self.signals.progress.emit(cleaned_msg, False)
+                if percent is not None:
+                    self.signals.progress_percent.emit(percent)
 
             rc = self.process.wait()
             if rc != 0 and not self.should_cancel:
@@ -100,7 +105,10 @@ class SyncProcess:
     def _process_output(self, message):
         """Remove [HH:MM:SS] timestamps and align following lines accordingly."""
         if not message:
-            return ""
+            return "", None
+
+        percent_match = re.search(r'(\d{1,2}(?:\.\d{1,2})?)\s*%', message)
+        percent = float(percent_match.group(1)) if percent_match else None
 
         lines = message.split('\n')
         result = []
@@ -125,7 +133,7 @@ class SyncProcess:
             # Always add the line, even if empty, to preserve progress updates
             result.append(line)
         
-        return '\n'.join(result)
+        return '\n'.join(result), percent
     
     def _build_cmd(self, tool, exe, reference, subtitle, output):
         cmd_structure = SYNC_TOOLS[tool].get("cmd_structure")
@@ -196,6 +204,16 @@ def start_sync_process(app):
             proc.signals.progress.connect(lambda msg, is_overwrite: app.log_window.append_message(msg, overwrite=is_overwrite))
             proc.signals.error.connect(lambda msg: app.log_window.append_message(msg, color=COLORS["RED"], end="\n\n"))
 
+            def handle_progress(percent):
+                if app.batch_mode_enabled and total_items > 1:
+                    base_progress = (current_item_idx - 1) * (100 / total_items)
+                    item_progress = percent / total_items
+                    total_progress = base_progress + item_progress
+                    app.log_window.update_progress(int(total_progress), current_item_idx, total_items)
+                else:
+                    app.log_window.update_progress(int(percent))
+            proc.signals.progress_percent.connect(handle_progress)
+
             # When finished with this item, process the next one
             if app.batch_mode_enabled and len(items) > 1:
                 def batch_completion_handler(ok, out):
@@ -205,6 +223,11 @@ def start_sync_process(app):
                     else:
                         batch_fail_count += 1
                         failed_pairs.append((original_idx, it["reference_path"], it["subtitle_path"]))
+                    
+                    # Update progress when a pair finishes to ensure it's at 100% for that segment
+                    base_progress = (original_idx + 1) * (100 / total_items)
+                    app.log_window.update_progress(int(base_progress), original_idx + 1, total_items)
+
                     # Inline _handle_batch_completion logic
                     app.log_window.handle_batch_completion(ok, out, process_next_item)
                 proc.signals.finished.connect(batch_completion_handler)

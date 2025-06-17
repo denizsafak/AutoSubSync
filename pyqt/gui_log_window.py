@@ -1,6 +1,6 @@
 import os
 import logging
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QLabel
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
@@ -76,6 +76,13 @@ class LogWindow(QWidget):
         self.go_back_button = self.parent()._button("Go back", h=40)
         self.go_back_button.setVisible(False)
         bottom.addWidget(self.go_back_button)
+
+        # Progress bar
+        progress_layout = QHBoxLayout()
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        progress_layout.addWidget(self.progress_bar)
+        bottom.addLayout(progress_layout)
 
         # Initially setup with just cancel button
         self.cancel_button = self.parent()._button("Cancel")
@@ -181,6 +188,16 @@ class LogWindow(QWidget):
         super().resizeEvent(event)
         self._position_scroll_button()
 
+    def update_progress(self, value, current=None, total=None):
+        self.progress_bar.setValue(value)
+        if self.progress_bar.isHidden():
+            self.progress_bar.setVisible(True)
+
+        if total and total > 1 and current:
+            self.progress_bar.setFormat(f"%p% ({current}/{total})")
+        else:
+            self.progress_bar.setFormat("%p%")
+
     def handle_sync_completion(self, success, output):
         """Handle completion of a synchronization process
         
@@ -190,6 +207,7 @@ class LogWindow(QWidget):
         """
         # Get the main application instance
         app = self.window()
+        self.progress_bar.setVisible(False)
         
         if success:
             self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
@@ -241,6 +259,7 @@ class LogWindow(QWidget):
     def finish_batch_sync(self):
         """Update buttons for batch sync completion."""
         app = self.window()
+        self.progress_bar.setVisible(False)
         # Hide cancel and show go back button
         self.cancel_button.setVisible(False)
         self.go_back_button.setVisible(True)
@@ -293,6 +312,11 @@ class LogWindow(QWidget):
         self.go_back_button.setVisible(False)
         self.cancel_button.setVisible(True)
         self.cancel_button.setText("Cancel")
+
+        # Reset progress bar
+        self.progress_bar.setValue(0)
+        self.progress_bar.setVisible(False)
+        
         # Reset signal handlers to default
         try:
             self.cancel_clicked.disconnect()
