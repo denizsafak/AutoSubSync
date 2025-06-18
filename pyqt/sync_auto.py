@@ -5,8 +5,13 @@ import threading
 import time
 import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject
-from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS
-from utils import create_process, create_backup, default_encoding
+from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
+from utils import (
+    create_process,
+    create_backup,
+    default_encoding,
+)
+from subtitle_converter import convert_to_srt
 
 logger = logging.getLogger(__name__)
 
@@ -262,8 +267,60 @@ def start_sync_process(app):
             # Process current item
             it = items[current_item_idx]
             original_idx = current_item_idx
-            current_item_idx += 1
             
+            original_ref_path = it["reference_path"]
+            original_sub_path = it["subtitle_path"]
+            
+            # Determine output path early for potential conversions
+            output_path = determine_output_path(app, original_ref_path, original_sub_path)
+            output_dir = os.path.dirname(output_path)
+            
+            converted_files_to_clean = []
+            
+            def convert_if_needed(file_path):
+                ext = os.path.splitext(file_path)[-1].lower()
+                supported = SYNC_TOOLS[tool].get("supported_formats", [])
+                if ext in SUBTITLE_EXTENSIONS and ext not in supported:
+                    msgs = []
+                    converted, msgs = convert_to_srt(file_path, output_dir)
+                    for msg in msgs:
+                        app.log_window.append_message(msg, color=COLORS["GREY"])
+                    if converted:
+                        if not app.config.get("keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]):
+                            converted_files_to_clean.append(converted)
+                        return converted
+                    app.log_window.append_message(f"Conversion failed for {os.path.basename(file_path)}", color=COLORS["RED"])
+                    return None
+                return file_path
+
+            reference_path = convert_if_needed(original_ref_path)
+            subtitle_path = convert_if_needed(original_sub_path)
+            
+            # Check if subtitle was converted to determine output extension
+            subtitle_was_converted = subtitle_path != original_sub_path and subtitle_path is not None
+            
+            current_item_idx += 1
+
+            if not reference_path or not subtitle_path:
+                if app.batch_mode_enabled and total_items > 1:
+                    batch_fail_count += 1
+                    failed_pairs.append((original_idx, original_ref_path, original_sub_path))
+                    app.log_window.update_progress(int((original_idx + 1) * 100 / total_items), original_idx + 1, total_items)
+                    process_next_item() # Move to next item
+                else:
+                    app.log_window.append_message("Sync cancelled due to conversion failure.", color=COLORS["RED"])
+                    app.restore_auto_sync_tab()
+                return
+
+            def cleanup_converted_files():
+                for f in converted_files_to_clean:
+                    try:
+                        if os.path.exists(f):
+                            os.remove(f)
+                            logger.info(f"Removed converted file: {f}")
+                    except OSError as e:
+                        logger.error(f"Failed to remove converted file {f}: {e}")
+
             if app.batch_mode_enabled and len(items) > 1:
                 app.log_window.append_message(f"Processing pair [{current_item_idx}/{len(items)}]", bold=True, color=COLORS["BLUE"])
 
@@ -292,19 +349,40 @@ def start_sync_process(app):
                     
                     # Check if batch was cancelled
                     if hasattr(app, '_batch_state') and app._batch_state.get('should_cancel', False):
+                        cleanup_converted_files()
                         return
                     
+                    # Check if output file exists, otherwise treat as error
+                    if ok and (not out or not os.path.exists(out)):
+                        ok = False
+                        if hasattr(app, 'log_window'):
+                            app.log_window.append_message(
+                                "Sync failed. Please check the logs.",
+                                color=COLORS["RED"]
+                            )
                     if ok:
                         batch_success_count += 1
+                        cleanup_converted_files()
                     else:
                         batch_fail_count += 1
-                        failed_pairs.append((original_idx, it["reference_path"], it["subtitle_path"]))
+                        failed_pairs.append((original_idx, original_ref_path, original_sub_path))
                     
                     app.log_window.update_progress(int((original_idx + 1) * 100 / total_items), original_idx + 1, total_items)
                     app.log_window.handle_batch_completion(ok, out, process_next_item)
                 proc.signals.finished.connect(batch_completion_handler)
             else:
-                proc.signals.finished.connect(lambda ok, out: app.log_window.handle_sync_completion(ok, out))
+                def single_completion_handler(ok, out):
+                    if ok and (not out or not os.path.exists(out)):
+                        ok = False
+                        if hasattr(app, 'log_window'):
+                            app.log_window.append_message(
+                                "Sync failed. Please check the logs.",
+                                color=COLORS["RED"]
+                            )
+                    app.log_window.handle_sync_completion(ok, out)
+                    if ok:
+                        cleanup_converted_files()
+                proc.signals.finished.connect(single_completion_handler)
                 
             # Setup cancellation
             app.log_window.cancel_clicked.disconnect()
@@ -324,8 +402,8 @@ def start_sync_process(app):
                 app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
             
             # Start sync
-            out = determine_output_path(app, it["reference_path"], it["subtitle_path"])
-            proc.run_sync(it["reference_path"], it["subtitle_path"], tool, out)
+            final_output_path = determine_output_path(app, original_ref_path, original_sub_path, subtitle_was_converted)
+            proc.run_sync(reference_path, subtitle_path, tool, final_output_path)
         
         process_next_item()
     except Exception as e:
@@ -334,7 +412,7 @@ def start_sync_process(app):
         if hasattr(app, '_batch_state'):
             del app._batch_state
 
-def determine_output_path(app, reference, subtitle):
+def determine_output_path(app, reference, subtitle, subtitle_was_converted=False):
     config = app.config
     save_loc = config.get("automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"])
     add_prefix = config.get("add_autosync_prefix", DEFAULT_OPTIONS["add_autosync_prefix"])
@@ -343,10 +421,15 @@ def determine_output_path(app, reference, subtitle):
     ref_dir, vid_file = os.path.dirname(reference), os.path.basename(reference)
     ref_name, _ = os.path.splitext(vid_file)
     prefix = "autosync_" if add_prefix else ""
+    
+    # If subtitle was converted, output should be .srt
+    if subtitle_was_converted:
+        sub_ext = ".srt"
+    
     if save_loc == "save_next_to_input_subtitle":
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "overwrite_input_subtitle":
-        out_dir, out_name = sub_dir, sub_file
+        out_dir, out_name = sub_dir, sub_file if not subtitle_was_converted else f"{sub_name}{sub_ext}"
     elif save_loc == "save_next_to_reference":
         out_dir, out_name = ref_dir, f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "save_next_to_reference_with_same_filename":

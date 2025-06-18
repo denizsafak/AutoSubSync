@@ -10,6 +10,7 @@ import platform
 import signal
 import time
 import shutil
+import cchardet, charset_normalizer, chardet
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
@@ -100,6 +101,21 @@ def create_backup(file_path):
         suffix += 1
     shutil.copy2(file_path, backup_file)
     return backup_file
+
+def detect_encoding(file_path):
+    with open(file_path, "rb") as f:
+        raw_data = f.read()
+    detected_encoding = None
+    for detectors in (cchardet, charset_normalizer, chardet):
+        try:
+            result = detectors.detect(raw_data)["encoding"]
+        except Exception:
+            continue
+        if result is not None:
+            detected_encoding = result
+            break
+    encoding = detected_encoding if detected_encoding else "utf-8"
+    return encoding.lower()
 
 def get_user_config_path():
     global _config_path_cache, _config_path_logged
