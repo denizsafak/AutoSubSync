@@ -1,3 +1,4 @@
+import platform
 from utils import get_version, get_resource_path
 
 # Program Information
@@ -10,8 +11,9 @@ GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/
 VERSION = get_version()
 
 # ffmpeg and ffprobe paths
-FFMPEG_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", "ffmpeg")
-FFPROBE_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", "ffprobe")
+_exe_suffix = ".exe" if platform.system() == "Windows" else ""
+FFMPEG_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}")
+FFPROBE_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", f"ffprobe{_exe_suffix}")
 
 # Synchronization tools
 SYNC_TOOLS = {
