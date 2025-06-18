@@ -11,7 +11,10 @@ from utils import (
     create_process,
     create_backup,
     default_encoding,
+    detect_encoding,
+    find_closest_encoding
 )
+from alass_encodings import enc_list
 from subtitle_converter import convert_to_srt
 
 logger = logging.getLogger(__name__)
@@ -220,6 +223,33 @@ class SyncProcess:
     def _build_cmd(self, tool, exe, reference, subtitle, output):
         cmd_structure = SYNC_TOOLS[tool].get("cmd_structure")
         cmd = [exe] + [part.format(reference=reference, subtitle=subtitle, output=output) for part in cmd_structure]
+        
+        # Add encoding arguments for ALASS
+        if tool == "alass":
+            # Detect encoding for subtitle file
+            try:
+                subtitle_encoding = detect_encoding(subtitle)
+                if subtitle_encoding not in enc_list:
+                    subtitle_encoding = find_closest_encoding(subtitle_encoding)
+                    logger.warning(f"Encoding not found in ALASS encodings, using the closest: {subtitle_encoding}")
+                cmd.extend(["--encoding-inc", subtitle_encoding])
+                logger.info(f"Using subtitle encoding: {subtitle_encoding}")
+            except Exception as e:
+                logger.warning(f"Failed to detect subtitle encoding: {e}")
+            
+            # Check if reference is a subtitle file and add encoding argument
+            ref_ext = os.path.splitext(reference)[1].lower()
+            if ref_ext in SUBTITLE_EXTENSIONS:
+                try:
+                    ref_encoding = detect_encoding(reference)
+                    if ref_encoding not in enc_list:
+                        ref_encoding = find_closest_encoding(ref_encoding)
+                        logger.warning(f"Encoding not found in ALASS encodings, using the closest: {ref_encoding}")
+                    cmd.extend(["--encoding-ref", ref_encoding])
+                    logger.info(f"Using reference encoding: {ref_encoding}")
+                except Exception as e:
+                    logger.warning(f"Failed to detect reference encoding: {e}")
+        
         return self._append_opts(cmd, tool)
     
     def _append_opts(self, cmd, tool):

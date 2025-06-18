@@ -117,6 +117,31 @@ def detect_encoding(file_path):
     encoding = detected_encoding if detected_encoding else "utf-8"
     return encoding.lower()
 
+def levenshtein_distance(s1, s2):
+    """Compute the Levenshtein distance between s1 and s2."""
+    if len(s1) < len(s2):
+        s1, s2 = s2, s1
+    if not s2:
+        return len(s1)
+    previous = list(range(len(s2) + 1))
+    for i, c1 in enumerate(s1, 1):
+        current = [i]
+        for j, c2 in enumerate(s2, 1):
+            current.append(
+                min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (c1 != c2))
+            )
+        previous = current
+    return previous[-1]
+
+
+def find_closest_encoding(unsupported_encoding):
+    from alass_encodings import enc_list
+    """Return the encoding from enc_list closest to unsupported_encoding."""
+    return min(
+        enc_list,
+        key=lambda enc: levenshtein_distance(enc.lower(), unsupported_encoding.lower()),
+    )
+
 def get_user_config_path():
     global _config_path_cache, _config_path_logged
     if _config_path_cache is not None:
