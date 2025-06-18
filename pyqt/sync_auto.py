@@ -81,6 +81,23 @@ class SyncProcess:
         threading.Thread(target=self._run, args=(reference, subtitle, tool, output), daemon=True).start()
     def _run(self, reference, subtitle, tool, output):
         try:
+            # Check if both files exist before starting sync
+            reference_exists = os.path.exists(reference)
+            subtitle_exists = os.path.exists(subtitle)
+            
+            if not reference_exists and not subtitle_exists:
+                self.signals.error.emit("Skipping: Both files does not exist")
+                self.signals.finished.emit(False, None)
+                return
+            elif not reference_exists:
+                self.signals.error.emit("Skipping: Reference file does not exist")
+                self.signals.finished.emit(False, None)
+                return
+            elif not subtitle_exists:
+                self.signals.error.emit("Skipping: Subtitle file does not exist")
+                self.signals.finished.emit(False, None)
+                return
+            
             if tool not in SYNC_TOOLS:
                 self.signals.error.emit(f"Unknown sync tool: {tool}"); return
             exe = SYNC_TOOLS[tool]["executable"]

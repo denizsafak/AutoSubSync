@@ -7,6 +7,7 @@ The module exports:
 - All the UI setup and functionality for the automatic synchronization tab
 """
 
+import os
 import logging
 from gui_log_window import LogWindow
 from sync_auto import start_sync_process
@@ -214,6 +215,13 @@ def validate_auto_sync_inputs(self):
         ):
             logger.warning("Cannot use the same file for both inputs.")
             QMessageBox.warning(self, "Invalid Input", "Cannot use the same file for both inputs.")
+            return False
+        # Check if files exist
+        if self.video_ref_input.file_path and not os.path.exists(self.video_ref_input.file_path):
+            QMessageBox.warning(self, "File Not Found", f"Video/Reference file does not exist.")
+            return False
+        if self.subtitle_input.file_path and not os.path.exists(self.subtitle_input.file_path):
+            QMessageBox.warning(self, "File Not Found", f"Subtitle file does not exist.")
             return False
         if missing:
             return False
