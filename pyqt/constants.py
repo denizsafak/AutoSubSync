@@ -21,7 +21,11 @@ SYNC_TOOLS = {
         "description": "Automatic subtitle synchronization tool using audio alignment",
         "github": "https://github.com/smacke/ffsubsync",
         "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
-        "executable": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
+        "executable": {
+            "Windows": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync.exe"),
+            "Linux": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
+            "Darwin": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync")
+        },
         "cmd_structure": ["{reference}", "-i", "{subtitle}", "-o", "{output}"],
         "options": {
             "dont_fix_framerate": {
@@ -61,7 +65,11 @@ SYNC_TOOLS = {
         "description": "Audio-based subtitle synchronization with high accuracy",
         "github": "https://github.com/kaegi/alass",
         "supported_formats": [".srt", ".ass", ".ssa", ".sub", ".idx"],
-        "executable": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
+        "executable": {
+            "Windows": get_resource_path("autosubsync.resources.alass-bin", "alass-cli.exe"),
+            "Linux": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
+            "Darwin": "alass-cli"
+        },
         "cmd_structure": ["{reference}", "{subtitle}", "{output}"],
         "options": {
             "check_video_subtitles": {

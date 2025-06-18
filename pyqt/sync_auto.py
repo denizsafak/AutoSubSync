@@ -3,6 +3,7 @@ import re
 import logging
 import threading
 import time
+import platform
 import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
@@ -100,9 +101,15 @@ class SyncProcess:
             
             if tool not in SYNC_TOOLS:
                 self.signals.error.emit(f"Unknown sync tool: {tool}"); return
-            exe = SYNC_TOOLS[tool]["executable"]
-            if not exe or not os.path.exists(exe):
-                self.signals.error.emit(f"Executable for {tool} not found"); return
+            
+            # Get OS-specific executable
+            exe_info = SYNC_TOOLS[tool]["executable"]
+            current_os = platform.system()
+            if isinstance(exe_info, dict):
+                exe = exe_info.get(current_os)
+                if not exe:
+                    self.signals.error.emit(f"No executable found for {tool} on {current_os}"); return
+                
             if not output:
                 output = determine_output_path(self.app, reference, subtitle)
             # Backup output subtitle if needed
