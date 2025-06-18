@@ -217,7 +217,7 @@ class LogWindow(QWidget):
         
         if success:
             self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
-            self.append_message(f"Subtitle saved to: {output}", color=COLORS["GREY"], bold=True)
+            self.append_message(f"Saved to: {output}", color=COLORS["GREY"])
 
             # Only show "Go to folder" for single file sync
             self.go_to_folder_button.setVisible(True)
@@ -250,7 +250,7 @@ class LogWindow(QWidget):
         """
         if success:
             self.append_message("\nSynchronization completed successfully.", color=COLORS["GREEN"], bold=True)
-            self.append_message(f"Subtitle saved to: {output}", color=COLORS["GREY"], bold=True, end="\n\n")
+            self.append_message(f"Saved to: {output}", color=COLORS["GREY"], end="\n\n")
         else:
             logger.error("Synchronization canceled/failed")
         

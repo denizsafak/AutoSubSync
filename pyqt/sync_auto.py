@@ -74,8 +74,8 @@ class SyncProcess:
     def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
         # Print command arguments and append current pair to log window
         if hasattr(self.app, 'log_window'):
-            self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(reference, color=COLORS["GREY"], bold=True)
-            self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREY"], bold=True)
+            self.app.log_window.append_message(f"Reference: ", end=""); self.app.log_window.append_message(reference, color=COLORS["GREY"])
+            self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREY"])
             # add new line
             self.app.log_window.append_message("")
         threading.Thread(target=self._run, args=(reference, subtitle, tool, output), daemon=True).start()
@@ -430,10 +430,10 @@ def determine_output_path(app, reference, subtitle, subtitle_was_converted=False
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "overwrite_input_subtitle":
         out_dir, out_name = sub_dir, sub_file if not subtitle_was_converted else f"{sub_name}{sub_ext}"
-    elif save_loc == "save_next_to_reference":
+    elif save_loc == "save_next_to_video":
         out_dir, out_name = ref_dir, f"{prefix}{sub_name}{sub_ext}"
-    elif save_loc == "save_next_to_reference_with_same_filename":
-        out_dir, out_name = ref_dir, f"{prefix}{ref_name}{sub_ext}"
+    elif save_loc == "save_next_to_video_with_same_filename":
+        out_dir, out_name = ref_dir, f"{ref_name}{sub_ext}"
     elif save_loc == "save_to_desktop":
         out_dir, out_name = platformdirs.user_desktop_path(), f"{prefix}{sub_name}{sub_ext}"
     elif save_loc == "select_destination_folder":
@@ -445,7 +445,7 @@ def determine_output_path(app, reference, subtitle, subtitle_was_converted=False
 
     output_path = os.path.join(out_dir, out_name)
     # Add numeric suffix if file exists and not in excluded save locations
-    if save_loc not in ("save_next_to_reference_with_same_filename", "overwrite_input_subtitle"):
+    if save_loc not in ("save_next_to_video_with_same_filename", "overwrite_input_subtitle"):
         base, ext = os.path.splitext(out_name)
         counter = 2
         while os.path.exists(output_path):
