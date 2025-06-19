@@ -13,7 +13,6 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QMenu,
     QMessageBox,
-    QFileDialog,
     QFileIconProvider
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QSize, QFileInfo, QIODevice, QBuffer
@@ -242,7 +241,7 @@ class InputBox(QLabel):
         # Get icon without resizing using custom provider
         provider = QFileIconProvider()
         qicon = provider.icon(QFileInfo(file_path))
-        size_icon = QSize(32, 32)
+        size_icon = QSize(24, 24)
         pixmap = qicon.pixmap(size_icon)
         
         # Convert to base64 PNG
