@@ -6,6 +6,7 @@ import time
 import platform
 import platformdirs
 from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtWidgets import QApplication
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
 from utils import (
     create_process,
@@ -16,6 +17,8 @@ from utils import (
 )
 from alass_encodings import enc_list
 from subtitle_converter import convert_to_srt
+from subtitle_extractor import extract_subtitles
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -325,6 +328,84 @@ def start_sync_process(app):
             original_ref_path = it["reference_path"]
             original_sub_path = it["subtitle_path"]
             
+            # Update progress display immediately for batch mode
+            if app.batch_mode_enabled and len(items) > 1:
+                app.log_window.append_message(f"Processing pair [{current_item_idx+1}/{len(items)}]", bold=True, color=COLORS["BLUE"])
+
+            # Determine output path early for potential conversions
+            output_path = determine_output_path(app, original_ref_path, original_sub_path)
+            output_dir = os.path.dirname(output_path)
+            
+            # Check if we should extract subtitles from video
+            check_video_subs = app.config.get(f"{tool}_check_video_for_subtitles", SYNC_TOOLS[tool].get("options", {}).get("check_video_for_subtitles", {}).get("default", False))
+            extracted_subtitle_path = None
+            extracted_folder_to_clean = None
+            
+            if check_video_subs:
+                # Try to extract subtitles from video file
+                app.log_window.append_message("Checking video for embedded subtitles...", color=COLORS["GREY"])
+                
+                # Setup for extraction in thread with real-time updates
+                extraction_result = [None, None, []]  # [subtitle_path, score, logs]
+                extraction_done = threading.Event()
+                log_lock = threading.Lock()
+                
+                # Define a custom log handler that updates UI in real-time
+                def log_handler(message):
+                    with log_lock:
+                        extraction_result[2].append(message)
+                
+                def run_extraction():
+                    try:
+                        result = extract_subtitles(original_ref_path, original_sub_path, output_dir)
+                        subtitle_path, score, logs = result
+                        extraction_result[0] = subtitle_path
+                        extraction_result[1] = score
+                        
+                        # Add logs to our shared list
+                        with log_lock:
+                            extraction_result[2].extend(logs)
+                    except Exception as e:
+                        logger.exception(f"Extraction failed: {e}")
+                        with log_lock:
+                            extraction_result[2].append(f"Extraction failed: {str(e)}")
+                    finally:
+                        extraction_done.set()
+                
+                # Start extraction in background thread
+                threading.Thread(target=run_extraction, daemon=True).start()
+                
+                # Process UI and display logs during extraction
+                last_log_count = 0
+                while not extraction_done.is_set():
+                    with log_lock:
+                        # Display any new log messages
+                        while last_log_count < len(extraction_result[2]):
+                            app.log_window.append_message(f"{extraction_result[2][last_log_count]}", color=COLORS["GREY"])
+                            last_log_count += 1
+                    
+                    # Keep UI responsive
+                    QApplication.processEvents()
+                    time.sleep(0.05)  # Small sleep to prevent CPU overuse
+                
+                # Show any remaining logs
+                with log_lock:
+                    for i in range(last_log_count, len(extraction_result[2])):
+                        app.log_window.append_message(f"{extraction_result[2][i]}", color=COLORS["GREY"])
+                
+                # Get final results
+                extracted_subtitle_path, extraction_score = extraction_result[0], extraction_result[1]
+                
+                if extracted_subtitle_path:
+                    filename = os.path.basename(extracted_subtitle_path)
+                    app.log_window.append_message(f"Selected: {filename} with timestamp difference: {extraction_score}", color=COLORS["BLUE"])
+                    
+                    # Store extraction folder for potential cleanup
+                    if not app.config.get("keep_extracted_subtitles", DEFAULT_OPTIONS["keep_extracted_subtitles"]):
+                        extracted_folder_to_clean = os.path.dirname(extracted_subtitle_path)
+                else:
+                    app.log_window.append_message("No compatible subtitles found to extract, using video...", color=COLORS["ORANGE"])
+
             # Determine output path early for potential conversions
             output_path = determine_output_path(app, original_ref_path, original_sub_path)
             output_dir = os.path.dirname(output_path)
@@ -347,7 +428,9 @@ def start_sync_process(app):
                     return None
                 return file_path
 
-            reference_path = convert_if_needed(original_ref_path)
+            # Use extracted subtitle as reference if available, otherwise use original reference
+            reference_to_process = extracted_subtitle_path if extracted_subtitle_path else original_ref_path
+            reference_path = convert_if_needed(reference_to_process)
             subtitle_path = convert_if_needed(original_sub_path)
             
             # Check if subtitle was converted to determine output extension
@@ -374,9 +457,17 @@ def start_sync_process(app):
                             logger.info(f"Removed converted file: {f}")
                     except OSError as e:
                         logger.error(f"Failed to remove converted file {f}: {e}")
+                
+                # Clean up extracted subtitle folder if needed
+                if extracted_folder_to_clean and os.path.exists(extracted_folder_to_clean):
+                    try:
+                        import shutil
+                        shutil.rmtree(extracted_folder_to_clean)
+                        logger.info(f"Removed extracted subtitles folder: {extracted_folder_to_clean}")
+                    except OSError as e:
+                        logger.error(f"Failed to remove extracted subtitles folder {extracted_folder_to_clean}: {e}")
 
-            if app.batch_mode_enabled and len(items) > 1:
-                app.log_window.append_message(f"Processing pair [{current_item_idx}/{len(items)}]", bold=True, color=COLORS["BLUE"])
+            # Progress already shown at start of processing each item, no need to show again
 
             proc = SyncProcess(app)
             app._current_sync_process = proc

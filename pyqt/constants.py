@@ -72,7 +72,7 @@ SYNC_TOOLS = {
         },
         "cmd_structure": ["{reference}", "{subtitle}", "{output}"],
         "options": {
-            "check_video_subtitles": {
+            "check_video_for_subtitles": {
                 "type": "checkbox",
                 "label": "Check video subtitles",
                 "tooltip": "Check if video already contains subtitles",
@@ -180,3 +180,9 @@ VIDEO_EXTENSIONS = [
     ".h265",
     ".hevc",
 ]
+
+EXTRACTABLE_SUBTITLE_EXTENSIONS = {
+    "subrip": "srt",
+    "ass": "ass",
+    "webvtt": "vtt"
+}
