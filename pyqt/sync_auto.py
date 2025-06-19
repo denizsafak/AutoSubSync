@@ -560,12 +560,13 @@ def start_sync_process(app):
 def determine_output_path(app, reference, subtitle, subtitle_was_converted=False):
     config = app.config
     save_loc = config.get("automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"])
-    add_prefix = config.get("add_autosync_prefix", DEFAULT_OPTIONS["add_autosync_prefix"])
+    add_prefix = config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"])
     sub_dir, sub_file = os.path.dirname(subtitle), os.path.basename(subtitle)
     sub_name, sub_ext = os.path.splitext(sub_file)
     ref_dir, vid_file = os.path.dirname(reference), os.path.basename(reference)
     ref_name, _ = os.path.splitext(vid_file)
-    prefix = "autosync_" if add_prefix else ""
+    tool = config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
+    prefix = f"{tool}_" if add_prefix else ""
     
     # If subtitle was converted, output should be .srt
     if subtitle_was_converted:

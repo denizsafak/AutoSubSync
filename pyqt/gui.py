@@ -419,11 +419,11 @@ class autosubsync(QWidget):
         self.keep_converted_subtitles_action.triggered.connect(lambda checked: update_config(self, "keep_converted_subtitles", checked))
         self.settings_menu.addAction(self.keep_converted_subtitles_action)
 
-        self.add_autosync_prefix_action = QAction("Add \"_autosync\" prefix to subtitles", self)
-        self.add_autosync_prefix_action.setCheckable(True)
-        self.add_autosync_prefix_action.setChecked(self.config.get("add_autosync_prefix", DEFAULT_OPTIONS["add_autosync_prefix"]))
-        self.add_autosync_prefix_action.triggered.connect(lambda checked: update_config(self, "add_autosync_prefix", checked))
-        self.settings_menu.addAction(self.add_autosync_prefix_action)
+        self.add_tool_prefix_action = QAction("Add \"tool_\" prefix to subtitles", self)
+        self.add_tool_prefix_action.setCheckable(True)
+        self.add_tool_prefix_action.setChecked(self.config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"]))
+        self.add_tool_prefix_action.triggered.connect(lambda checked: update_config(self, "add_tool_prefix", checked))
+        self.settings_menu.addAction(self.add_tool_prefix_action)
 
         self.settings_menu.addSeparator()
 

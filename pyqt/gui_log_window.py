@@ -115,7 +115,7 @@ class LogWindow(QWidget):
                 self.append_message(f"{prefix}{v.get('label', k)}: ", end=""); self.append_message(str(val), bold=True, color=COLORS["GREEN"])
         else:
             self.append_message("Unknown sync tool. No options available.", color=COLORS["ORANGE"])
-        self.append_message("Add 'autosync' prefix: ", end=""); self.append_message(str(get("add_autosync_prefix")), bold=True, color=COLORS["GREEN"])
+        self.append_message("Add 'autosync' prefix: ", end=""); self.append_message(str(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"])
         self.append_message("Backup subtitles before overwriting: ", end=""); self.append_message(str(get("backup_subtitles_before_overwriting")), bold=True, color=COLORS["GREEN"])
         self.append_message("Keep extracted subtitles: ", end=""); self.append_message(str(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"])
         self.append_message("Keep converted subtitles: ", end=""); self.append_message(str(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"])
