@@ -201,7 +201,7 @@ class SyncProcess:
         percent_match = re.search(r'(\d{1,2}(?:\.\d{1,2})?)\s*%', message)
         percent = float(percent_match.group(1)) if percent_match else None
 
-        sync_tool = self.app.config.get("sync_tool")
+        sync_tool = self.app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         lines = message.split('\n')
         
         if sync_tool == "ffsubsync":
