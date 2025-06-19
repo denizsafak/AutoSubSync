@@ -115,6 +115,7 @@ DEFAULT_OPTIONS = {
     "backup_subtitles_before_overwriting": True,
     "keep_extracted_subtitles": False,
     "keep_converted_subtitles": False,
+    "output_subtitle_encoding": "same_as_input",
 }
 
 AUTOMATIC_SAVE_MAP = {

@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QFileIconProvider
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QSize, QFileInfo, QIODevice, QBuffer
-from PyQt6.QtGui import QIcon, QDesktopServices, QDragEnterEvent, QDropEvent, QAction
+from PyQt6.QtGui import QIcon, QDesktopServices, QDragEnterEvent, QDropEvent, QAction, QActionGroup
 import os, base64
 from utils import *
 from constants import *
@@ -400,6 +400,53 @@ class autosubsync(QWidget):
         self.settings_menu = QMenu(self)
 
         # Add subtitle processing options
+
+        # Add output subtitle encoding submenu
+        self.encoding_menu = self.settings_menu.addMenu("Change output subtitle encoding")
+        self.encoding_action_group = QActionGroup(self)
+        self.encoding_action_group.setExclusive(True)
+
+        # Add "Disabled" option
+        self.encoding_disabled_action = QAction("Disabled", self)
+        self.encoding_disabled_action.setCheckable(True)
+        self.encoding_disabled_action.setActionGroup(self.encoding_action_group)
+        self.encoding_disabled_action.triggered.connect(lambda: update_config(self, "output_subtitle_encoding", "disabled"))
+        self.encoding_menu.addAction(self.encoding_disabled_action)
+
+        # Add "Same as input" option
+        self.encoding_same_action = QAction("Same as input subtitle", self)
+        self.encoding_same_action.setCheckable(True)
+        self.encoding_same_action.setActionGroup(self.encoding_action_group)
+        self.encoding_same_action.triggered.connect(lambda: update_config(self, "output_subtitle_encoding", "same_as_input"))
+        self.encoding_menu.addAction(self.encoding_same_action)
+        
+        # Add separator before specific encodings
+        self.encoding_menu.addSeparator()
+        
+        # Add all available encodings
+        from utils import get_available_encodings
+        self.encoding_actions = {}
+        for encoding_id, encoding_name in get_available_encodings():
+            action = QAction(encoding_name, self)
+            action.setCheckable(True)
+            action.setActionGroup(self.encoding_action_group)
+            action.triggered.connect(lambda checked, enc=encoding_id: update_config(self, "output_subtitle_encoding", enc))
+            self.encoding_menu.addAction(action)
+            self.encoding_actions[encoding_id] = action
+        
+        # Set the current selection
+        current_encoding = self.config.get("output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"])
+        if current_encoding == "default":
+            self.encoding_default_action.setChecked(True)
+        elif current_encoding == "same_as_input":
+            self.encoding_same_action.setChecked(True)
+        elif current_encoding in self.encoding_actions:
+            self.encoding_actions[current_encoding].setChecked(True)
+        else:
+            # Fallback to "Same as input" if invalid encoding
+            self.encoding_same_action.setChecked(True)
+            update_config(self, "output_subtitle_encoding", "same_as_input")
+
 
         self.backup_subtitles_action = QAction("Backup subtitles before overwriting", self)
         self.backup_subtitles_action.setCheckable(True)

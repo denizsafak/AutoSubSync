@@ -13,7 +13,8 @@ from utils import (
     create_backup,
     default_encoding,
     detect_encoding,
-    find_closest_encoding
+    find_closest_encoding,
+    match_subtitle_encoding
 )
 from alass_encodings import enc_list
 from subtitle_converter import convert_to_srt
@@ -37,7 +38,7 @@ def shorten_progress_bar(line):
         percent_start = line.find(" ", end) + 1
         percent_end = line.find("%", percent_start)
         percent = float(line[percent_start:percent_end])
-        width = 30  # New shorter width
+        width = 25  # New shorter width
         filled = int(width * percent / 100)
         if filled < width:
             new_progress_bar = (
@@ -505,6 +506,26 @@ def start_sync_process(app):
                                 "Sync failed. Please check the logs.",
                                 color=COLORS["RED"]
                             )
+                    
+                    # Match encoding if sync was successful
+                    if ok and out and os.path.exists(out):
+                        try:
+                            # Get encoding setting from config
+                            encoding_setting = app.config.get("output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"])
+                            
+                            if encoding_setting == "disabled":
+                                # Don't change encoding, just log success
+                                if app.log_window:
+                                    app.log_window.append_message("Using default encoding (not modifying output)", color=COLORS["GREY"])
+                            elif encoding_setting == "same_as_input":
+                                # Match input encoding
+                                match_subtitle_encoding(original_sub_path, out, app.log_window if hasattr(app, 'log_window') else None)
+                            else:
+                                # Use specific encoding
+                                match_subtitle_encoding(original_sub_path, out, app.log_window if hasattr(app, 'log_window') else None, encoding_setting)
+                        except Exception as e:
+                            logger.warning(f"Failed to match subtitle encoding: {e}")
+                    
                     if ok:
                         batch_success_count += 1
                         cleanup_converted_files()
@@ -524,6 +545,26 @@ def start_sync_process(app):
                                 "Sync failed. Please check the logs.",
                                 color=COLORS["RED"]
                             )
+                    
+                    # Match encoding if sync was successful
+                    if ok and out and os.path.exists(out):
+                        try:
+                            # Get encoding setting from config
+                            encoding_setting = app.config.get("output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"])
+                            
+                            if encoding_setting == "default":
+                                # Don't change encoding, just log success
+                                if app.log_window:
+                                    app.log_window.append_message("Using default encoding (not modifying output)", color=COLORS["GREY"])
+                            elif encoding_setting == "same_as_input":
+                                # Match input encoding
+                                match_subtitle_encoding(original_sub_path, out, app.log_window if hasattr(app, 'log_window') else None)
+                            else:
+                                # Use specific encoding
+                                match_subtitle_encoding(original_sub_path, out, app.log_window if hasattr(app, 'log_window') else None, encoding_setting)
+                        except Exception as e:
+                            logger.warning(f"Failed to match subtitle encoding: {e}")
+                    
                     app.log_window.handle_sync_completion(ok, out)
                     if ok:
                         cleanup_converted_files()
