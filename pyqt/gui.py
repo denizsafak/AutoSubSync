@@ -263,6 +263,7 @@ class InputBox(QLabel):
         self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
         # Show and position the Go to folder button in the bottom left
         self.goto_folder_btn.show()
+        self.goto_folder_btn.setToolTip(file_path)
         self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
 
     def show_error(self, message):
