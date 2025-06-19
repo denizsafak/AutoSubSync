@@ -646,7 +646,7 @@ def show_about_dialog(parent):
     icon = parent.windowIcon()
     dialog = QDialog(parent)
     dialog.setWindowTitle(f"About {PROGRAM_NAME}")
-    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButton)
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
     dialog.setFixedSize(400, 320)
     layout = QVBoxLayout(dialog)
     layout.setSpacing(10)

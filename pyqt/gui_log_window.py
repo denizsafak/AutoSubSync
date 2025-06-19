@@ -122,7 +122,7 @@ class LogWindow(QWidget):
         if encoding_setting == "disabled":
             encoding_display = "Disabled"
         elif encoding_setting == "same_as_input":
-            encoding_display = "Same as input"
+            encoding_display = "Same as input subtitle"
         else:
             # Get the display name for the encoding
             from utils import get_available_encodings
