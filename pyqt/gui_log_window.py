@@ -115,10 +115,26 @@ class LogWindow(QWidget):
                 self.append_message(f"{prefix}{v.get('label', k)}: ", end=""); self.append_message(str(val), bold=True, color=COLORS["GREEN"])
         else:
             self.append_message("Unknown sync tool. No options available.", color=COLORS["ORANGE"])
-        self.append_message("Add 'autosync' prefix: ", end=""); self.append_message(str(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"])
         self.append_message("Backup subtitles before overwriting: ", end=""); self.append_message(str(get("backup_subtitles_before_overwriting")), bold=True, color=COLORS["GREEN"])
+
+        # Display output subtitle encoding setting
+        encoding_setting = get("output_subtitle_encoding")
+        if encoding_setting == "disabled":
+            encoding_display = "Disabled"
+        elif encoding_setting == "same_as_input":
+            encoding_display = "Same as input"
+        else:
+            # Get the display name for the encoding
+            from utils import get_available_encodings
+            encoding_map = dict(get_available_encodings())
+            encoding_display = encoding_map.get(encoding_setting, encoding_setting)
+        self.append_message("Output subtitle encoding: ", end=""); self.append_message(encoding_display, bold=True, color=COLORS["GREEN"])
+        
+        self.append_message("Add 'tool_' prefix: ", end=""); self.append_message(str(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"])
+
         self.append_message("Keep extracted subtitles: ", end=""); self.append_message(str(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"])
         self.append_message("Keep converted subtitles: ", end=""); self.append_message(str(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"])
+        
         loc = get("automatic_save_location")
         # Get display text for the save location (mapping is now key:internal -> value:display)
         save_location_message = AUTOMATIC_SAVE_MAP.get(loc, loc)
