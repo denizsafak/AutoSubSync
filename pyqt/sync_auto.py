@@ -263,7 +263,15 @@ class SyncProcess:
             arg, default = opt.get("argument"), opt.get("default")
             val = config.get(f"{tool}_{name}", default)
             if arg and val != default:
-                cmd.append(arg) if isinstance(default, bool) else cmd.extend([arg, str(val)])
+                # Special handling for ALASS split penalty
+                if name == "split_penalty" and val == -1:
+                    no_splits_arg = opt.get("no_split_argument")
+                    if no_splits_arg:
+                        cmd.append(no_splits_arg)
+                elif isinstance(default, bool):
+                    cmd.append(arg)
+                else:
+                    cmd.extend([arg, str(val)])
         extra = config.get(f"{tool}_arguments", "").strip().split()
         return cmd + extra if extra else cmd
 

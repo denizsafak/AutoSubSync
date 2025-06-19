@@ -97,6 +97,7 @@ SYNC_TOOLS = {
                 "label": "Split penalty",
                 "tooltip": "--split-penalty: Penalty for splitting subtitles during alignment\n(Default: 7, Recommended: 5-20, No splits: -1)",
                 "argument": "--split-penalty",
+                "no_split_argument": "--no-split",
                 "range": [-1, 100],
                 "default": 7
             }
