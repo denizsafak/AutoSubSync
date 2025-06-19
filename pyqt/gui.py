@@ -91,6 +91,13 @@ class InputBox(QLabel):
         self.goto_folder_btn.hide()
         self.goto_folder_btn.setStyleSheet("font-size: 12px; padding: 2px 10px;")
         
+        # Add total shifted label for overwrite mode (only for manual tab input boxes)
+        if input_type == "subtitle":  # Only for manual tab subtitle input
+            self.total_shifted_label = QLabel("", self)
+            self.total_shifted_label.setStyleSheet(f"QLabel {{ color: {COLORS['GREY']} }}")
+            self.total_shifted_label.hide()
+            self.total_shifted_ms = 0  # Track total shifted amount
+        
         if label:
             l = QLabel(label, self)
             l.setObjectName("boxLabel")
@@ -238,6 +245,21 @@ class InputBox(QLabel):
         name = os.path.basename(file_path)
         size = os.path.getsize(file_path)
         
+        # Hide manual sync message when file changes
+        main_window = self.window()
+        if hasattr(main_window, 'manual_message_label') and main_window.manual_message_label.isVisible():
+            main_window.manual_message_label.setVisible(False)
+        
+        # Load total shifted amount from session data if available
+        if hasattr(self, 'total_shifted_ms'):
+            if hasattr(main_window, 'session_shifted_files'):
+                self.total_shifted_ms = main_window.session_shifted_files.get(file_path, 0)
+            else:
+                self.total_shifted_ms = 0
+            # Update display after loading session data
+            if hasattr(main_window, '_update_total_shifted_display'):
+                main_window._update_total_shifted_display()
+        
         # Get icon without resizing using custom provider
         provider = QFileIconProvider()
         qicon = provider.icon(QFileInfo(file_path))
@@ -304,6 +326,12 @@ class InputBox(QLabel):
 
     def reset_to_default(self):
         logger.info("Resetting InputBox to default state.")
+        
+        # Hide manual sync message when file is removed
+        main_window = self.window()
+        if hasattr(main_window, 'manual_message_label') and main_window.manual_message_label.isVisible():
+            main_window.manual_message_label.setVisible(False)
+        
         self.file_path = None
         self.setText(self.default_text)
         self._active_state_key = 'default'
@@ -317,6 +345,8 @@ class InputBox(QLabel):
             self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
         if hasattr(self, 'goto_folder_btn') and self.goto_folder_btn.isVisible():
             self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
+        if hasattr(self, 'total_shifted_label') and self.total_shifted_label.isVisible():
+            self.total_shifted_label.move(10, self.height() - self.total_shifted_label.height() - 10)
 
     def open_file_folder(self):
         logger.info(f"Opening folder of: {self.file_path}")
@@ -348,7 +378,7 @@ class autosubsync(QWidget):
     COMBO_STYLE = "QComboBox { min-height: 20px; padding: 6px 12px; }"
     TAB_STYLE = f"""
         QTabWidget::pane {{ border: 0; outline: 0; top: 15px; }}
-        QTabBar::tab {{ border: none; padding: 10px 20px; margin-right: 6px; background-color: {COLORS['GREY_BACKGROUND']}; }}
+        QTabBar::tab {{ border-radius: 2px; border: none; padding: 10px 20px; margin-right: 6px; background-color: {COLORS['GREY_BACKGROUND']}; }}
         QTabBar::tab:hover {{ background-color: {COLORS['GREY_BACKGROUND_HOVER']}; }}
         QTabBar::tab:selected {{ background-color: {COLORS['GREY_BACKGROUND_HOVER']}; border-bottom: 3px solid {COLORS['GREY']}; }}
         QTabBar::tab:!selected {{ color: {COLORS['GREY']}; }}

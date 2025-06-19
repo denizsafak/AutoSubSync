@@ -116,6 +116,7 @@ DEFAULT_OPTIONS = {
     "keep_extracted_subtitles": False,
     "keep_converted_subtitles": False,
     "output_subtitle_encoding": "same_as_input",
+    "add_ms_prefix_to_filename": True,
 }
 
 AUTOMATIC_SAVE_MAP = {
