@@ -515,8 +515,7 @@ def start_sync_process(app):
                             
                             if encoding_setting == "disabled":
                                 # Don't change encoding, just log success
-                                if app.log_window:
-                                    app.log_window.append_message("Using default encoding (not modifying output)", color=COLORS["GREY"])
+                                logger.info("Output encoding disabled, not modifying output")
                             elif encoding_setting == "same_as_input":
                                 # Match input encoding
                                 match_subtitle_encoding(original_sub_path, out, app.log_window if hasattr(app, 'log_window') else None)
@@ -552,10 +551,9 @@ def start_sync_process(app):
                             # Get encoding setting from config
                             encoding_setting = app.config.get("output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"])
                             
-                            if encoding_setting == "default":
+                            if encoding_setting == "disabled":
                                 # Don't change encoding, just log success
-                                if app.log_window:
-                                    app.log_window.append_message("Using default encoding (not modifying output)", color=COLORS["GREY"])
+                                logger.info("Output encoding disabled, not modifying output")
                             elif encoding_setting == "same_as_input":
                                 # Match input encoding
                                 match_subtitle_encoding(original_sub_path, out, app.log_window if hasattr(app, 'log_window') else None)
