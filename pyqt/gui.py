@@ -514,6 +514,13 @@ class autosubsync(QWidget):
         self.open_logs_directory_action.triggered.connect(lambda: open_logs_directory(self))
         self.settings_menu.addAction(self.open_logs_directory_action)
 
+        # Add 'Keep log records' option
+        self.keep_log_records_action = QAction("Keep log records", self)
+        self.keep_log_records_action.setCheckable(True)
+        self.keep_log_records_action.setChecked(self.config.get("keep_log_records", DEFAULT_OPTIONS["keep_log_records"]))
+        self.keep_log_records_action.triggered.connect(lambda checked: update_config(self, "keep_log_records", checked))
+        self.settings_menu.addAction(self.keep_log_records_action)
+
         # Add 'Clear logs directory' option
         self.clear_logs_directory_action = QAction("Clear all logs", self)
         self.clear_logs_directory_action.triggered.connect(lambda: clear_logs_directory(self))

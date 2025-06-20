@@ -86,6 +86,8 @@ class SyncProcess:
             self.app.log_window.append_message(f"Subtitle: ", end=""); self.app.log_window.append_message(subtitle, color=COLORS["GREY"])
             # add new line
             self.app.log_window.append_message("")
+            # Enable the cancel button now that sync is starting
+            self.app.log_window.cancel_button.setEnabled(True)
         threading.Thread(target=self._run, args=(reference, subtitle, tool, output), daemon=True).start()
     def _run(self, reference, subtitle, tool, output):
         try:
@@ -302,12 +304,45 @@ def start_sync_process(app):
             'current_process': None
         }
         
+        # Setup cancellation immediately for batch mode
+        if app.batch_mode_enabled and len(items) > 1:
+            # For batch mode, cancel the entire batch
+            def cancel_batch():
+                if hasattr(app, '_batch_state'):
+                    app._batch_state['should_cancel'] = True
+                    current_proc = app._batch_state.get('current_process')
+                    if current_proc:
+                        current_proc.cancel()
+                # Show cancellation message and save logs
+                if hasattr(app, 'log_window'):
+                    # Give a small delay to ensure the message is displayed before saving
+                    from PyQt6.QtCore import QTimer
+                    def save_and_restore():
+                        app.log_window._save_log_output_to_file(app, success=False, mode="batch")
+                        app.restore_auto_sync_tab()
+                    QTimer.singleShot(50, save_and_restore)
+                else:
+                    app.restore_auto_sync_tab()
+            app.log_window.cancel_clicked.disconnect()
+            app.log_window.cancel_clicked.connect(cancel_batch)
+        else:
+            # For single item mode, setup basic cancellation
+            def cancel_single():
+                if hasattr(app, '_current_sync_process'):
+                    app._current_sync_process.cancel()
+                app.restore_auto_sync_tab()
+            app.log_window.cancel_clicked.disconnect()
+            app.log_window.cancel_clicked.connect(cancel_single)
+        
         def process_next_item():
             nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
             
             # Check if batch should be cancelled
             if hasattr(app, '_batch_state') and app._batch_state.get('should_cancel', False):
                 logger.info("Batch sync cancelled by user")
+                # Clean up batch state when cancelled
+                if hasattr(app, '_batch_state'):
+                    del app._batch_state
                 return
             
             if current_item_idx >= len(items):
@@ -576,27 +611,11 @@ def start_sync_process(app):
                         cleanup_converted_files()
                 proc.signals.finished.connect(single_completion_handler)
                 
-            # Setup cancellation
-            app.log_window.cancel_clicked.disconnect()
-            if app.batch_mode_enabled and len(items) > 1:
-                # For batch mode, cancel the entire batch
-                def cancel_batch():
-                    if hasattr(app, '_batch_state'):
-                        app._batch_state['should_cancel'] = True
-                        current_proc = app._batch_state.get('current_process')
-                        if current_proc:
-                            current_proc.cancel()
-                    app.restore_auto_sync_tab()
-                app.log_window.cancel_clicked.connect(cancel_batch)
-            else:
-                # For single item, just cancel the process
-                app.log_window.cancel_clicked.connect(proc.cancel)
-                app.log_window.cancel_clicked.connect(app.restore_auto_sync_tab)
-            
             # Start sync
             final_output_path = determine_output_path(app, original_ref_path, original_sub_path, subtitle_was_converted)
             proc.run_sync(reference_path, subtitle_path, tool, final_output_path)
         
+        # Start processing items
         process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")

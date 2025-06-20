@@ -1,10 +1,11 @@
 import os
 import logging
+from datetime import datetime
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QApplication
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
-from utils import get_resource_path
+from utils import get_resource_path, get_logs_directory
 
 logger = logging.getLogger(__name__)
 
@@ -244,8 +245,13 @@ class LogWindow(QWidget):
             self.new_conversion_button.setVisible(True)
             self.new_conversion_button.clicked.disconnect() if hasattr(self.new_conversion_button, 'clicked') and self.new_conversion_button.receivers(self.new_conversion_button.clicked) > 0 else None
             self.new_conversion_button.clicked.connect(lambda: self._reset_and_go_back(app))
+
+            # Save log window output to file if keep_log_records is enabled
+            self._save_log_output_to_file(app, success=True, mode="normal")
         else:
             logger.error("Synchronization canceled/failed")
+            # Save log output even for failures if enabled
+            self._save_log_output_to_file(app, success=False, mode="normal")
         
         # Hide cancel and show go back button
         self.cancel_button.setVisible(False)
@@ -284,6 +290,10 @@ class LogWindow(QWidget):
         """Update buttons for batch sync completion."""
         app = self.window()
         self.progress_bar.setVisible(False)
+        
+        # Save batch log output to file if keep_log_records is enabled
+        self._save_log_output_to_file(app, success=True, mode="batch")
+        
         # Hide cancel and show go back button
         self.cancel_button.setVisible(False)
         self.go_back_button.setVisible(True)
@@ -334,6 +344,45 @@ class LogWindow(QWidget):
             if hasattr(app, 'subtitle_input'):
                 app.subtitle_input.reset_to_default()
 
+    def _save_log_output_to_file(self, app, success, mode):
+        """Save the log window output to a file if keep_log_records is enabled
+        
+        Args:
+            app: The main application instance
+            success: Whether the synchronization was successful
+            mode: "normal" or "batch" to determine filename prefix
+        """
+        try:
+            # Check if keep_log_records is enabled
+            if not app.config.get("keep_log_records", DEFAULT_OPTIONS["keep_log_records"]):
+                return
+            
+            # Create logs directory
+            logs_dir = get_logs_directory()
+            os.makedirs(logs_dir, exist_ok=True)
+            
+            # Generate filename with date, mode prefix, and status
+            current_date = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+            status = "success" if success else "failed"
+            filename = f"{mode}_{status}_{current_date}.txt"
+            log_file_path = os.path.join(logs_dir, filename)
+            
+            # Get the plain text content from the log window
+            log_content = self.log_text.toPlainText()
+            
+            # Write to file
+            with open(log_file_path, 'w', encoding='utf-8') as log_file:
+                log_file.write(f"AutoSubSync Log - {mode.title()} Mode\n")
+                log_file.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                log_file.write(f"Status: {'Success' if success else 'Failed/Canceled'}\n")
+                log_file.write("=" * 50 + "\n\n")
+                log_file.write(log_content)
+            
+            logger.info(f"Log output saved to: {log_file_path}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save log output to file: {e}")
+
     def reset_for_new_sync(self):
         """Reset UI for a new synchronization"""
         # Hide action buttons
@@ -343,6 +392,7 @@ class LogWindow(QWidget):
         self.go_back_button.setVisible(False)
         self.cancel_button.setVisible(True)
         self.cancel_button.setText("Cancel")
+        self.cancel_button.setEnabled(False)  # Disable cancel button initially until sync starts
 
         # Reset progress bar
         self.progress_bar.setValue(0)
