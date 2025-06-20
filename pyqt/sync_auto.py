@@ -308,6 +308,18 @@ def start_sync_process(app):
         if app.batch_mode_enabled and len(items) > 1:
             # For batch mode, cancel the entire batch
             def cancel_batch():
+                # Show confirmation dialog if there are more than 5 pairs
+                from PyQt6.QtWidgets import QMessageBox
+                reply = QMessageBox.question(
+                    app,
+                    "Cancel Batch Sync", 
+                    f"Are you sure you want to cancel batch sync?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+                if reply == QMessageBox.StandardButton.No:
+                    return
+                
                 if hasattr(app, '_batch_state'):
                     app._batch_state['should_cancel'] = True
                     current_proc = app._batch_state.get('current_process')
