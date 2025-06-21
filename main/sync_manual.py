@@ -15,16 +15,19 @@ import platformdirs
 
 logger = logging.getLogger(__name__)
 
+
 def determine_manual_output_path(app, subtitle, shift_ms, add_prefix=True):
     """
     Determine output path for manual sync based on save location settings.
     """
     config = app.config
-    save_loc = config.get("manual_save_location", DEFAULT_OPTIONS["manual_save_location"])
-    
+    save_loc = config.get(
+        "manual_save_location", DEFAULT_OPTIONS["manual_save_location"]
+    )
+
     sub_dir, sub_file = os.path.dirname(subtitle), os.path.basename(subtitle)
     sub_name, sub_ext = os.path.splitext(sub_file)
-    
+
     # Format shift for filename (using prefix only if enabled)
     if add_prefix:
         if shift_ms >= 0:
@@ -33,13 +36,16 @@ def determine_manual_output_path(app, subtitle, shift_ms, add_prefix=True):
             shift_prefix = f"{shift_ms}ms_"
     else:
         shift_prefix = ""
-    
+
     if save_loc == "same_folder":
         out_dir, out_name = sub_dir, f"{shift_prefix}{sub_name}{sub_ext}"
     elif save_loc == "overwrite_input_subtitle":
         out_dir, out_name = sub_dir, sub_file
     elif save_loc == "save_to_desktop":
-        out_dir, out_name = platformdirs.user_desktop_path(), f"{shift_prefix}{sub_name}{sub_ext}"
+        out_dir, out_name = (
+            platformdirs.user_desktop_path(),
+            f"{shift_prefix}{sub_name}{sub_ext}",
+        )
     elif save_loc == "select_destination_folder":
         folder = config.get("manual_save_folder", "")
         out_dir = folder if folder and os.path.isdir(folder) else sub_dir
@@ -51,23 +57,22 @@ def determine_manual_output_path(app, subtitle, shift_ms, add_prefix=True):
     output_path = os.path.join(out_dir, out_name)
     return output_path
 
+
 def shift_subtitle(
-    subtitle_file: str, 
-    milliseconds: int, 
-    output_file: str = None
+    subtitle_file: str, milliseconds: int, output_file: str = None
 ) -> Tuple[Optional[str], bool, str]:
     """
     Shift subtitle timing by specified milliseconds.
-    
+
     Args:
         subtitle_file: Path to the input subtitle file
         milliseconds: Number of milliseconds to shift (positive for delay, negative for advance)
         output_file: Path for output file. If None, will be automatically generated
-        
+
     Returns:
         Tuple of (output_file_path, success_flag, message)
     """
-    
+
     # Load and decode file
     try:
         with open(subtitle_file, "rb") as file:
@@ -78,9 +83,9 @@ def shift_subtitle(
         error_msg = f"Error loading subtitle file: {str(e)}"
         logger.error(error_msg)
         return None, False, error_msg
-    
+
     file_extension = os.path.splitext(subtitle_file)[-1].lower()
-    
+
     # Determine output file path
     if output_file is None:
         base_name = os.path.splitext(subtitle_file)[0]
@@ -140,7 +145,7 @@ def shift_subtitle(
         m = (ms // 60000) % 60
         s = (ms // 1000) % 60
         ms_remainder = ms % 1000
-        
+
         if fmt == "srt":
             return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
         elif fmt == "vtt":
@@ -180,71 +185,81 @@ def shift_subtitle(
 
     # Format-specific shifting functions
     shift_functions = {
-        ".srt": lambda line: re.sub(
-            r"(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})",
-            lambda m: f"{shift_timestamp(m.group(1), 'srt')} --> {shift_timestamp(m.group(2), 'srt')}",
-            line
-        ) if "-->" in line else line,
-        
-        ".vtt": lambda line: re.sub(
-            r"(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})",
-            lambda m: f"{shift_timestamp(m.group(1), 'vtt')} --> {shift_timestamp(m.group(2), 'vtt')}",
-            line
-        ) if "-->" in line else line,
-        
-        ".sbv": lambda line: re.sub(
-            r"(\d+:\d{2}:\d{2}\.\d{3}),(\d+:\d{2}:\d{2}\.\d{3})",
-            lambda m: f"{shift_timestamp(m.group(1), 'sbv')},{shift_timestamp(m.group(2), 'sbv')}",
-            line
-        ) if "," in line else line,
-        
-        ".sub": lambda line: re.sub(
-            r"(\d{2}:\d{2}:\d{2}\.\d{2})\s*,\s*(\d{2}:\d{2}:\d{2}\.\d{2})",
-            lambda m: f"{shift_timestamp(m.group(1), 'sub')},{shift_timestamp(m.group(2), 'sub')}",
-            line
-        ) if "," in line else line,
-        
-        ".stl": lambda line: re.sub(
-            r"(\d{1,2}:\d{2}:\d{2}:\d{2})\s*,\s*(\d{1,2}:\d{2}:\d{2}:\d{2})(.*)",
-            lambda m: f"{shift_timestamp(m.group(1), 'stl')} , {shift_timestamp(m.group(2), 'stl')}{m.group(3)}",
-            line
-        ) if "," in line else line,
-        
+        ".srt": lambda line: (
+            re.sub(
+                r"(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})",
+                lambda m: f"{shift_timestamp(m.group(1), 'srt')} --> {shift_timestamp(m.group(2), 'srt')}",
+                line,
+            )
+            if "-->" in line
+            else line
+        ),
+        ".vtt": lambda line: (
+            re.sub(
+                r"(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})",
+                lambda m: f"{shift_timestamp(m.group(1), 'vtt')} --> {shift_timestamp(m.group(2), 'vtt')}",
+                line,
+            )
+            if "-->" in line
+            else line
+        ),
+        ".sbv": lambda line: (
+            re.sub(
+                r"(\d+:\d{2}:\d{2}\.\d{3}),(\d+:\d{2}:\d{2}\.\d{3})",
+                lambda m: f"{shift_timestamp(m.group(1), 'sbv')},{shift_timestamp(m.group(2), 'sbv')}",
+                line,
+            )
+            if "," in line
+            else line
+        ),
+        ".sub": lambda line: (
+            re.sub(
+                r"(\d{2}:\d{2}:\d{2}\.\d{2})\s*,\s*(\d{2}:\d{2}:\d{2}\.\d{2})",
+                lambda m: f"{shift_timestamp(m.group(1), 'sub')},{shift_timestamp(m.group(2), 'sub')}",
+                line,
+            )
+            if "," in line
+            else line
+        ),
+        ".stl": lambda line: (
+            re.sub(
+                r"(\d{1,2}:\d{2}:\d{2}:\d{2})\s*,\s*(\d{1,2}:\d{2}:\d{2}:\d{2})(.*)",
+                lambda m: f"{shift_timestamp(m.group(1), 'stl')} , {shift_timestamp(m.group(2), 'stl')}{m.group(3)}",
+                line,
+            )
+            if "," in line
+            else line
+        ),
         ".dfxp": lambda line: re.sub(
             r'begin="([\d:,\.]+)"\s+end="([\d:,\.]+)"',
             lambda m: f'begin="{shift_timestamp(m.group(1), "dfxp")}" end="{shift_timestamp(m.group(2), "dfxp")}"',
-            line
+            line,
         ),
-        
         ".ttml": lambda line: re.sub(
             r'\b(begin|end)="([^"]+)"',
             lambda m: f'{m.group(1)}="{shift_timestamp(m.group(2), "ttml", m.group(2))}"',
-            line
+            line,
         ),
-        
         ".itt": lambda line: re.sub(
             r'\b(begin|end)="([^"]+)"',
             lambda m: f'{m.group(1)}="{shift_timestamp(m.group(2), "itt", m.group(2))}"',
-            line
+            line,
         ),
-        
         ".ass": lambda line: re.sub(
             r"(\d{1,2}:\d{2}:\d{2}\.\d{2}),(\d{1,2}:\d{2}:\d{2}\.\d{2})",
             lambda m: f"{shift_timestamp(m.group(1), 'ass_ssa')},{shift_timestamp(m.group(2), 'ass_ssa')}",
-            line
+            line,
         ),
-        
         ".ssa": lambda line: re.sub(
             r"(\d{1,2}:\d{2}:\d{2}\.\d{2}),(\d{1,2}:\d{2}:\d{2}\.\d{2})",
             lambda m: f"{shift_timestamp(m.group(1), 'ass_ssa')},{shift_timestamp(m.group(2), 'ass_ssa')}",
-            line
+            line,
         ),
-        
         ".smi": lambda line: re.sub(
             r"<SYNC Start=(\d+)",
             lambda m: f"<SYNC Start={max(0, int(m.group(1)) + milliseconds)}",
-            line
-        )
+            line,
+        ),
     }
 
     # Process lines
@@ -255,12 +270,12 @@ def shift_subtitle(
     try:
         with open(output_file, "w", encoding=encoding) as file:
             file.write("\n".join(new_lines))
-        
+
         success_msg = f"Subtitle shifted successfully by {milliseconds}ms!\nSaved to: {output_file}"
         logger.info(f"Successfully shifted subtitle by {milliseconds}ms: {output_file}")
-        
+
         return output_file, True, success_msg
-        
+
     except Exception as e:
         error_msg = f"Error saving shifted subtitle: {str(e)}"
         logger.error(error_msg)

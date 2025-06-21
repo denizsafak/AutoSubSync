@@ -1,28 +1,46 @@
 import os
 from utils import create_process, detect_encoding
-from constants import FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE, EXTRACTABLE_SUBTITLE_EXTENSIONS
+from constants import (
+    FFMPEG_EXECUTABLE,
+    FFPROBE_EXECUTABLE,
+    EXTRACTABLE_SUBTITLE_EXTENSIONS,
+)
+
 
 def parse_timestamps(subtitle_file):
     # Fast timestamp extraction for comparison
     try:
         sub_encoding = detect_encoding(subtitle_file)
         ext = os.path.splitext(subtitle_file)[1].lower()
-        
+
         with open(subtitle_file, "r", encoding=sub_encoding) as file:
             # Read file once and process efficiently
             if ext in (".srt", ".vtt"):
-                return [float(line.split("-->")[0].strip().replace(",", ".").split(":")[0]) * 3600 + 
-                        float(line.split("-->")[0].strip().replace(",", ".").split(":")[1]) * 60 + 
-                        float(line.split("-->")[0].strip().replace(",", ".").split(":")[2])
-                        for line in file if "-->" in line]
+                return [
+                    float(line.split("-->")[0].strip().replace(",", ".").split(":")[0])
+                    * 3600
+                    + float(
+                        line.split("-->")[0].strip().replace(",", ".").split(":")[1]
+                    )
+                    * 60
+                    + float(
+                        line.split("-->")[0].strip().replace(",", ".").split(":")[2]
+                    )
+                    for line in file
+                    if "-->" in line
+                ]
             elif ext in (".ass", ".ssa"):
-                return [float(line.split(",")[1].strip().split(":")[0]) * 3600 + 
-                        float(line.split(",")[1].strip().split(":")[1]) * 60 + 
-                        float(line.split(",")[1].strip().split(":")[2])
-                        for line in file if line.startswith("Dialogue")]
+                return [
+                    float(line.split(",")[1].strip().split(":")[0]) * 3600
+                    + float(line.split(",")[1].strip().split(":")[1]) * 60
+                    + float(line.split(",")[1].strip().split(":")[2])
+                    for line in file
+                    if line.startswith("Dialogue")
+                ]
         return []
     except Exception:
         return None
+
 
 def choose_best_subtitle(subtitle_file, extracted_subtitles_folder):
     reference_times = parse_timestamps(subtitle_file)
@@ -51,20 +69,21 @@ def choose_best_subtitle(subtitle_file, extracted_subtitles_folder):
             best_subtitle = candidate
     return best_subtitle, best_score
 
+
 def extract_subtitles(video_file, subtitle_file, output_dir):
     """
     Extract subtitles from video and choose the best match.
-    
+
     Args:
         video_file: Path to the video file
         subtitle_file: Path to the reference subtitle file
         output_dir: Directory to extract subtitles to
-    
+
     Returns:
         tuple: (best_subtitle_path, best_score, log_messages) or (None, None, log_messages) if failed
     """
     log_messages = []
-    
+
     # Fast validation
     if not os.path.exists(video_file):
         log_messages.append(f"Video file not found: {video_file}")
@@ -91,7 +110,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
             return None, None, log_messages
         # Parse subtitle streams
         subtitle_streams = []
-        output_text = output.decode('utf-8') if isinstance(output, bytes) else output
+        output_text = output.decode("utf-8") if isinstance(output, bytes) else output
         for line in output_text.splitlines():
             if not line.strip():
                 continue
@@ -114,7 +133,9 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
             output_dir, "extracted_subtitles_" + os.path.basename(video_file)
         )
         os.makedirs(output_folder, exist_ok=True)
-        log_messages.append(f"Found {len(compatible_subtitles)} compatible subtitle(s) in video file. Extracting to: {output_folder}")
+        log_messages.append(
+            f"Found {len(compatible_subtitles)} compatible subtitle(s) in video file. Extracting to: {output_folder}"
+        )
         # Prepare FFmpeg command
         ffmpeg_base_cmd = [FFMPEG_EXECUTABLE, "-y", "-i", video_file]
         output_files = []
@@ -136,7 +157,9 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
         output, _ = ffmpeg_process.communicate()
         if ffmpeg_process.returncode == 0:
             for output_file in output_files:
-                log_messages.append(f"Successfully extracted: {os.path.basename(output_file)}")
+                log_messages.append(
+                    f"Successfully extracted: {os.path.basename(output_file)}"
+                )
             log_messages.append("Choosing best subtitle match...")
             closest_subtitle, score = choose_best_subtitle(
                 subtitle_file, extracted_subtitles_folder=output_folder
@@ -145,7 +168,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
                 return closest_subtitle, score, log_messages
             return None, None, log_messages
 
-        error_output = output.decode('utf-8') if isinstance(output, bytes) else output
+        error_output = output.decode("utf-8") if isinstance(output, bytes) else output
         log_messages.append(f"Failed to extract subtitles: {error_output}")
         return None, None, log_messages
     except Exception as e:

@@ -5,9 +5,11 @@
 
 from constants import PROGRAM_NAME
 
+
 class TranslationDict(dict):
     def __missing__(self, key):
         return self.get("en", "")
+
 
 TOOLTIP_SAVE_TO_DESKTOP = {
     "en": "Check this box if you want to save the subtitle to your Desktop. If unchecked it will be saved next to the input subtitle.",

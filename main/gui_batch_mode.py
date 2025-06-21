@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QHBoxLayout,
-    QWidget
+    QWidget,
 )
 from PyQt6.QtCore import Qt, QTimer, QFileInfo, QPoint, QUrl
 from PyQt6.QtGui import QCursor, QColor, QDesktopServices
@@ -33,45 +33,54 @@ from utils import update_config, open_filedialog, open_folder
 logger = logging.getLogger(__name__)
 
 # Constants for file dialogs
-VIDEO_SUBTITLE_FILTER = f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+VIDEO_SUBTITLE_FILTER = (
+    f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+)
 VIDEO_FILTER = f"Video Files (*{' *'.join(VIDEO_EXTENSIONS)})"
 SUBTITLE_FILTER = f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+
 
 # Helper functions for file operations
 def get_file_extension(file_path):
     """Get the lowercase extension of a file path."""
     return os.path.splitext(file_path)[1].lower() if file_path else ""
 
+
 def is_video_file(file_path):
     """Check if a file is a video file based on its extension."""
     return get_file_extension(file_path) in VIDEO_EXTENSIONS
 
+
 def is_subtitle_file(file_path):
     """Check if a file is a subtitle file based on its extension."""
     return get_file_extension(file_path) in SUBTITLE_EXTENSIONS
+
 
 def is_media_file(file_path):
     """Check if a file is either a video or subtitle file."""
     ext = get_file_extension(file_path)
     return ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS
 
+
 def update_last_dir(app_instance, dir_path):
     """Update the last used directory in app config."""
     update_config(app_instance, "last_used_dir", dir_path)
-    
+
+
 def get_basename(file_path):
     """Get the basename of a file path."""
     return os.path.basename(file_path) if file_path else ""
 
+
 def effective_basename(file_path):
     """Extract effective basename from file path, handling language tags.
-    
-    Removes potential language tags that are often 2-4 characters and 
+
+    Removes potential language tags that are often 2-4 characters and
     preceded by a separator character like '_', '.', or '-'.
-    
+
     Args:
         file_path: Path to a file
-        
+
     Returns:
         Base filename without extension or language tags
     """
@@ -81,25 +90,26 @@ def effective_basename(file_path):
             return base[: -(tag_length + 1)]
     return base
 
+
 def calculate_file_similarity(reference_name, sub_name):
     """Calculate similarity score between reference and subtitle filenames.
-    
+
     This function uses multiple methods to determine the similarity:
     1. Uses effective_basename to remove language tags
     2. Calculates common prefix length
     3. Uses a string similarity ratio
-    
+
     Args:
         reference_name: Basename of a reference file
         sub_name: Basename of a subtitle file
-        
+
     Returns:
         Similarity score (higher is more similar)
     """
     # Clean and prepare names
-    reference_base = effective_basename(reference_name).lower().strip('.-_ [](){}')
-    sub_base = effective_basename(sub_name).lower().strip('.-_ [](){}')
-    
+    reference_base = effective_basename(reference_name).lower().strip(".-_ [](){}")
+    sub_base = effective_basename(sub_name).lower().strip(".-_ [](){}")
+
     # Calculate common prefix length
     common_len = 0
     for i in range(min(len(reference_base), len(sub_base))):
@@ -107,33 +117,36 @@ def calculate_file_similarity(reference_name, sub_name):
             common_len += 1
         else:
             break
-            
+
     # Calculate similarity score - weight by:
     # 1. Common prefix length (heavily weighted)
     # 2. Length difference (penalty for very different lengths)
     # 3. Bonus for exact match after processing
-    
+
     similarity = common_len * 10  # Base score from common prefix
-    
+
     # Penalty for length difference
     length_diff = abs(len(reference_base) - len(sub_base))
-    similarity -= min(length_diff * 2, similarity // 2)  # Don't let penalty exceed half the score
-    
+    similarity -= min(
+        length_diff * 2, similarity // 2
+    )  # Don't let penalty exceed half the score
+
     # Exact match bonus
     if reference_base == sub_base:
         similarity += 50
-        
+
     return max(0, similarity)  # Ensure non-negative score
+
 
 def create_tree_widget_item(file_path, parent=None, icon_provider=None, item_id=None):
     """Create a QTreeWidgetItem for a file path.
-    
+
     Args:
         file_path: Path to the file
         parent: Optional parent item
         icon_provider: Optional QFileIconProvider for file icons
         item_id: Optional ID for the item
-        
+
     Returns:
         A configured QTreeWidgetItem
     """
@@ -142,16 +155,17 @@ def create_tree_widget_item(file_path, parent=None, icon_provider=None, item_id=
         item = QTreeWidgetItem(parent, [basename])
     else:
         item = QTreeWidgetItem([basename])
-    
+
     item.setData(0, Qt.ItemDataRole.UserRole, file_path)
     if item_id is not None:
         item.setData(0, BatchTreeView.ITEM_ID_ROLE, item_id)
-    
+
     # Add icon if provider is available
     if icon_provider:
         item.setIcon(0, icon_provider.icon(QFileInfo(file_path)))
-        
+
     return item
+
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach batch mode functions to the autosubsync class"""
@@ -165,8 +179,11 @@ def attach_functions_to_autosubsync(autosubsync_class):
     autosubsync_class.toggle_batch_mode = toggle_batch_mode
     autosubsync_class.validate_batch_inputs = validate_batch_inputs
 
+
 class BatchTreeView(QTreeWidget):
-    VALID_STATE_ROLE = Qt.ItemDataRole.UserRole + 10  # Role to store parent item's validity state
+    VALID_STATE_ROLE = (
+        Qt.ItemDataRole.UserRole + 10
+    )  # Role to store parent item's validity state
     ITEM_ID_ROLE = Qt.ItemDataRole.UserRole + 11  # Role to store the item's unique ID
 
     def _is_parent_item_valid(self, item):
@@ -174,14 +191,17 @@ class BatchTreeView(QTreeWidget):
         # Quick early returns for invalid cases
         if not item or item.parent() or item.childCount() != 1:
             return False
-            
+
         first_child = item.child(0)
         if not first_child or first_child.childCount() > 0:
             return False
-            
+
         # Check if child is a subtitle (not a video)
         child_file_path = first_child.data(0, Qt.ItemDataRole.UserRole)
-        return child_file_path and get_file_extension(child_file_path) not in VIDEO_EXTENSIONS
+        return (
+            child_file_path
+            and get_file_extension(child_file_path) not in VIDEO_EXTENSIONS
+        )
 
     def is_duplicate_pair(self, reference_path, sub_path):
         """Return True if (reference_path, sub_path) matches an existing valid top-level pair."""
@@ -194,20 +214,24 @@ class BatchTreeView(QTreeWidget):
         self._next_item_id = 1  # Initialize the ID counter
         self.setColumnCount(1)
         self.setHeaderHidden(False)  # Show header to display pair counts
-        #self.headerItem().setTextAlignment(0, Qt.AlignCenter)
+        # self.headerItem().setTextAlignment(0, Qt.AlignCenter)
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
         self.setDropIndicatorShown(True)
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.icon_provider = QFileIconProvider()
-        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # Allow multi-selection for removal
+        self.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )  # Allow multi-selection for removal
 
         self._update_ui_timer = QTimer(self)
         self._update_ui_timer.setSingleShot(True)
-        self._update_ui_timer.setInterval(0) # Process on next event loop iteration
+        self._update_ui_timer.setInterval(0)  # Process on next event loop iteration
         self._update_ui_timer.timeout.connect(self._perform_actual_ui_update)
 
-        self._items_to_re_expand_paths = set() # For preserving expansion state during moves
+        self._items_to_re_expand_paths = (
+            set()
+        )  # For preserving expansion state during moves
 
         # Cache for performance optimization
         self._current_pair_id_set = set()
@@ -230,61 +254,76 @@ class BatchTreeView(QTreeWidget):
         self._next_item_id += 1
         return current_id
 
-    def _schedule_ui_update(self, *args): # Accept any arguments from signals
+    def _schedule_ui_update(self, *args):  # Accept any arguments from signals
         self._update_ui_timer.start()
 
     def _perform_actual_ui_update(self):
         # Check if this is an internal drag/drop operation
-        is_internal_move = hasattr(self, '_in_internal_drag') and self._in_internal_drag
-        
+        is_internal_move = hasattr(self, "_in_internal_drag") and self._in_internal_drag
+
         # Phase 1: Rebuild pair ID set and item-to-pair_id map for efficient validation
         self._current_pair_id_set.clear()
         self._item_to_pair_id_map.clear()
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
-            if item and item.childCount() == 1: # Potential pair structure
+            if item and item.childCount() == 1:  # Potential pair structure
                 parent_path = item.data(0, Qt.ItemDataRole.UserRole)
                 child_item = item.child(0)
                 child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
-                
-                if parent_path and child_path and \
-                   not child_item.childCount() and \
-                   is_subtitle_file(child_path):
+
+                if (
+                    parent_path
+                    and child_path
+                    and not child_item.childCount()
+                    and is_subtitle_file(child_path)
+                ):
                     norm_parent = os.path.normpath(parent_path)
                     norm_child = os.path.normpath(child_path)
-                    if norm_parent != norm_child: # Ensure parent and child are not the same file
+                    if (
+                        norm_parent != norm_child
+                    ):  # Ensure parent and child are not the same file
                         pair_id = (norm_parent, norm_child)
                         self._current_pair_id_set.add(pair_id)
                         self._item_to_pair_id_map[id(item)] = pair_id
-        
+
         # Continue with existing UI update logic - but ONLY trigger app parent updates if not an internal move
-        if self.app_parent and hasattr(self.app_parent, 'update_auto_sync_ui_for_batch') and not is_internal_move:
+        if (
+            self.app_parent
+            and hasattr(self.app_parent, "update_auto_sync_ui_for_batch")
+            and not is_internal_move
+        ):
             self.app_parent.update_auto_sync_ui_for_batch()
 
         # Re-apply expansion state for items that were moved
         if self._items_to_re_expand_paths:
-            self._apply_expansion_recursive(self) # Start recursion from the tree itself
-            self._items_to_re_expand_paths.clear() # Clear after use
-        
-        self._update_parent_item_style() # Update styles for all parent items
-        self._update_header_pair_counts() # Update header with valid/invalid pair counts
-        self._sort_top_level_items() # Sort/expand items after updates
+            self._apply_expansion_recursive(
+                self
+            )  # Start recursion from the tree itself
+            self._items_to_re_expand_paths.clear()  # Clear after use
+
+        self._update_parent_item_style()  # Update styles for all parent items
+        self._update_header_pair_counts()  # Update header with valid/invalid pair counts
+        self._sort_top_level_items()  # Sort/expand items after updates
 
         # Log appropriate message based on operation type
         if is_internal_move:
-            logger.info(f"Internal move - {self.topLevelItemCount()} parents, {len(self._current_pair_id_set)} valid pairs")
+            logger.info(
+                f"Internal move - {self.topLevelItemCount()} parents, {len(self._current_pair_id_set)} valid pairs"
+            )
         else:
-            logger.info(f"UI update: {self.topLevelItemCount()} top-level items, {len(self._current_pair_id_set)} valid pairs")
-            
+            logger.info(
+                f"UI update: {self.topLevelItemCount()} top-level items, {len(self._current_pair_id_set)} valid pairs"
+            )
+
         # Reset internal move flag
-        if hasattr(self, '_in_internal_drag'):
+        if hasattr(self, "_in_internal_drag"):
             self._in_internal_drag = False
 
     def _sort_top_level_items(self):
         # Expand all top-level items
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
-            if item: # Ensure item is valid
+            if item:  # Ensure item is valid
                 item.setExpanded(True)
 
     def _get_provisional_validity(self, item):
@@ -303,7 +342,7 @@ class BatchTreeView(QTreeWidget):
                 valid_pairs += 1
             else:
                 invalid_pairs += 1
-        
+
         header_text = f"Pairs ({valid_pairs} Valid, {invalid_pairs} Invalid)"
         self.setHeaderLabel(header_text)
 
@@ -311,8 +350,14 @@ class BatchTreeView(QTreeWidget):
         """Recursively expand items whose paths are in the re-expansion set."""
         # Determine if we're processing a tree widget or a tree item
         is_tree = not isinstance(parent_item_or_tree, QTreeWidgetItem)
-        get_child = parent_item_or_tree.topLevelItem if is_tree else parent_item_or_tree.child
-        child_count = parent_item_or_tree.topLevelItemCount() if is_tree else parent_item_or_tree.childCount()
+        get_child = (
+            parent_item_or_tree.topLevelItem if is_tree else parent_item_or_tree.child
+        )
+        child_count = (
+            parent_item_or_tree.topLevelItemCount()
+            if is_tree
+            else parent_item_or_tree.childCount()
+        )
 
         # Process all children
         for i in range(child_count):
@@ -354,47 +399,47 @@ class BatchTreeView(QTreeWidget):
         if message:
             item.setToolTip(0, f"{id_text} Status: Invalid\n{message}")
             return
-        
+
         item.setToolTip(0, f"{id_text} Status: Valid")
 
     def _validate_item(self, item):
         """Validate an item and return its validity state.
         Uses precomputed _current_pair_id_set for duplicate checks.
         """
-        
+
         # Check if item has exactly one child
         if item.childCount() == 0:
             return False, "Add a subtitle file to this item"
-        
+
         # Check if item has more than one child
         if item.childCount() > 1:
             return False, f"Too many files - keep only one subtitle per item"
-        
+
         # Check if the child has no children
         child_item = item.child(0)
         if child_item.childCount() > 0:
             return False, "Nested items not allowed - remove extra levels"
-        
+
         # Check if the child is a video file
         if is_video_file(child_item.data(0, Qt.ItemDataRole.UserRole)):
             return False, "Video files cannot be children - add a subtitle instead"
-        
+
         # Path validation
         parent_path = item.data(0, Qt.ItemDataRole.UserRole)
         child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
-        
+
         if not parent_path or not child_path:
             return False, "Missing file path"
-            
+
         norm_parent = os.path.normpath(parent_path)
         norm_child = os.path.normpath(child_path)
-        
+
         if norm_parent == norm_child:
             return False, "Parent and subtitle cannot be the same file"
-            
+
         if not is_subtitle_file(child_path):
             return False, "Child must be a subtitle file"
-            
+
         # Check for duplicates using the precomputed set
         current_item_pair_id = self._item_to_pair_id_map.get(id(item))
         if current_item_pair_id:
@@ -411,20 +456,20 @@ class BatchTreeView(QTreeWidget):
                 current_id = item.data(0, self.ITEM_ID_ROLE)
                 if current_id == max(duplicate_ids):
                     return False, "This pair already exists"
-        
+
         return True, None
 
     def _apply_item_styles(self, item, is_valid):
         """Apply styling to an item based on its validity.
-        
+
         Args:
             item: QTreeWidgetItem to style
             is_valid: Boolean indicating if the item is valid
         """
-        green_qcolor = self._parse_rgba_to_qcolor(COLORS['GREEN_BACKGROUND_HOVER'])
-        red_qcolor = self._parse_rgba_to_qcolor(COLORS['RED_BACKGROUND_HOVER'])
+        green_qcolor = self._parse_rgba_to_qcolor(COLORS["GREEN_BACKGROUND_HOVER"])
+        red_qcolor = self._parse_rgba_to_qcolor(COLORS["RED_BACKGROUND_HOVER"])
         default_qcolor = QColor(Qt.GlobalColor.transparent)
-        
+
         if not item.parent():  # Top-level item
             item.setData(0, self.VALID_STATE_ROLE, "valid" if is_valid else "invalid")
             item.setBackground(0, green_qcolor if is_valid else red_qcolor)
@@ -440,23 +485,28 @@ class BatchTreeView(QTreeWidget):
         while current.parent():
             current = current.parent()
         return current
-    
-    def _update_parent_item_style(self, specific_items_affected=None, old_parents_affected=None):
+
+    def _update_parent_item_style(
+        self, specific_items_affected=None, old_parents_affected=None
+    ):
         """Update item background colors based on validity state.
-           Efficiently updates specific items if provided, otherwise full scan.
+        Efficiently updates specific items if provided, otherwise full scan.
         """
+
         def process_item_recursive(item_to_process):
             is_top_level = not item_to_process.parent()
-            
+
             # Apply appropriate styling based on item type
             if is_top_level:
                 is_valid, message = self._validate_item(item_to_process)
                 self._apply_item_styles(item_to_process, is_valid)
             else:
                 self._apply_item_styles(item_to_process, False)
-            
+
             # Update tooltip
-            self._set_item_tooltip(item_to_process, message if is_top_level and not is_valid else None)
+            self._set_item_tooltip(
+                item_to_process, message if is_top_level and not is_valid else None
+            )
 
             # Process all children
             for i in range(item_to_process.childCount()):
@@ -468,13 +518,13 @@ class BatchTreeView(QTreeWidget):
             # Get unique root ancestors from affected items and old parents
             # Use a list instead of a set since QTreeWidgetItem is not hashable
             roots_to_process = []
-            
+
             for item_list in (specific_items_affected, old_parents_affected or []):
                 for item in item_list:
                     if root := self._find_root_ancestor(item):
                         if root.treeWidget() == self and root not in roots_to_process:
                             roots_to_process.append(root)
-            
+
             # Process identified root items
             for root_item in roots_to_process:
                 process_item_recursive(root_item)
@@ -508,7 +558,7 @@ class BatchTreeView(QTreeWidget):
             # Mark as internal drag operation to optimize updates
             self._in_internal_drag = True
             logger.info("Internal drag operation started")
-            
+
         if event.mimeData().hasUrls():
             self._set_drag_highlight(True)
             event.acceptProposedAction()
@@ -552,44 +602,65 @@ class BatchTreeView(QTreeWidget):
         action_add_folder = add_files_menu.addAction("Add folder")
         action_add_files = add_files_menu.addAction("Add multiple files")
         add_files_menu.addSeparator()
-        action_auto_pairing = add_files_menu.addAction("Auto-Pairing with Season/Episode")
+        action_auto_pairing = add_files_menu.addAction(
+            "Auto-Pairing with Season/Episode"
+        )
 
         action_add_pair.triggered.connect(lambda: self.app_parent.handle_add_pair())
         action_add_folder.triggered.connect(lambda: self.app_parent.handle_add_folder())
-        action_add_files.triggered.connect(lambda: self.app_parent.handle_add_multiple_files())
-        action_add_continuously.triggered.connect(self.app_parent.handle_add_pairs_continuously)
+        action_add_files.triggered.connect(
+            lambda: self.app_parent.handle_add_multiple_files()
+        )
+        action_add_continuously.triggered.connect(
+            self.app_parent.handle_add_pairs_continuously
+        )
         # Connect the new auto-pairing option
-        action_auto_pairing.triggered.connect(lambda: self.app_parent.open_auto_pairing_dialog())
-        
+        action_auto_pairing.triggered.connect(
+            lambda: self.app_parent.open_auto_pairing_dialog()
+        )
+
         menu.addSeparator()
 
         if item_at_pos and not item_at_pos.parent():  # Right-clicked a top-level item
-            menu.addAction("Add subtitle to this item", lambda: self.add_subtitle_to_item_dialog(item_at_pos))
+            menu.addAction(
+                "Add subtitle to this item",
+                lambda: self.add_subtitle_to_item_dialog(item_at_pos),
+            )
             # Check if the top-level item is a subtitle file
             item_path = item_at_pos.data(0, Qt.ItemDataRole.UserRole)
-            if item_path and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS:
-                menu.addAction("Add video to this item", lambda: self.add_video_to_subtitle_dialog(item_at_pos))
+            if (
+                item_path
+                and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS
+            ):
+                menu.addAction(
+                    "Add video to this item",
+                    lambda: self.add_video_to_subtitle_dialog(item_at_pos),
+                )
 
         # Add 'Go to folder' option for any item
         if item_at_pos:
             menu.addAction("Go to folder", lambda: self.open_item_folder(item_at_pos))
 
         if selected_items:  # Operations for selected items
-            if len(selected_items) == 1 and item_at_pos:  # Change only makes sense for a single item
+            if (
+                len(selected_items) == 1 and item_at_pos
+            ):  # Change only makes sense for a single item
                 menu.addAction("Change", lambda: self.change_file_for_item(item_at_pos))
-            menu.addAction(f"Remove selected ({len(selected_items)})", self.remove_selected_items)
+            menu.addAction(
+                f"Remove selected ({len(selected_items)})", self.remove_selected_items
+            )
         elif item_at_pos:  # Fallback if no selection but right-clicked on an item
             menu.addAction("Remove", lambda: self.remove_item(item_at_pos))
             menu.addAction("Change", lambda: self.change_file_for_item(item_at_pos))
 
-
-        
         menu.addSeparator()
         action_clear_all = menu.addAction("Clear all")
         action_clear_all.triggered.connect(self.clear_all_items)
         if not self.has_items():
             action_clear_all.setEnabled(False)
-        if not selected_items and not item_at_pos:  # Disable remove/change if not on item and no selection
+        if (
+            not selected_items and not item_at_pos
+        ):  # Disable remove/change if not on item and no selection
             for act in menu.actions():
                 if act.text().startswith("Remove") or act.text().startswith("Change"):
                     act.setEnabled(False)
@@ -612,7 +683,7 @@ class BatchTreeView(QTreeWidget):
             # Clicked on empty area - clear selection
             self.clearSelection()
             self.setCurrentItem(None)
-        
+
         # Call parent implementation to handle normal clicking behavior
         super().mousePressEvent(event)
 
@@ -625,27 +696,37 @@ class BatchTreeView(QTreeWidget):
         # Special case: Check if there are exactly 2 files, one video and one subtitle
         if len(paths) == 2 and all(os.path.isfile(p) for p in paths):
             if paths[0] == paths[1]:
-                QMessageBox.warning(self.app_parent, "Invalid Pair", "Cannot pair file with itself.")
+                QMessageBox.warning(
+                    self.app_parent, "Invalid Pair", "Cannot pair file with itself."
+                )
                 return
             exts = [os.path.splitext(path)[1].lower() for path in paths]
             # Check if we have one video and one subtitle file
-            if (exts[0] in VIDEO_EXTENSIONS and exts[1] in SUBTITLE_EXTENSIONS):
+            if exts[0] in VIDEO_EXTENSIONS and exts[1] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[0], paths[1]):
-                    QMessageBox.warning(self.app_parent, "Duplicate Pair", f"This pair already exists.")
+                    QMessageBox.warning(
+                        self.app_parent, "Duplicate Pair", f"This pair already exists."
+                    )
                     return
                 reference_path, sub_path = paths[0], paths[1]
                 self.add_explicit_pair(reference_path, sub_path)
-                logger.info(f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}")
+                logger.info(
+                    f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}"
+                )
                 return
-            elif (exts[1] in VIDEO_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS):
+            elif exts[1] in VIDEO_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[1], paths[0]):
-                    QMessageBox.warning(self.app_parent, "Duplicate Pair", f"This pair already exists.")
+                    QMessageBox.warning(
+                        self.app_parent, "Duplicate Pair", f"This pair already exists."
+                    )
                     return
                 reference_path, sub_path = paths[1], paths[0]
                 self.add_explicit_pair(reference_path, sub_path)
-                logger.info(f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}")
+                logger.info(
+                    f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}"
+                )
                 return
-        
+
         # Standard processing for all other cases
         files_to_process = []
         for path in paths:
@@ -660,26 +741,35 @@ class BatchTreeView(QTreeWidget):
                 ext = os.path.splitext(path)[1].lower()
                 if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                     files_to_process.append(path)
-        
+
         if not files_to_process:
             logger.warning("No supported media files found in dropped/added paths.")
-            QMessageBox.warning(self.app_parent, "No Media Files Found", 
-                              "No supported video or subtitle files were found in the selected files/folders.")
+            QMessageBox.warning(
+                self.app_parent,
+                "No Media Files Found",
+                "No supported video or subtitle files were found in the selected files/folders.",
+            )
             return
-        
+
         if files_to_process:
             logger.info(f"Processing {len(files_to_process)} files for pairing")
             skipped = 0
             self.add_paired_files(files_to_process, drop_target_item=drop_target_item)
             if skipped:
-                QMessageBox.information(self.app_parent, "Duplicates Skipped", f"{skipped} duplicate pair(s) skipped.")
+                QMessageBox.information(
+                    self.app_parent,
+                    "Duplicates Skipped",
+                    f"{skipped} duplicate pair(s) skipped.",
+                )
 
     def _create_tree_item(self, file_path):
         """Helper to create a new tree item for a file."""
         item_id = self._get_next_id()
-        item = create_tree_widget_item(file_path, icon_provider=self.icon_provider, item_id=item_id)
+        item = create_tree_widget_item(
+            file_path, icon_provider=self.icon_provider, item_id=item_id
+        )
         return item
-        
+
     def _pair_references_with_subtitles(self, references, subs):
         """Match references with their corresponding subtitles."""
         paired_references = set()
@@ -688,17 +778,17 @@ class BatchTreeView(QTreeWidget):
 
         # First pass: exact basename matching
         for reference in references:
-            reference_base = effective_basename(reference).lower().strip('.-_ [](){}')
+            reference_base = effective_basename(reference).lower().strip(".-_ [](){}")
             for sub in subs:
                 if sub in paired_subs:
                     continue
-                sub_base = effective_basename(sub).lower().strip('.-_ [](){}')
+                sub_base = effective_basename(sub).lower().strip(".-_ [](){}")
                 if reference_base == sub_base:
                     reference_sub_pairs.append((reference, sub))
                     paired_references.add(reference)
                     paired_subs.add(sub)
                     break
-        
+
         # Second pass: similarity-based matching
         for reference in references:
             if reference in paired_references:
@@ -726,22 +816,31 @@ class BatchTreeView(QTreeWidget):
         # Separate references and subtitles
         references = sorted([f for f in file_paths if is_video_file(f)])
         subs = sorted([f for f in file_paths if is_subtitle_file(f)])
-        
+
         # Match references with subtitles
-        pairs, paired_references, paired_subs = self._pair_references_with_subtitles(references, subs)
+        pairs, paired_references, paired_subs = self._pair_references_with_subtitles(
+            references, subs
+        )
 
         # Create tree items for each reference-sub pair
         for reference, sub_file_path in pairs:
-            if reference == sub_file_path or self.is_duplicate_pair(reference, sub_file_path):
+            if reference == sub_file_path or self.is_duplicate_pair(
+                reference, sub_file_path
+            ):
                 skipped += 1
                 continue
 
             parent_item = self._create_tree_item(reference)
             # Ensure child gets an ID
-            child_item = create_tree_widget_item(sub_file_path, parent=parent_item, icon_provider=self.icon_provider, item_id=self._get_next_id())
+            child_item = create_tree_widget_item(
+                sub_file_path,
+                parent=parent_item,
+                icon_provider=self.icon_provider,
+                item_id=self._get_next_id(),
+            )
             parent_item.setExpanded(True)
             newly_created_items.append(parent_item)
-        
+
         # Create items for unpaired files
         for reference in references:
             if reference not in paired_references:
@@ -750,112 +849,152 @@ class BatchTreeView(QTreeWidget):
         for sub in subs:
             if sub not in paired_subs:
                 newly_created_items.append(self._create_tree_item(sub))
-        
+
         # Add all newly created items to the tree
         if newly_created_items:
             # Sort by validity and name
-            newly_created_items.sort(key=lambda item: (
-                0 if self._get_provisional_validity(item) == "invalid" else 1,
-                os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)).lower())
+            newly_created_items.sort(
+                key=lambda item: (
+                    0 if self._get_provisional_validity(item) == "invalid" else 1,
+                    os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)).lower(),
+                )
             )
-            
+
             # Add to tree
             for item in reversed(newly_created_items):
                 self.insertTopLevelItem(0, item)
-                
+
         # Show message about skipped items
         if skipped:
             logger.info(f"Skipped {skipped} duplicate pairs")
-            QMessageBox.information(self.app_parent, "Duplicates Skipped", 
-                                    f"{skipped} duplicate pair(s) skipped.")
+            QMessageBox.information(
+                self.app_parent,
+                "Duplicates Skipped",
+                f"{skipped} duplicate pair(s) skipped.",
+            )
 
-        logger.info(f"Paired {len(pairs)} reference-subtitle pairs. Unpaired references: {len(references) - len(paired_references)}, unpaired subs: {len(subs) - len(paired_subs)}")
+        logger.info(
+            f"Paired {len(pairs)} reference-subtitle pairs. Unpaired references: {len(references) - len(paired_references)}, unpaired subs: {len(subs) - len(paired_subs)}"
+        )
 
     def add_explicit_pair(self, video_ref_path, sub_path):
-        logger.info(f"Adding pair: {os.path.basename(video_ref_path)} + {os.path.basename(sub_path)}")
+        logger.info(
+            f"Adding pair: {os.path.basename(video_ref_path)} + {os.path.basename(sub_path)}"
+        )
         parent_item_id = self._get_next_id()
-        parent_item = create_tree_widget_item(video_ref_path, None, self.icon_provider, item_id=parent_item_id)
-        
+        parent_item = create_tree_widget_item(
+            video_ref_path, None, self.icon_provider, item_id=parent_item_id
+        )
+
         child_item_id = self._get_next_id()
-        child_item = create_tree_widget_item(sub_path, parent_item, self.icon_provider, item_id=child_item_id)
-        
+        child_item = create_tree_widget_item(
+            sub_path, parent_item, self.icon_provider, item_id=child_item_id
+        )
+
         parent_item.setExpanded(True)
-        self.insertTopLevelItem(0, parent_item) # Insert the configured parent item at the top
+        self.insertTopLevelItem(
+            0, parent_item
+        )  # Insert the configured parent item at the top
         # UI update (including sort) will be scheduled by model signals
 
     def add_subtitle_to_item_dialog(self, parent_item):
-        logger.info(f"Adding subtitle to item: {os.path.basename(parent_item.data(0, Qt.ItemDataRole.UserRole)) if parent_item and parent_item.data(0, Qt.ItemDataRole.UserRole) else None}")
+        logger.info(
+            f"Adding subtitle to item: {os.path.basename(parent_item.data(0, Qt.ItemDataRole.UserRole)) if parent_item and parent_item.data(0, Qt.ItemDataRole.UserRole) else None}"
+        )
         if not parent_item or parent_item.parent():  # Must be a top-level item
-            QMessageBox.warning(self.app_parent, "Selection Error", "Please select a video or reference subtitle (a top-level item) to add a subtitle to.")
+            QMessageBox.warning(
+                self.app_parent,
+                "Selection Error",
+                "Please select a video or reference subtitle (a top-level item) to add a subtitle to.",
+            )
             return
 
         file_paths = open_filedialog(
-            self.app_parent,
-            'files-open',
-            "Select Subtitle File(s)",
-            SUBTITLE_FILTER
+            self.app_parent, "files-open", "Select Subtitle File(s)", SUBTITLE_FILTER
         )
-        
+
         if file_paths:
             # Set internal operation flag to prevent full UI updates
             self._in_internal_drag = True
-            
+
             skipped = 0
             any_subtitle_added = False
             child_items_added = []
-            
+
             for file_path in file_paths:
                 if file_path == parent_item.data(0, Qt.ItemDataRole.UserRole):
                     skipped += 1
                     continue
                 if not is_subtitle_file(file_path):
-                    QMessageBox.warning(self.app_parent, "Invalid File", f"'{get_basename(file_path)}' is not a subtitle file. Skipping.")
+                    QMessageBox.warning(
+                        self.app_parent,
+                        "Invalid File",
+                        f"'{get_basename(file_path)}' is not a subtitle file. Skipping.",
+                    )
                     continue
-                if self.is_duplicate_pair(parent_item.data(0, Qt.ItemDataRole.UserRole), file_path):
+                if self.is_duplicate_pair(
+                    parent_item.data(0, Qt.ItemDataRole.UserRole), file_path
+                ):
                     skipped += 1
                     continue
                 # Ensure child gets an ID
-                child_item = create_tree_widget_item(file_path, parent_item, self.icon_provider, item_id=self._get_next_id())
+                child_item = create_tree_widget_item(
+                    file_path,
+                    parent_item,
+                    self.icon_provider,
+                    item_id=self._get_next_id(),
+                )
                 child_items_added.append(child_item)
                 any_subtitle_added = True
-            
+
             if skipped:
-                QMessageBox.warning(self.app_parent, "Duplicate Pairs", f"{skipped} duplicate pair(s) skipped.")
+                QMessageBox.warning(
+                    self.app_parent,
+                    "Duplicate Pairs",
+                    f"{skipped} duplicate pair(s) skipped.",
+                )
             if any_subtitle_added:
                 parent_item.setExpanded(True)
-                
+
                 # Only update the specific item that was modified
                 self._update_parent_item_style([parent_item])
                 self._schedule_ui_update()
 
     def add_video_to_subtitle_dialog(self, subtitle_item):
-        logger.info(f"Adding video to subtitle item: {os.path.basename(subtitle_item.data(0, Qt.ItemDataRole.UserRole)) if subtitle_item and subtitle_item.data(0, Qt.ItemDataRole.UserRole) else None}")
+        logger.info(
+            f"Adding video to subtitle item: {os.path.basename(subtitle_item.data(0, Qt.ItemDataRole.UserRole)) if subtitle_item and subtitle_item.data(0, Qt.ItemDataRole.UserRole) else None}"
+        )
         """Add a video file as parent to an existing subtitle item, maintaining item position."""
 
         # Verify the item is actually a subtitle
         item_path = subtitle_item.data(0, Qt.ItemDataRole.UserRole)
         if not item_path or not is_subtitle_file(item_path):
-            QMessageBox.warning(self.app_parent, "Invalid Item", "Selected item is not a subtitle file.")
+            QMessageBox.warning(
+                self.app_parent, "Invalid Item", "Selected item is not a subtitle file."
+            )
             return
 
         reference_path = open_filedialog(
-            self.app_parent, 
-            'file-open', 
-            "Select Video File", 
-            VIDEO_FILTER
+            self.app_parent, "file-open", "Select Video File", VIDEO_FILTER
         )
-        
+
         if not reference_path:
             return
 
         if reference_path == subtitle_item.data(0, Qt.ItemDataRole.UserRole):
-            QMessageBox.warning(self.app_parent, "Invalid Pair", "Cannot pair file with itself.")
+            QMessageBox.warning(
+                self.app_parent, "Invalid Pair", "Cannot pair file with itself."
+            )
             return
 
-        if self.is_duplicate_pair(reference_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)):
-            QMessageBox.warning(self.app_parent, "Duplicate Pair", "This pair already exists.")
+        if self.is_duplicate_pair(
+            reference_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)
+        ):
+            QMessageBox.warning(
+                self.app_parent, "Duplicate Pair", "This pair already exists."
+            )
             return
-            
+
         # Set internal operation flag to prevent full UI updates
         self._in_internal_drag = True
 
@@ -872,7 +1011,9 @@ class BatchTreeView(QTreeWidget):
 
         # Create new video parent item with an ID
         video_item_id = self._get_next_id()
-        video_item = create_tree_widget_item(reference_path, None, self.icon_provider, item_id=video_item_id)
+        video_item = create_tree_widget_item(
+            reference_path, None, self.icon_provider, item_id=video_item_id
+        )
 
         # Preserve subtitle's existing ID or assign a new one if it doesn't have one
         subtitle_item_id = subtitle_item.data(0, self.ITEM_ID_ROLE)
@@ -882,23 +1023,25 @@ class BatchTreeView(QTreeWidget):
 
         # Take the subtitle item from its current position
         root.removeChild(subtitle_item)
-        
+
         # Add the subtitle as a child of the video item
         video_item.addChild(subtitle_item)
-        
+
         # Insert the video item back at the same position
         root.insertChild(sub_index, video_item)
-        
+
         # Expand the new video parent
         video_item.setExpanded(True)
-        
+
         # Only update this specific item
         self._update_parent_item_style([video_item])
         self._schedule_ui_update()
 
     def remove_item(self, item):
         if item:
-            logger.info(f"Removing item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item.data(0, Qt.ItemDataRole.UserRole) else None}")
+            logger.info(
+                f"Removing item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item.data(0, Qt.ItemDataRole.UserRole) else None}"
+            )
             # Set internal operation flag to prevent full UI updates
             self._in_internal_drag = True
             root = self.invisibleRootItem()
@@ -922,45 +1065,48 @@ class BatchTreeView(QTreeWidget):
                 "Confirm Remove Selected",
                 f"Are you sure you want to remove {len(selected)} items?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
             if reply != QMessageBox.StandardButton.Yes:
                 return
 
         # Set internal operation flag to prevent full UI updates
         self._in_internal_drag = True
-        
+
         # We'll process as a batch removal
         root = self.invisibleRootItem()
         for item in selected:
             (item.parent() or root).removeChild(item)
-            
+
         # Schedule a single UI update after all removals
         self._schedule_ui_update()
 
     def change_file_for_item(self, item):
-        if not item: return
-        logger.info(f"Changing file for item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item.data(0, Qt.ItemDataRole.UserRole) else None}")
+        if not item:
+            return
+        logger.info(
+            f"Changing file for item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item.data(0, Qt.ItemDataRole.UserRole) else None}"
+        )
         current_file_path = item.data(0, Qt.ItemDataRole.UserRole)
         is_parent = not item.parent()
-        
+
         if is_parent:
             file_filter = VIDEO_SUBTITLE_FILTER
             dialog_title = "Select Replacement Video or Reference Subtitle"
-        else: 
+        else:
             file_filter = SUBTITLE_FILTER
             dialog_title = "Select Replacement Subtitle File"
 
         # Use the centralized function for file selection
-        initial_dir = os.path.dirname(current_file_path) if current_file_path and os.path.exists(os.path.dirname(current_file_path)) else None
-        new_file_path = open_filedialog(
-            self.app_parent,
-            'file-open',
-            dialog_title,
-            file_filter,
-            initial_dir
+        initial_dir = (
+            os.path.dirname(current_file_path)
+            if current_file_path and os.path.exists(os.path.dirname(current_file_path))
+            else None
         )
-        
+        new_file_path = open_filedialog(
+            self.app_parent, "file-open", dialog_title, file_filter, initial_dir
+        )
+
         if new_file_path:
             new_ext = os.path.splitext(new_file_path)[1].lower()
             valid_new_type = False
@@ -970,7 +1116,11 @@ class BatchTreeView(QTreeWidget):
                 valid_new_type = True
 
             if not valid_new_type:
-                QMessageBox.warning(self.app_parent, "Invalid File Type", "The selected file type is not appropriate for this item.")
+                QMessageBox.warning(
+                    self.app_parent,
+                    "Invalid File Type",
+                    "The selected file type is not appropriate for this item.",
+                )
                 return
 
             item.setText(0, os.path.basename(new_file_path))
@@ -986,7 +1136,7 @@ class BatchTreeView(QTreeWidget):
                 "Confirm Clear All",
                 f"Are you sure you want to clear all items?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
             if reply != QMessageBox.StandardButton.Yes:
                 return
@@ -994,30 +1144,37 @@ class BatchTreeView(QTreeWidget):
             self.clear()
 
     def open_item_folder(self, item):
-        logger.info(f"Opening folder for item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item and item.data(0, Qt.ItemDataRole.UserRole) else None}")
         """Open the folder containing the file for the given item."""
         if not item:
             return
-        
+
         file_path = item.data(0, Qt.ItemDataRole.UserRole)
         if not file_path or not os.path.exists(file_path):
-            QMessageBox.warning(self.app_parent, "File Not Found", "The file does not exist or path is invalid.")
+            QMessageBox.warning(
+                self.app_parent,
+                "File Not Found",
+                "The file does not exist or path is invalid.",
+            )
             return
-        
-        open_folder(file_path, self.app_parent)
+
+        open_folder(file_path)
 
     def get_all_valid_pairs(self):
         pairs = []
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
-            if item and item.childCount() == 1 and item.data(0, self.VALID_STATE_ROLE) == "valid":
+            if (
+                item
+                and item.childCount() == 1
+                and item.data(0, self.VALID_STATE_ROLE) == "valid"
+            ):
                 reference_path = item.data(0, Qt.ItemDataRole.UserRole)
                 sub_item = item.child(0)
                 sub_path = sub_item.data(0, Qt.ItemDataRole.UserRole)
                 if reference_path and sub_path:
                     pairs.append((reference_path, sub_path))
         return pairs
-            
+
     def has_items(self):
         return self.topLevelItemCount() > 0
 
@@ -1026,24 +1183,37 @@ class BatchTreeView(QTreeWidget):
 def create_batch_interface(self):
     """Create the batch mode interface elements for the main application."""
     # Initialize batch mode UI elements if they don't exist
-    if not hasattr(self, 'batch_buttons_widget'):
+    if not hasattr(self, "batch_buttons_widget"):
         self.batch_buttons_widget = QWidget(self)
         batch_buttons_layout = QHBoxLayout(self.batch_buttons_widget)
         batch_buttons_layout.setContentsMargins(0, 0, 0, 0)
         self.btn_batch_add_files = QPushButton("Add Files", self.batch_buttons_widget)
-        self.btn_batch_add_files.clicked.connect(lambda: self.show_batch_add_menu(self.btn_batch_add_files))
-        self.btn_batch_remove_selected = QPushButton("Remove Selected", self.batch_buttons_widget)
-        self.btn_batch_remove_selected.clicked.connect(self.batch_tree_view.remove_selected_items)
-        self.btn_batch_change_selected = QPushButton("Change Selected", self.batch_buttons_widget)
-        self.btn_batch_change_selected.clicked.connect(lambda: self.batch_tree_view.change_file_for_item(self.batch_tree_view.currentItem()))
-        
+        self.btn_batch_add_files.clicked.connect(
+            lambda: self.show_batch_add_menu(self.btn_batch_add_files)
+        )
+        self.btn_batch_remove_selected = QPushButton(
+            "Remove Selected", self.batch_buttons_widget
+        )
+        self.btn_batch_remove_selected.clicked.connect(
+            self.batch_tree_view.remove_selected_items
+        )
+        self.btn_batch_change_selected = QPushButton(
+            "Change Selected", self.batch_buttons_widget
+        )
+        self.btn_batch_change_selected.clicked.connect(
+            lambda: self.batch_tree_view.change_file_for_item(
+                self.batch_tree_view.currentItem()
+            )
+        )
+
         batch_buttons_layout.addWidget(self.btn_batch_add_files)
         batch_buttons_layout.addWidget(self.btn_batch_remove_selected)
         batch_buttons_layout.addWidget(self.btn_batch_change_selected)
 
+
 def show_batch_add_menu(self, source_widget=None, position=None):
     """Show the batch add menu with various file addition options.
-    
+
     Args:
         source_widget: The widget that triggered the menu (optional)
         position: The global position where to show the menu (optional)
@@ -1060,74 +1230,79 @@ def show_batch_add_menu(self, source_widget=None, position=None):
     action_add_pair.triggered.connect(lambda: handle_add_pair(self))
     action_add_folder.triggered.connect(lambda: handle_add_folder(self))
     action_add_files.triggered.connect(lambda: handle_add_multiple_files(self))
-    action_add_continuously.triggered.connect(lambda: handle_add_pairs_continuously(self))
+    action_add_continuously.triggered.connect(
+        lambda: handle_add_pairs_continuously(self)
+    )
     # Connect the new auto-pairing option
     action_auto_pairing.triggered.connect(lambda: self.open_auto_pairing_dialog())
-    
+
     # Show menu at the specified position, or at a position relevant to the source widget
     if position:
         menu.popup(position)
     elif source_widget:
         # For InputBox, position at bottom-left. For button, also bottom-left.
-        if isinstance(source_widget, QLabel) and hasattr(source_widget, 'input_type'):
-             menu.popup(source_widget.mapToGlobal(QPoint(0, source_widget.height())))
+        if isinstance(source_widget, QLabel) and hasattr(source_widget, "input_type"):
+            menu.popup(source_widget.mapToGlobal(QPoint(0, source_widget.height())))
         else:  # Assuming QPushButton or similar
-             menu.popup(source_widget.mapToGlobal(source_widget.rect().bottomLeft()))
-    else: 
+            menu.popup(source_widget.mapToGlobal(source_widget.rect().bottomLeft()))
+    else:
         # Default fallback to cursor position
         menu.popup(QCursor.pos())
-        
+
     return menu  # Return the menu so caller can connect to its signals
+
 
 def handle_add_pair(self):
     """Show dialogs to add a video/subtitle pair."""
     video_ref_path = open_filedialog(
-        self, 
-        'file-open', 
-        "Select Video or Reference Subtitle File", 
-        VIDEO_SUBTITLE_FILTER
+        self,
+        "file-open",
+        "Select Video or Reference Subtitle File",
+        VIDEO_SUBTITLE_FILTER,
     )
     if not video_ref_path:
         return
-    
+
     # Check if the selected file is a supported media type
     ext = os.path.splitext(video_ref_path)[1].lower()
     if ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
-        QMessageBox.warning(self, "Unsupported File Type", 
-                          f"The selected file is not a supported video or subtitle format.")
+        QMessageBox.warning(
+            self,
+            "Unsupported File Type",
+            f"The selected file is not a supported video or subtitle format.",
+        )
         return
-    
+
     sub_path = open_filedialog(
-        self, 
-        'file-open', 
-        "Select Input Subtitle File", 
-        SUBTITLE_FILTER
+        self, "file-open", "Select Input Subtitle File", SUBTITLE_FILTER
     )
     if not sub_path:
         return
-    
+
     # Check if the selected subtitle file is supported
     ext = os.path.splitext(sub_path)[1].lower()
     if ext not in SUBTITLE_EXTENSIONS:
-        QMessageBox.warning(self, "Unsupported File Type", 
-                          f"The selected file is not a supported subtitle format.")
+        QMessageBox.warning(
+            self,
+            "Unsupported File Type",
+            f"The selected file is not a supported subtitle format.",
+        )
         return
-    
+
     if video_ref_path == sub_path:
         QMessageBox.warning(self, "Invalid Pair", "Cannot pair file with itself.")
         return
-    
+
     if self.batch_tree_view.is_duplicate_pair(video_ref_path, sub_path):
         QMessageBox.warning(self, "Duplicate Pair", f"This pair already exists.")
         return
     self.batch_tree_view.add_explicit_pair(video_ref_path, sub_path)
 
+
 def handle_add_folder(self):
     """Add all supported files from a folder to the batch."""
     folder_path = open_filedialog(
-        self, 
-        'directory', 
-        "Select Folder Containing Media Files"
+        self, "directory", "Select Folder Containing Media Files"
     )
     if folder_path:
         # Check if folder contains any media files before adding
@@ -1140,21 +1315,22 @@ def handle_add_folder(self):
                     break
             if media_files_found:
                 break
-        
+
         if not media_files_found:
-            QMessageBox.warning(self, "No Media Files Found", 
-                              f"No supported video or subtitle files were found in the selected folder.")
+            QMessageBox.warning(
+                self,
+                "No Media Files Found",
+                f"No supported video or subtitle files were found in the selected folder.",
+            )
             return
-        
+
         self.batch_tree_view.add_files_or_folders([folder_path])
+
 
 def handle_add_multiple_files(self):
     """Allow selection of multiple files to add to the batch."""
     files_paths = open_filedialog(
-        self, 
-        'files-open', 
-        "Select Files", 
-        VIDEO_SUBTITLE_FILTER
+        self, "files-open", "Select Files", VIDEO_SUBTITLE_FILTER
     )
     if files_paths:
         # Check if any of the selected files are supported media types
@@ -1163,26 +1339,33 @@ def handle_add_multiple_files(self):
             ext = os.path.splitext(file_path)[1].lower()
             if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                 supported_files.append(file_path)
-        
+
         if not supported_files:
-            QMessageBox.warning(self, "No Media Files Found", 
-                              "None of the selected files are supported video or subtitle formats.")
+            QMessageBox.warning(
+                self,
+                "No Media Files Found",
+                "None of the selected files are supported video or subtitle formats.",
+            )
             return
         elif len(supported_files) < len(files_paths):
             unsupported_count = len(files_paths) - len(supported_files)
-            QMessageBox.information(self, "Some Files Skipped", 
-                                  f"{unsupported_count} unsupported file(s) were skipped. Only video and subtitle files will be added.")
-        
+            QMessageBox.information(
+                self,
+                "Some Files Skipped",
+                f"{unsupported_count} unsupported file(s) were skipped. Only video and subtitle files will be added.",
+            )
+
         self.batch_tree_view.add_files_or_folders(supported_files)
+
 
 def handle_add_pairs_continuously(self):
     """Continuously prompt for video/subtitle pairs until canceled."""
     while True:
         video_ref_path = open_filedialog(
-            self, 
-            'file-open', 
-            "Select Video or Reference Subtitle File (or Cancel to Stop)", 
-            VIDEO_SUBTITLE_FILTER
+            self,
+            "file-open",
+            "Select Video or Reference Subtitle File (or Cancel to Stop)",
+            VIDEO_SUBTITLE_FILTER,
         )
         if not video_ref_path:
             break  # User cancelled video selection
@@ -1190,34 +1373,41 @@ def handle_add_pairs_continuously(self):
         # Check if the selected file is a supported media type
         ext = os.path.splitext(video_ref_path)[1].lower()
         if ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
-            QMessageBox.warning(self, "Unsupported File Type", 
-                              f"The selected file is not a supported video or subtitle format.")
+            QMessageBox.warning(
+                self,
+                "Unsupported File Type",
+                f"The selected file is not a supported video or subtitle format.",
+            )
             continue
 
         sub_path = open_filedialog(
-            self, 
-            'file-open', 
-            f"Select Input Subtitle for '{os.path.basename(video_ref_path)}' (or Cancel to Stop)", 
-            SUBTITLE_FILTER
+            self,
+            "file-open",
+            f"Select Input Subtitle for '{os.path.basename(video_ref_path)}' (or Cancel to Stop)",
+            SUBTITLE_FILTER,
         )
         if not sub_path:
             break  # User cancelled subtitle selection
-        
+
         # Check if the selected subtitle file is supported
         ext = os.path.splitext(sub_path)[1].lower()
         if ext not in SUBTITLE_EXTENSIONS:
-            QMessageBox.warning(self, "Unsupported File Type", 
-                              f"The selected file is not a supported subtitle format.")
+            QMessageBox.warning(
+                self,
+                "Unsupported File Type",
+                f"The selected file is not a supported subtitle format.",
+            )
             continue
-        
+
         if video_ref_path == sub_path:
             QMessageBox.warning(self, "Invalid Pair", "Cannot pair file with itself.")
             continue
-        
+
         if self.batch_tree_view.is_duplicate_pair(video_ref_path, sub_path):
             QMessageBox.warning(self, "Duplicate Pair", f"This pair already exists.")
             continue
         self.batch_tree_view.add_explicit_pair(video_ref_path, sub_path)
+
 
 def handle_batch_drop(self, files):
     logger.info(f"handle_batch_drop: {len(files)} files")
@@ -1225,23 +1415,27 @@ def handle_batch_drop(self, files):
     if files:
         self.batch_tree_view.add_files_or_folders(files)
 
+
 def update_batch_buttons_state(self):
     """Update the enabled state of batch buttons based on selection."""
-    
-    if hasattr(self, 'btn_batch_remove_selected') and hasattr(self, 'btn_batch_change_selected'):
+
+    if hasattr(self, "btn_batch_remove_selected") and hasattr(
+        self, "btn_batch_change_selected"
+    ):
         selected_items = self.batch_tree_view.selectedItems()
         has_selection = bool(selected_items)
-        
+
         # Avoid unnecessary UI updates by checking if state actually changed
         new_remove_state = has_selection
         new_change_state = len(selected_items) == 1
-        
+
         # Only update if state changed
         if self.btn_batch_remove_selected.isEnabled() != new_remove_state:
             self.btn_batch_remove_selected.setEnabled(new_remove_state)
-            
+
         if self.btn_batch_change_selected.isEnabled() != new_change_state:
             self.btn_batch_change_selected.setEnabled(new_change_state)
+
 
 def toggle_batch_mode(self):
     """Toggle between batch mode and normal mode."""
@@ -1252,21 +1446,24 @@ def toggle_batch_mode(self):
     )
     self.show_auto_sync_inputs()
 
+
 def validate_batch_inputs(self):
     """Validate batch mode inputs."""
     if not self.batch_tree_view.has_items():
         # Show error in batch input instead of QMessageBox
-        if hasattr(self, 'batch_input'):
+        if hasattr(self, "batch_input"):
             self.batch_input.show_error("Please add files for batch processing.")
         return False
-    
+
     valid_pairs = self.batch_tree_view.get_all_valid_pairs()
     if not valid_pairs:
         logger.warning("No valid pairs found for batch processing.")
         QMessageBox.warning(self, "No Valid Pairs", "No valid pairs found.")
         return False
-    
+
     # Log information about valid pairs for debugging
-    logger.info(f"Batch mode validation passed with {len(valid_pairs)} valid pairs. Starting sync...")
-    
+    logger.info(
+        f"Batch mode validation passed with {len(valid_pairs)} valid pairs. Starting sync..."
+    )
+
     return True  # Indicate validation passed

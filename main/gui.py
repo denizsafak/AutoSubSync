@@ -13,16 +13,17 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QMenu,
     QMessageBox,
-    QFileIconProvider
+    QFileIconProvider,
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer
 from PyQt6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QAction, QActionGroup
 import os, base64
 from utils import *
 from constants import *
+
 # Import batch mode functionality
 from gui_batch_mode import (
-    BatchTreeView, 
+    BatchTreeView,
     show_batch_add_menu,
     handle_batch_drop,
 )
@@ -33,23 +34,30 @@ if platform.system() == "Windows":
 
 logger = logging.getLogger(__name__)
 
+
 class InputBox(QLabel):
     _STATE_CONFIG = {
-        'default': {
-            'border': COLORS["GREY"], 'bg': COLORS["BLUE_BACKGROUND"],
-            'hover_border': COLORS["BLUE"], 'hover_bg': COLORS["BLUE_BACKGROUND_HOVER"],
-            'text': None
+        "default": {
+            "border": COLORS["GREY"],
+            "bg": COLORS["BLUE_BACKGROUND"],
+            "hover_border": COLORS["BLUE"],
+            "hover_bg": COLORS["BLUE_BACKGROUND_HOVER"],
+            "text": None,
         },
-        'active': {
-            'border': COLORS["GREEN"], 'bg': COLORS["GREEN_BACKGROUND"],
-            'hover_border': COLORS["GREEN"], 'hover_bg': COLORS["GREEN_BACKGROUND_HOVER"],
-            'text': None
+        "active": {
+            "border": COLORS["GREEN"],
+            "bg": COLORS["GREEN_BACKGROUND"],
+            "hover_border": COLORS["GREEN"],
+            "hover_bg": COLORS["GREEN_BACKGROUND_HOVER"],
+            "text": None,
         },
-        'error': {
-            'border': COLORS["RED"], 'bg': COLORS["RED_BACKGROUND"],
-            'hover_border': COLORS["RED"], 'hover_bg': COLORS["RED_BACKGROUND_HOVER"],
-            'text': COLORS["RED"]
-        }
+        "error": {
+            "border": COLORS["RED"],
+            "bg": COLORS["RED_BACKGROUND"],
+            "hover_border": COLORS["RED"],
+            "hover_bg": COLORS["RED_BACKGROUND_HOVER"],
+            "text": COLORS["RED"],
+        },
     }
     BORDER_RADIUS = 5
     PADDING = 20
@@ -67,7 +75,7 @@ class InputBox(QLabel):
         self.setAcceptDrops(True)
         self.setText(text)
         self.setObjectName("inputBox")
-        self._active_state_key = 'default'  # Initialize current state
+        self._active_state_key = "default"  # Initialize current state
         self._apply_style()  # Apply initial style
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -75,7 +83,7 @@ class InputBox(QLabel):
         self.input_type = input_type
         self.default_text = text
         self._error_timer = None  # Timer for error message restoration
-        
+
         # Add clear button
         self.clear_btn = QPushButton("✕", self)
         self.clear_btn.setFixedSize(25, 25)
@@ -90,14 +98,16 @@ class InputBox(QLabel):
         self.goto_folder_btn.clicked.connect(self.open_file_folder)
         self.goto_folder_btn.hide()
         self.goto_folder_btn.setStyleSheet("font-size: 12px; padding: 2px 10px;")
-        
+
         # Add total shifted label for overwrite mode (only for manual tab input boxes)
         if input_type == "subtitle":  # Only for manual tab subtitle input
             self.total_shifted_label = QLabel("", self)
-            self.total_shifted_label.setStyleSheet(f"QLabel {{ color: {COLORS['GREY']} }}")
+            self.total_shifted_label.setStyleSheet(
+                f"QLabel {{ color: {COLORS['GREY']} }}"
+            )
             self.total_shifted_label.hide()
             self.total_shifted_ms = 0  # Track total shifted amount
-        
+
         if label:
             l = QLabel(label, self)
             l.setObjectName("boxLabel")
@@ -118,30 +128,39 @@ class InputBox(QLabel):
             # For "batch" type, file browsing is handled by the menu triggered from mousePressEvent.
             # For other unknown types, or if this is somehow called for batch, do nothing.
             return
-        
+
         # Get the parent autosubsync instance to access config
         parent = self
         while parent and not isinstance(parent, autosubsync):
             parent = parent.parentWidget()
-        
+
         if parent:
-            file_path = open_filedialog(parent, 'file-open', title, file_filter)
+            file_path = open_filedialog(parent, "file-open", title, file_filter)
             if file_path:
                 self.set_file(file_path)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton or event.button() == Qt.MouseButton.RightButton:
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            or event.button() == Qt.MouseButton.RightButton
+        ):
             if self.input_type == "batch":
                 main_window = self.window()
                 if isinstance(main_window, autosubsync):
                     # Pass self (InputBox) to position menu correctly and the event position
-                    menu = show_batch_add_menu(main_window, source_widget=self, position=event.globalPosition().toPoint())
+                    menu = show_batch_add_menu(
+                        main_window,
+                        source_widget=self,
+                        position=event.globalPosition().toPoint(),
+                    )
                     # Connect to menu close event to fix hover state
                     if menu:
                         menu.aboutToHide.connect(self._on_menu_closed)
                 return  # Prevent default browse_file for batch mode
-            
-            elif event.button() == Qt.MouseButton.LeftButton:  # Only browse on left click for non-batch
+
+            elif (
+                event.button() == Qt.MouseButton.LeftButton
+            ):  # Only browse on left click for non-batch
                 self.handle_file_dialog()
 
     def _on_menu_closed(self):
@@ -154,14 +173,14 @@ class InputBox(QLabel):
             # Force a style update
             self.style().unpolish(self)
             self.style().polish(self)
-            
+
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
-            self._apply_style(drag_hover=True) # Apply "hovered" appearance
-            
+            self._apply_style(drag_hover=True)  # Apply "hovered" appearance
+
     def dragLeaveEvent(self, event):
-        self._apply_style(drag_hover=False) # Restore normal appearance with :hover
+        self._apply_style(drag_hover=False)  # Restore normal appearance with :hover
 
     def dropEvent(self, event: QDropEvent):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
@@ -177,16 +196,16 @@ class InputBox(QLabel):
         while parent and not isinstance(parent, autosubsync):
             # Access parent as a property, not as a callable
             parent = parent.parentWidget()
-            
+
         # Special handling for exactly 2 files
         if len(files) == 2 and parent and not parent.batch_mode_enabled:
             # Get extensions of both files
             ext1 = os.path.splitext(files[0])[1].lower()
             ext2 = os.path.splitext(files[1])[1].lower()
-            
+
             reference_file = None
             subtitle_file = None
-            
+
             # Determine which is video and which is subtitle
             if ext1 in VIDEO_EXTENSIONS and ext2 in SUBTITLE_EXTENSIONS:
                 reference_file = files[0]
@@ -194,7 +213,7 @@ class InputBox(QLabel):
             elif ext1 in SUBTITLE_EXTENSIONS and ext2 in VIDEO_EXTENSIONS:
                 reference_file = files[1]
                 subtitle_file = files[0]
-                
+
             # If we have one of each file type, set them appropriately
             if reference_file and subtitle_file and parent:
                 # If in auto sync tab inputs
@@ -208,7 +227,7 @@ class InputBox(QLabel):
                 elif self == parent.manual_input_box:
                     self.set_file(subtitle_file)
                     return
-                
+
         # Standard single-file handling
         if self.input_type == "subtitle" or self.input_type == "video_or_subtitle":
             if files:
@@ -221,14 +240,12 @@ class InputBox(QLabel):
                 handle_batch_drop(main_window, files)
             return
 
-
-
     def set_file(self, file_path):
         logger.info(f'Added: "{file_path}"')
         if not os.path.exists(file_path):
             self.show_error("File does not exist")
             return
-            
+
         # Validate file type
         ext = os.path.splitext(file_path)[1].lower()
         if not ext:
@@ -238,74 +255,85 @@ class InputBox(QLabel):
         if self.input_type == "subtitle" and ext not in SUBTITLE_EXTENSIONS:
             self.show_error(f'"{ext}" is not a supported subtitle format.')
             return
-        elif self.input_type == "video_or_subtitle" and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS:
+        elif (
+            self.input_type == "video_or_subtitle"
+            and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS
+        ):
             self.show_error(f'"{ext}" is not a supported video or subtitle format.')
             return
 
         self.file_path = file_path
         name = os.path.basename(file_path)
         size = os.path.getsize(file_path)
-        
+
         # Hide manual sync message when file changes
         main_window = self.window()
-        if hasattr(main_window, 'manual_message_label') and main_window.manual_message_label.isVisible():
+        if (
+            hasattr(main_window, "manual_message_label")
+            and main_window.manual_message_label.isVisible()
+        ):
             main_window.manual_message_label.setVisible(False)
-        
+
         # Load total shifted amount from session data if available
-        if hasattr(self, 'total_shifted_ms'):
-            if hasattr(main_window, 'session_shifted_files'):
-                self.total_shifted_ms = main_window.session_shifted_files.get(file_path, 0)
+        if hasattr(self, "total_shifted_ms"):
+            if hasattr(main_window, "session_shifted_files"):
+                self.total_shifted_ms = main_window.session_shifted_files.get(
+                    file_path, 0
+                )
             else:
                 self.total_shifted_ms = 0
             # Update display after loading session data
-            if hasattr(main_window, '_update_total_shifted_display'):
+            if hasattr(main_window, "_update_total_shifted_display"):
                 main_window._update_total_shifted_display()
-        
+
         # Get icon without resizing using custom provider
         provider = QFileIconProvider()
         qicon = provider.icon(QFileInfo(file_path))
         size_icon = QSize(24, 24)
         pixmap = qicon.pixmap(size_icon)
-        
+
         # Convert to base64 PNG
         buffer = QBuffer()
         buffer.open(QIODevice.OpenModeFlag.WriteOnly)
         pixmap.save(buffer, "PNG")
         img_data = base64.b64encode(buffer.data()).decode()
-        
+
         # Update display
         self.setText(
             f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%; word-break: break-all;"><b>{name}</b></span><br>Size: {format_num(size)}'
         )
         self.setWordWrap(True)
-        self._active_state_key = 'active'
+        self._active_state_key = "active"
         self._apply_style()
-        
+
         # Show and position the clear button in the top right corner
         self.clear_btn.show()
         self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
         # Show and position the Go to folder button in the bottom left
         self.goto_folder_btn.show()
         self.goto_folder_btn.setToolTip(file_path)
-        self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
+        self.goto_folder_btn.move(
+            self.width() - self.goto_folder_btn.width() - 10,
+            self.height() - self.goto_folder_btn.height() - 10,
+        )
 
     def show_error(self, message):
         logger.warning(f"{message}")
-        
+
         # Cancel any existing error timer to prevent multiple resets
         if self._error_timer is not None:
             self._error_timer.stop()
             self._error_timer = None
-        
+
         prev_file_path = self.file_path
-        prev_text = self.text() if hasattr(self, 'text') else self.default_text
+        prev_text = self.text() if hasattr(self, "text") else self.default_text
         prev_state = self._active_state_key
         self.setText(message)
-        self._active_state_key = 'error'
+        self._active_state_key = "error"
         self._apply_style()
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
-        
+
         def restore_prev():
             # Only restore if file_path has not changed during error display
             if self.file_path == prev_file_path and prev_file_path:
@@ -319,7 +347,7 @@ class InputBox(QLabel):
             elif not self.file_path:
                 self.reset_to_default()
             self._error_timer = None  # Clear timer reference
-            
+
         self._error_timer = QTimer()
         self._error_timer.setSingleShot(True)
         self._error_timer.timeout.connect(restore_prev)
@@ -327,31 +355,42 @@ class InputBox(QLabel):
 
     def reset_to_default(self):
         logger.info("Resetting InputBox to default state.")
-        
+
         # Hide manual sync message when file is removed
         main_window = self.window()
-        if hasattr(main_window, 'manual_message_label') and main_window.manual_message_label.isVisible():
+        if (
+            hasattr(main_window, "manual_message_label")
+            and main_window.manual_message_label.isVisible()
+        ):
             main_window.manual_message_label.setVisible(False)
-        
+
         self.file_path = None
         self.setText(self.default_text)
-        self._active_state_key = 'default'
+        self._active_state_key = "default"
         self._apply_style()
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if hasattr(self, 'clear_btn') and self.clear_btn.isVisible():
+        if hasattr(self, "clear_btn") and self.clear_btn.isVisible():
             self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
-        if hasattr(self, 'goto_folder_btn') and self.goto_folder_btn.isVisible():
-            self.goto_folder_btn.move(self.width() - self.goto_folder_btn.width() - 10, self.height() - self.goto_folder_btn.height() - 10)
-        if hasattr(self, 'total_shifted_label') and self.total_shifted_label.isVisible():
-            self.total_shifted_label.move(10, self.height() - self.total_shifted_label.height() - 10)
+        if hasattr(self, "goto_folder_btn") and self.goto_folder_btn.isVisible():
+            self.goto_folder_btn.move(
+                self.width() - self.goto_folder_btn.width() - 10,
+                self.height() - self.goto_folder_btn.height() - 10,
+            )
+        if (
+            hasattr(self, "total_shifted_label")
+            and self.total_shifted_label.isVisible()
+        ):
+            self.total_shifted_label.move(
+                10, self.height() - self.total_shifted_label.height() - 10
+            )
 
     def open_file_folder(self):
         if self.file_path and os.path.exists(self.file_path):
-            open_folder(self.file_path, self)
+            open_folder(self.file_path)
         else:
             QMessageBox.warning(
                 self,
@@ -361,7 +400,7 @@ class InputBox(QLabel):
 
     def _apply_style(self, drag_hover=False):
         p = self._STATE_CONFIG[self._active_state_key]
-        t = f"color: {p['text']};" if p['text'] else ""
+        t = f"color: {p['text']};" if p["text"] else ""
         base = f"border-radius:{self.BORDER_RADIUS}px;padding:{self.PADDING}px;min-height:{self.MIN_HEIGHT}px;{t}"
         if drag_hover:
             s = f"QLabel#inputBox{{border:2px dashed {p['hover_border']};background:{p['hover_bg']};{base}}}"
@@ -386,7 +425,9 @@ class autosubsync(QWidget):
     def __init__(self):
         super().__init__()
         self.config = load_config()
-        self.batch_mode_enabled = self.config.get("batch_mode", DEFAULT_OPTIONS["batch_mode"])
+        self.batch_mode_enabled = self.config.get(
+            "batch_mode", DEFAULT_OPTIONS["batch_mode"]
+        )
         self.batch_tree_view = BatchTreeView(self)
         icon_path = get_resource_path("autosubsync.assets", "icon.ico")
         if icon_path:
@@ -396,7 +437,9 @@ class autosubsync(QWidget):
                     "autosubsync"
                 )
         # Check for updates at startup if enabled
-        if self.config.get("check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]):
+        if self.config.get(
+            "check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]
+        ):
             QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
         self.initUI()
         logger.info("Main window initialized")
@@ -414,7 +457,9 @@ class autosubsync(QWidget):
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(15, 15, 15, 15)
         self.tab_widget = QTabWidget(self)
-        self.tab_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.tab_widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.tab_widget.setStyleSheet(self.TAB_STYLE)
         outer_layout.addWidget(self.tab_widget)
         self.settings_btn = QPushButton(self)
@@ -424,14 +469,16 @@ class autosubsync(QWidget):
         self.settings_btn.setToolTip("Settings")
         self.settings_btn.setFixedSize(36, 36)
         self.settings_btn.move(self.width() - 36 - 15, 15)
-        
+
         # Create settings menu
         self.settings_menu = QMenu(self)
 
         # Add subtitle processing options
 
         # Add output subtitle encoding submenu
-        self.encoding_menu = self.settings_menu.addMenu("Change output subtitle encoding")
+        self.encoding_menu = self.settings_menu.addMenu(
+            "Change output subtitle encoding"
+        )
         self.encoding_action_group = QActionGroup(self)
         self.encoding_action_group.setExclusive(True)
 
@@ -439,32 +486,43 @@ class autosubsync(QWidget):
         self.encoding_disabled_action = QAction("Disabled", self)
         self.encoding_disabled_action.setCheckable(True)
         self.encoding_disabled_action.setActionGroup(self.encoding_action_group)
-        self.encoding_disabled_action.triggered.connect(lambda: update_config(self, "output_subtitle_encoding", "disabled"))
+        self.encoding_disabled_action.triggered.connect(
+            lambda: update_config(self, "output_subtitle_encoding", "disabled")
+        )
         self.encoding_menu.addAction(self.encoding_disabled_action)
 
         # Add "Same as input" option
         self.encoding_same_action = QAction("Same as input subtitle", self)
         self.encoding_same_action.setCheckable(True)
         self.encoding_same_action.setActionGroup(self.encoding_action_group)
-        self.encoding_same_action.triggered.connect(lambda: update_config(self, "output_subtitle_encoding", "same_as_input"))
+        self.encoding_same_action.triggered.connect(
+            lambda: update_config(self, "output_subtitle_encoding", "same_as_input")
+        )
         self.encoding_menu.addAction(self.encoding_same_action)
-        
+
         # Add separator before specific encodings
         self.encoding_menu.addSeparator()
-        
+
         # Add all available encodings
         from utils import get_available_encodings
+
         self.encoding_actions = {}
         for encoding_id, encoding_name in get_available_encodings():
             action = QAction(encoding_name, self)
             action.setCheckable(True)
             action.setActionGroup(self.encoding_action_group)
-            action.triggered.connect(lambda checked, enc=encoding_id: update_config(self, "output_subtitle_encoding", enc))
+            action.triggered.connect(
+                lambda checked, enc=encoding_id: update_config(
+                    self, "output_subtitle_encoding", enc
+                )
+            )
             self.encoding_menu.addAction(action)
             self.encoding_actions[encoding_id] = action
-        
+
         # Set the current selection
-        current_encoding = self.config.get("output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"])
+        current_encoding = self.config.get(
+            "output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"]
+        )
         if current_encoding == "default":
             self.encoding_default_action.setChecked(True)
         elif current_encoding == "same_as_input":
@@ -476,68 +534,114 @@ class autosubsync(QWidget):
             self.encoding_same_action.setChecked(True)
             update_config(self, "output_subtitle_encoding", "same_as_input")
 
-
-        self.backup_subtitles_action = QAction("Backup subtitles before overwriting", self)
+        self.backup_subtitles_action = QAction(
+            "Backup subtitles before overwriting", self
+        )
         self.backup_subtitles_action.setCheckable(True)
-        self.backup_subtitles_action.setChecked(self.config.get("backup_subtitles_before_overwriting", DEFAULT_OPTIONS["backup_subtitles_before_overwriting"]))
-        self.backup_subtitles_action.triggered.connect(lambda checked: update_config(self, "backup_subtitles_before_overwriting", checked))
+        self.backup_subtitles_action.setChecked(
+            self.config.get(
+                "backup_subtitles_before_overwriting",
+                DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
+            )
+        )
+        self.backup_subtitles_action.triggered.connect(
+            lambda checked: update_config(
+                self, "backup_subtitles_before_overwriting", checked
+            )
+        )
         self.settings_menu.addAction(self.backup_subtitles_action)
 
         self.keep_extracted_subtitles_action = QAction("Keep extracted subtitles", self)
         self.keep_extracted_subtitles_action.setCheckable(True)
-        self.keep_extracted_subtitles_action.setChecked(self.config.get("keep_extracted_subtitles", DEFAULT_OPTIONS["keep_extracted_subtitles"]))
-        self.keep_extracted_subtitles_action.triggered.connect(lambda checked: update_config(self, "keep_extracted_subtitles", checked))
+        self.keep_extracted_subtitles_action.setChecked(
+            self.config.get(
+                "keep_extracted_subtitles", DEFAULT_OPTIONS["keep_extracted_subtitles"]
+            )
+        )
+        self.keep_extracted_subtitles_action.triggered.connect(
+            lambda checked: update_config(self, "keep_extracted_subtitles", checked)
+        )
         self.settings_menu.addAction(self.keep_extracted_subtitles_action)
 
         self.keep_converted_subtitles_action = QAction("Keep converted subtitles", self)
         self.keep_converted_subtitles_action.setCheckable(True)
-        self.keep_converted_subtitles_action.setChecked(self.config.get("keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]))
-        self.keep_converted_subtitles_action.triggered.connect(lambda checked: update_config(self, "keep_converted_subtitles", checked))
+        self.keep_converted_subtitles_action.setChecked(
+            self.config.get(
+                "keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]
+            )
+        )
+        self.keep_converted_subtitles_action.triggered.connect(
+            lambda checked: update_config(self, "keep_converted_subtitles", checked)
+        )
         self.settings_menu.addAction(self.keep_converted_subtitles_action)
 
-        self.add_tool_prefix_action = QAction("Add \"tool_\" prefix to subtitles", self)
+        self.add_tool_prefix_action = QAction('Add "tool_" prefix to subtitles', self)
         self.add_tool_prefix_action.setCheckable(True)
-        self.add_tool_prefix_action.setChecked(self.config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"]))
-        self.add_tool_prefix_action.triggered.connect(lambda checked: update_config(self, "add_tool_prefix", checked))
+        self.add_tool_prefix_action.setChecked(
+            self.config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"])
+        )
+        self.add_tool_prefix_action.triggered.connect(
+            lambda checked: update_config(self, "add_tool_prefix", checked)
+        )
         self.settings_menu.addAction(self.add_tool_prefix_action)
 
         self.settings_menu.addSeparator()
 
         # Add 'Open config directory' option at the top
         self.open_config_dir_action = QAction("Open config directory", self)
-        self.open_config_dir_action.triggered.connect(lambda: open_config_directory(self))
+        self.open_config_dir_action.triggered.connect(
+            lambda: open_config_directory(self)
+        )
         self.settings_menu.addAction(self.open_config_dir_action)
 
         # Add 'Open logs directory' option at the top
         self.open_logs_directory_action = QAction("Open logs directory", self)
-        self.open_logs_directory_action.triggered.connect(lambda: open_logs_directory(self))
+        self.open_logs_directory_action.triggered.connect(
+            lambda: open_logs_directory(self)
+        )
         self.settings_menu.addAction(self.open_logs_directory_action)
 
         # Add 'Keep log records' option
         self.keep_log_records_action = QAction("Keep log records", self)
         self.keep_log_records_action.setCheckable(True)
-        self.keep_log_records_action.setChecked(self.config.get("keep_log_records", DEFAULT_OPTIONS["keep_log_records"]))
-        self.keep_log_records_action.triggered.connect(lambda checked: update_config(self, "keep_log_records", checked))
+        self.keep_log_records_action.setChecked(
+            self.config.get("keep_log_records", DEFAULT_OPTIONS["keep_log_records"])
+        )
+        self.keep_log_records_action.triggered.connect(
+            lambda checked: update_config(self, "keep_log_records", checked)
+        )
         self.settings_menu.addAction(self.keep_log_records_action)
 
         # Add 'Clear logs directory' option
         self.clear_logs_directory_action = QAction("Clear all logs", self)
-        self.clear_logs_directory_action.triggered.connect(lambda: clear_logs_directory(self))
+        self.clear_logs_directory_action.triggered.connect(
+            lambda: clear_logs_directory(self)
+        )
         self.settings_menu.addAction(self.clear_logs_directory_action)
 
         self.settings_menu.addSeparator()
 
         self.remember_changes_action = QAction("Remember the changes", self)
         self.remember_changes_action.setCheckable(True)
-        self.remember_changes_action.setChecked(self.config.get("remember_changes", DEFAULT_OPTIONS["remember_changes"]))
-        self.remember_changes_action.triggered.connect(lambda checked: toggle_remember_changes(self, checked))
+        self.remember_changes_action.setChecked(
+            self.config.get("remember_changes", DEFAULT_OPTIONS["remember_changes"])
+        )
+        self.remember_changes_action.triggered.connect(
+            lambda checked: toggle_remember_changes(self, checked)
+        )
         self.settings_menu.addAction(self.remember_changes_action)
 
         # Add 'Check for updates at startup' option
         self.check_updates_action = QAction("Check for updates at startup", self)
         self.check_updates_action.setCheckable(True)
-        self.check_updates_action.setChecked(self.config.get("check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]))
-        self.check_updates_action.triggered.connect(lambda checked: update_config(self, "check_updates_startup", checked))
+        self.check_updates_action.setChecked(
+            self.config.get(
+                "check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]
+            )
+        )
+        self.check_updates_action.triggered.connect(
+            lambda checked: update_config(self, "check_updates_startup", checked)
+        )
         self.settings_menu.addAction(self.check_updates_action)
 
         # Reset option
@@ -609,16 +713,17 @@ class autosubsync(QWidget):
                 item.widget().setParent(None)
             elif item.layout():
                 self.clear_layout(item.layout())
-                
+
     def eventFilter(self, obj, event):
         """Event filter to handle events for various widgets"""
         # Forward shift input events to the handler
-        if hasattr(self, '_handle_shift_input_events'):
+        if hasattr(self, "_handle_shift_input_events"):
             if self._handle_shift_input_events(obj, event):
                 return True
         return super().eventFilter(obj, event)
 
     def show_settings_menu(self):
         # Show the menu at the right position below the button
-        self.settings_menu.popup(self.settings_btn.mapToGlobal(
-            self.settings_btn.rect().bottomLeft()))
+        self.settings_menu.popup(
+            self.settings_btn.mapToGlobal(self.settings_btn.rect().bottomLeft())
+        )

@@ -11,33 +11,34 @@ import xml.etree.ElementTree as ET
 from typing import Optional, Tuple, List
 from utils import detect_encoding
 
+
 def convert_sub_to_srt(input_file: str, output_file: str) -> None:
     """Convert SUB subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input SUB file
         output_file: Path to the output SRT file
     """
     encoding = detect_encoding(input_file)
-    
+
     try:
         with open(input_file, "r", encoding=encoding, errors="replace") as sub, open(
             output_file, "w", encoding="utf-8"
         ) as srt:
             srt_counter = 1
-            
+
             while True:
                 line = sub.readline().strip()
                 if not line:
                     break
-                    
+
                 match = re.match(r"\{(\d+)\}\{(\d+)\}(.*)", line)
                 if match:
                     start, end, text = match.groups()
                     text_lines = text.split("|")
                     formatted_start = format_sub_time(start)
                     formatted_end = format_sub_time(end)
-                    
+
                     srt.write(f"{srt_counter}\n")
                     srt.write(f"{formatted_start} --> {formatted_end}\n")
                     srt.write("\n".join(text_lines) + "\n\n")
@@ -45,18 +46,18 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
                 else:
                     timestamps = line
                     text_lines = []
-                    
+
                     while True:
                         next_line = sub.readline().strip()
                         if not next_line:
                             break
                         text_lines.append(next_line.replace("[br]", "\n"))
-                    
+
                     if "," in timestamps:
                         start, end = timestamps.split(",")
                         formatted_start = format_sub_time(start)
                         formatted_end = format_sub_time(end)
-                        
+
                         srt.write(f"{srt_counter}\n")
                         srt.write(f"{formatted_start} --> {formatted_end}\n")
                         srt.write("\n".join(text_lines) + "\n\n")
@@ -67,10 +68,10 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
 
 def format_sub_time(time_str: str) -> str:
     """Format SUB time string to SRT time format.
-    
+
     Args:
         time_str: Time string from SUB file
-        
+
     Returns:
         Formatted time string in SRT format
     """
@@ -80,7 +81,7 @@ def format_sub_time(time_str: str) -> str:
         m, s = divmod(s, 60)
         h, m = divmod(m, 60)
         return f"{h:02}:{m:02}:{s:02},{ms:03}"
-    
+
     parts = re.split(r"[:.]", time_str)
     if len(parts) >= 4:
         h, m, s, ms = map(int, parts[:4])
@@ -93,13 +94,13 @@ def format_sub_time(time_str: str) -> str:
 
 def convert_ass_to_srt(input_file: str, output_file: str) -> None:
     """Convert ASS/SSA subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input ASS/SSA file
         output_file: Path to the output SRT file
     """
     encoding = detect_encoding(input_file)
-    
+
     try:
         with open(input_file, "r", encoding=encoding, errors="replace") as ass, open(
             output_file, "w", encoding="utf-8"
@@ -107,27 +108,27 @@ def convert_ass_to_srt(input_file: str, output_file: str) -> None:
             srt_counter = 1
             buffer = ""
             collecting = False
-            
+
             for line in ass:
                 if line.startswith("Dialogue:"):
                     collecting = True
                     if buffer:
                         srt.write(f"{buffer}\n\n")
                         srt_counter += 1
-                        
+
                     parts = line.split(",", 9)
                     if len(parts) < 10:
                         continue
-                        
+
                     start = parts[1].strip()
                     end = parts[2].strip()
                     text = parts[9].replace("\\N", "\n").strip()
-                    
+
                     # Replace ASS/SSA tags with SRT tags
                     text = text.replace("{i}", "<i>").replace("{/i}", "</i>")
                     text = text.replace("{u}", "<u>").replace("{/u}", "</u>")
                     text = text.replace("{b}", "<b>").replace("{/b}", "</b>")
-                    
+
                     buffer = f"{srt_counter}\n{format_ass_time(start)} --> {format_ass_time(end)}\n{text}"
                 elif collecting:
                     line = line.strip()
@@ -136,7 +137,7 @@ def convert_ass_to_srt(input_file: str, output_file: str) -> None:
                     line = line.replace("{u}", "<u>").replace("{/u}", "</u>")
                     line = line.replace("{b}", "<b>").replace("{/b}", "</b>")
                     buffer += f"\n{line}"
-                    
+
             if buffer:
                 srt.write(f"{buffer}\n\n")
     except Exception as e:
@@ -145,10 +146,10 @@ def convert_ass_to_srt(input_file: str, output_file: str) -> None:
 
 def format_ass_time(time_str: str) -> str:
     """Format ASS/SSA time string to SRT time format.
-    
+
     Args:
         time_str: Time string from ASS/SSA file (H:MM:SS.CC format)
-        
+
     Returns:
         Formatted time string in SRT format (HH:MM:SS,mmm)
     """
@@ -161,7 +162,7 @@ def format_ass_time(time_str: str) -> str:
 
 def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
     """Convert TTML/DFXP subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input TTML/DFXP file
         output_file: Path to the output SRT file
@@ -232,10 +233,10 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
 
 def format_ttml_time(timestamp: str) -> str:
     """Format TTML timestamp to SRT time format.
-    
+
     Args:
         timestamp: TTML timestamp string
-        
+
     Returns:
         Formatted time string in SRT format
     """
@@ -267,7 +268,7 @@ def format_ttml_time(timestamp: str) -> str:
 
 def convert_vtt_to_srt(input_file: str, output_file: str) -> None:
     """Convert VTT subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input VTT file
         output_file: Path to the output SRT file
@@ -289,7 +290,9 @@ def convert_vtt_to_srt(input_file: str, output_file: str) -> None:
                 if match:
                     start, end = match.groups()
                     srt.write(f"{srt_counter}\n")
-                    srt.write(f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n")
+                    srt.write(
+                        f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n"
+                    )
                     srt_counter += 1
                     text = ""
                     while True:
@@ -308,7 +311,7 @@ def convert_vtt_to_srt(input_file: str, output_file: str) -> None:
 
 def convert_sbv_to_srt(input_file: str, output_file: str) -> None:
     """Convert SBV subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input SBV file
         output_file: Path to the output SRT file
@@ -353,10 +356,10 @@ def convert_sbv_to_srt(input_file: str, output_file: str) -> None:
 
 def format_sbv_time(time_str: str) -> str:
     """Format SBV time string to SRT format.
-    
+
     Args:
         time_str: Time string from SBV file
-        
+
     Returns:
         Formatted time string in SRT format
     """
@@ -367,7 +370,7 @@ def format_sbv_time(time_str: str) -> str:
 
 def convert_stl_to_srt(input_file: str, output_file: str) -> None:
     """Convert STL subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input STL file
         output_file: Path to the output SRT file
@@ -398,10 +401,10 @@ def convert_stl_to_srt(input_file: str, output_file: str) -> None:
 
 def convert_stl_time(time_str: str) -> str:
     """Convert STL time format to SRT time format.
-    
+
     Args:
         time_str: Time string from STL file
-        
+
     Returns:
         Formatted time string in SRT format
     """
@@ -413,123 +416,128 @@ def convert_stl_time(time_str: str) -> str:
 
 def convert_smi_to_srt(input_file: str, output_file: str) -> None:
     """Convert SMI subtitle file to SRT format.
-    
+
     Args:
         input_file: Path to the input SMI file
         output_file: Path to the output SRT file
     """
     encoding = detect_encoding(input_file)
-    
+
     try:
         with open(input_file, "r", encoding=encoding, errors="replace") as smi:
             content = smi.read()
-            
+
         # Extract all SYNC blocks with their timestamps
         sync_blocks = re.findall(
-            r'<SYNC\s+Start=(\d+)(?:\s+[^>]*)?>(.*?)(?=<SYNC|</BODY|\Z)',
+            r"<SYNC\s+Start=(\d+)(?:\s+[^>]*)?>(.*?)(?=<SYNC|</BODY|\Z)",
             content,
-            re.DOTALL | re.IGNORECASE
+            re.DOTALL | re.IGNORECASE,
         )
-        
+
         if not sync_blocks:
             raise ValueError("No valid SYNC blocks found in SMI file")
-        
+
         with open(output_file, "w", encoding="utf-8") as srt:
             srt_counter = 1
-            
+
             for i, (start_ms_str, text_block) in enumerate(sync_blocks):
                 start_ms = int(start_ms_str)
-                
+
                 # Calculate end time
                 if i < len(sync_blocks) - 1:
-                    end_ms = int(sync_blocks[i+1][0])
+                    end_ms = int(sync_blocks[i + 1][0])
                 else:
                     # Default duration for the last subtitle
                     end_ms = start_ms + 5000
-                
+
                 # Skip empty blocks that only serve to clear previous text
                 if not text_block.strip() or text_block.strip() == "&nbsp;":
                     continue
-                
+
                 # Extract text from P tags and clean HTML formatting
                 clean_text = ""
-                
+
                 # Find all P tags in the text block
-                p_tags = re.finditer(r'<P[^>]*>(.*?)(?=</P>|$)', text_block, re.DOTALL | re.IGNORECASE)
-                
+                p_tags = re.finditer(
+                    r"<P[^>]*>(.*?)(?=</P>|$)", text_block, re.DOTALL | re.IGNORECASE
+                )
+
                 for match in p_tags:
                     # Get the content between <P> and </P>
                     p_content = match.group(1).strip()
-                    
+
                     if not p_content or p_content == "&nbsp;":
                         continue
-                    
+
                     # First, handle <br> tags by replacing with a special marker
                     # This ensures they're preserved during other HTML tag removal
-                    p_content = re.sub(r'<br\s*/?>|<BR\s*/?>', '\n', p_content, flags=re.IGNORECASE)
-                    
+                    p_content = re.sub(
+                        r"<br\s*/?>|<BR\s*/?>", "\n", p_content, flags=re.IGNORECASE
+                    )
+
                     # Remove other HTML tags but preserve their content
-                    p_content = re.sub(r'<[^>]*>', '', p_content)
-                    
+                    p_content = re.sub(r"<[^>]*>", "", p_content)
+
                     # Decode HTML entities
                     html_entities = {
-                        '&nbsp;': ' ',
-                        '&lt;': '<',
-                        '&gt;': '>',
-                        '&amp;': '&',
-                        '&quot;': '"',
-                        '&#39;': "'",
-                        '&hellip;': '...',
-                        '&mdash;': '—',
-                        '&ndash;': '–',
-                        '&lsquo;': ''',
-                        '&rsquo;': ''',
-                        '&ldquo;': '"',
-                        '&rdquo;': '"'
+                        "&nbsp;": " ",
+                        "&lt;": "<",
+                        "&gt;": ">",
+                        "&amp;": "&",
+                        "&quot;": '"',
+                        "&#39;": "'",
+                        "&hellip;": "...",
+                        "&mdash;": "—",
+                        "&ndash;": "–",
+                        "&lsquo;": """,
+                        '&rsquo;': """,
+                        "&ldquo;": '"',
+                        "&rdquo;": '"',
                     }
-                    
+
                     for entity, replacement in html_entities.items():
                         p_content = p_content.replace(entity, replacement)
-                    
+
                     # Clean up whitespace while preserving newlines
-                    lines = p_content.split('\n')
+                    lines = p_content.split("\n")
                     cleaned_lines = []
                     for line in lines:
                         # Replace multiple spaces with a single space and trim
-                        cleaned_line = re.sub(r'\s+', ' ', line).strip()
+                        cleaned_line = re.sub(r"\s+", " ", line).strip()
                         if cleaned_line:  # Only add non-empty lines
                             cleaned_lines.append(cleaned_line)
-                    
-                    p_content = '\n'.join(cleaned_lines)
-                    
+
+                    p_content = "\n".join(cleaned_lines)
+
                     if p_content:
                         clean_text += p_content + "\n"
-                
+
                 clean_text = clean_text.strip()
-                
+
                 # Skip if there's no text content after cleaning
                 if not clean_text:
                     continue
-                
+
                 # Format timestamps for SRT
                 start_time = format_ms_to_srt_time(start_ms)
                 end_time = format_ms_to_srt_time(end_ms)
-                
+
                 # Write SRT entry
                 srt.write(f"{srt_counter}\n")
                 srt.write(f"{start_time} --> {end_time}\n")
                 srt.write(f"{clean_text}\n\n")
                 srt_counter += 1
-                
+
     except Exception as e:
         raise ValueError(f"Error converting SMI to SRT: {str(e)}")
 
+
 def format_ms_to_srt_time(ms: int) -> str:
     """Convert milliseconds to SRT time format (HH:MM:SS,mmm).
-    
+
     Args:
         ms: Time in milliseconds
-        
+
     Returns:
         Formatted time string in SRT format
     """
@@ -541,10 +549,10 @@ def format_ms_to_srt_time(ms: int) -> str:
 
 def strip_namespace(tag: str) -> str:
     """Remove namespace from XML tag name.
-    
+
     Args:
         tag: XML tag name with potential namespace
-        
+
     Returns:
         Tag name without namespace
     """
@@ -553,13 +561,15 @@ def strip_namespace(tag: str) -> str:
     return tag
 
 
-def convert_to_srt(subtitle_file: str, output_dir: str) -> Tuple[Optional[str], List[str]]:
+def convert_to_srt(
+    subtitle_file: str, output_dir: str
+) -> Tuple[Optional[str], List[str]]:
     """Convert subtitle file to SRT format.
-    
+
     Args:
         subtitle_file: Path to the input subtitle file
         output_dir: Directory to save the converted SRT file
-        
+
     Returns:
         Tuple of (output_file_path, messages_list)
     """
@@ -569,7 +579,7 @@ def convert_to_srt(subtitle_file: str, output_dir: str) -> Tuple[Optional[str], 
     )  # Store original base name
     srt_file = os.path.join(output_dir, "converted_" + original_base_name + ".srt")
     messages = []
-    
+
     converters = {
         ".ttml": convert_ttml_or_dfxp_to_srt,
         ".dfxp": convert_ttml_or_dfxp_to_srt,
@@ -582,7 +592,7 @@ def convert_to_srt(subtitle_file: str, output_dir: str) -> Tuple[Optional[str], 
         ".stl": convert_stl_to_srt,
         ".smi": convert_smi_to_srt,
     }
-    
+
     converter = converters.get(file_extension)
     if converter:
         try:
@@ -593,5 +603,7 @@ def convert_to_srt(subtitle_file: str, output_dir: str) -> Tuple[Optional[str], 
             return None, messages
         return srt_file, messages
 
-    messages.append(f"Error: Unsupported subtitle format for conversion: {file_extension}")
+    messages.append(
+        f"Error: Unsupported subtitle format for conversion: {file_extension}"
+    )
     return None, messages

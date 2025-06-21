@@ -7,22 +7,26 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
 
 # Add the directory to Python path
-#sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+# sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from gui import autosubsync
 from gui_automatic_tab import attach_functions_to_autosubsync as attach_auto_functions
 from gui_manual_tab import attach_functions_to_autosubsync as attach_manual_functions
 from gui_batch_mode import attach_functions_to_autosubsync as attach_batch_functions
-from gui_auto_pairing import attach_functions_to_autosubsync as attach_auto_pairing_functions
+from gui_auto_pairing import (
+    attach_functions_to_autosubsync as attach_auto_pairing_functions,
+)
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
 
 # Set environment variables for ffmpeg and ffprobe
-os.environ["PATH"] = os.pathsep.join([
-    os.path.dirname(FFMPEG_EXECUTABLE),
-    os.path.dirname(FFPROBE_EXECUTABLE),
-    os.environ.get("PATH", "")
-])
+os.environ["PATH"] = os.pathsep.join(
+    [
+        os.path.dirname(FFMPEG_EXECUTABLE),
+        os.path.dirname(FFPROBE_EXECUTABLE),
+        os.environ.get("PATH", ""),
+    ]
+)
 
 # Setup root logger with basic configuration
 try:
@@ -44,6 +48,7 @@ attach_manual_functions(autosubsync)
 attach_batch_functions(autosubsync)
 attach_auto_pairing_functions(autosubsync)
 
+
 # Custom message handler to filter out specific Qt warnings
 def qt_message_handler(mode, context, message):
     if "Wayland does not support QWindow::requestActivate()" in message:
@@ -56,6 +61,7 @@ def qt_message_handler(mode, context, message):
         print(f"Qt Fatal: {message}")
     elif mode == QtMsgType.QtInfoMsg:
         print(f"Qt Info: {message}")
+
 
 # Install the custom message handler
 qInstallMessageHandler(qt_message_handler)
@@ -87,6 +93,7 @@ if platform.system() == "Linux":
 # Set up main logger
 logger = logging.getLogger(__name__)
 
+
 def main():
     """Main entry point for console usage."""
     logger.info("Starting application")
@@ -107,6 +114,7 @@ def main():
     ex = autosubsync()
     ex.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

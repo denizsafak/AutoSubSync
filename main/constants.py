@@ -12,8 +12,12 @@ VERSION = get_version()
 
 # ffmpeg and ffprobe paths
 _exe_suffix = ".exe" if platform.system() == "Windows" else ""
-FFMPEG_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}")
-FFPROBE_EXECUTABLE = get_resource_path("autosubsync.resources.ffmpeg-bin", f"ffprobe{_exe_suffix}")
+FFMPEG_EXECUTABLE = get_resource_path(
+    "autosubsync.resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}"
+)
+FFPROBE_EXECUTABLE = get_resource_path(
+    "autosubsync.resources.ffmpeg-bin", f"ffprobe{_exe_suffix}"
+)
 
 # Synchronization tools
 SYNC_TOOLS = {
@@ -22,9 +26,15 @@ SYNC_TOOLS = {
         "github": "https://github.com/smacke/ffsubsync",
         "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
         "executable": {
-            "Windows": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync.exe"),
-            "Linux": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync"),
-            "Darwin": get_resource_path("autosubsync.resources.ffsubsync-bin", "ffsubsync")
+            "Windows": get_resource_path(
+                "autosubsync.resources.ffsubsync-bin", "ffsubsync.exe"
+            ),
+            "Linux": get_resource_path(
+                "autosubsync.resources.ffsubsync-bin", "ffsubsync"
+            ),
+            "Darwin": get_resource_path(
+                "autosubsync.resources.ffsubsync-bin", "ffsubsync"
+            ),
         },
         "cmd_structure": ["{reference}", "-i", "{subtitle}", "-o", "{output}"],
         "options": {
@@ -33,14 +43,14 @@ SYNC_TOOLS = {
                 "label": "Don't fix framerate",
                 "tooltip": "--no-fix-framerate: Disable automatic frame rate correction",
                 "argument": "--no-fix-framerate",
-                "default": False
+                "default": False,
             },
             "use_golden_section": {
                 "type": "checkbox",
                 "label": "Use golden section search",
                 "tooltip": "--gss: Use golden section search for better alignment",
                 "argument": "--gss",
-                "default": False
+                "default": False,
             },
             "vad": {
                 "type": "dropdown",
@@ -48,7 +58,15 @@ SYNC_TOOLS = {
                 "tooltip": "--vad: Enable voice activity detection for better alignment",
                 "argument": "--vad",
                 "default": "default",
-                "values": ["default", "subs_then_webrtc", "subs_then_auditok", "subs_then_silero", "webrtc", "auditok", "silero"],
+                "values": [
+                    "default",
+                    "subs_then_webrtc",
+                    "subs_then_auditok",
+                    "subs_then_silero",
+                    "webrtc",
+                    "auditok",
+                    "silero",
+                ],
                 "value_labels": {
                     "default": "Default",
                     "subs_then_webrtc": "Subs then WebRTC",
@@ -56,19 +74,23 @@ SYNC_TOOLS = {
                     "subs_then_silero": "Subs then Silero",
                     "webrtc": "WebRTC",
                     "auditok": "Auditok",
-                    "silero": "Silero"
-                }
-            }
-        }
+                    "silero": "Silero",
+                },
+            },
+        },
     },
     "alass": {
         "description": "Audio-based subtitle synchronization with high accuracy",
         "github": "https://github.com/kaegi/alass",
         "supported_formats": [".srt", ".ass", ".ssa", ".sub", ".idx"],
         "executable": {
-            "Windows": get_resource_path("autosubsync.resources.alass-bin", "alass-cli.exe"),
-            "Linux": get_resource_path("autosubsync.resources.alass-bin", "alass-linux64"),
-            "Darwin": "alass-cli"
+            "Windows": get_resource_path(
+                "autosubsync.resources.alass-bin", "alass-cli.exe"
+            ),
+            "Linux": get_resource_path(
+                "autosubsync.resources.alass-bin", "alass-linux64"
+            ),
+            "Darwin": "alass-cli",
         },
         "cmd_structure": ["{reference}", "{subtitle}", "{output}"],
         "options": {
@@ -76,21 +98,21 @@ SYNC_TOOLS = {
                 "type": "checkbox",
                 "label": "Check video subtitles",
                 "tooltip": "Check if video already contains subtitles",
-                "default": True
+                "default": True,
             },
             "disable_fps_guessing": {
                 "type": "checkbox",
                 "label": "Disable FPS guessing",
                 "tooltip": "--disable-fps-guessing: Disable automatic frame rate detection",
                 "argument": "--disable-fps-guessing",
-                "default": False
+                "default": False,
             },
             "disable_speed_optimization": {
                 "type": "checkbox",
                 "label": "Disable speed optimization",
                 "tooltip": "--speed-optimization 0: Disable speed optimization algorithms",
                 "argument": "--speed-optimization 0",
-                "default": False
+                "default": False,
             },
             "split_penalty": {
                 "type": "slider",
@@ -99,10 +121,10 @@ SYNC_TOOLS = {
                 "argument": "--split-penalty",
                 "no_split_argument": "--no-split",
                 "range": [-1, 100],
-                "default": 7
-            }
-        }
-    }
+                "default": 7,
+            },
+        },
+    },
 }
 
 DEFAULT_OPTIONS = {
@@ -185,8 +207,4 @@ VIDEO_EXTENSIONS = [
     ".hevc",
 ]
 
-EXTRACTABLE_SUBTITLE_EXTENSIONS = {
-    "subrip": "srt",
-    "ass": "ass",
-    "webvtt": "vtt"
-}
+EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt"}
