@@ -122,7 +122,7 @@ class InputBox(QLabel):
         # Get the parent autosubsync instance to access config
         parent = self
         while parent and not isinstance(parent, autosubsync):
-            parent = parent.parent()
+            parent = parent.parentWidget()
         
         if parent:
             file_path = open_filedialog(parent, 'file-open', title, file_filter)
@@ -175,7 +175,8 @@ class InputBox(QLabel):
         # Get the parent autosubsync instance first
         parent = self
         while parent and not isinstance(parent, autosubsync):
-            parent = parent.parent()
+            # Access parent as a property, not as a callable
+            parent = parent.parentWidget()
             
         # Special handling for exactly 2 files
         if len(files) == 2 and parent and not parent.batch_mode_enabled:

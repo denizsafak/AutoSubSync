@@ -551,11 +551,15 @@ class BatchTreeView(QTreeWidget):
         action_add_continuously = add_files_menu.addAction("Add pair (continuously)")
         action_add_folder = add_files_menu.addAction("Add folder")
         action_add_files = add_files_menu.addAction("Add multiple files")
+        add_files_menu.addSeparator()
+        action_auto_pairing = add_files_menu.addAction("Auto-Pairing with Season/Episode")
 
         action_add_pair.triggered.connect(lambda: self.app_parent.handle_add_pair())
         action_add_folder.triggered.connect(lambda: self.app_parent.handle_add_folder())
         action_add_files.triggered.connect(lambda: self.app_parent.handle_add_multiple_files())
         action_add_continuously.triggered.connect(self.app_parent.handle_add_pairs_continuously)
+        # Connect the new auto-pairing option
+        action_auto_pairing.triggered.connect(lambda: self.app_parent.open_auto_pairing_dialog())
         
         menu.addSeparator()
 
@@ -1056,12 +1060,16 @@ def show_batch_add_menu(self, source_widget=None, position=None):
     action_add_continuously = menu.addAction("Add pair (continuously)")
     action_add_folder = menu.addAction("Add folder")
     action_add_files = menu.addAction("Add multiple files")
-
+    # Add new auto-pairing option
+    menu.addSeparator()
+    action_auto_pairing = menu.addAction("Auto-Pairing with Season/Episode")
 
     action_add_pair.triggered.connect(lambda: handle_add_pair(self))
     action_add_folder.triggered.connect(lambda: handle_add_folder(self))
     action_add_files.triggered.connect(lambda: handle_add_multiple_files(self))
     action_add_continuously.triggered.connect(lambda: handle_add_pairs_continuously(self))
+    # Connect the new auto-pairing option
+    action_auto_pairing.triggered.connect(lambda: self.open_auto_pairing_dialog())
     
     # Show menu at the specified position, or at a position relevant to the source widget
     if position:
