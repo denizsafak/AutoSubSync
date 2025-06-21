@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import (
     QFileIconProvider, QSplitter, QWidget, QMessageBox, QScrollArea, 
     QFrame, QMenu, QDialogButtonBox, QTreeWidget, QTreeWidgetItem
 )
-from PyQt6.QtCore import Qt, QFileInfo
-from PyQt6.QtGui import QColor
+from PyQt6.QtCore import Qt, QFileInfo, QUrl
+from PyQt6.QtGui import QColor, QDesktopServices
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, PROGRAM_NAME, COLORS
 from utils import open_filedialog
 
@@ -108,6 +108,7 @@ class AutoPairingDialog(QDialog):
         
         exp_widget = QWidget()
         exp_layout = QVBoxLayout(exp_widget)
+        exp_layout.setContentsMargins(0, 0, 0, 0)
         exp_layout.addWidget(QLabel("<h2>How the Pairing Works?</h2>"))
         desc = QLabel(f"{PROGRAM_NAME} will automatically match videos or reference subtitles with subtitle files using similar names.\n"
                      f"For example: \"S01E01.srt/mkv\" will be paired with \"1x01.srt\"\n"
@@ -226,10 +227,10 @@ class AutoPairingDialog(QDialog):
         move_btn.setEnabled(False)
         move_btn.clicked.connect(lambda: self.move_to_other_list(is_reference))
         
-        btn_layout.addStretch()
         btn_layout.addWidget(add_files_btn)
         btn_layout.addWidget(remove_btn)
         btn_layout.addWidget(move_btn)
+        btn_layout.addStretch()
         
         return buttons
     
@@ -280,6 +281,13 @@ class AutoPairingDialog(QDialog):
         remove_action = menu.addAction("Remove selected")
         remove_action.setEnabled(has_selection)
         remove_action.triggered.connect(lambda: self.remove_selected(is_reference))
+        
+        menu.addSeparator()
+        
+        # Add "Go to folder" option for any selected item
+        if has_selection:
+            go_to_folder_action = menu.addAction("Go to folder")
+            go_to_folder_action.triggered.connect(lambda: self.go_to_folder(components['widget'].selectedItems()[0]))
         
         menu.addAction("Clear all", lambda: self.clear_files(is_reference))
         menu.popup(components['widget'].mapToGlobal(position))
@@ -394,6 +402,7 @@ class AutoPairingDialog(QDialog):
             item = QTreeWidgetItem([name])
             item.setData(0, Qt.ItemDataRole.UserRole, file_path)
             item.setIcon(0, self.icon_provider.icon(QFileInfo(file_path)))
+            item.setToolTip(0, file_path)
             target['widget'].addTopLevelItem(item)
         
         # Update UI visibility
@@ -412,7 +421,7 @@ class AutoPairingDialog(QDialog):
         files = open_filedialog(
             self.parent_window, 'files-open',
             f"Select {'Video or Reference Subtitle' if is_reference else 'Subtitle'} Files",
-            f"{'Video/Subtitle' if is_reference else 'Subtitle'} Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS if is_reference else SUBTITLE_EXTENSIONS)})"
+            f"{'Video/Subtitle' if is_reference else 'Subtitle'} Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
         )
         if files:
             self.add_files(is_reference, files)
@@ -527,6 +536,7 @@ class AutoPairingDialog(QDialog):
             item = QTreeWidgetItem([name])
             item.setData(0, Qt.ItemDataRole.UserRole, path)
             item.setIcon(0, self.icon_provider.icon(QFileInfo(path)))
+            item.setToolTip(0, path)
             widget.addTopLevelItem(item)
         
         # Update pairing and UI state before showing message box
@@ -636,6 +646,7 @@ class AutoPairingDialog(QDialog):
                 new_item = QTreeWidgetItem([text])
                 new_item.setData(0, Qt.ItemDataRole.UserRole, path)
                 new_item.setIcon(0, icon)
+                new_item.setToolTip(0, path)
                 new_item.setBackground(0, green if is_paired else QColor(Qt.GlobalColor.transparent))
                 widget.addTopLevelItem(new_item)
     
@@ -679,6 +690,24 @@ class AutoPairingDialog(QDialog):
             self.close()
         else:
             QMessageBox.information(self, "No New Pairs", "All pairs already exist in the batch.")
+    
+    def go_to_folder(self, item):
+        """Open the folder containing the file for the given item."""
+        if not item:
+            return
+        
+        file_path = item.data(0, Qt.ItemDataRole.UserRole)
+        if not file_path or not os.path.exists(file_path):
+            QMessageBox.warning(
+                self,
+                "File Not Found",
+                "The selected file does not exist or has been moved."
+            )
+            return
+        
+        folder_path = os.path.dirname(file_path)
+        folder_url = QUrl.fromLocalFile(folder_path)
+        QDesktopServices.openUrl(folder_url)
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach auto-pairing functions."""
