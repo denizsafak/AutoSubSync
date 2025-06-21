@@ -210,17 +210,14 @@ class AutoPairingDialog(QDialog):
         btn_layout.setSpacing(5)
         
         add_files_btn = QPushButton("Add Files")
-        add_files_btn.setFixedHeight(24)
         add_files_btn.clicked.connect(lambda: self.show_add_menu_button(is_reference))
         
         remove_btn = QPushButton("Remove selected")
-        remove_btn.setFixedHeight(24)
         remove_btn.setObjectName("remove")
         remove_btn.setEnabled(False)
         remove_btn.clicked.connect(lambda: self.remove_selected(is_reference))
         
         move_btn = QPushButton("⇄")
-        move_btn.setFixedHeight(24)
         move_btn.setFixedWidth(30)
         move_btn.setObjectName("move")
         move_btn.setToolTip("Move selected items to other list")
