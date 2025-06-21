@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from constants import COLORS, DEFAULT_OPTIONS, MANUAL_SAVE_MAP
-from utils import handle_save_location_dropdown, update_folder_label, update_config
+from utils import handle_save_location_dropdown, update_folder_label, update_config, open_folder
 from sync_manual import shift_subtitle, determine_manual_output_path
 
 logger = logging.getLogger(__name__)
@@ -549,12 +549,8 @@ def _on_message_clicked(self, event):
         
         # Check if file exists
         if os.path.exists(result_file):
-            # Open containing folder
-            folder = os.path.dirname(result_file)
-            from PyQt6.QtCore import QUrl
-            from PyQt6.QtGui import QDesktopServices
-            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
-            logger.info(f"Opened folder: {folder}")
+            # Open containing folder using the new open_folder function
+            open_folder(result_file, self)
         else:
             # Show error dialog if file not found
             QMessageBox.warning(

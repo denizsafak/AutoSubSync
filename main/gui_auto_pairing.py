@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QFileInfo, QUrl
 from PyQt6.QtGui import QColor, QDesktopServices
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, PROGRAM_NAME, COLORS
-from utils import open_filedialog
+from utils import open_filedialog, open_folder
 
 logger = logging.getLogger(__name__)
 
@@ -702,9 +702,7 @@ class AutoPairingDialog(QDialog):
             )
             return
         
-        folder_path = os.path.dirname(file_path)
-        folder_url = QUrl.fromLocalFile(folder_path)
-        QDesktopServices.openUrl(folder_url)
+        open_folder(file_path, self)
 
 def attach_functions_to_autosubsync(autosubsync_class):
     """Attach auto-pairing functions."""

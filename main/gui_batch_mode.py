@@ -27,7 +27,7 @@ import os
 import re
 import logging
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
-from utils import update_config, open_filedialog
+from utils import update_config, open_filedialog, open_folder
 
 # Set up logging for batch events
 logger = logging.getLogger(__name__)
@@ -995,7 +995,7 @@ class BatchTreeView(QTreeWidget):
 
     def open_item_folder(self, item):
         logger.info(f"Opening folder for item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item and item.data(0, Qt.ItemDataRole.UserRole) else None}")
-        """Open the folder containing the file for the given item using QDesktopServices."""
+        """Open the folder containing the file for the given item."""
         if not item:
             return
         
@@ -1004,14 +1004,7 @@ class BatchTreeView(QTreeWidget):
             QMessageBox.warning(self.app_parent, "File Not Found", "The file does not exist or path is invalid.")
             return
         
-        folder_path = os.path.dirname(file_path)
-        if not os.path.isdir(folder_path):
-            QMessageBox.warning(self.app_parent, "Folder Not Found", "The folder does not exist.")
-            return
-        
-        # Use QDesktopServices to open the folder
-        folder_url = QUrl.fromLocalFile(folder_path)
-        QDesktopServices.openUrl(folder_url)
+        open_folder(file_path, self.app_parent)
 
     def get_all_valid_pairs(self):
         pairs = []

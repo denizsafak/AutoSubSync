@@ -483,6 +483,39 @@ def shorten_path(path, maxlen=50):
         return path[:maxlen//2-2] + '…' + path[-maxlen//2+1:]
 
 
+def open_folder(path, parent=None):
+    """
+    Opens a folder in the system's file explorer.
+    
+    Args:
+        path (str): Path to a file or directory to open
+        parent: Optional parent widget for error messages
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not path:
+        return False
+    
+    try:
+        # Check if path is a directory (for multiple chapter files)
+        if os.path.isdir(path):
+            folder = path
+        else:
+            folder = os.path.dirname(path)
+        
+        logger.info(f"Opening folder: {folder}")
+        QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+        return True
+    except Exception as e:
+        logger.error(f"Could not open folder: {e}")
+        if parent:
+            QMessageBox.critical(
+                parent, "Open Folder Error", f"Could not open folder:\n{e}"
+            )
+        return False
+
+
 def open_filedialog(parent_instance, dialog_type, title, file_filter=None, initial_dir=None, multiple=False):
     """Helper function for file selection dialogs that update the last used directory.
     
@@ -567,12 +600,10 @@ def reset_to_defaults(parent):
 
 def open_config_directory(parent=None):
     """Open the config directory in the system file manager"""
-
     try:
         config_path = get_user_config_path()
-        logger.info(f"Opening config directory: {os.path.dirname(config_path)}")
-        # Open the directory containing the config file
-        QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(config_path)))
+        config_dir = os.path.dirname(config_path)
+        open_folder(config_dir, parent)
     except Exception as e:
         logger.error(f"Could not open config location: {e}")
         QMessageBox.critical(
@@ -581,15 +612,8 @@ def open_config_directory(parent=None):
 
 def open_logs_directory(parent=None):
     """Open the logs directory used by the program."""
-    try:
-        logger.info(f"Opening logs directory: {get_logs_directory()}")
-        # Open the directory in file explorer
-        QDesktopServices.openUrl(QUrl.fromLocalFile(get_logs_directory()))
-    except Exception as e:
-        logger.error(f"Could not open logs directory: {e}")
-        QMessageBox.critical(
-            parent, "logs directory Error", f"Could not open logs directory:\n{e}"
-        )
+    logs_dir = get_logs_directory()
+    open_folder(logs_dir, parent)
 
 def clear_logs_directory(parent=None):
     """Delete logs directory after user confirmation."""

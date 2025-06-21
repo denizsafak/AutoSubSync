@@ -2,45 +2,12 @@
 # All translations are made by AI. If you find any errors, feel free to contribute. #
 # You can contribute in GitHub by forking the repository and making a pull request. #
 #####################################################################################
-import os
-import sys
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # Add parent directory
-sys.path.append((os.path.dirname(__file__)))  # Add current directory
 
-from functions.get_platform import platform
-
-PROGRAM_NAME = "AutoSubSync"
-GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
-GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
-GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
-ARABIC_LANGUAGES = {
-    "ar",  # Arabic
-    "fa",  # Farsi (Persian)
-    "ur",  # Urdu
-    "ps",  # Pashto
-    "sd",  # Sindhi
-    "ug",  # Uyghur
-}
-
-if platform != "Darwin":
-    from bidi.algorithm import get_display
-    import arabic_reshaper
-
+from constants import PROGRAM_NAME
 
 class TranslationDict(dict):
     def __missing__(self, key):
         return self.get("en", "")
-
-    if platform != "Darwin":
-        # Fix arabic text display
-        def __getitem__(self, key):
-            text = super().__getitem__(key)
-            if key in ARABIC_LANGUAGES:
-                reshaped_text = arabic_reshaper.reshape(text)
-                return get_display(reshaped_text)
-            return text
-
 
 TOOLTIP_SAVE_TO_DESKTOP = {
     "en": "Check this box if you want to save the subtitle to your Desktop. If unchecked it will be saved next to the input subtitle.",
@@ -2260,7 +2227,7 @@ DEFAULT_AUTO_DETECT = {
     "id": "Default (Deteksi Otomatis)",
     "ms": "Default (Deteksi Automatik)",
     "th": "ค่าเริ่มต้น (ตรวจสอบอัตโนมัติ)",
-    "ur": "ڈیفالٹ (خود کار تشخیص)"
+    "ur": "ڈیفالٹ (خود کار تشخیص)",
 }
 OVERRIDE_ENCODING = {
     "en": "Override Encoding",

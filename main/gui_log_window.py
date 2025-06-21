@@ -1,11 +1,11 @@
 import os
 import logging
 from datetime import datetime
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar, QApplication
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QHBoxLayout, QSizePolicy, QPushButton, QProgressBar
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtGui import QTextCursor, QColor, QFont, QTextCharFormat, QFontDatabase
 from constants import DEFAULT_OPTIONS, COLORS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
-from utils import get_resource_path, get_logs_directory
+from utils import get_resource_path, get_logs_directory, open_folder
 
 logger = logging.getLogger(__name__)
 
@@ -318,10 +318,7 @@ class LogWindow(QWidget):
     def _open_output_folder(self, output_path):
         """Open the folder containing the output file"""
         if output_path and os.path.exists(output_path):
-            folder = os.path.dirname(output_path)
-            from PyQt6.QtCore import QUrl
-            from PyQt6.QtGui import QDesktopServices
-            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+            open_folder(output_path, self)
         else:
             from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "Error", "Output file does not exist.")

@@ -15,8 +15,8 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QFileIconProvider
 )
-from PyQt6.QtCore import Qt, QTimer, QUrl, QSize, QFileInfo, QIODevice, QBuffer
-from PyQt6.QtGui import QIcon, QDesktopServices, QDragEnterEvent, QDropEvent, QAction, QActionGroup
+from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer
+from PyQt6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QAction, QActionGroup
 import os, base64
 from utils import *
 from constants import *
@@ -350,10 +350,8 @@ class InputBox(QLabel):
             self.total_shifted_label.move(10, self.height() - self.total_shifted_label.height() - 10)
 
     def open_file_folder(self):
-        logger.info(f"Opening folder of: {self.file_path}")
         if self.file_path and os.path.exists(self.file_path):
-            folder = os.path.dirname(self.file_path)
-            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+            open_folder(self.file_path, self)
         else:
             QMessageBox.warning(
                 self,
