@@ -215,7 +215,17 @@ class SyncProcess:
                 self.signals.finished.emit(True, output)
         except Exception as e:
             if not self.should_cancel:
-                self.signals.error.emit(f"Error: {str(e)}")
+                error_msg = f"Error: {str(e)}"
+                # Custom message for ALASS float conversion error
+                if tool == "alass" and "could not convert string to float" in str(e):
+                    has_brackets = any(
+                        c in reference or c in subtitle for c in ["[", "]"]
+                    )
+                    if has_brackets:
+                        error_msg += (
+                            "\n\nThis error is likely caused because of '[' or ']' characters in file or folder names. ALASS cannot process names containing these characters. Please rename your files or folders and try again."
+                        )
+                self.signals.error.emit(error_msg)
                 self.signals.finished.emit(False, None)
             else:
                 self.signals.finished.emit(False, None)
@@ -474,12 +484,16 @@ def start_sync_process(app):
             output_dir = os.path.dirname(output_path)
 
             # Check if we should extract subtitles from video
-            check_video_subs = app.config.get(
-                f"{tool}_check_video_for_subtitles",
-                SYNC_TOOLS[tool]
-                .get("options", {})
-                .get("check_video_for_subtitles", {})
-                .get("default", False),
+            ref_ext = os.path.splitext(original_ref_path)[1].lower()
+            is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
+            check_video_subs = (
+                is_video_ref and app.config.get(
+                    f"{tool}_check_video_for_subtitles",
+                    SYNC_TOOLS[tool]
+                    .get("options", {})
+                    .get("check_video_for_subtitles", {})
+                    .get("default", False),
+                )
             )
             extracted_subtitle_path = None
             extracted_folder_to_clean = None
@@ -494,11 +508,6 @@ def start_sync_process(app):
                 extraction_result = [None, None, []]  # [subtitle_path, score, logs]
                 extraction_done = threading.Event()
                 log_lock = threading.Lock()
-
-                # Define a custom log handler that updates UI in real-time
-                def log_handler(message):
-                    with log_lock:
-                        extraction_result[2].append(message)
 
                 def run_extraction():
                     try:
