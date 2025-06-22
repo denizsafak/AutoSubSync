@@ -48,7 +48,6 @@ def create_process(cmd):
                 {
                     "startupinfo": startupinfo,
                     "creationflags": subprocess.CREATE_NO_WINDOW
-                    | subprocess.CREATE_NEW_PROCESS_GROUP,
                 }
             )
         else:
