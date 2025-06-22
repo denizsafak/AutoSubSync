@@ -525,7 +525,18 @@ def open_folder(path, parent=None):
             folder = os.path.dirname(path)
 
         logger.info(f"Opening folder: {folder}")
-        QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
+        if platform.system() == "Linux" and getattr(sys, "frozen", False):
+            # When bundled with PyInstaller on Linux, LD_LIBRARY_PATH is set,
+            # which can cause conflicts with system utilities like xdg-open.
+            # We invoke xdg-open with a cleaned environment.
+            env = os.environ.copy()
+            if "LD_LIBRARY_PATH_ORIG" in env:
+                env["LD_LIBRARY_PATH"] = env["LD_LIBRARY_PATH_ORIG"]
+            elif "LD_LIBRARY_PATH" in env:
+                del env["LD_LIBRARY_PATH"]
+            subprocess.Popen(["xdg-open", folder], env=env)
+        else:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
         return True
     except Exception as e:
         logger.error(f"Could not open folder: {e}")

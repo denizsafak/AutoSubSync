@@ -12,7 +12,7 @@ os.chdir(script_dir)
 
 
 def check_modules():
-    required_modules = ["pip", "tkinter", "venv"]
+    required_modules = ["pip", "venv"]
     for module in required_modules:
         try:
             importlib.import_module(module)
@@ -22,39 +22,26 @@ def check_modules():
                     "Module 'pip' is not installed. Please install it using your system's package manager.\n"
                 )
                 sys.stderr.write(
-                    "Debian: sudo apt-get install python3-pip python3-tk python3-venv\n"
+                    "Debian: sudo apt-get install python3-pip python3-venv\n"
                 )
-                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip tk\n")
+                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip\n")
                 sys.stderr.write(
-                    "Fedora: sudo dnf install python3-pip python3-tkinter python3-venv\n"
+                    "Fedora: sudo dnf install python3-pip python3-venv\n"
                 )
-                sys.stderr.write("macOS: brew install python3 python-tk\n")
-                sys.exit(1)
-            elif module == "tkinter":
-                sys.stderr.write(
-                    "Module 'tkinter' is not installed. Please install it using your system's package manager.\n"
-                )
-                sys.stderr.write(
-                    "Debian: sudo apt-get install python3-pip python3-tk python3-venv\n"
-                )
-                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip tk\n")
-                sys.stderr.write(
-                    "Fedora: sudo dnf install python3-pip python3-tkinter python3-venv\n"
-                )
-                sys.stderr.write("macOS: brew install python3 python-tk\n")
+                sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
             elif module == "venv":
                 sys.stderr.write(
                     "Module 'venv' is not installed. Please install it using your system's package manager.\n"
                 )
                 sys.stderr.write(
-                    "Debian: sudo apt-get install python3-pip python3-tk python3-venv\n"
+                    "Debian: sudo apt-get install python3-pip python3-venv\n"
                 )
-                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip tk\n")
+                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip\n")
                 sys.stderr.write(
-                    "Fedora: sudo dnf install python3-pip python3-tkinter python3-venv\n"
+                    "Fedora: sudo dnf install python3-pip python3-venv\n"
                 )
-                sys.stderr.write("macOS: brew install python3 python-tk\n")
+                sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
     print("All required modules are installed.")
 
