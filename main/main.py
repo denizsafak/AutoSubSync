@@ -99,6 +99,9 @@ def main():
     logger.info("Starting application")
     app = QApplication(sys.argv)
 
+    # Set global theme
+    app.setStyle("Fusion")
+
     # Set application icon using get_resource_path from utils
     icon_path = get_resource_path("autosubsync.assets", "icon.ico")
     if icon_path:
