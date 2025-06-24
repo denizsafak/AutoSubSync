@@ -754,6 +754,20 @@ class autosubsync(QWidget):
         self.setLayout(outer_layout)
         self.update_auto_sync_ui_for_batch()  # Ensure correct UI for batch mode on startup
 
+        # Connect tab change to update InputBox positions
+        self.tab_widget.currentChanged.connect(self._update_inputbox_positions_on_tab)
+
+    def _update_inputbox_positions_on_tab(self, index):
+        # Find all InputBox instances in the current tab and trigger their resizeEvent
+        current_widget = self.tab_widget.widget(index)
+        if not current_widget:
+            return
+        def update_inputboxes(widget):
+            for child in widget.findChildren(InputBox):
+                # Trigger a resizeEvent to reposition buttons
+                child.resizeEvent(None)
+        update_inputboxes(current_widget)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if hasattr(self, "settings_btn"):
