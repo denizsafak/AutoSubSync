@@ -282,12 +282,12 @@ class SyncProcess:
             try:
                 subtitle_encoding = detect_encoding(subtitle)
                 if subtitle_encoding not in enc_list:
-                    subtitle_encoding = find_closest_encoding(subtitle_encoding)
+                    new_subtitle_encoding = find_closest_encoding(subtitle_encoding)
                     logger.warning(
-                        f"Encoding not found in ALASS encodings, using the closest: {subtitle_encoding}"
+                        f"Input subtitle encoding ({subtitle_encoding}) not found in ALASS encodings, using the closest: {new_subtitle_encoding}"
                     )
-                cmd.extend(["--encoding-inc", subtitle_encoding])
-                logger.info(f"Using subtitle encoding: {subtitle_encoding}")
+                cmd.extend(["--encoding-inc", new_subtitle_encoding])
+                logger.info(f"Using subtitle encoding: {new_subtitle_encoding}")
             except Exception as e:
                 logger.warning(f"Failed to detect subtitle encoding: {e}")
 
@@ -297,12 +297,12 @@ class SyncProcess:
                 try:
                     ref_encoding = detect_encoding(reference)
                     if ref_encoding not in enc_list:
-                        ref_encoding = find_closest_encoding(ref_encoding)
+                        new_ref_encoding = find_closest_encoding(ref_encoding)
                         logger.warning(
-                            f"Encoding not found in ALASS encodings, using the closest: {ref_encoding}"
+                            f"Input reference encoding ({ref_encoding}) not found in ALASS encodings, using the closest: {new_ref_encoding}"
                         )
-                    cmd.extend(["--encoding-ref", ref_encoding])
-                    logger.info(f"Using reference encoding: {ref_encoding}")
+                    cmd.extend(["--encoding-ref", new_ref_encoding])
+                    logger.info(f"Using reference encoding: {new_ref_encoding}")
                 except Exception as e:
                     logger.warning(f"Failed to detect reference encoding: {e}")
 
