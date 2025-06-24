@@ -286,6 +286,8 @@ class SyncProcess:
                     logger.warning(
                         f"Input subtitle encoding ({subtitle_encoding}) not found in ALASS encodings, using the closest: {new_subtitle_encoding}"
                     )
+                else:
+                    new_subtitle_encoding = subtitle_encoding
                 cmd.extend(["--encoding-inc", new_subtitle_encoding])
                 logger.info(f"Using subtitle encoding: {new_subtitle_encoding}")
             except Exception as e:
@@ -301,6 +303,8 @@ class SyncProcess:
                         logger.warning(
                             f"Input reference encoding ({ref_encoding}) not found in ALASS encodings, using the closest: {new_ref_encoding}"
                         )
+                    else:
+                        new_ref_encoding = ref_encoding
                     cmd.extend(["--encoding-ref", new_ref_encoding])
                     logger.info(f"Using reference encoding: {new_ref_encoding}")
                 except Exception as e:
