@@ -27,13 +27,13 @@ SYNC_TOOLS = {
         "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
         "executable": {
             "Windows": get_resource_path(
-                "autosubsync.resources.ffsubsync-bin", "ffsubsync.exe"
+                "autosubsync", "call_ffsubsync.py"
             ),
             "Linux": get_resource_path(
-                "autosubsync.resources.ffsubsync-bin", "ffsubsync"
+                "autosubsync", "call_ffsubsync.py"
             ),
             "Darwin": get_resource_path(
-                "autosubsync.resources.ffsubsync-bin", "ffsubsync"
+                "autosubsync", "call_ffsubsync.py"
             ),
         },
         "cmd_structure": ["{reference}", "-i", "{subtitle}", "-o", "{output}"],

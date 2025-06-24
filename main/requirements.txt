@@ -7,3 +7,4 @@ requests
 pyinstaller
 psutil
 platformdirs
+ffsubsync
