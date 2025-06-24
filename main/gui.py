@@ -436,6 +436,8 @@ class autosubsync(QWidget):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
                     "autosubsync"
                 )
+        # Theme: apply on startup
+        self.apply_theme(self.config.get("theme", DEFAULT_OPTIONS["theme"]))
         # Check for updates at startup if enabled
         if self.config.get(
             "check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]
@@ -443,6 +445,65 @@ class autosubsync(QWidget):
             QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
         self.initUI()
         logger.info("Main window initialized")
+
+    def apply_theme(self, theme):
+        from PyQt6.QtGui import QPalette, QColor
+        app = QApplication.instance()
+        if theme == "dark":
+            app.setStyle("Fusion")
+            palette = QPalette()
+            dark_bg = QColor(COLORS["DARK_BG"])
+            base_bg = QColor(COLORS["DARK_BASE"])
+            alt_bg = QColor(COLORS["DARK_ALT"])
+            button_bg = QColor(COLORS["DARK_BUTTON"])
+            disabled_fg = QColor(COLORS["DARK_DISABLED"])
+            palette.setColor(QPalette.ColorRole.Window, dark_bg)
+            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Base, base_bg)
+            palette.setColor(QPalette.ColorRole.AlternateBase, alt_bg)
+            palette.setColor(QPalette.ColorRole.ToolTipBase, dark_bg)
+            palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.Button, button_bg)
+            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+            # Disabled roles
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_fg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_fg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_fg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, dark_bg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, dark_bg)
+            app.setPalette(palette)
+        elif theme == "light":
+            app.setStyle("Fusion")
+            palette = QPalette()
+            disabled_fg = QColor(COLORS["LIGHT_DISABLED"])
+            palette.setColor(QPalette.ColorRole.Window, QColor(COLORS["LIGHT_BG"]))
+            palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+            palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.AlternateBase, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.black)
+            palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+            palette.setColor(QPalette.ColorRole.Button, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+            # Disabled roles
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_fg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_fg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_fg)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, Qt.GlobalColor.white)
+            app.setPalette(palette)
+        else:  # system
+            app.setStyle("Fusion")
+            app.setPalette(QPalette())
+        # Force style refresh for all top-level widgets
+        style_name = app.style().objectName()
+        app.setStyle(style_name)
+        for widget in app.topLevelWidgets():
+            app.style().polish(widget)
+            widget.update()
+        self.config["theme"] = theme
+        save_config(self.config)
 
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
@@ -473,7 +534,35 @@ class autosubsync(QWidget):
         # Create settings menu
         self.settings_menu = QMenu(self)
 
-        # Add subtitle processing options
+        # Add Theme submenu
+        self.theme_menu = self.settings_menu.addMenu("Theme")
+        self.theme_action_group = QActionGroup(self)
+        self.theme_action_group.setExclusive(True)
+        self.theme_system_action = QAction("System", self)
+        self.theme_system_action.setCheckable(True)
+        self.theme_system_action.setActionGroup(self.theme_action_group)
+        self.theme_system_action.triggered.connect(lambda: self.apply_theme("system"))
+        self.theme_menu.addAction(self.theme_system_action)
+        self.theme_dark_action = QAction("Dark", self)
+        self.theme_dark_action.setCheckable(True)
+        self.theme_dark_action.setActionGroup(self.theme_action_group)
+        self.theme_dark_action.triggered.connect(lambda: self.apply_theme("dark"))
+        self.theme_menu.addAction(self.theme_dark_action)
+        self.theme_light_action = QAction("Light", self)
+        self.theme_light_action.setCheckable(True)
+        self.theme_light_action.setActionGroup(self.theme_action_group)
+        self.theme_light_action.triggered.connect(lambda: self.apply_theme("light"))
+        self.theme_menu.addAction(self.theme_light_action)
+        # Set checked theme
+        theme = self.config.get("theme", "system")
+        if theme == "dark":
+            self.theme_dark_action.setChecked(True)
+        elif theme == "light":
+            self.theme_light_action.setChecked(True)
+        else:
+            self.theme_system_action.setChecked(True)
+
+        self.settings_menu.addSeparator()
 
         # Add output subtitle encoding submenu
         self.encoding_menu = self.settings_menu.addMenu(
@@ -651,10 +740,11 @@ class autosubsync(QWidget):
 
         self.settings_menu.addSeparator()
 
-        # Add separator and About option
+        # Add About option
         self.about_action = QAction("About", self)
         self.about_action.triggered.connect(lambda: show_about_dialog(self))
         self.settings_menu.addAction(self.about_action)
+
 
         # Connect button click to show menu instead of setting the menu directly
         self.settings_btn.clicked.connect(self.show_settings_menu)

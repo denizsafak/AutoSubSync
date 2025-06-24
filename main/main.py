@@ -4,7 +4,7 @@ import platform
 import logging
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
+from PyQt6.QtCore import qInstallMessageHandler, QtMsgType, Qt
 
 # Add the directory to Python path
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
@@ -98,9 +98,6 @@ def main():
     """Main entry point for console usage."""
     logger.info("Starting application")
     app = QApplication(sys.argv)
-
-    # Set global theme
-    app.setStyle("Fusion")
 
     # Set application icon using get_resource_path from utils
     icon_path = get_resource_path("autosubsync.assets", "icon.ico")

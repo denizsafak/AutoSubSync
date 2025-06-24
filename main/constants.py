@@ -141,6 +141,7 @@ DEFAULT_OPTIONS = {
     "output_subtitle_encoding": "same_as_input",
     "add_ms_prefix_to_filename": True,
     "keep_log_records": True,
+    "theme": "system",
 }
 
 AUTOMATIC_SAVE_MAP = {
@@ -173,6 +174,14 @@ COLORS = {
     "GREEN_BACKGROUND_HOVER": "rgba(66, 173, 73, 0.15)",
     "RED_BACKGROUND": "rgba(232, 78, 60, 0.1)",
     "RED_BACKGROUND_HOVER": "rgba(232, 78, 60, 0.15)",
+    # Theme palette colors
+    "DARK_BG": "#202326",
+    "DARK_BASE": "#141618",
+    "DARK_ALT": "#2c2f31",
+    "DARK_BUTTON": "#292c30",
+    "DARK_DISABLED": "#535353",
+    "LIGHT_BG": "#eff0f1",
+    "LIGHT_DISABLED": "#9a9999",
 }
 
 SUBTITLE_EXTENSIONS = [
