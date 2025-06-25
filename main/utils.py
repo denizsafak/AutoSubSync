@@ -66,6 +66,7 @@ def terminate_process_safely(process):
             return
 
         try:
+            logger.info(f"Terminating process: {process.pid}")
             if platform.system() == "Windows":
                 # On Windows, terminate the process group
                 process.send_signal(signal.CTRL_BREAK_EVENT)
