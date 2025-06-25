@@ -126,20 +126,29 @@ class SyncProcess:
             tool_info = SYNC_TOOLS[tool]
             tool_type = tool_info.get("type", "executable")
 
+            rc = None
             if tool_type == "module":
                 module_name = tool_info.get("module")
                 try:
                     module = importlib.import_module(module_name)
                 except Exception as e:
                     self.signals.error.emit(f"Failed to import module '{module_name}': {e}")
+                    self.signals.finished.emit(False, None)
                     return
+                # Get idx/total for batch mode
+                idx = getattr(self.app, '_current_batch_idx', None)
+                total = getattr(self.app, '_current_batch_total', None)
                 cmd_args = self._build_cmd(tool, None, reference, subtitle, output)[1:]
-                log_stream = LogWindowStream(self.signals.progress.emit)
+                log_stream = LogWindowStream(self.signals.progress.emit, self.signals.progress_percent.emit, idx, total)
+                # root logger for capturing module output
                 root_logger = logging.getLogger()
                 old_handlers = root_logger.handlers[:]
                 handler = logging.StreamHandler(log_stream)
                 handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
                 root_logger.handlers = [handler]
+                import sys
+                old_stdout, old_stderr = sys.stdout, sys.stderr
+                sys.stdout = sys.stderr = log_stream
                 try:
                     rc = module.cli_entry(cmd_args) if hasattr(module, 'cli_entry') else 1
                 except SystemExit as e:
@@ -148,97 +157,96 @@ class SyncProcess:
                     self.signals.error.emit(f"Module execution failed: {e}")
                     self.signals.finished.emit(False, None)
                     root_logger.handlers = old_handlers
+                    sys.stdout, sys.stderr = old_stdout, old_stderr
                     return
                 finally:
                     root_logger.handlers = old_handlers
-                self.signals.finished.emit(rc == 0, output if rc == 0 else None)
-                if rc != 0:
-                    self.signals.error.emit(f"{tool} failed with code {rc}")
-                return
-            # Get OS-specific executable
-            exe_info = tool_info["executable"]
-            current_os = platform.system()
-            if isinstance(exe_info, dict):
-                exe = exe_info.get(current_os)
-                if not exe:
-                    self.signals.error.emit(
-                        f"No executable found for {tool} on {current_os}"
-                    )
-                    return
-
-            if not output:
-                output = determine_output_path(self.app, reference, subtitle)
-            # Backup output subtitle if needed
-            config = self.app.config
-            backup_enabled = config.get(
-                "backup_subtitles_before_overwriting",
-                DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
-            )
-            if backup_enabled and os.path.exists(output):
-                try:
-                    create_backup(output)
-                except Exception as e:
-                    logger.error(f"Failed to create backup: {e}")
-            cmd = self._build_cmd(tool, exe, reference, subtitle, output)
-
-            with self._process_lock:
-                if self.should_cancel:
-                    return
-                self.process = create_process(cmd)
-
-            buffer = b""
-            last_was_cr = False  # Track if last processed delimiter was \r
-            while True:
-                if self.should_cancel:
-                    break
-
-                chunk = self.process.stdout.read(128)
-                if not chunk:
-                    break
-                buffer += chunk
-
-                # Process complete lines efficiently
-                while b"\r" in buffer or b"\n" in buffer:
-                    cr_pos = buffer.find(b"\r")
-                    lf_pos = buffer.find(b"\n")
-
-                    # Determine which delimiter comes first
-                    if cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
-                        # Carriage return case (overwrite)
-                        part, buffer = buffer[:cr_pos], buffer[cr_pos + 1 :]
-                        is_overwrite = True
-                        last_was_cr = True
-                    elif lf_pos != -1:
-                        # Newline case - check if this follows a \r
-                        part, buffer = buffer[:lf_pos], buffer[lf_pos + 1 :]
-                        is_overwrite = (
-                            last_was_cr  # If last was \r, this content should overwrite
+                    sys.stdout, sys.stderr = old_stdout, old_stderr
+                # After running the module, continue to the rest of the logic below
+            else:
+                # Get OS-specific executable
+                exe_info = tool_info["executable"]
+                current_os = platform.system()
+                if isinstance(exe_info, dict):
+                    exe = exe_info.get(current_os)
+                    if not exe:
+                        self.signals.error.emit(
+                            f"No executable found for {tool} on {current_os}"
                         )
-                        last_was_cr = False
-                    else:
+                        self.signals.finished.emit(False, None)
+                        return
+
+                if not output:
+                    output = determine_output_path(self.app, reference, subtitle)
+                # Backup output subtitle if needed
+                config = self.app.config
+                backup_enabled = config.get(
+                    "backup_subtitles_before_overwriting",
+                    DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
+                )
+                if backup_enabled and os.path.exists(output):
+                    try:
+                        create_backup(output)
+                    except Exception as e:
+                        logger.error(f"Failed to create backup: {e}")
+                cmd = self._build_cmd(tool, exe, reference, subtitle, output)
+
+                with self._process_lock:
+                    if self.should_cancel:
+                        return
+                    self.process = create_process(cmd)
+
+                buffer = b""
+                last_was_cr = False  # Track if last processed delimiter was \r
+                while True:
+                    if self.should_cancel:
                         break
 
-                    # Process the part even if it's empty (for newlines)
+                    chunk = self.process.stdout.read(128)
+                    if not chunk:
+                        break
+                    buffer += chunk
+
+                    # Improved: Process complete lines efficiently, handling \r and \n correctly
+                    while True:
+                        cr_pos = buffer.find(b"\r")
+                        lf_pos = buffer.find(b"\n")
+                        if cr_pos == -1 and lf_pos == -1:
+                            break
+
+                        if cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
+                            part, buffer = buffer[:cr_pos], buffer[cr_pos + 1 :]
+                            is_overwrite = True
+                            last_was_cr = True
+                        elif lf_pos != -1:
+                            part, buffer = buffer[:lf_pos], buffer[lf_pos + 1 :]
+                            is_overwrite = last_was_cr
+                            last_was_cr = False
+                        else:
+                            break
+
+                        cleaned_msg, percent = self._process_output(
+                            part.decode(default_encoding, errors="replace")
+                        )
+                        if cleaned_msg or not part:
+                            self.signals.progress.emit(cleaned_msg, is_overwrite)
+                        if percent is not None:
+                            self.signals.progress_percent.emit(percent)
+
+                # Process remaining buffer
+                if buffer and not self.should_cancel:
                     cleaned_msg, percent = self._process_output(
-                        part.decode(default_encoding, errors="replace")
+                        buffer.decode(default_encoding, errors="replace").rstrip("\r\n")
                     )
-                    if cleaned_msg or not part:  # Emit empty lines too
-                        self.signals.progress.emit(cleaned_msg, is_overwrite)
+                    if cleaned_msg:
+                        # If the last processed delimiter was \r, remaining content should overwrite
+                        self.signals.progress.emit(cleaned_msg, last_was_cr)
                     if percent is not None:
                         self.signals.progress_percent.emit(percent)
 
-            # Process remaining buffer
-            if buffer and not self.should_cancel:
-                cleaned_msg, percent = self._process_output(
-                    buffer.decode(default_encoding, errors="replace").rstrip("\r\n")
-                )
-                if cleaned_msg:
-                    # If the last processed delimiter was \r, remaining content should overwrite
-                    self.signals.progress.emit(cleaned_msg, last_was_cr)
-                if percent is not None:
-                    self.signals.progress_percent.emit(percent)
+                rc = self.process.wait() if not self.should_cancel else 1
 
-            rc = self.process.wait() if not self.should_cancel else 1
+            # Handle completion for both module and executable
             if rc != 0 and not self.should_cancel:
                 self.signals.error.emit(f"{tool} failed with code {rc}")
                 self.signals.finished.emit(False, None)
@@ -356,20 +364,61 @@ class SyncProcess:
 
 
 class LogWindowStream:
-    def __init__(self, emit_func):
+    def __init__(self, emit_func, progress_percent_emit=None, idx=None, total=None):
         self.emit_func = emit_func
+        self.progress_percent_emit = progress_percent_emit
+        self.idx = idx
+        self.total = total
         self._buffer = ""
+        self._last_was_cr = False
 
     def write(self, s):
         self._buffer += s
-        while "\n" in self._buffer:
-            line, self._buffer = self._buffer.split("\n", 1)
-            self.emit_func(line, False)
+        while True:
+            idx = min((i for i in (self._buffer.find("\r"), self._buffer.find("\n")) if i != -1), default=-1)
+            if idx == -1:
+                break
+            ch = self._buffer[idx]
+            line, self._buffer = self._buffer[:idx], self._buffer[idx+1:]
+            # Append [idx/total] to percentage if available
+            display_line = line
+            if self.idx is not None and self.total is not None:
+                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", line)
+                if percent_match:
+                    display_line = f"{line} [{self.idx}/{self.total}]"
+            if self.progress_percent_emit:
+                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", line)
+                if percent_match:
+                    try:
+                        percent = float(percent_match.group(1))
+                        self.progress_percent_emit(percent)
+                    except Exception:
+                        pass
+            if ch == "\r":
+                self.emit_func(display_line, True)
+                self._last_was_cr = True
+            else:
+                self.emit_func(display_line, self._last_was_cr)
+                self._last_was_cr = False
 
     def flush(self):
         if self._buffer:
-            self.emit_func(self._buffer, False)
+            display_line = self._buffer
+            if self.idx is not None and self.total is not None:
+                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", self._buffer)
+                if percent_match:
+                    display_line = f"{self._buffer} [{self.idx}/{self.total}]"
+            if self.progress_percent_emit:
+                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", self._buffer)
+                if percent_match:
+                    try:
+                        percent = float(percent_match.group(1))
+                        self.progress_percent_emit(percent)
+                    except Exception:
+                        pass
+            self.emit_func(display_line, self._last_was_cr)
             self._buffer = ""
+            self._last_was_cr = False
 
 
 def start_sync_process(app):
