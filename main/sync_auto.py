@@ -5,6 +5,7 @@ import threading
 import time
 import platform
 import platformdirs
+import importlib
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtWidgets import QApplication
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
@@ -122,8 +123,40 @@ class SyncProcess:
                 self.signals.error.emit(f"Unknown sync tool: {tool}")
                 return
 
+            tool_info = SYNC_TOOLS[tool]
+            tool_type = tool_info.get("type", "executable")
+
+            if tool_type == "module":
+                module_name = tool_info.get("module")
+                try:
+                    module = importlib.import_module(module_name)
+                except Exception as e:
+                    self.signals.error.emit(f"Failed to import module '{module_name}': {e}")
+                    return
+                cmd_args = self._build_cmd(tool, None, reference, subtitle, output)[1:]
+                log_stream = LogWindowStream(self.signals.progress.emit)
+                root_logger = logging.getLogger()
+                old_handlers = root_logger.handlers[:]
+                handler = logging.StreamHandler(log_stream)
+                handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
+                root_logger.handlers = [handler]
+                try:
+                    rc = module.cli_entry(cmd_args) if hasattr(module, 'cli_entry') else 1
+                except SystemExit as e:
+                    rc = e.code if hasattr(e, 'code') else 1
+                except Exception as e:
+                    self.signals.error.emit(f"Module execution failed: {e}")
+                    self.signals.finished.emit(False, None)
+                    root_logger.handlers = old_handlers
+                    return
+                finally:
+                    root_logger.handlers = old_handlers
+                self.signals.finished.emit(rc == 0, output if rc == 0 else None)
+                if rc != 0:
+                    self.signals.error.emit(f"{tool} failed with code {rc}")
+                return
             # Get OS-specific executable
-            exe_info = SYNC_TOOLS[tool]["executable"]
+            exe_info = tool_info["executable"]
             current_os = platform.system()
             if isinstance(exe_info, dict):
                 exe = exe_info.get(current_os)
@@ -243,17 +276,7 @@ class SyncProcess:
         sync_tool = self.app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         lines = message.split("\n")
 
-        if sync_tool == "ffsubsync":
-            # Optimize ffsubsync processing
-            result = []
-            for line in lines:
-                # Remove timestamps and format
-                line = re.sub(r"\[\d{2}:\d{2}:\d{2}\]\s*", "", line).lstrip()
-                if not re.search(r"\b(INFO|WARNING|CRITICAL|ERROR)\b", line):
-                    # Add only 2 spaces for progress lines (containing %), 9 spaces for others
-                    line = line if "%" in line else "         " + line
-                result.append((" " + line).rstrip())
-        elif sync_tool == "alass":
+        if sync_tool == "alass":
             # Optimize ALASS processing
             result = [
                 (
@@ -330,6 +353,23 @@ class SyncProcess:
                     cmd.extend([arg, str(val)])
         extra = config.get(f"{tool}_arguments", "").strip().split()
         return cmd + extra if extra else cmd
+
+
+class LogWindowStream:
+    def __init__(self, emit_func):
+        self.emit_func = emit_func
+        self._buffer = ""
+
+    def write(self, s):
+        self._buffer += s
+        while "\n" in self._buffer:
+            line, self._buffer = self._buffer.split("\n", 1)
+            self.emit_func(line, False)
+
+    def flush(self):
+        if self._buffer:
+            self.emit_func(self._buffer, False)
+            self._buffer = ""
 
 
 def start_sync_process(app):
