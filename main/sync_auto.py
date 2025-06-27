@@ -78,6 +78,53 @@ def shorten_progress_bar(line):
         return line[:start]+new_bar+line[end+1:]
     return line
 
+def module_worker(module_name, args, conn, idx, total):
+    import importlib, sys, logging
+    try:
+        module = importlib.import_module(module_name)
+        class PipeStream:
+            def __init__(self, conn):
+                self.conn = conn
+                self._buffer = ''
+                self._last_was_cr = False
+            def write(self, s):
+                self._buffer += s
+                while True:
+                    i = min([x for x in (self._buffer.find('\r'), self._buffer.find('\n')) if x != -1], default=-1)
+                    if i == -1: break
+                    ch = self._buffer[i]
+                    part, self._buffer = self._buffer[:i], self._buffer[i+1:]
+                    self.conn.send(('progress', part, ch == '\r' or self._last_was_cr))
+                    self._last_was_cr = (ch == '\r')
+            def flush(self):
+                if self._buffer:
+                    self.conn.send(('progress', self._buffer, self._last_was_cr))
+                    self._buffer = ''
+                    self._last_was_cr = False
+        log_stream = PipeStream(conn)
+        root_logger = logging.getLogger()
+        old_handlers = root_logger.handlers[:]
+        handler = logging.StreamHandler(log_stream)
+        handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
+        root_logger.handlers = [handler]
+        old_stdout, old_stderr = sys.stdout, sys.stderr
+        sys.stdout = sys.stderr = log_stream
+        try:
+            rc = module.cli_entry(args) if hasattr(module, 'cli_entry') else 1
+        except SystemExit as e:
+            rc = e.code if hasattr(e, 'code') else 1
+        except Exception as e:
+            conn.send(('error', f"Module execution failed: {e}"))
+            rc = 1
+        finally:
+            log_stream.flush()
+            root_logger.handlers = old_handlers
+            sys.stdout, sys.stderr = old_stdout, old_stderr
+        conn.send(('finished', rc))
+    except Exception as e:
+        conn.send(('error', f"Failed to import module '{module_name}': {e}"))
+        conn.send(('finished', 1))
+
 class SyncProcess:
     def __init__(self, app):
         self.app = app
@@ -129,53 +176,8 @@ class SyncProcess:
                 idx, total = getattr(self.app, '_current_batch_idx', None), getattr(self.app, '_current_batch_total', None)
                 cmd_args = self._build_cmd(tool, None, reference, subtitle, output)[1:]
                 parent_conn, child_conn = multiprocessing.Pipe()
-                def module_worker(args, conn, idx, total):
-                    import importlib, sys, logging
-                    try:
-                        module = importlib.import_module(module_name)
-                        class PipeStream:
-                            def __init__(self, conn):
-                                self.conn = conn
-                                self._buffer = ''
-                                self._last_was_cr = False
-                            def write(self, s):
-                                self._buffer += s
-                                while True:
-                                    i = min([x for x in (self._buffer.find('\r'), self._buffer.find('\n')) if x != -1], default=-1)
-                                    if i == -1: break
-                                    ch = self._buffer[i]
-                                    part, self._buffer = self._buffer[:i], self._buffer[i+1:]
-                                    self.conn.send(('progress', part, ch == '\r' or self._last_was_cr))
-                                    self._last_was_cr = (ch == '\r')
-                            def flush(self):
-                                if self._buffer:
-                                    self.conn.send(('progress', self._buffer, self._last_was_cr))
-                                    self._buffer = ''
-                                    self._last_was_cr = False
-                        log_stream = PipeStream(conn)
-                        root_logger = logging.getLogger()
-                        old_handlers = root_logger.handlers[:]
-                        handler = logging.StreamHandler(log_stream)
-                        handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
-                        root_logger.handlers = [handler]
-                        old_stdout, old_stderr = sys.stdout, sys.stderr
-                        sys.stdout = sys.stderr = log_stream
-                        try:
-                            rc = module.cli_entry(args) if hasattr(module, 'cli_entry') else 1
-                        except SystemExit as e:
-                            rc = e.code if hasattr(e, 'code') else 1
-                        except Exception as e:
-                            conn.send(('error', f"Module execution failed: {e}"))
-                            rc = 1
-                        finally:
-                            log_stream.flush()
-                            root_logger.handlers = old_handlers
-                            sys.stdout, sys.stderr = old_stdout, old_stderr
-                        conn.send(('finished', rc))
-                    except Exception as e:
-                        conn.send(('error', f"Failed to import module '{module_name}': {e}"))
-                        conn.send(('finished', 1))
-                proc = multiprocessing.Process(target=module_worker, args=(cmd_args, child_conn, idx, total))
+                # Use top-level module_worker for Windows compatibility
+                proc = multiprocessing.Process(target=module_worker, args=(module_name, cmd_args, child_conn, idx, total))
                 self._module_proc = proc
                 self._module_proc_pipe = parent_conn
                 proc.start()
