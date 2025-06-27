@@ -117,4 +117,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()  # Fix for PyInstaller on Windows
     main()
