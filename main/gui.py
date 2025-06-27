@@ -448,6 +448,7 @@ class autosubsync(QWidget):
 
     def apply_theme(self, theme):
         from PyQt6.QtGui import QPalette, QColor
+
         app = QApplication.instance()
         if theme == "dark":
             app.setStyle("Fusion")
@@ -467,11 +468,21 @@ class autosubsync(QWidget):
             palette.setColor(QPalette.ColorRole.Button, button_bg)
             palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
             # Disabled roles
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_fg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_fg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_fg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, dark_bg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, dark_bg)
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_fg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_fg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_fg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, dark_bg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, dark_bg
+            )
             app.setPalette(palette)
         elif theme == "light":
             app.setStyle("Fusion")
@@ -487,11 +498,25 @@ class autosubsync(QWidget):
             palette.setColor(QPalette.ColorRole.Button, Qt.GlobalColor.white)
             palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
             # Disabled roles
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_fg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_fg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_fg)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Base, Qt.GlobalColor.white)
-            palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, Qt.GlobalColor.white)
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, disabled_fg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, disabled_fg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, disabled_fg
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Base,
+                Qt.GlobalColor.white,
+            )
+            palette.setColor(
+                QPalette.ColorGroup.Disabled,
+                QPalette.ColorRole.Button,
+                Qt.GlobalColor.white,
+            )
             app.setPalette(palette)
         else:  # system
             app.setStyle("Fusion")
@@ -745,7 +770,6 @@ class autosubsync(QWidget):
         self.about_action.triggered.connect(lambda: show_about_dialog(self))
         self.settings_menu.addAction(self.about_action)
 
-
         # Connect button click to show menu instead of setting the menu directly
         self.settings_btn.clicked.connect(self.show_settings_menu)
         self.settings_btn.show()
@@ -762,10 +786,12 @@ class autosubsync(QWidget):
         current_widget = self.tab_widget.widget(index)
         if not current_widget:
             return
+
         def update_inputboxes(widget):
             for child in widget.findChildren(InputBox):
                 # Trigger a resizeEvent to reposition buttons
                 child.resizeEvent(None)
+
         update_inputboxes(current_widget)
 
     def resizeEvent(self, event):
