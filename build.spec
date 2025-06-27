@@ -38,11 +38,10 @@ a = Analysis(
     pathex=[],
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
-        (alass_bin, 'resources/alass-bin'),
-        (ffsubsync_bin, 'resources/ffsubsync-bin'),
+        (alass_bin, 'resources/alass-bin')
     ],
     datas=datas,
-    hiddenimports=[],
+    hiddenimports=['ffsubsync', 'call_ffsubsync'],
     #hookspath=['main/resources/hooks'],
     hooksconfig={},
     runtime_hooks=[],

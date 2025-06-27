@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import logging
 import threading
 import time
@@ -115,35 +114,23 @@ class SyncProcess:
             rc = None
             if tool_type == "module":
                 module_name = tool_info.get("module")
+                try: module = importlib.import_module(module_name)
+                except Exception as e:
+                    self.signals.error.emit(f"Failed to import module '{module_name}': {e}"); self.signals.finished.emit(False, None); return
                 idx, total = getattr(self.app, '_current_batch_idx', None), getattr(self.app, '_current_batch_total', None)
                 cmd_args = self._build_cmd(tool, None, reference, subtitle, output)[1:]
-                # Run the module as a subprocess: python -m module_name [args]
-                cmd = [sys.executable, '-m', module_name] + cmd_args
-                with self._process_lock:
-                    if self.should_cancel: return
-                    self.process = create_process(cmd)
-                buffer = b""; last_was_cr = False
-                while True:
-                    if self.should_cancel: break
-                    chunk = self.process.stdout.read(128)
-                    if not chunk: break
-                    buffer += chunk
-                    while True:
-                        cr_pos, lf_pos = buffer.find(b"\r"), buffer.find(b"\n")
-                        if cr_pos == -1 and lf_pos == -1: break
-                        if cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
-                            part, buffer = buffer[:cr_pos], buffer[cr_pos+1:]; is_overwrite = True; last_was_cr = True
-                        elif lf_pos != -1:
-                            part, buffer = buffer[:lf_pos], buffer[lf_pos+1:]; is_overwrite = last_was_cr; last_was_cr = False
-                        else: break
-                        cleaned_msg, percent = self._process_output(part.decode(default_encoding, errors="replace"))
-                        if cleaned_msg or not part: self.signals.progress.emit(cleaned_msg, is_overwrite)
-                        if percent is not None: self.signals.progress_percent.emit(percent)
-                if buffer and not self.should_cancel:
-                    cleaned_msg, percent = self._process_output(buffer.decode(default_encoding, errors="replace").rstrip("\r\n"))
-                    if cleaned_msg: self.signals.progress.emit(cleaned_msg, last_was_cr)
-                    if percent is not None: self.signals.progress_percent.emit(percent)
-                rc = self.process.wait() if not self.should_cancel else 1
+                log_stream = LogWindowStream(self.signals.progress.emit, self.signals.progress_percent.emit, idx, total)
+                root_logger = logging.getLogger(); old_handlers = root_logger.handlers[:]
+                handler = logging.StreamHandler(log_stream); handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
+                root_logger.handlers = [handler]
+                import sys; old_stdout, old_stderr = sys.stdout, sys.stderr; sys.stdout = sys.stderr = log_stream
+                try: rc = module.cli_entry(cmd_args) if hasattr(module, 'cli_entry') else 1
+                except SystemExit as e: rc = e.code if hasattr(e, 'code') else 1
+                except Exception as e:
+                    self.signals.error.emit(f"Module execution failed: {e}"); self.signals.finished.emit(False, None)
+                    root_logger.handlers = old_handlers; sys.stdout, sys.stderr = old_stdout, old_stderr; return
+                finally:
+                    root_logger.handlers = old_handlers; sys.stdout, sys.stderr = old_stdout, old_stderr
             else:
                 exe_info = tool_info["executable"]; current_os = platform.system()
                 exe = exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
@@ -200,16 +187,6 @@ class SyncProcess:
         lines = message.split("\n")
         if sync_tool == "alass":
             result = [shorten_progress_bar(line) if "[" in line and "]" in line else line.rstrip() for line in lines]
-        elif sync_tool == "ffsubsync":
-            # Optimize ffsubsync processing
-            result = []
-            for line in lines:
-                # Remove timestamps and format
-                line = re.sub(r"\[\d{2}:\d{2}:\d{2}\]\s*", "", line).lstrip()
-                if not re.search(r"\b(INFO|WARNING|CRITICAL|ERROR)\b", line):
-                    # Add only 2 spaces for progress lines (containing %), 9 spaces for others
-                    line = line if "%" in line else "         " + line
-                result.append((" " + line).rstrip())
         else:
             result = [line.rstrip() for line in lines]
         return "\n".join(result), percent
