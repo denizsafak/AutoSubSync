@@ -6,6 +6,7 @@ import time
 import platform
 import platformdirs
 import importlib
+import multiprocessing
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtWidgets import QApplication
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
@@ -79,20 +80,31 @@ def shorten_progress_bar(line):
 
 class SyncProcess:
     def __init__(self, app):
-        self.app, self.signals, self.process, self.should_cancel = app, SyncSignals(), None, False
+        self.app = app
+        self.signals = SyncSignals()
+        self.process = None  # For subprocess.Popen or multiprocessing.Process
+        self.should_cancel = False
         self._process_lock = threading.Lock()
+        self._module_proc = None  # For module-based multiprocessing
+        self._module_proc_pipe = None
     def cancel(self):
         self.should_cancel = True
         def _cancel():
             try:
                 with self._process_lock:
-                    if self.process and self.process.poll() is None:
+                    # Terminate external process
+                    if self.process and hasattr(self.process, 'poll') and self.process.poll() is None:
                         from utils import terminate_process_safely
                         terminate_process_safely(self.process)
                         for _ in range(10):
                             if self.process.poll() is not None: break
                             time.sleep(0.1)
-            except Exception as e: logger.error(f"Error canceling process: {e}")
+                    # Terminate module process
+                    if self._module_proc and self._module_proc.is_alive():
+                        self._module_proc.terminate()
+                        self._module_proc.join(timeout=1)
+            except Exception as e:
+                logger.error(f"Error canceling process: {e}")
         threading.Thread(target=_cancel, daemon=True).start()
     def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
         if hasattr(self.app, "log_window"):
@@ -114,23 +126,73 @@ class SyncProcess:
             rc = None
             if tool_type == "module":
                 module_name = tool_info.get("module")
-                try: module = importlib.import_module(module_name)
-                except Exception as e:
-                    self.signals.error.emit(f"Failed to import module '{module_name}': {e}"); self.signals.finished.emit(False, None); return
                 idx, total = getattr(self.app, '_current_batch_idx', None), getattr(self.app, '_current_batch_total', None)
                 cmd_args = self._build_cmd(tool, None, reference, subtitle, output)[1:]
-                log_stream = LogWindowStream(self.signals.progress.emit, self.signals.progress_percent.emit, idx, total)
-                root_logger = logging.getLogger(); old_handlers = root_logger.handlers[:]
-                handler = logging.StreamHandler(log_stream); handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
-                root_logger.handlers = [handler]
-                import sys; old_stdout, old_stderr = sys.stdout, sys.stderr; sys.stdout = sys.stderr = log_stream
-                try: rc = module.cli_entry(cmd_args) if hasattr(module, 'cli_entry') else 1
-                except SystemExit as e: rc = e.code if hasattr(e, 'code') else 1
-                except Exception as e:
-                    self.signals.error.emit(f"Module execution failed: {e}"); self.signals.finished.emit(False, None)
-                    root_logger.handlers = old_handlers; sys.stdout, sys.stderr = old_stdout, old_stderr; return
-                finally:
-                    root_logger.handlers = old_handlers; sys.stdout, sys.stderr = old_stdout, old_stderr
+                parent_conn, child_conn = multiprocessing.Pipe()
+                def module_worker(args, conn, idx, total):
+                    import importlib, sys, logging
+                    try:
+                        module = importlib.import_module(module_name)
+                        class PipeStream:
+                            def __init__(self, conn):
+                                self.conn = conn
+                                self._buffer = ''
+                                self._last_was_cr = False
+                            def write(self, s):
+                                self._buffer += s
+                                while True:
+                                    i = min([x for x in (self._buffer.find('\r'), self._buffer.find('\n')) if x != -1], default=-1)
+                                    if i == -1: break
+                                    ch = self._buffer[i]
+                                    part, self._buffer = self._buffer[:i], self._buffer[i+1:]
+                                    self.conn.send(('progress', part, ch == '\r' or self._last_was_cr))
+                                    self._last_was_cr = (ch == '\r')
+                            def flush(self):
+                                if self._buffer:
+                                    self.conn.send(('progress', self._buffer, self._last_was_cr))
+                                    self._buffer = ''
+                                    self._last_was_cr = False
+                        log_stream = PipeStream(conn)
+                        root_logger = logging.getLogger()
+                        old_handlers = root_logger.handlers[:]
+                        handler = logging.StreamHandler(log_stream)
+                        handler.setFormatter(logging.Formatter('%(levelname)-6s %(message)s'))
+                        root_logger.handlers = [handler]
+                        old_stdout, old_stderr = sys.stdout, sys.stderr
+                        sys.stdout = sys.stderr = log_stream
+                        try:
+                            rc = module.cli_entry(args) if hasattr(module, 'cli_entry') else 1
+                        except SystemExit as e:
+                            rc = e.code if hasattr(e, 'code') else 1
+                        except Exception as e:
+                            conn.send(('error', f"Module execution failed: {e}"))
+                            rc = 1
+                        finally:
+                            log_stream.flush()
+                            root_logger.handlers = old_handlers
+                            sys.stdout, sys.stderr = old_stdout, old_stderr
+                        conn.send(('finished', rc))
+                    except Exception as e:
+                        conn.send(('error', f"Failed to import module '{module_name}': {e}"))
+                        conn.send(('finished', 1))
+                proc = multiprocessing.Process(target=module_worker, args=(cmd_args, child_conn, idx, total))
+                self._module_proc = proc
+                self._module_proc_pipe = parent_conn
+                proc.start()
+                while True:
+                    if self.should_cancel: break
+                    if parent_conn.poll(0.1):
+                        msg = parent_conn.recv()
+                        if msg[0] == 'progress':
+                            cleaned_msg, percent = self._process_output(msg[1])
+                            self.signals.progress.emit(cleaned_msg, msg[2])
+                            if percent is not None:
+                                self.signals.progress_percent.emit(percent)
+                        elif msg[0] == 'error':
+                            self.signals.error.emit(msg[1])
+                        elif msg[0] == 'finished':
+                            rc = msg[1]; break
+                proc.join(timeout=1)
             else:
                 exe_info = tool_info["executable"]; current_os = platform.system()
                 exe = exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
