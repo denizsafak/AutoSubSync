@@ -76,6 +76,26 @@ def install_requirements():
     print("Requirements installed.")
 
 
+def remove_webrtcvad_hook():
+    if platform.system() == "Windows":
+        hook_path = os.path.join(
+            "venv",
+            "Lib",
+            "site-packages",
+            "_pyinstaller_hooks_contrib",
+            "stdhooks",
+            "hook-webrtcvad.py",
+        )
+        if os.path.exists(hook_path):
+            try:
+                os.remove(hook_path)
+                print(f"Removed: {hook_path}")
+            except Exception as e:
+                print(f"Failed to remove {hook_path}: {e}")
+        else:
+            print(f"File not found, skipping: {hook_path}")
+
+
 def ensure_ffmpeg():
     apps = ["ffmpeg", "ffprobe"]
     exe = ".exe" if platform.system() == "Windows" else ""
@@ -259,8 +279,9 @@ if __name__ == "__main__":
     check_modules()
     create_virtualenv()
     install_requirements()
+    remove_webrtcvad_hook()
     ensure_ffmpeg()
-    ensure_ffsubsync()
+    #ensure_ffsubsync()
     check_versions()
     build_with_pyinstaller()
     create_archive()
