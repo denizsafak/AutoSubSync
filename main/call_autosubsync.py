@@ -1,7 +1,11 @@
 import sys
 from multiprocessing import freeze_support
 import runpy, os, importlib.util, site, threading
+import logging
 from utils import get_resource_path
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 AUTOSUBSYNC_MODEL = get_resource_path(
     "autosubsync.resources.autosubsync", "trained-model.bin"
@@ -43,8 +47,9 @@ def cli_entry(args=None):
                 runpy.run_module('autosubsync.main', run_name='__main__')
         except SystemExit as e:
             code = e.code if hasattr(e, 'code') else 1
-        except Exception:
+        except Exception as ex:
             code = 1
+            logger.exception(ex)
         finally:
             os.dup2(orig_stdout_fd, 1)
             os.dup2(orig_stderr_fd, 2)
