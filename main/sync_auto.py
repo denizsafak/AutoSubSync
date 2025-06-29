@@ -607,7 +607,7 @@ def start_sync_process(app):
             original_ref_path, original_sub_path = it["reference_path"], it["subtitle_path"]
             if app.batch_mode_enabled and len(items) > 1:
                 append_log(app, f"Processing pair [{current_item_idx+1}/{len(items)}]", COLORS["BLUE"], True)
-            output_dir = os.path.dirname(original_sub_path)
+            output_dir = os.path.dirname(determine_output_path(app, original_ref_path, original_sub_path))
             ref_ext = os.path.splitext(original_ref_path)[1].lower()
             is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
             check_video_subs = is_video_ref and app.config.get(
