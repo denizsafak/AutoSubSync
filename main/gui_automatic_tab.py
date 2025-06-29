@@ -3,7 +3,7 @@ This module provides the automatic synchronization tab functionality for AutoSub
 It's designed to be imported and attached to the main application at runtime.
 
 The module exports:
-- attach_functions_to_autosubsync: Function to attach all tab functionality to the main class
+- attach_functions_to_autosubsyncapp: Function to attach all tab functionality to the main class
 - All the UI setup and functionality for the automatic synchronization tab
 """
 
@@ -40,20 +40,20 @@ import gui_batch_mode
 logger = logging.getLogger(__name__)
 
 
-def attach_functions_to_autosubsync(autosubsync_class):
-    """Attach automatic tab functions to the autosubsync class"""
-    autosubsync_class.setupAutoSyncTab = setup_auto_sync_tab
-    autosubsync_class.validate_auto_sync_inputs = validate_auto_sync_inputs
-    autosubsync_class.show_add_arguments_dialog = show_add_arguments_dialog
-    autosubsync_class.show_auto_sync_inputs = show_auto_sync_inputs
-    autosubsync_class.update_auto_sync_ui_for_batch = update_auto_sync_ui_for_batch
-    autosubsync_class.update_sync_tool_options = update_sync_tool_options
-    autosubsync_class.update_args_tooltip = update_args_tooltip
-    autosubsync_class._create_slider = _create_slider
-    autosubsync_class.OneStepSlider = OneStepSlider
-    autosubsync_class.show_log_window = show_log_window
-    autosubsync_class.restore_auto_sync_tab = restore_auto_sync_tab
-    autosubsync_class.show_log_window = show_log_window
+def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
+    """Attach automatic tab functions to the autosubsyncapp class"""
+    autosubsyncapp_class.setupAutoSyncTab = setup_auto_sync_tab
+    autosubsyncapp_class.validate_auto_sync_inputs = validate_auto_sync_inputs
+    autosubsyncapp_class.show_add_arguments_dialog = show_add_arguments_dialog
+    autosubsyncapp_class.show_auto_sync_inputs = show_auto_sync_inputs
+    autosubsyncapp_class.update_auto_sync_ui_for_batch = update_auto_sync_ui_for_batch
+    autosubsyncapp_class.update_sync_tool_options = update_sync_tool_options
+    autosubsyncapp_class.update_args_tooltip = update_args_tooltip
+    autosubsyncapp_class._create_slider = _create_slider
+    autosubsyncapp_class.OneStepSlider = OneStepSlider
+    autosubsyncapp_class.show_log_window = show_log_window
+    autosubsyncapp_class.restore_auto_sync_tab = restore_auto_sync_tab
+    autosubsyncapp_class.show_log_window = show_log_window
 
 
 class OneStepSlider(QSlider):

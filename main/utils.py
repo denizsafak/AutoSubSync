@@ -449,7 +449,7 @@ def get_resource_path(package, resource):
     Get the path to a resource file, with fallback to local file system.
 
     Args:
-        package (str): Package name containing the resource (e.g., 'autosubsync.assets')
+        package (str): Package name containing the resource (e.g., 'autosubsyncapp.assets')
         resource (str): Resource filename (e.g., 'icon.ico')
 
     Returns:
@@ -475,7 +475,7 @@ def get_resource_path(package, resource):
 
     # Fallback to local file system
     try:
-        # Extract the subdirectory from package name (e.g., 'assets' from 'autosubsync.assets')
+        # Extract the subdirectory from package name (e.g., 'assets' from 'autosubsyncapp.assets')
         subdir = package.split(".")[-1] if "." in package else package
         local_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), subdir, resource
@@ -761,7 +761,7 @@ def show_about_dialog(parent):
     desc_label.setWordWrap(True)
     layout.addWidget(desc_label)
     github_btn = QPushButton("Visit GitHub Repository")
-    github_btn.setIcon(QIcon(get_resource_path("autosubsync.assets", "github.png")))
+    github_btn.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.png")))
     github_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
     github_btn.setFixedHeight(32)
     layout.addWidget(github_btn)

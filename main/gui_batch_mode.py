@@ -167,17 +167,17 @@ def create_tree_widget_item(file_path, parent=None, icon_provider=None, item_id=
     return item
 
 
-def attach_functions_to_autosubsync(autosubsync_class):
-    """Attach batch mode functions to the autosubsync class"""
-    autosubsync_class.show_batch_add_menu = show_batch_add_menu
-    autosubsync_class.handle_add_pair = handle_add_pair
-    autosubsync_class.handle_add_folder = handle_add_folder
-    autosubsync_class.handle_add_multiple_files = handle_add_multiple_files
-    autosubsync_class.handle_add_pairs_continuously = handle_add_pairs_continuously
-    autosubsync_class.handle_batch_drop = handle_batch_drop
-    autosubsync_class.update_batch_buttons_state = update_batch_buttons_state
-    autosubsync_class.toggle_batch_mode = toggle_batch_mode
-    autosubsync_class.validate_batch_inputs = validate_batch_inputs
+def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
+    """Attach batch mode functions to the autosubsyncapp class"""
+    autosubsyncapp_class.show_batch_add_menu = show_batch_add_menu
+    autosubsyncapp_class.handle_add_pair = handle_add_pair
+    autosubsyncapp_class.handle_add_folder = handle_add_folder
+    autosubsyncapp_class.handle_add_multiple_files = handle_add_multiple_files
+    autosubsyncapp_class.handle_add_pairs_continuously = handle_add_pairs_continuously
+    autosubsyncapp_class.handle_batch_drop = handle_batch_drop
+    autosubsyncapp_class.update_batch_buttons_state = update_batch_buttons_state
+    autosubsyncapp_class.toggle_batch_mode = toggle_batch_mode
+    autosubsyncapp_class.validate_batch_inputs = validate_batch_inputs
 
 
 class BatchTreeView(QTreeWidget):
@@ -208,7 +208,7 @@ class BatchTreeView(QTreeWidget):
         norm_v, norm_s = os.path.normpath(reference_path), os.path.normpath(sub_path)
         return (norm_v, norm_s) in self._current_pair_id_set
 
-    def __init__(self, parent_app=None):  # parent_app is the autosubsync instance
+    def __init__(self, parent_app=None):  # parent_app is the autosubsyncapp instance
         super().__init__(parent_app)
         self.app_parent = parent_app
         self._next_item_id = 1  # Initialize the ID counter

@@ -129,9 +129,9 @@ class InputBox(QLabel):
             # For other unknown types, or if this is somehow called for batch, do nothing.
             return
 
-        # Get the parent autosubsync instance to access config
+        # Get the parent autosubsyncapp instance to access config
         parent = self
-        while parent and not isinstance(parent, autosubsync):
+        while parent and not isinstance(parent, autosubsyncapp):
             parent = parent.parentWidget()
 
         if parent:
@@ -146,7 +146,7 @@ class InputBox(QLabel):
         ):
             if self.input_type == "batch":
                 main_window = self.window()
-                if isinstance(main_window, autosubsync):
+                if isinstance(main_window, autosubsyncapp):
                     # Pass self (InputBox) to position menu correctly and the event position
                     menu = show_batch_add_menu(
                         main_window,
@@ -187,13 +187,13 @@ class InputBox(QLabel):
 
         if self.input_type == "batch":
             main_window = self.window()
-            if isinstance(main_window, autosubsync):
+            if isinstance(main_window, autosubsyncapp):
                 handle_batch_drop(main_window, files)
             return  # Batch drop handled by main window's BatchTreeView
 
-        # Get the parent autosubsync instance first
+        # Get the parent autosubsyncapp instance first
         parent = self
-        while parent and not isinstance(parent, autosubsync):
+        while parent and not isinstance(parent, autosubsyncapp):
             # Access parent as a property, not as a callable
             parent = parent.parentWidget()
 
@@ -236,7 +236,7 @@ class InputBox(QLabel):
             # This case should ideally be fully handled by the main window's BatchTreeView
             # if the InputBox itself is used for dropping when the tree is not yet visible.
             main_window = self.window()
-            if isinstance(main_window, autosubsync):
+            if isinstance(main_window, autosubsyncapp):
                 handle_batch_drop(main_window, files)
             return
 
@@ -409,7 +409,7 @@ class InputBox(QLabel):
         self.setStyleSheet(s)
 
 
-class autosubsync(QWidget):
+class autosubsyncapp(QWidget):
     # Make InputBox accessible as a class attribute for imported functions
     InputBox = InputBox
 
@@ -429,12 +429,12 @@ class autosubsync(QWidget):
             "batch_mode", DEFAULT_OPTIONS["batch_mode"]
         )
         self.batch_tree_view = BatchTreeView(self)
-        icon_path = get_resource_path("autosubsync.assets", "icon.ico")
+        icon_path = get_resource_path("autosubsyncapp.assets", "icon.ico")
         if icon_path:
             self.setWindowIcon(QIcon(icon_path))
             if platform.system() == "Windows":
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                    "autosubsync"
+                    "autosubsyncapp"
                 )
         # Theme: apply on startup
         self.apply_theme(self.config.get("theme", DEFAULT_OPTIONS["theme"]))
@@ -550,7 +550,7 @@ class autosubsync(QWidget):
         outer_layout.addWidget(self.tab_widget)
         self.settings_btn = QPushButton(self)
         self.settings_btn.setIcon(
-            QIcon(get_resource_path("autosubsync.assets", "settings.png"))
+            QIcon(get_resource_path("autosubsyncapp.assets", "settings.png"))
         )
         self.settings_btn.setToolTip("Settings")
         self.settings_btn.setFixedSize(36, 36)

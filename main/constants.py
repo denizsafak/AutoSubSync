@@ -13,10 +13,10 @@ VERSION = get_version()
 # ffmpeg and ffprobe paths
 _exe_suffix = ".exe" if platform.system() == "Windows" else ""
 FFMPEG_EXECUTABLE = get_resource_path(
-    "autosubsync.resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}"
+    "autosubsyncapp.resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}"
 )
 FFPROBE_EXECUTABLE = get_resource_path(
-    "autosubsync.resources.ffmpeg-bin", f"ffprobe{_exe_suffix}"
+    "autosubsyncapp.resources.ffmpeg-bin", f"ffprobe{_exe_suffix}"
 )
 
 # Synchronization tools
@@ -79,10 +79,10 @@ SYNC_TOOLS = {
         "type": "executable",
         "executable": {
             "Windows": get_resource_path(
-                "autosubsync.resources.alass-bin", "alass-cli.exe"
+                "autosubsyncapp.resources.alass-bin", "alass-cli.exe"
             ),
             "Linux": get_resource_path(
-                "autosubsync.resources.alass-bin", "alass-linux64"
+                "autosubsyncapp.resources.alass-bin", "alass-linux64"
             ),
             "Darwin": "alass-cli",
         },

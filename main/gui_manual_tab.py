@@ -3,7 +3,7 @@ This module provides the manual subtitle synchronization tab functionality for A
 It's designed to be imported and attached to the main application at runtime.
 
 The module exports:
-- attach_functions_to_autosubsync: Function to attach all tab functionality to the main class
+- attach_functions_to_autosubsyncapp: Function to attach all tab functionality to the main class
 - All the UI setup and functionality for the manual synchronization tab
 """
 
@@ -72,24 +72,24 @@ class ManualSyncWorker(QThread):
             self.finished.emit(False, "", error_msg)
 
 
-def attach_functions_to_autosubsync(autosubsync_class):
-    """Attach manual tab functions to the autosubsync class"""
-    autosubsync_class.setupManualSyncTab = setup_manual_sync_tab
-    autosubsync_class.validate_manual_sync_inputs = validate_manual_sync_inputs
-    autosubsync_class._update_shift_input_color = _update_shift_input_color
-    autosubsync_class._increment_shift = _increment_shift
-    autosubsync_class._decrement_shift = _decrement_shift
-    autosubsync_class._shift_input_wheel_event = _shift_input_wheel_event
-    autosubsync_class._handle_shift_input_events = _handle_shift_input_events
-    autosubsync_class._is_child_of = _is_child_of
-    autosubsync_class._update_total_shifted_display = _update_total_shifted_display
-    autosubsync_class._update_prefix_checkbox_state = _update_prefix_checkbox_state
-    autosubsync_class._would_overwrite_input_file = _would_overwrite_input_file
-    autosubsync_class._on_settings_changed = _on_settings_changed
-    autosubsync_class._show_message = _show_message
-    autosubsync_class._start_manual_sync = _start_manual_sync
-    autosubsync_class._on_sync_finished = _on_sync_finished
-    autosubsync_class._on_message_clicked = _on_message_clicked
+def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
+    """Attach manual tab functions to the autosubsyncapp class"""
+    autosubsyncapp_class.setupManualSyncTab = setup_manual_sync_tab
+    autosubsyncapp_class.validate_manual_sync_inputs = validate_manual_sync_inputs
+    autosubsyncapp_class._update_shift_input_color = _update_shift_input_color
+    autosubsyncapp_class._increment_shift = _increment_shift
+    autosubsyncapp_class._decrement_shift = _decrement_shift
+    autosubsyncapp_class._shift_input_wheel_event = _shift_input_wheel_event
+    autosubsyncapp_class._handle_shift_input_events = _handle_shift_input_events
+    autosubsyncapp_class._is_child_of = _is_child_of
+    autosubsyncapp_class._update_total_shifted_display = _update_total_shifted_display
+    autosubsyncapp_class._update_prefix_checkbox_state = _update_prefix_checkbox_state
+    autosubsyncapp_class._would_overwrite_input_file = _would_overwrite_input_file
+    autosubsyncapp_class._on_settings_changed = _on_settings_changed
+    autosubsyncapp_class._show_message = _show_message
+    autosubsyncapp_class._start_manual_sync = _start_manual_sync
+    autosubsyncapp_class._on_sync_finished = _on_sync_finished
+    autosubsyncapp_class._on_message_clicked = _on_message_clicked
 
 
 def setup_manual_sync_tab(self):

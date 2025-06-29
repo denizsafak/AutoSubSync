@@ -42,7 +42,7 @@ class LogWindow(QWidget):
 
         # Set custom font
         try:
-            font_path = get_resource_path("autosubsync.assets.fonts", "hack.ttf")
+            font_path = get_resource_path("autosubsyncapp.assets.fonts", "hack.ttf")
             font_id = QFontDatabase.addApplicationFont(font_path)
             if font_id != -1:
                 family = QFontDatabase.applicationFontFamilies(font_id)[0]

@@ -1,15 +1,11 @@
 import sys
 from multiprocessing import freeze_support
-import runpy, os, importlib.util, site, threading
+import runpy, os, threading
 import logging
 from utils import get_resource_path
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
-
-AUTOSUBSYNC_MODEL = get_resource_path(
-    "autosubsync.resources.autosubsync", "trained-model.bin"
-)
 
 def _redirect_fd(fd, target_stream):
     orig_fd = os.dup(fd)
@@ -27,24 +23,20 @@ def _redirect_fd(fd, target_stream):
 
 def cli_entry(args=None):
     _argv = sys.argv
-    if args: sys.argv = [_argv[0]] + args
+    model_file_default = get_resource_path("autosubsync.resources.autosubsync", "trained-model.bin")
+    if args is None:
+        args = sys.argv[1:]
+    if '--model_file' not in args:
+        args = ['--model_file', model_file_default] + args
+    sys.argv = [_argv[0]] + args
     try:
-        model_dir = os.path.dirname(AUTOSUBSYNC_MODEL) if AUTOSUBSYNC_MODEL and os.path.exists(AUTOSUBSYNC_MODEL) else None
-        out = args[2] if args and len(args) > 2 else (sys.argv[3] if len(sys.argv) > 3 else None)
+        out = args[3]
         code = 0
         orig_stdout_fd, t_out = _redirect_fd(1, sys.stdout)
         orig_stderr_fd, t_err = _redirect_fd(2, sys.stderr)
         try:
-            if model_dir:
-                cwd = os.getcwd(); os.chdir(model_dir)
-                try:
-                    sys.modules.pop('autosubsync.main', None)
-                    runpy.run_module('autosubsync.main', run_name='__main__')
-                finally:
-                    os.chdir(cwd)
-            else:
-                sys.modules.pop('autosubsync.main', None)
-                runpy.run_module('autosubsync.main', run_name='__main__')
+            sys.modules.pop('autosubsync.main', None)
+            runpy.run_module('autosubsync.main', run_name='__main__')
         except SystemExit as e:
             code = e.code if hasattr(e, 'code') else 1
         except Exception as ex:

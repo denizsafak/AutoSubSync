@@ -867,8 +867,8 @@ class AutoPairingDialog(QDialog):
         open_folder(file_path, self)
 
 
-def attach_functions_to_autosubsync(autosubsync_class):
+def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
     """Attach auto-pairing functions."""
-    autosubsync_class.open_auto_pairing_dialog = lambda self: AutoPairingDialog(
+    autosubsyncapp_class.open_auto_pairing_dialog = lambda self: AutoPairingDialog(
         self
     ).exec()

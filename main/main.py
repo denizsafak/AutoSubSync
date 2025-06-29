@@ -9,12 +9,12 @@ from PyQt6.QtCore import qInstallMessageHandler, QtMsgType, Qt
 # Add the directory to Python path
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
-from gui import autosubsync
-from gui_automatic_tab import attach_functions_to_autosubsync as attach_auto_functions
-from gui_manual_tab import attach_functions_to_autosubsync as attach_manual_functions
-from gui_batch_mode import attach_functions_to_autosubsync as attach_batch_functions
+from gui import autosubsyncapp
+from gui_automatic_tab import attach_functions_to_autosubsyncapp as attach_auto_functions
+from gui_manual_tab import attach_functions_to_autosubsyncapp as attach_manual_functions
+from gui_batch_mode import attach_functions_to_autosubsyncapp as attach_batch_functions
 from gui_auto_pairing import (
-    attach_functions_to_autosubsync as attach_auto_pairing_functions,
+    attach_functions_to_autosubsyncapp as attach_auto_pairing_functions,
 )
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
@@ -42,11 +42,11 @@ try:
 except:
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
-# Attach tab module functions to the autosubsync class
-attach_auto_functions(autosubsync)
-attach_manual_functions(autosubsync)
-attach_batch_functions(autosubsync)
-attach_auto_pairing_functions(autosubsync)
+# Attach tab module functions to the autosubsyncapp class
+attach_auto_functions(autosubsyncapp)
+attach_manual_functions(autosubsyncapp)
+attach_batch_functions(autosubsyncapp)
+attach_auto_pairing_functions(autosubsyncapp)
 
 
 # Custom message handler to filter out specific Qt warnings
@@ -100,18 +100,18 @@ def main():
     app = QApplication(sys.argv)
 
     # Set application icon using get_resource_path from utils
-    icon_path = get_resource_path("autosubsync.assets", "icon.ico")
+    icon_path = get_resource_path("autosubsyncapp.assets", "icon.ico")
     if icon_path:
         app.setWindowIcon(QIcon(icon_path))
 
     # Set the .desktop name on Linux
     if platform.system() == "Linux":
         try:
-            app.setDesktopFileName("autosubsync")
+            app.setDesktopFileName("autosubsyncapp")
         except AttributeError:
             logger.warning("setDesktopFileName not available on this Qt version")
 
-    ex = autosubsync()
+    ex = autosubsyncapp()
     ex.show()
     sys.exit(app.exec())
 
