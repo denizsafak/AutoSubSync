@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QInputDialog,
     QLineEdit,
     QSizePolicy,
+    QSpacerItem,
     QLabel,
     QMessageBox,
 )
@@ -415,6 +416,14 @@ def update_sync_tool_options(self, tool):
                 lambda value, key=config_key: update_config(self, key, value)
             )
             self.tool_option_widgets[option_name] = slider
+
+        elif option_type == "spacer":
+            value = option_data.get("value", 10)
+            spacer = QSpacerItem(
+                0, value, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+            )
+            self.sync_options_layout.addItem(spacer)
+            self.tool_option_widgets[option_name] = spacer
 
     # Ensure the + button stays on top
     if hasattr(self, "btn_add_args"):

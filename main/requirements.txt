@@ -8,3 +8,4 @@ pyinstaller
 psutil
 platformdirs
 ffsubsync
+autosubsync

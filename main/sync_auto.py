@@ -237,13 +237,30 @@ class SyncProcess:
             tool_info, tool_type = SYNC_TOOLS[tool], SYNC_TOOLS[tool].get(
                 "type", "executable"
             )
+            # Use local variables for tool fallback logic
+            current_tool = tool
+            current_tool_info = tool_info
+            current_tool_type = tool_type
+            supports_sub_ref = current_tool_info.get("supports_subtitle_as_reference", True)
+            ref_ext = os.path.splitext(reference)[1].lower()
+            is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
+            if not supports_sub_ref and not is_video_ref:
+                default_tool = DEFAULT_OPTIONS["sync_tool"]
+                append_log(self.app, f"{current_tool} does not support subtitle files as reference. Falling back to {default_tool}.", COLORS["ORANGE"])
+                logger.info(f"{current_tool} does not support subtitle files as reference. Falling back to {default_tool}.")
+                current_tool = default_tool
+                current_tool_info = SYNC_TOOLS[current_tool]
+                current_tool_type = current_tool_info.get("type", "executable")
             rc = None
-            if tool_type == "module":
-                module_name = tool_info.get("module")
+            if current_tool_type == "module":
+                module_name = current_tool_info.get("module")
                 idx, total = getattr(self.app, "_current_batch_idx", None), getattr(
                     self.app, "_current_batch_total", None
                 )
-                cmd_args = self._build_cmd(tool, None, reference, subtitle, output)[1:]
+                cmd_args = self._build_cmd(current_tool, None, reference, subtitle, output)[1:]
+                # Print and log what is executing
+                exec_msg = f"Executing: {module_name} {' '.join(cmd_args)}"
+                logger.info(exec_msg)
                 parent_conn, child_conn = multiprocessing.Pipe()
                 # Use top-level module_worker for Windows compatibility
                 proc = multiprocessing.Process(
@@ -270,14 +287,14 @@ class SyncProcess:
                             break
                 proc.join(timeout=1)
             else:
-                exe_info = tool_info["executable"]
+                exe_info = current_tool_info["executable"]
                 current_os = platform.system()
                 exe = (
                     exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
                 )
                 if not exe:
                     self.signals.error.emit(
-                        f"No executable found for {tool} on {current_os}"
+                        f"No executable found for {current_tool} on {current_os}"
                     )
                     self.signals.finished.emit(False, None)
                     return
@@ -293,7 +310,7 @@ class SyncProcess:
                         create_backup(output)
                     except Exception as e:
                         logger.error(f"Failed to create backup: {e}")
-                cmd = self._build_cmd(tool, exe, reference, subtitle, output)
+                cmd = self._build_cmd(current_tool, exe, reference, subtitle, output)
                 with self._process_lock:
                     if self.should_cancel:
                         return
@@ -562,9 +579,8 @@ def start_sync_process(app):
 
         def process_next_item():
             nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
-            if hasattr(app, "_batch_state") and app._batch_state.get(
-                "should_cancel", False
-            ):
+            converted_files_to_clean = []
+            if hasattr(app, "_batch_state") and app._batch_state.get("should_cancel", False):
                 logger.info("Batch sync cancelled by user")
                 if hasattr(app, "_batch_state"):
                     del app._batch_state
@@ -573,22 +589,11 @@ def start_sync_process(app):
                 if app.batch_mode_enabled and total_items > 1:
                     append_log(app, "Batch sync completed.", COLORS["BLUE"], True)
                     append_log(app, f"Total pairs: {total_items}", COLORS["BLUE"])
-                    append_log(
-                        app, f"Successful: {batch_success_count}", COLORS["GREEN"]
-                    )
+                    append_log(app, f"Successful: {batch_success_count}", COLORS["GREEN"])
                     if batch_fail_count > 0:
-                        append_log(
-                            app,
-                            f"Failed: {batch_fail_count}",
-                            COLORS["RED"],
-                            end="\n\n",
-                        )
+                        append_log(app, f"Failed: {batch_fail_count}", COLORS["RED"], end="\n\n")
                         for fail_idx, v, s in failed_pairs:
-                            append_log(
-                                app,
-                                f"Failed pair: [{fail_idx+1}/{total_items}]",
-                                COLORS["RED"],
-                            )
+                            append_log(app, f"Failed pair: [{fail_idx+1}/{total_items}]", COLORS["RED"])
                             append_log(app, "Reference: ", end="")
                             append_log(app, v, COLORS["ORANGE"], end="\n")
                             append_log(app, "Subtitle: ", end="")
@@ -599,50 +604,24 @@ def start_sync_process(app):
                 return
             it = items[current_item_idx]
             original_idx = current_item_idx
-            original_ref_path, original_sub_path = (
-                it["reference_path"],
-                it["subtitle_path"],
-            )
+            original_ref_path, original_sub_path = it["reference_path"], it["subtitle_path"]
             if app.batch_mode_enabled and len(items) > 1:
-                append_log(
-                    app,
-                    f"Processing pair [{current_item_idx+1}/{len(items)}]",
-                    COLORS["BLUE"],
-                    True,
-                )
-            output_path = determine_output_path(
-                app, original_ref_path, original_sub_path
-            )
-            output_dir = os.path.dirname(output_path)
+                append_log(app, f"Processing pair [{current_item_idx+1}/{len(items)}]", COLORS["BLUE"], True)
+            output_dir = os.path.dirname(original_sub_path)
             ref_ext = os.path.splitext(original_ref_path)[1].lower()
             is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
             check_video_subs = is_video_ref and app.config.get(
                 f"{tool}_check_video_for_subtitles",
-                SYNC_TOOLS[tool]
-                .get("options", {})
-                .get("check_video_for_subtitles", {})
-                .get("default", False),
+                SYNC_TOOLS[tool].get("options", {}).get("check_video_for_subtitles", {}).get("default", False),
             )
             extracted_subtitle_path, extracted_folder_to_clean = None, None
             if check_video_subs:
-                append_log(
-                    app, "Checking video for embedded subtitles...", COLORS["GREY"]
-                )
-                extraction_result, extraction_done, log_lock = (
-                    [None, None, []],
-                    threading.Event(),
-                    threading.Lock(),
-                )
-
+                append_log(app, "Checking video for embedded subtitles...", COLORS["GREY"])
+                extraction_result, extraction_done, log_lock = ([None, None, []], threading.Event(), threading.Lock())
                 def run_extraction():
                     try:
-                        result = extract_subtitles(
-                            original_ref_path, original_sub_path, output_dir
-                        )
-                        extraction_result[0], extraction_result[1] = (
-                            result[0],
-                            result[1],
-                        )
+                        result = extract_subtitles(original_ref_path, original_sub_path, output_dir)
+                        extraction_result[0], extraction_result[1] = result[0], result[1]
                         with log_lock:
                             extraction_result[2].extend(result[2])
                     except Exception as e:
@@ -651,53 +630,26 @@ def start_sync_process(app):
                             extraction_result[2].append(f"Extraction failed: {str(e)}")
                     finally:
                         extraction_done.set()
-
                 threading.Thread(target=run_extraction, daemon=True).start()
                 last_log_count = 0
                 while not extraction_done.is_set():
                     with log_lock:
                         while last_log_count < len(extraction_result[2]):
-                            append_log(
-                                app,
-                                f"{extraction_result[2][last_log_count]}",
-                                COLORS["GREY"],
-                            )
+                            append_log(app, f"{extraction_result[2][last_log_count]}", COLORS["GREY"])
                             last_log_count += 1
                     QApplication.processEvents()
                     time.sleep(0.05)
                 with log_lock:
                     for i in range(last_log_count, len(extraction_result[2])):
                         append_log(app, f"{extraction_result[2][i]}", COLORS["GREY"])
-                extracted_subtitle_path, extraction_score = (
-                    extraction_result[0],
-                    extraction_result[1],
-                )
+                extracted_subtitle_path, extraction_score = extraction_result[0], extraction_result[1]
                 if extracted_subtitle_path:
                     filename = os.path.basename(extracted_subtitle_path)
-                    append_log(
-                        app,
-                        f"Selected: {filename} with timestamp difference: {extraction_score}",
-                        COLORS["BLUE"],
-                    )
-                    if not app.config.get(
-                        "keep_extracted_subtitles",
-                        DEFAULT_OPTIONS["keep_extracted_subtitles"],
-                    ):
-                        extracted_folder_to_clean = os.path.dirname(
-                            extracted_subtitle_path
-                        )
+                    append_log(app, f"Selected: {filename} with timestamp difference: {extraction_score}", COLORS["BLUE"])
+                    if not app.config.get("keep_extracted_subtitles", DEFAULT_OPTIONS["keep_extracted_subtitles"]):
+                        extracted_folder_to_clean = os.path.dirname(extracted_subtitle_path)
                 else:
-                    append_log(
-                        app,
-                        "No compatible subtitles found to extract, using video...",
-                        COLORS["ORANGE"],
-                    )
-            output_path = determine_output_path(
-                app, original_ref_path, original_sub_path
-            )
-            output_dir = os.path.dirname(output_path)
-            converted_files_to_clean = []
-
+                    append_log(app, "No compatible subtitles found to extract, using video...", COLORS["ORANGE"])
             def convert_if_needed(file_path):
                 ext = os.path.splitext(file_path)[-1].lower()
                 supported = SYNC_TOOLS[tool].get("supported_formats", [])
@@ -706,93 +658,39 @@ def start_sync_process(app):
                     for msg in msgs:
                         append_log(app, msg, COLORS["GREY"])
                     if converted:
-                        if not app.config.get(
-                            "keep_converted_subtitles",
-                            DEFAULT_OPTIONS["keep_converted_subtitles"],
-                        ):
+                        if not app.config.get("keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]):
                             converted_files_to_clean.append(converted)
                         return converted
-                    append_log(
-                        app,
-                        f"Conversion failed for {os.path.basename(file_path)}",
-                        COLORS["RED"],
-                    )
+                    append_log(app, f"Conversion failed for {os.path.basename(file_path)}", COLORS["RED"])
                     return None
                 return file_path
-
-            reference_to_process = (
-                extracted_subtitle_path
-                if extracted_subtitle_path
-                else original_ref_path
-            )
+            reference_to_process = extracted_subtitle_path if extracted_subtitle_path else original_ref_path
             reference_path = convert_if_needed(reference_to_process)
             subtitle_path = convert_if_needed(original_sub_path)
-            subtitle_was_converted = (
-                subtitle_path != original_sub_path and subtitle_path is not None
-            )
+            subtitle_was_converted = subtitle_path != original_sub_path and subtitle_path is not None
             current_item_idx += 1
             if not reference_path or not subtitle_path:
                 if app.batch_mode_enabled and total_items > 1:
                     batch_fail_count += 1
-                    failed_pairs.append(
-                        (original_idx, original_ref_path, original_sub_path)
-                    )
-                    update_progress(
-                        app,
-                        int((original_idx + 1) * 100 / total_items),
-                        original_idx + 1,
-                        total_items,
-                    )
+                    failed_pairs.append((original_idx, original_ref_path, original_sub_path))
+                    update_progress(app, int((original_idx + 1) * 100 / total_items), original_idx + 1, total_items)
                     process_next_item()
                 else:
-                    append_log(
-                        app, "Sync cancelled due to conversion failure.", COLORS["RED"]
-                    )
+                    append_log(app, "Sync cancelled due to conversion failure.", COLORS["RED"])
                     app.restore_auto_sync_tab()
                 return
+            final_output_path = determine_output_path(app, original_ref_path, original_sub_path, subtitle_was_converted)
+            tool_local, tool_info, tool_type = get_tool_with_fallback(app, reference_path)
             proc = SyncProcess(app)
             app._current_sync_process = proc
             if hasattr(app, "_batch_state"):
                 app._batch_state["current_process"] = proc
-            proc.signals.progress.connect(
-                lambda msg, is_overwrite: append_log(app, msg, overwrite=is_overwrite)
-            )
-            proc.signals.error.connect(
-                lambda msg: append_log(app, msg, COLORS["RED"], end="\n\n")
-            )
-            proc.signals.progress_percent.connect(
-                lambda percent: (
-                    update_progress(
-                        app,
-                        (
-                            int(
-                                (current_item_idx - 1) * 100 / total_items
-                                + percent / total_items
-                            )
-                            if app.batch_mode_enabled and total_items > 1
-                            else int(percent)
-                        ),
-                        (
-                            current_item_idx
-                            if app.batch_mode_enabled and total_items > 1
-                            else None
-                        ),
-                        (
-                            total_items
-                            if app.batch_mode_enabled and total_items > 1
-                            else None
-                        ),
-                    )
-                    if percent is not None
-                    else None
-                )
-            )
-
+            proc.signals.progress.connect(lambda msg, is_overwrite: append_log(app, msg, overwrite=is_overwrite))
+            proc.signals.error.connect(lambda msg: append_log(app, msg, COLORS["RED"], end="\n\n"))
+            proc.signals.progress_percent.connect(lambda percent: update_progress(app, int((current_item_idx - 1) * 100 / total_items + percent / total_items) if app.batch_mode_enabled and total_items > 1 else int(percent), current_item_idx if app.batch_mode_enabled and total_items > 1 else None, total_items if app.batch_mode_enabled and total_items > 1 else None) if percent is not None else None)
             def batch_completion_handler(ok, out):
                 nonlocal batch_success_count, batch_fail_count
-                if hasattr(app, "_batch_state") and app._batch_state.get(
-                    "should_cancel", False
-                ):
+                if hasattr(app, "_batch_state") and app._batch_state.get("should_cancel", False):
                     cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
                     return
                 ok = handle_completion(app, ok, out, original_sub_path)
@@ -801,37 +699,42 @@ def start_sync_process(app):
                     cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
                 else:
                     batch_fail_count += 1
-                    failed_pairs.append(
-                        (original_idx, original_ref_path, original_sub_path)
-                    )
-                update_progress(
-                    app,
-                    int((original_idx + 1) * 100 / total_items),
-                    original_idx + 1,
-                    total_items,
-                )
+                    failed_pairs.append((original_idx, original_ref_path, original_sub_path))
+                update_progress(app, int((original_idx + 1) * 100 / total_items), original_idx + 1, total_items)
                 app.log_window.handle_batch_completion(ok, out, process_next_item)
-
             def single_completion_handler(ok, out):
                 ok = handle_completion(app, ok, out, original_sub_path)
                 app.log_window.handle_sync_completion(ok, out)
                 if ok:
                     cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
-
             if app.batch_mode_enabled and len(items) > 1:
                 proc.signals.finished.connect(batch_completion_handler)
             else:
                 proc.signals.finished.connect(single_completion_handler)
-            final_output_path = determine_output_path(
-                app, original_ref_path, original_sub_path, subtitle_was_converted
-            )
-            proc.run_sync(reference_path, subtitle_path, tool, final_output_path)
+            proc.run_sync(reference_path, subtitle_path, tool_local, final_output_path)
 
         process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
         if hasattr(app, "_batch_state"):
             del app._batch_state
+
+
+def get_tool_with_fallback(app, ref_path):
+    t = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
+    info = SYNC_TOOLS[t]
+    t_type = info.get("type", "executable")
+    supports_sub_ref = info.get("supports_subtitle_as_reference", True)
+    ref_ext = os.path.splitext(ref_path)[1].lower()
+    is_video = ref_ext not in SUBTITLE_EXTENSIONS
+    if not supports_sub_ref and not is_video:
+        fallback = DEFAULT_OPTIONS["sync_tool"]
+        append_log(app, f"{t} does not support subtitle files as reference. Falling back to {fallback}.", COLORS["ORANGE"])
+        logger.info(f"{t} does not support subtitle files as reference. Falling back to {fallback}.")
+        t = fallback
+        info = SYNC_TOOLS[t]
+        t_type = info.get("type", "executable")
+    return t, info, t_type
 
 
 def determine_output_path(app, reference, subtitle, subtitle_was_converted=False):

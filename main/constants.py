@@ -25,6 +25,7 @@ SYNC_TOOLS = {
         "description": "Automatic subtitle synchronization tool using audio alignment",
         "github": "https://github.com/smacke/ffsubsync",
         "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
+        "supports_subtitle_as_reference": True,
         "type": "module",
         "module": "call_ffsubsync",
         "cmd_structure": ["{reference}", "-i", "{subtitle}", "-o", "{output}"],
@@ -74,6 +75,7 @@ SYNC_TOOLS = {
         "description": "Audio-based subtitle synchronization with high accuracy",
         "github": "https://github.com/kaegi/alass",
         "supported_formats": [".srt", ".ass", ".ssa", ".sub", ".idx"],
+        "supports_subtitle_as_reference": True,
         "type": "executable",
         "executable": {
             "Windows": get_resource_path(
@@ -88,7 +90,7 @@ SYNC_TOOLS = {
         "options": {
             "check_video_for_subtitles": {
                 "type": "checkbox",
-                "label": "Check video subtitles",
+                "label": "Check video for subtitles",
                 "tooltip": "Check if video already contains subtitles",
                 "default": True,
             },
@@ -115,6 +117,47 @@ SYNC_TOOLS = {
                 "range": [-1, 100],
                 "default": 7,
             },
+        },
+    },
+    "autosubsync": {
+        "description": "Simple automatic subtitle synchronizer",
+        "github": "https://github.com/oseiskar/autosubsync",
+        "supported_formats": [".srt"],
+        "supports_subtitle_as_reference": False,
+        "type": "module",
+        "module": "call_autosubsync",
+        "cmd_structure": ["{reference}", "{subtitle}", "{output}"],
+        "options": {
+            "spacer1": {
+                "type": "spacer",
+                "value": 2,
+            },
+            "check_video_for_subtitles": {
+                "type": "checkbox",
+                "label": "Check video for subtitles",
+                "tooltip": "Check if video already contains subtitles",
+                "default": True,
+            },
+            "spacer2": {
+                "type": "spacer",
+                "value": 9,
+            },
+            "max_shift_secs": {
+                "type": "slider",
+                "label": "Maximum shift (seconds)",
+                "tooltip": "--max_shift_secs: Maximum subtitle shift in seconds (default 20)",
+                "argument": "--max_shift_secs",
+                "range": [1, 120],
+                "default": 20,
+            },
+            "parallelism": {
+                "type": "slider",
+                "label": "Parallelism",
+                "tooltip": "--parallelism: Number of parallel worker processes (default 3)",
+                "argument": "--parallelism",
+                "range": [1, 16],
+                "default": 3,
+            }
         },
     },
 }

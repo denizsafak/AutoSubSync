@@ -14,6 +14,7 @@ qt_platforms_dir = os.path.join(qt_plugins_dir, 'platforms')
 
 ffmpeg_bin = os.path.join(os.curdir, 'main', 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'main', 'resources', 'alass-bin')
+autosubsync = os.path.join(os.curdir, 'main', 'resources', 'autosubsync')
 #ffsubsync_bin = os.path.join(os.curdir, 'main', 'resources', 'ffsubsync-bin')
 
 datas = [
@@ -38,11 +39,12 @@ a = Analysis(
     pathex=[],
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
-        (alass_bin, 'resources/alass-bin')
+        (alass_bin, 'resources/alass-bin'),
+        (autosubsync, 'resources/autosubsync'),
     #    (ffsubsync_bin, 'resources/ffsubsync-bin'),
     ],
     datas=datas,
-    hiddenimports=['ffsubsync', 'call_ffsubsync'],
+    hiddenimports=['ffsubsync', 'call_ffsubsync', 'autosubsync', 'call_autosubsync'],
     #hookspath=['main/resources/hooks'],
     hooksconfig={},
     runtime_hooks=[],
