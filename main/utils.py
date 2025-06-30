@@ -776,6 +776,105 @@ def show_about_dialog(parent):
     dialog.exec()
 
 
+def show_tool_info_dialog(parent):
+    from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QWidget, QStyle
+    from PyQt6.QtCore import Qt, QUrl
+    from PyQt6.QtGui import QIcon, QDesktopServices
+    from constants import SYNC_TOOLS
+    from utils import get_resource_path
+    import platform
+    tool_name = getattr(parent.sync_tool_combo, 'currentText', lambda: '')()
+    tool = SYNC_TOOLS.get(tool_name, {})
+    if not tool: return
+    d = QDialog(parent)
+    d.setWindowTitle(f"About {tool_name}")
+    d.setWindowFlags(d.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
+    main_layout = QVBoxLayout(d)
+    main_layout.setSpacing(10)
+    main_layout.setContentsMargins(12,14,12,12)
+    header = QHBoxLayout()
+    icon = QLabel()
+    style = parent.style() if hasattr(parent, 'style') else QApplication.instance().style()
+    info_icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation)
+    icon.setPixmap(info_icon.pixmap(32, 32))
+    header.addWidget(icon)
+    version = tool.get('version', '')
+    t = QLabel(f"<h1 style='margin-bottom: 0;'>{tool_name} <span style='font-size: 12px; font-weight: normal; color: #888;'>v{version}</span></h1>")
+    t.setTextFormat(Qt.TextFormat.RichText)
+    header.addWidget(t, 1)
+    main_layout.addLayout(header)
+    # Use row layouts for label-value pairs
+    info_layout = QVBoxLayout()
+    info_layout.setSpacing(6)
+    info_layout.setContentsMargins(5, 0, 5, 5)
+    def row(label_widget, value_widget):
+        h = QHBoxLayout()
+        h.addWidget(label_widget, alignment=Qt.AlignmentFlag.AlignTop)
+        h.addWidget(value_widget, 1)
+        return h
+    def bold_label(text):
+        lab = QLabel(f"<b>{text}</b>")
+        lab.setTextFormat(Qt.TextFormat.RichText)
+        return lab
+    def wrap_label(text):
+        if isinstance(text, list):
+            text = ', '.join(str(x) for x in text)
+        lab = QLabel(text)
+        lab.setWordWrap(True)
+        return lab
+    desc = tool.get('description','').replace('<p>','').replace('</p>','').replace('\n','<br>')
+    desc_label = QLabel(desc)
+    desc_label.setWordWrap(True)
+    desc_label.setTextFormat(Qt.TextFormat.RichText)
+    info_layout.addWidget(desc_label)
+    typ = tool.get('type','')
+    if typ == 'module':
+        label = 'Module'
+        val = tool.get('module','')
+    elif typ == 'executable':
+        label = 'Executable'
+        exe = tool.get('executable','')
+        val = exe.get(platform.system(), exe) if isinstance(exe, dict) else exe
+    else:
+        label = 'Module/Executable'
+        val = tool.get('module', tool.get('executable',''))
+    cmd = tool.get('cmd_structure', [])
+    cmd_str = ' '.join(str(x) for x in cmd) if isinstance(cmd, list) else str(cmd)
+    cmd_label = QLabel(f"<pre style='font-size:12px'>{cmd_str}</pre>")
+    cmd_label.setTextFormat(Qt.TextFormat.RichText)
+    cmd_label.setWordWrap(True)
+    # Add each field as a row (label and value in same row)
+    info_layout.addLayout(row(bold_label("Type:"), wrap_label(tool.get('type',''))))
+    info_layout.addLayout(row(bold_label(label+":"), wrap_label(val)))
+    info_layout.addLayout(row(bold_label("Command structure:"), cmd_label))
+    info_layout.addLayout(row(bold_label("Supported formats:"), wrap_label(tool.get('supported_formats',''))))
+    info_layout.addLayout(row(bold_label("Supports subtitle as reference:"), wrap_label('Yes' if tool.get('supports_subtitle_as_reference', False) else 'No')))
+    form_widget = QWidget()
+    form_widget.setLayout(info_layout)
+    main_layout.addWidget(form_widget)
+    if tool.get('github'):
+        b = QPushButton("Visit on GitHub")
+        b.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.png")))
+        b.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(tool['github'])))
+        b.setFixedHeight(32)
+        main_layout.addWidget(b)
+    c = QPushButton("Close")
+    c.clicked.connect(d.accept)
+    c.setFixedHeight(32)
+    main_layout.addWidget(c)
+    d.adjustSize()
+    d.setFixedSize(d.sizeHint())
+    d.exec()
+
+def get_version_info(module_name):
+    """Return a version information of package."""
+    from importlib.metadata import version, PackageNotFoundError
+
+    try:
+        return version(module_name)
+    except PackageNotFoundError:
+        return "0.0"
+
 # Update checking functionality
 class UpdateSignals(QObject):
     update_available = pyqtSignal(str, str)

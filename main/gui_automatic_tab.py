@@ -31,7 +31,7 @@ from utils import (
     update_config,
     handle_save_location_dropdown,
     update_folder_label,
-    shorten_path,
+    show_tool_info_dialog,
 )
 
 # Import directly from gui_batch_mode for cleaner integration
@@ -54,6 +54,7 @@ def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
     autosubsyncapp_class.show_log_window = show_log_window
     autosubsyncapp_class.restore_auto_sync_tab = restore_auto_sync_tab
     autosubsyncapp_class.show_log_window = show_log_window
+    autosubsyncapp_class.show_tool_info_dialog = show_tool_info_dialog
 
 
 class OneStepSlider(QSlider):
@@ -123,16 +124,31 @@ def setup_auto_sync_tab(self):
     self.update_args_tooltip()
     self.btn_add_args.clicked.connect(self.show_add_arguments_dialog)
 
+    # Create the ? button for tool info
+    self.btn_tool_info = QPushButton("?", self)
+    self.btn_tool_info.setFixedSize(30, 30)
+    self.btn_tool_info.setToolTip("Show tool information")
+    self.btn_tool_info.clicked.connect(self.show_tool_info_dialog)
+
     # Set the sync options group layout
     self.sync_options_layout = QVBoxLayout()
     self.sync_options_group.setLayout(self.sync_options_layout)
     controls.addWidget(self.sync_options_group)
 
-    # Position the + button in the top right of the group box
+    # Position the + and ? buttons in the top right of the group box
     self.btn_add_args.setParent(self.sync_options_group)
-    self.sync_options_group.resizeEvent = lambda event: self.btn_add_args.move(
-        self.sync_options_group.width() - self.btn_add_args.width() - 10, 30
-    )
+    self.btn_tool_info.setParent(self.sync_options_group)
+    def _move_buttons(event=None):
+        # Place ? to the left of +
+        x_add = self.sync_options_group.width() - self.btn_add_args.width() - 10
+        x_info = x_add - self.btn_tool_info.width() - 5
+        y = 30
+        self.btn_add_args.move(x_add, y)
+        self.btn_tool_info.move(x_info, y)
+        # Ensure both buttons are on top
+        self.btn_add_args.raise_()
+        self.btn_tool_info.raise_()
+    self.sync_options_group.resizeEvent = _move_buttons
 
     self.sync_tool_combo = self._dropdown(
         controls, "Sync tool:", list(SYNC_TOOLS.keys())

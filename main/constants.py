@@ -1,5 +1,5 @@
 import platform
-from utils import get_version, get_resource_path
+from utils import get_version, get_resource_path, get_version_info
 
 # Program Information
 PROGRAM_NAME = "AutoSubSync"
@@ -22,7 +22,8 @@ FFPROBE_EXECUTABLE = get_resource_path(
 # Synchronization tools
 SYNC_TOOLS = {
     "ffsubsync": {
-        "description": "Automatic subtitle synchronization tool using audio alignment",
+        "version": get_version_info("ffsubsync"),
+        "description": "Automagically synchronize subtitles with video",
         "github": "https://github.com/smacke/ffsubsync",
         "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
         "supports_subtitle_as_reference": True,
@@ -72,7 +73,8 @@ SYNC_TOOLS = {
         },
     },
     "alass": {
-        "description": "Audio-based subtitle synchronization with high accuracy",
+        "version": "2.0",
+        "description": "Automatic Language-Agnostic Subtitle Synchronization",
         "github": "https://github.com/kaegi/alass",
         "supported_formats": [".srt", ".ass", ".ssa", ".sub", ".idx"],
         "supports_subtitle_as_reference": True,
@@ -120,7 +122,8 @@ SYNC_TOOLS = {
         },
     },
     "autosubsync": {
-        "description": "Simple automatic subtitle synchronizer",
+        "version": get_version_info("autosubsync"),
+        "description": "Automatically synchronize subtitles with audio using machine learning",
         "github": "https://github.com/oseiskar/autosubsync",
         "supported_formats": [".srt"],
         "supports_subtitle_as_reference": False,
