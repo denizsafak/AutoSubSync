@@ -390,7 +390,9 @@ def update_sync_tool_options(self, tool):
         if option_type == "checkbox":
             # Create checkbox
             checkbox = self._checkbox(label)
-            checkbox.setToolTip(tooltip)
+            argument = option_data.get("argument", "")
+            tooltip_text = f"{argument}: {tooltip}" if argument and tooltip else (argument if argument else tooltip)
+            checkbox.setToolTip(tooltip_text)
             checkbox.setChecked(self.config.get(config_key, default))
             checkbox.toggled.connect(
                 lambda state, key=config_key: update_config(self, key, state)
@@ -405,7 +407,9 @@ def update_sync_tool_options(self, tool):
             dropdown = self._dropdown(
                 self.sync_options_layout, label, [labels.get(v, v) for v in values]
             )
-            dropdown.setToolTip(tooltip)
+            argument = option_data.get("argument", "")
+            tooltip_text = f"{argument}: {tooltip}" if argument and tooltip else (argument if argument else tooltip)
+            dropdown.setToolTip(tooltip_text)
 
             saved = self.config.get(config_key, default)
             if (idx := dropdown.findText(labels.get(saved, saved))) >= 0:
@@ -424,13 +428,25 @@ def update_sync_tool_options(self, tool):
             # Create slider
             range_min, range_max = option_data.get("range", [0, 100])
             current_value = self.config.get(config_key, default)
-            slider, _ = self._create_slider(
+            slider, val_label = self._create_slider(
                 self.sync_options_layout, label, range_min, range_max, current_value
             )
-            slider.setToolTip(tooltip)
-            slider.valueChanged.connect(
-                lambda value, key=config_key: update_config(self, key, value)
-            )
+            argument = option_data.get("argument", "")
+            tooltip_text = f"{argument}: {tooltip}" if argument and tooltip else (argument if argument else tooltip)
+            slider.setToolTip(tooltip_text)
+            
+            # Special handling for alass split_penalty slider
+            if tool == "alass" and option_name == "split_penalty":
+                def update_split_penalty_display(value):
+                    val_label.setText("No splits" if value == -1 else str(value))
+                    update_config(self, config_key, value)
+                # Set initial display
+                update_split_penalty_display(current_value)
+                slider.valueChanged.connect(update_split_penalty_display)
+            else:
+                slider.valueChanged.connect(
+                    lambda value, key=config_key: update_config(self, key, value)
+                )
             self.tool_option_widgets[option_name] = slider
 
         elif option_type == "spacer":

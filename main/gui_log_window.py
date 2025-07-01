@@ -138,8 +138,13 @@ class LogWindow(QWidget):
             for i, (k, v) in enumerate(opts.items()):
                 prefix = "└─ " if i == len(opts) - 1 else "├─ "
                 val = cfg.get(f"{sync_tool}_{k}", v.get("default"))
+                # Special handling for alass split_penalty
+                if sync_tool == "alass" and k == "split_penalty" and val == -1:
+                    display_val = "No splits"
+                else:
+                    display_val = str(val)
                 self.append_message(f"{prefix}{v.get('label', k)}: ", end="")
-                self.append_message(str(val), bold=True, color=COLORS["GREEN"])
+                self.append_message(display_val, bold=True, color=COLORS["GREEN"])
         else:
             self.append_message(
                 "Unknown sync tool. No options available.", color=COLORS["ORANGE"]
