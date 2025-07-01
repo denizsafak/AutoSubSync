@@ -139,9 +139,9 @@ def setup_auto_sync_tab(self):
     self.btn_add_args.setParent(self.sync_options_group)
     self.btn_tool_info.setParent(self.sync_options_group)
     def _move_buttons(event=None):
-        # Place ? to the left of +
-        x_add = self.sync_options_group.width() - self.btn_add_args.width() - 10
-        x_info = x_add - self.btn_tool_info.width() - 5
+        # Place + to the left of ?
+        x_info = self.sync_options_group.width() - self.btn_tool_info.width() - 10
+        x_add = x_info - self.btn_add_args.width() - 5
         y = 30
         self.btn_add_args.move(x_add, y)
         self.btn_tool_info.move(x_info, y)
