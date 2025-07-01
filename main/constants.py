@@ -4,7 +4,7 @@ from utils import get_version, get_resource_path, get_version_info
 # Program Information
 PROGRAM_NAME = "AutoSubSync"
 PROGRAM_TAGLINE = "Subtitle Synchronizer"
-PROGRAM_DESCRIPTION = "Synchronize subtitle files with video using advanced algorithms."
+PROGRAM_DESCRIPTION = "AutoSubSync is a user-friendly Python tool that helps you easily synchronize subtitle files. It supports various subtitle formats and allows you to sync subtitles effortlessly by shifting subtitle timings automatically or manually with a millisecond offset."
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
 GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
