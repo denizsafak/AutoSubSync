@@ -550,7 +550,7 @@ class autosubsyncapp(QWidget):
         outer_layout.addWidget(self.tab_widget)
         self.settings_btn = QPushButton(self)
         self.settings_btn.setIcon(
-            QIcon(get_resource_path("autosubsyncapp.assets", "settings.png"))
+            QIcon(get_resource_path("autosubsyncapp.assets", "settings.svg"))
         )
         self.settings_btn.setToolTip("Settings")
         self.settings_btn.setFixedSize(36, 36)
