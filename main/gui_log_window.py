@@ -135,8 +135,10 @@ class LogWindow(QWidget):
         tool_info = SYNC_TOOLS.get(sync_tool)
         if tool_info and "options" in tool_info:
             opts = tool_info["options"]
-            for i, (k, v) in enumerate(opts.items()):
-                prefix = "└─ " if i == len(opts) - 1 else "├─ "
+            # Filter out spacer options for display
+            display_opts = {k: v for k, v in opts.items() if v.get("type") != "spacer"}
+            for i, (k, v) in enumerate(display_opts.items()):
+                prefix = "└─ " if i == len(display_opts) - 1 else "├─ "
                 val = cfg.get(f"{sync_tool}_{k}", v.get("default"))
                 # Special handling for alass split_penalty
                 if sync_tool == "alass" and k == "split_penalty" and val == -1:
