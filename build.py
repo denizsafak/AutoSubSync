@@ -131,15 +131,21 @@ def load_constants():
         else:
             python_executable = "venv/bin/python"
         
-        # Execute a subprocess to get constants
+        # Execute a subprocess to get constants with offscreen display and additional headless settings
+        env = os.environ.copy()
+        env["QT_QPA_PLATFORM"] = "offscreen"
+        env["DISPLAY"] = ""
+        env["HEADLESS"] = "1"
+        
         result = subprocess.run([
             python_executable, "-c",
-            "import sys; import os; sys.path.insert(0, 'main'); "
+            "import os; os.environ['QT_QPA_PLATFORM'] = 'offscreen'; "
+            "import sys; sys.path.insert(0, 'main'); "
             "from constants import VERSION, SYNC_TOOLS; "
             "import json; "
             "data = {'VERSION': VERSION, 'SYNC_TOOLS': {k: {'version': v.get('version', 'unknown'), 'github': v.get('github', '')} for k, v in SYNC_TOOLS.items()}}; "
             "print(json.dumps(data))"
-        ], capture_output=True, text=True, cwd=script_dir)
+        ], capture_output=True, text=True, cwd=script_dir, env=env)
         
         if result.returncode == 0:
             return json.loads(result.stdout.strip())
