@@ -123,12 +123,47 @@ def ensure_ffmpeg():
 
 
 def load_constants():
-    """Load constants module using importlib"""
+    """Load constants module using venv python"""
     try:
-        spec = importlib.util.spec_from_file_location("constants", os.path.join(script_dir, "main", "constants.py"))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+        if platform.system() == "Windows":
+            python_executable = "venv\\Scripts\\python"
+        else:
+            python_executable = "venv/bin/python"
+        
+        # Create a small script to extract constants
+        script = '''
+import sys
+import os
+sys.path.insert(0, "main")
+import constants
+import json
+
+data = {
+    "VERSION": constants.VERSION,
+    "SYNC_TOOLS": {}
+}
+
+for tool_name, tool_info in constants.SYNC_TOOLS.items():
+    data["SYNC_TOOLS"][tool_name] = {
+        "version": tool_info.get("version", "unknown"),
+        "github": tool_info.get("github", "")
+    }
+
+print(json.dumps(data))
+'''
+        
+        result = subprocess.run(
+            [python_executable, "-c", script],
+            capture_output=True,
+            text=True,
+            cwd=script_dir
+        )
+        
+        if result.returncode == 0:
+            return json.loads(result.stdout)
+        else:
+            print(f"Error loading constants: {result.stderr}")
+            return None
     except Exception as e:
         print(f"Error loading constants: {e}")
         return None
@@ -137,7 +172,7 @@ def load_constants():
 def get_autosubsync_version():
     constants = load_constants()
     if constants:
-        version = constants.VERSION
+        version = constants["VERSION"]
         print("Detected AutoSubSync version: " + version)
         return version
     return "unknown"
@@ -164,7 +199,7 @@ def get_sync_tools_versions():
     constants = load_constants()
     if constants:
         sync_tools_versions = {}
-        for tool_name, tool_info in constants.SYNC_TOOLS.items():
+        for tool_name, tool_info in constants["SYNC_TOOLS"].items():
             version = tool_info.get("version", "unknown")
             github = tool_info.get("github", "")
             sync_tools_versions[tool_name] = {
