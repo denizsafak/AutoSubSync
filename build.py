@@ -10,6 +10,9 @@ import json
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
 
+# Add main directory to Python path to import constants and utils
+sys.path.insert(0, os.path.join(script_dir, "main"))
+
 
 def check_modules():
     required_modules = ["pip", "venv"]
@@ -119,97 +122,77 @@ def ensure_ffmpeg():
         print("FFmpeg executables already exist. Skipping download.")
 
 
-def ensure_ffsubsync():
-    exe = ".exe" if platform.system() == "Windows" else ""
-    ffsubsync_dir = "main/resources/ffsubsync-bin"
-    ffsubsync_exe = "ffsubsync" + exe
-    if not os.path.exists(os.path.join(ffsubsync_dir, ffsubsync_exe)):
-        print("ffsubsync executable not found, running ffsubsync_bin_download.py...")
-        if platform.system() == "Windows":
-            python_executable = "venv\\Scripts\\python"
-        else:
-            python_executable = "venv/bin/python"
-        if (
-            subprocess.run(
-                [python_executable, "main/resources/ffsubsync_bin_download.py"],
-                text=True,
-            ).returncode
-            != 0
-        ):
-            print("Error downloading ffsubsync.")
-            sys.exit(1)
-        print("ffsubsync downloaded.")
-    else:
-        print("ffsubsync executable already exists. Skipping download.")
+def load_constants():
+    """Load constants module using importlib"""
+    try:
+        spec = importlib.util.spec_from_file_location("constants", os.path.join(script_dir, "main", "constants.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception as e:
+        print(f"Error loading constants: {e}")
+        return None
 
 
 def get_autosubsync_version():
-    try:
-        with open("main/VERSION", "r") as f:
-            version = f.read().strip()
+    constants = load_constants()
+    if constants:
+        version = constants.VERSION
         print("Detected AutoSubSync version: " + version)
         return version
-    except:
-        return "unknown"
+    return "unknown"
 
 
 def get_ffmpeg_version():
     try:
-        ffmpeg_path = os.path.join("main", "resources", "ffmpeg-bin", "ffmpeg.exe")
+        ffmpeg_path = os.path.join("main", "resources", "ffmpeg-bin", "ffmpeg")
         result = subprocess.run(
             [ffmpeg_path, "-version"], capture_output=True, text=True
         )
         first_line = result.stdout.split("\n")[0]
-        # Split by -www and take first part
-        version = first_line.split("-www")[0].strip()
-        # Print version info
+        # Extract version number from "ffmpeg version X.X.X-static"
+        version_part = first_line.split(" ")[2]  # Get the third part
+        version = version_part.split("-")[0]  # Remove "-static" or other suffixes
         print("Detected FFmpeg version: " + version)
         return version
     except:
         return "unknown"
 
 
-def get_ffsubsync_version():
-    try:
-        ffsubsync_path = os.path.join(
-            "main", "resources", "ffsubsync-bin", "ffsubsync.exe"
-        )
-        result = subprocess.run(
-            [ffsubsync_path, "--version"], capture_output=True, text=True
-        )
-        version = result.stdout.strip()
-        print("Detected ffsubsync version: " + version)
-        return version
-    except:
-        return "unknown"
-
-
-def get_alass_version():
-    try:
-        alass_path = os.path.join("main", "resources", "alass-bin", "alass-cli.exe")
-        result = subprocess.run(
-            [alass_path, "--version"], capture_output=True, text=True
-        )
-        version = result.stdout.strip()
-        print("Detected alass version: " + version)
-        return version
-    except:
-        return "unknown"
+def get_sync_tools_versions():
+    """Get versions of sync tools from constants.py"""
+    constants = load_constants()
+    if constants:
+        sync_tools_versions = {}
+        for tool_name, tool_info in constants.SYNC_TOOLS.items():
+            version = tool_info.get("version", "unknown")
+            github = tool_info.get("github", "")
+            sync_tools_versions[tool_name] = {
+                "version": version,
+                "github": github
+            }
+            print(f"Detected {tool_name} version: {version}")
+        return sync_tools_versions
+    return {}
 
 
 def check_versions():
-    if platform.system() == "Windows":
+    if platform.system() == "Linux":
         versions = {
             "AutoSubSync": get_autosubsync_version(),
             "ffmpeg": get_ffmpeg_version(),
-            "ffsubsync": get_ffsubsync_version(),
-            "alass": get_alass_version(),
         }
+
+        # Add sync tools versions
+        sync_tools_versions = get_sync_tools_versions()
+        if sync_tools_versions:
+            versions["sync_tools"] = sync_tools_versions
+
         print("Writing versions to 'versions.json'...")
         with open(os.path.join("main", "resources", "versions.json"), "w") as f:
             json.dump(versions, f, indent=2)
     else:
-        print("Skipping version check for non-Windows platform.")
+        print("Skipping version check for non-Linux platform.")
 
 
 def build_with_pyinstaller():
@@ -281,7 +264,6 @@ if __name__ == "__main__":
     install_requirements()
     remove_webrtcvad_hook()
     ensure_ffmpeg()
-    #ensure_ffsubsync()
     check_versions()
     build_with_pyinstaller()
     create_archive()

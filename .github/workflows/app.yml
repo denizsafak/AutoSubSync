@@ -25,12 +25,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    outputs:
-      version: ${{ steps.set-version.outputs.version }}
-      ffmpeg_version: ${{ steps.set-version.outputs.ffmpeg_version }}
-      ffsubsync_version: ${{ steps.set-version.outputs.ffsubsync_version }}
-      alass_version: ${{ steps.set-version.outputs.alass_version }}
-
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -49,20 +43,6 @@ jobs:
         run: |
           python build.py
 
-      - name: Parse versions.json (Windows)
-        if: matrix.os == 'windows-latest'
-        id: set-version
-        run: |
-          if (Test-Path main/resources/versions.json) {
-            $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
-            echo "version=$($json.AutoSubSync)" >> $env:GITHUB_OUTPUT
-            echo "ffmpeg_version=$($json.ffmpeg)" >> $env:GITHUB_OUTPUT
-            echo "ffsubsync_version=$($json.ffsubsync)" >> $env:GITHUB_OUTPUT
-            echo "alass_version=$($json.alass)" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "versions.json not found"
-          }
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -73,6 +53,11 @@ jobs:
 
   build-linux-ubuntu:
     runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.set-version.outputs.version }}
+      ffmpeg_version: ${{ steps.set-version.outputs.ffmpeg_version }}
+      sync_tools_info: ${{ steps.set-version.outputs.sync_tools_info }}
     
     steps:
       - name: Check out the repository
@@ -91,6 +76,30 @@ jobs:
                 ldd --version | head -n 1 && \
                 pip install --upgrade pip setuptools wheel requests pyinstaller && \
                 python build.py"
+
+      - name: Parse versions.json (Linux)
+        id: set-version
+        run: |
+          if [ -f main/resources/versions.json ]; then
+            version=$(jq -r '.AutoSubSync' main/resources/versions.json)
+            ffmpeg_version=$(jq -r '.ffmpeg' main/resources/versions.json)
+            
+            # Build sync tools info string
+            sync_tools_info=""
+            for tool in $(jq -r '.sync_tools | keys[]' main/resources/versions.json); do
+              tool_version=$(jq -r ".sync_tools.$tool.version" main/resources/versions.json)
+              tool_github=$(jq -r ".sync_tools.$tool.github" main/resources/versions.json)
+              sync_tools_info="${sync_tools_info}>[${tool}](${tool_github}): ${tool_version}"$'\n'
+            done
+            
+            echo "version=$version" >> $GITHUB_OUTPUT
+            echo "ffmpeg_version=$ffmpeg_version" >> $GITHUB_OUTPUT
+            echo "sync_tools_info<<EOF" >> $GITHUB_OUTPUT
+            echo "$sync_tools_info" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "versions.json not found"
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -126,17 +135,16 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ needs.build.outputs.version }}"
-          name: "AutoSubSync v${{ needs.build.outputs.version }}"
+          tag_name: "v${{ needs.build-linux-ubuntu.outputs.version }}"
+          name: "AutoSubSync v${{ needs.build-linux-ubuntu.outputs.version }}"
           body: |
             ${{ env.changelog }}
 
             > MacOS users please read [this](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#for-macososx-users).
             
             >Included:
-            >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
-            >[ffsubsync](https://github.com/smacke/ffsubsync): ${{ needs.build.outputs.ffsubsync_version }}
-            >[alass](https://github.com/kaegi/alass): ${{ needs.build.outputs.alass_version }}
+            >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build-linux-ubuntu.outputs.ffmpeg_version }}
+            ${{ needs.build-linux-ubuntu.outputs.sync_tools_info }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
