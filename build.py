@@ -168,7 +168,7 @@ def get_autosubsync_version():
 
 def get_ffmpeg_version():
     try:
-        ffmpeg_path = os.path.join("main", "resources", "ffmpeg-bin", "ffmpeg")
+        ffmpeg_path = os.path.join("main", "resources", "ffmpeg-bin", "ffmpeg.exe")
         result = subprocess.run(
             [ffmpeg_path, "-version"], capture_output=True, text=True
         )
@@ -200,7 +200,7 @@ def get_sync_tools_versions():
 
 
 def check_versions():
-    if platform.system() == "Linux":
+    if platform.system() == "Windows":
         versions = {
             "AutoSubSync": get_autosubsync_version(),
             "ffmpeg": get_ffmpeg_version(),
@@ -215,7 +215,7 @@ def check_versions():
         with open(os.path.join("main", "resources", "versions.json"), "w") as f:
             json.dump(versions, f, indent=2)
     else:
-        print("Skipping version check for non-Linux platform.")
+        print("Skipping version check for non-Windows platform.")
 
 
 def build_with_pyinstaller():
