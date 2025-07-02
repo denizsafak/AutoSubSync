@@ -197,6 +197,35 @@ class InputBox(QLabel):
             # Access parent as a property, not as a callable
             parent = parent.parentWidget()
 
+        # Handle folder drops for normal mode input boxes
+        if parent and not parent.batch_mode_enabled:
+            # Check if any of the dropped items are folders
+            expanded_files = []
+            for file_path in files:
+                if os.path.isdir(file_path):
+                    # Get files from the folder
+                    try:
+                        folder_files = []
+                        for item in os.listdir(file_path):
+                            item_path = os.path.join(file_path, item)
+                            if os.path.isfile(item_path):
+                                folder_files.append(item_path)
+                        
+                        # If folder has 1 or 2 files, extract them
+                        if 1 <= len(folder_files) <= 2:
+                            expanded_files.extend(folder_files)
+                        else:
+                            # Keep the original folder path for other handling
+                            expanded_files.append(file_path)
+                    except (OSError, PermissionError):
+                        # If we can't read the folder, keep the original path
+                        expanded_files.append(file_path)
+                else:
+                    expanded_files.append(file_path)
+            
+            # Update files list with expanded files
+            files = expanded_files
+
         # Special handling for exactly 2 files
         if len(files) == 2 and parent and not parent.batch_mode_enabled:
             # Get extensions of both files
