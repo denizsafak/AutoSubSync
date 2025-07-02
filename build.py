@@ -123,44 +123,26 @@ def ensure_ffmpeg():
 
 
 def load_constants():
-    """Load constants module using venv python"""
+    """Load constants module using importlib with venv python"""
     try:
+        # Use venv python to load constants
         if platform.system() == "Windows":
             python_executable = "venv\\Scripts\\python"
         else:
             python_executable = "venv/bin/python"
         
-        # Create a small script to extract constants
-        script = '''
-import sys
-import os
-sys.path.insert(0, "main")
-import constants
-import json
-
-data = {
-    "VERSION": constants.VERSION,
-    "SYNC_TOOLS": {}
-}
-
-for tool_name, tool_info in constants.SYNC_TOOLS.items():
-    data["SYNC_TOOLS"][tool_name] = {
-        "version": tool_info.get("version", "unknown"),
-        "github": tool_info.get("github", "")
-    }
-
-print(json.dumps(data))
-'''
-        
-        result = subprocess.run(
-            [python_executable, "-c", script],
-            capture_output=True,
-            text=True,
-            cwd=script_dir
-        )
+        # Execute a subprocess to get constants
+        result = subprocess.run([
+            python_executable, "-c",
+            "import sys; import os; sys.path.insert(0, 'main'); "
+            "from constants import VERSION, SYNC_TOOLS; "
+            "import json; "
+            "data = {'VERSION': VERSION, 'SYNC_TOOLS': {k: {'version': v.get('version', 'unknown'), 'github': v.get('github', '')} for k, v in SYNC_TOOLS.items()}}; "
+            "print(json.dumps(data))"
+        ], capture_output=True, text=True, cwd=script_dir)
         
         if result.returncode == 0:
-            return json.loads(result.stdout)
+            return json.loads(result.stdout.strip())
         else:
             print(f"Error loading constants: {result.stderr}")
             return None
