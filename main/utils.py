@@ -415,9 +415,13 @@ def get_logs_directory():
 
 
 def load_config():
+    config_path = get_user_config_path()
+    if not os.path.exists(config_path):
+        logger.info("Config file does not exist, using defaults")
+        return {}
+    
     try:
-        config = {}
-        with open(get_user_config_path(), "r", encoding="utf-8") as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
         logger.info("Config file loaded successfully")
         return config

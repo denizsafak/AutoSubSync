@@ -478,6 +478,11 @@ class autosubsyncapp(QWidget):
     def apply_theme(self, theme):
         from PyQt6.QtGui import QPalette, QColor
 
+        # Check if theme is actually changing
+        current_theme = self.config.get("theme", DEFAULT_OPTIONS["theme"])
+        if current_theme == theme:
+            return  # No change needed
+
         app = QApplication.instance()
         if theme == "dark":
             app.setStyle("Fusion")
@@ -556,6 +561,8 @@ class autosubsyncapp(QWidget):
         for widget in app.topLevelWidgets():
             app.style().polish(widget)
             widget.update()
+        
+        # Save config since theme actually changed
         self.config["theme"] = theme
         save_config(self.config)
 
