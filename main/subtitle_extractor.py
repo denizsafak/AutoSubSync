@@ -13,7 +13,7 @@ def parse_timestamps(subtitle_file):
         sub_encoding = detect_encoding(subtitle_file)
         ext = os.path.splitext(subtitle_file)[1].lower()
 
-        with open(subtitle_file, "r", encoding=sub_encoding) as file:
+        with open(subtitle_file, "r", encoding=sub_encoding, errors="replace") as file:
             # Read file once and process efficiently
             if ext in (".srt", ".vtt"):
                 return [

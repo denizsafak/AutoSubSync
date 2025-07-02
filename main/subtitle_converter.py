@@ -168,7 +168,7 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
         output_file: Path to the output SRT file
     """
     try:
-        with open(input_file, "rb") as file:
+        with open(input_file, "rb", errors="replace") as file:
             data = file.read()
             encoding = detect_encoding(input_file)
             content = data.decode(encoding, errors="replace")
@@ -178,7 +178,7 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
     except Exception as e:
         raise IOError(f"Error reading file: {e}")
     captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == "p"]
-    with open(output_file, "w", encoding="utf-8") as srt:
+    with open(output_file, "w", encoding="utf-8", errors="replace") as srt:
         for idx, caption in enumerate(captions, 1):
             begin = format_ttml_time(caption.attrib.get("begin"))
             end = format_ttml_time(caption.attrib.get("end"))
@@ -380,7 +380,7 @@ def convert_stl_to_srt(input_file: str, output_file: str) -> None:
             stl_data = stl.read()
             encoding = detect_encoding(input_file)
             lines = stl_data.decode(encoding, errors="replace").splitlines()
-        with open(output_file, "w", encoding="utf-8") as srt:
+        with open(output_file, "w", encoding="utf-8", errors="replace") as srt:
             srt_counter = 1
             for line in lines:
                 parts = line.strip().split(",", 2)  # Split only on the first two commas
@@ -437,7 +437,7 @@ def convert_smi_to_srt(input_file: str, output_file: str) -> None:
         if not sync_blocks:
             raise ValueError("No valid SYNC blocks found in SMI file")
 
-        with open(output_file, "w", encoding="utf-8") as srt:
+        with open(output_file, "w", encoding="utf-8", errors="replace") as srt:
             srt_counter = 1
 
             for i, (start_ms_str, text_block) in enumerate(sync_blocks):

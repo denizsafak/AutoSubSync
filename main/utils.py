@@ -112,7 +112,7 @@ def create_backup(file_path):
 
 
 def detect_encoding(file_path):
-    with open(file_path, "rb") as f:
+    with open(file_path, "rb", errors="replace") as f:
         raw_data = f.read()
     detected_encoding = None
     for detectors in (cchardet, charset_normalizer, chardet):
@@ -211,7 +211,7 @@ def match_subtitle_encoding(
 
         # Read output file content with detected encoding
         try:
-            with open(output_subtitle_path, "r", encoding=output_encoding) as f:
+            with open(output_subtitle_path, "r", encoding=output_encoding, errors="replace") as f:
                 content = f.read()
         except UnicodeDecodeError:
             warning_msg = f"Failed to read output file with detected encoding {output_encoding}, trying utf-8"
@@ -225,7 +225,7 @@ def match_subtitle_encoding(
 
         # Write content back with target encoding
         try:
-            with open(output_subtitle_path, "w", encoding=final_encoding) as f:
+            with open(output_subtitle_path, "w", encoding=final_encoding, errors="replace") as f:
                 f.write(content)
             success_msg = f"Changed output subtitle encoding from {output_encoding} to {final_encoding}"
             logger.info(success_msg)
@@ -417,7 +417,7 @@ def get_logs_directory():
 def load_config():
     try:
         config = {}
-        with open(get_user_config_path(), "r", encoding="utf-8") as f:
+        with open(get_user_config_path(), "r", encoding="utf-8", errors="replace") as f:
             config = json.load(f)
         logger.info("Config file loaded successfully")
         return config
@@ -428,7 +428,7 @@ def load_config():
 
 def save_config(config):
     try:
-        with open(get_user_config_path(), "w", encoding="utf-8") as f:
+        with open(get_user_config_path(), "w", encoding="utf-8", errors="replace") as f:
             json.dump(config, f, indent=2)
         logger.info("Config file updated")
     except Exception as e:

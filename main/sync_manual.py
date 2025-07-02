@@ -75,7 +75,7 @@ def shift_subtitle(
 
     # Load and decode file
     try:
-        with open(subtitle_file, "rb") as file:
+        with open(subtitle_file, "rb", errors="replace") as file:
             raw_data = file.read()
             encoding = detect_encoding(subtitle_file)
             lines = raw_data.decode(encoding).splitlines()
@@ -268,7 +268,7 @@ def shift_subtitle(
 
     # Write output file
     try:
-        with open(output_file, "w", encoding=encoding) as file:
+        with open(output_file, "w", encoding=encoding, errors="replace") as file:
             file.write("\n".join(new_lines))
 
         success_msg = f"Subtitle shifted successfully by {milliseconds}ms!\nSaved to: {output_file}"

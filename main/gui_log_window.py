@@ -477,7 +477,7 @@ class LogWindow(QWidget):
             log_content = self.log_text.toPlainText()
 
             # Write to file
-            with open(log_file_path, "w", encoding="utf-8") as log_file:
+            with open(log_file_path, "w", encoding="utf-8", errors="replace") as log_file:
                 log_file.write(f"AutoSubSync Log - {mode.title()} Mode\n")
                 log_file.write(
                     f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
