@@ -78,21 +78,21 @@ SYNC_TOOLS = {
             "dont_fix_framerate": {
                 "type": "checkbox",
                 "label": "Don't fix framerate",
-                "tooltip": "Disable automatic frame rate correction",
+                "tooltip": "If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles.\nThis can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync.",
                 "argument": "--no-fix-framerate",
                 "default": False,
             },
             "use_golden_section": {
                 "type": "checkbox",
                 "label": "Use golden section search",
-                "tooltip": "Use golden section search for better alignment",
+                "tooltip": "Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
                 "argument": "--gss",
                 "default": False,
             },
             "vad": {
                 "type": "dropdown",
                 "label": "Voice activity detector",
-                "tooltip": "Enable voice activity detection for better alignment",
+                "tooltip": "Which voice activity detector (VAD) to use for speech extraction (if using video / audio as a reference, default=subs_then_webrtc).\nAuditok can sometimes work better in the case of low-quality audio than WebRTC.",
                 "argument": "--vad",
                 "default": "default",
                 "values": [
@@ -144,14 +144,14 @@ SYNC_TOOLS = {
             "disable_fps_guessing": {
                 "type": "checkbox",
                 "label": "Disable FPS guessing",
-                "tooltip": "Disable automatic frame rate detection",
+                "tooltip": "Disables guessing and correcting of framerate differences between reference file and input file.",
                 "argument": "--disable-fps-guessing",
                 "default": False,
             },
             "disable_speed_optimization": {
                 "type": "checkbox",
                 "label": "Disable speed optimization",
-                "tooltip": "Disable speed optimization algorithms",
+                "tooltip": "Disable speed optimization for better accuracy. This will increase the processing time.",
                 "argument": "--speed-optimization 0",
                 "default": False,
             },
@@ -194,7 +194,7 @@ SYNC_TOOLS = {
             "max_shift_secs": {
                 "type": "slider",
                 "label": "Maximum shift (seconds)",
-                "tooltip": "--max_shift_secs: Maximum subtitle shift in seconds (default 20)",
+                "tooltip": "Maximum subtitle shift in seconds (default 20)",
                 "argument": "--max_shift_secs",
                 "range": [1, 120],
                 "default": 20,
@@ -202,7 +202,7 @@ SYNC_TOOLS = {
             "parallelism": {
                 "type": "slider",
                 "label": "Parallelism",
-                "tooltip": "--parallelism: Number of parallel worker processes (default 3)",
+                "tooltip": "Number of parallel worker processes (default 3)",
                 "argument": "--parallelism",
                 "range": [1, 16],
                 "default": 3,
