@@ -780,7 +780,7 @@ def show_tool_info_dialog(parent):
     from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QWidget, QStyle
     from PyQt6.QtCore import Qt, QUrl
     from PyQt6.QtGui import QIcon, QDesktopServices
-    from constants import SYNC_TOOLS
+    from constants import SYNC_TOOLS, COLORS
     from utils import get_resource_path
     import platform
     tool_name = getattr(parent.sync_tool_combo, 'currentText', lambda: '')()
@@ -799,7 +799,7 @@ def show_tool_info_dialog(parent):
     icon.setPixmap(info_icon.pixmap(32, 32))
     header.addWidget(icon)
     version = tool.get('version', '')
-    t = QLabel(f"<h1 style='margin-bottom: 0;'>{tool_name} <span style='font-size: 12px; font-weight: normal; color: #888;'>v{version}</span></h1>")
+    t = QLabel(f"<h1 style='margin-bottom: 0;'>{tool_name} <span style='font-size: 12px; font-weight: normal; color: {COLORS['GREY']};'>v{version}</span></h1>")
     t.setTextFormat(Qt.TextFormat.RichText)
     header.addWidget(t, 1)
     main_layout.addLayout(header)
@@ -886,6 +886,24 @@ class UpdateSignals(QObject):
     update_available = pyqtSignal(str, str)
     up_to_date = pyqtSignal(str)
     check_failed = pyqtSignal(str)
+
+
+def get_locale():
+    """Get the current locale of the system using PyQt."""
+    from PyQt6.QtCore import QLocale
+    from constants import LANGUAGES
+    config = load_config()
+    system_locale = QLocale().name()
+    
+
+    if config.get("language") in LANGUAGES.values():
+        return config.get("language")
+        # Check if the system locale exists in our supported languages
+    elif system_locale in LANGUAGES.values():
+        return system_locale
+    
+    # If not found, return default English locale
+    return "en_US"
 
 
 def _show_update_message(parent, remote_version, local_version):

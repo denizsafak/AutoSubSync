@@ -1,5 +1,5 @@
 import platform
-from utils import get_version, get_resource_path, get_version_info
+from utils import get_version, get_resource_path, get_version_info, get_locale
 
 # Program Information
 PROGRAM_NAME = "AutoSubSync"
@@ -9,6 +9,49 @@ GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/denizsafak/AutoSubSync/refs/heads/main/main/VERSION"
 GITHUB_LATEST_RELEASE_URL = "https://github.com/denizsafak/AutoSubSync/releases/latest"
 VERSION = get_version()
+
+LANGUAGES = {
+    "English": "en_US",
+    "Español": "es_ES",
+    "Deutsch": "de_DE",
+    "Français": "fr_FR",
+    "Italiano": "it_IT",
+    "Polski": "pl_PL",
+    "Português": "pt_PT",
+    "Türkçe": "tr_TR",
+    "Tiếng Việt": "vi_VN",
+    "Bahasa Indonesia": "id_ID",
+    "Bahasa Melayu": "ms_MY",
+    "ไทย": "th_TH",
+    "Українська": "uk_UA",
+    "Русский": "ru_RU",
+    "中国人": "zh_CN",
+    "日本語": "ja_JP",
+    "한국어": "ko_KR",
+    "हिन्दी": "hi_IN",
+    "বাংলা": "bn_BD",
+    "اردو": "ur_PK",
+    "العربية": "ar_SA",
+    "فارسی": "fa_IR",
+}
+
+DEFAULT_OPTIONS = {
+    "language": get_locale(),
+    "sync_tool": "ffsubsync",
+    "automatic_save_location": "save_next_to_input_subtitle",
+    "manual_save_location": "save_next_to_input_subtitle",
+    "remember_changes": True,
+    "check_updates_startup": True,
+    "batch_mode": False,
+    "add_tool_prefix": False,
+    "backup_subtitles_before_overwriting": True,
+    "keep_extracted_subtitles": False,
+    "keep_converted_subtitles": False,
+    "output_subtitle_encoding": "same_as_input",
+    "add_ms_prefix_to_filename": True,
+    "keep_log_records": True,
+    "theme": "system",
+}
 
 # ffmpeg and ffprobe paths
 _exe_suffix = ".exe" if platform.system() == "Windows" else ""
@@ -166,23 +209,6 @@ SYNC_TOOLS = {
             }
         },
     },
-}
-
-DEFAULT_OPTIONS = {
-    "sync_tool": "ffsubsync",
-    "automatic_save_location": "save_next_to_input_subtitle",
-    "manual_save_location": "save_next_to_input_subtitle",
-    "remember_changes": True,
-    "check_updates_startup": True,
-    "batch_mode": False,
-    "add_tool_prefix": False,
-    "backup_subtitles_before_overwriting": True,
-    "keep_extracted_subtitles": False,
-    "keep_converted_subtitles": False,
-    "output_subtitle_encoding": "same_as_input",
-    "add_ms_prefix_to_filename": True,
-    "keep_log_records": True,
-    "theme": "system",
 }
 
 AUTOMATIC_SAVE_MAP = {

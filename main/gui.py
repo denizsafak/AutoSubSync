@@ -559,6 +559,27 @@ class autosubsyncapp(QWidget):
         # Create settings menu
         self.settings_menu = QMenu(self)
 
+        # Add Language submenu
+        self.language_menu = self.settings_menu.addMenu("Language")
+        self.language_action_group = QActionGroup(self)
+        self.language_action_group.setExclusive(True)
+        
+        self.language_actions = {}
+        for language_name, language_code in LANGUAGES.items():
+            action = QAction(language_name, self)
+            action.setCheckable(True)
+            action.setActionGroup(self.language_action_group)
+            action.triggered.connect(
+                lambda checked, code=language_code: update_config(self, "language", code)
+            )
+            self.language_menu.addAction(action)
+            self.language_actions[language_code] = action
+        
+        # Set the current selection
+        current_language = self.config.get("language", DEFAULT_OPTIONS["language"])
+        self.language_actions[current_language].setChecked(True)
+
+
         # Add Theme submenu
         self.theme_menu = self.settings_menu.addMenu("Theme")
         self.theme_action_group = QActionGroup(self)
@@ -579,7 +600,7 @@ class autosubsyncapp(QWidget):
         self.theme_light_action.triggered.connect(lambda: self.apply_theme("light"))
         self.theme_menu.addAction(self.theme_light_action)
         # Set checked theme
-        theme = self.config.get("theme", "system")
+        theme = self.config.get("theme", DEFAULT_OPTIONS["theme"])
         if theme == "dark":
             self.theme_dark_action.setChecked(True)
         elif theme == "light":
