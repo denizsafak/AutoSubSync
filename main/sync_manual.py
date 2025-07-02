@@ -75,7 +75,7 @@ def shift_subtitle(
 
     # Load and decode file
     try:
-        with open(subtitle_file, "rb", errors="replace") as file:
+        with open(subtitle_file, "rb") as file:
             raw_data = file.read()
             encoding = detect_encoding(subtitle_file)
             lines = raw_data.decode(encoding).splitlines()

@@ -112,7 +112,7 @@ def create_backup(file_path):
 
 
 def detect_encoding(file_path):
-    with open(file_path, "rb", errors="replace") as f:
+    with open(file_path, "rb") as f:
         raw_data = f.read()
     detected_encoding = None
     for detectors in (cchardet, charset_normalizer, chardet):
@@ -417,7 +417,7 @@ def get_logs_directory():
 def load_config():
     try:
         config = {}
-        with open(get_user_config_path(), "r", encoding="utf-8", errors="replace") as f:
+        with open(get_user_config_path(), "r", encoding="utf-8") as f:
             config = json.load(f)
         logger.info("Config file loaded successfully")
         return config
@@ -428,7 +428,7 @@ def load_config():
 
 def save_config(config):
     try:
-        with open(get_user_config_path(), "w", encoding="utf-8", errors="replace") as f:
+        with open(get_user_config_path(), "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
         logger.info("Config file updated")
     except Exception as e:

@@ -168,7 +168,7 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
         output_file: Path to the output SRT file
     """
     try:
-        with open(input_file, "rb", errors="replace") as file:
+        with open(input_file, "rb") as file:
             data = file.read()
             encoding = detect_encoding(input_file)
             content = data.decode(encoding, errors="replace")
