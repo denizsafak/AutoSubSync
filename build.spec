@@ -4,6 +4,8 @@ import os
 import sys
 import platform
 from PyQt6.QtCore import QLibraryInfo
+import glob
+import site
 
 # Add current directory to Python path
 sys.path.insert(0, os.getcwd())
@@ -22,6 +24,13 @@ datas = [
     (os.path.join(os.curdir, 'main', 'assets'), 'assets'),
     (qt_platforms_dir, 'platforms'),
 ]
+
+# Add all .dist-info folders from site-packages to datas for version detection
+site_packages_dirs = site.getsitepackages()
+for site_dir in site_packages_dirs:
+    dist_infos = glob.glob(os.path.join(site_dir, '*.dist-info'))
+    for dist_info in dist_infos:
+        datas.append((dist_info, os.path.basename(dist_info)))
 
 with open('main/VERSION', 'r') as f:
     version = f.read().strip()

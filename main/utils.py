@@ -970,13 +970,21 @@ def show_tool_info_dialog(parent):
 
 
 def get_version_info(module_name):
-    """Return a version information of package."""
-    from importlib.metadata import version, PackageNotFoundError
-
+    """Return version information of a package, compatible with PyInstaller."""
     try:
+        try:
+            from importlib.metadata import version
+        except ImportError:
+            from importlib_metadata import version  # type: ignore
+
         return version(module_name)
-    except PackageNotFoundError:
-        return "0.0"
+    except Exception:
+        # Fallback: try to get __version__ attribute
+        try:
+            mod = __import__(module_name)
+            return getattr(mod, "__version__", "0.0")
+        except Exception:
+            return "0.0"
 
 
 # Update checking functionality
