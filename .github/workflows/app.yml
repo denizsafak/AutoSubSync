@@ -150,5 +150,6 @@ jobs:
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
