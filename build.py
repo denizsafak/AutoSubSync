@@ -125,11 +125,21 @@ def ensure_ffmpeg():
 
 
 def get_version_info(module_name):
-    """Return a version information of package."""
-    from importlib.metadata import version, PackageNotFoundError
+    """Return a version information of package using the venv Python."""
+    if platform.system() == "Windows":
+        python_executable = os.path.join("venv", "Scripts", "python.exe")
+    else:
+        python_executable = os.path.join("venv", "bin", "python")
     try:
-        return version(module_name)
-    except PackageNotFoundError:
+        result = subprocess.run(
+            [python_executable, "-c", f"import importlib.metadata; print(importlib.metadata.version('{module_name}'))"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            return "0.0"
+    except Exception:
         return "0.0"
 
 
