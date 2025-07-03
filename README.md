@@ -8,7 +8,7 @@
 [![Operating Systems](https://img.shields.io/badge/os-windows%20%7C%20linux%20%7C%20macos%20-blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/denizsafak/AutoSubSync/total?color=blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 
-AutoSubSync is a user-friendly Python tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync) and [alass](https://github.com/kaegi/alass). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
+AutoSubSync is a user-friendly Python tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync) and [alass](https://github.com/kaegi/alass). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
 
 <img title="AutoSubSync Automatic Tab" src='images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='images/AutoSubSync4.png'>
 
@@ -22,22 +22,21 @@ AutoSubSync is a user-friendly Python tool that automatically synchronizes your 
 
 ## `How to Run?`
 - Extract the zip.
-- Run "AutoSubSync" file.
+- Double click "AutoSubSync".
 
 > MacOS users please read [this](#for-macososx-users).
 
-## `Example Use Case`
-<img title="Example use case of AutoSubSync" src='images/AutoSubSync.gif'>
-This is an example use case of AutoSubSync. In this scenario, the tool automatically matches subtitles with videos based on naming conventions (e.g., S01E01, 1x01) and saves the subtitles next to the videos with matching filenames. This ensures that media players can easily detect and load the subtitles alongside the corresponding videos. There are many other use cases as well. Simply drag and drop the files into the input boxes and let AutoSubSync handle the rest.
-
 ## `Features`
-- **Automatic Subtitle Synchronization:** Automatically syncronize subtitles with the video/reference subtitle using [ffsubsync](https://github.com/smacke/ffsubsync) or [alass](https://github.com/kaegi/alass). Choose between tools and configure options for optimal results.
-- **Manual Subtitle Synchronization:** Shift subtitles manually by specifying the number of milliseconds. Adjust timing using the `+` and `-` buttons and choose to save the changes to the desktop or replace the original file.
-- **Batch Processing:** Efficiently process multiple video, reference subtitle, and subtitle pairs in one go.
-- **Auto-Pairing with Season/Episode:** Automatically pair videos and reference subtitles with subtitle files using patterns like S01E01, 1x01, etc.
-- **Subtitle Formats:** Supports a variety of formats including `.srt`, `.vtt`, `.sbv`, `.sub`, `.ass`, `.ssa`, `.dfxp`, `.ttml`, `.itt`, `.smi` and `.stl`.
-- **Drag and Drop:** Simply drag and drop subtitle and video files onto the interface to begin the synchronization process.
-- **Informative Messages:** Receive clear feedback messages indicating the success or failure of the synchronization process.
+
+| Feature | Description |
+|---------|-------------|
+| **Automatic Subtitle Synchronization** | Automatically synchronize subtitles with the video/reference subtitle using [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync) or [alass](https://github.com/kaegi/alass). Choose between tools and configure options for optimal results. |
+| **Manual Subtitle Synchronization** | Shift subtitles manually by specifying the number of milliseconds. Adjust timing using the `+` and `-` buttons and choose to save the changes to the desktop or replace the original file. |
+| **Batch Processing** | Efficiently process multiple video, reference subtitle, and subtitle pairs in one go. |
+| **Auto-Pairing with Season/Episode** | Automatically pair videos and reference subtitles with subtitle files using patterns like S01E01, 1x01, etc. |
+| **Subtitle Formats** | Supports a variety of formats including `.srt`, `.vtt`, `.sbv`, `.sub`, `.ass`, `.ssa`, `.dfxp`, `.ttml`, `.itt`, `.smi` and `.stl`. |
+| **Drag and Drop** | Simply drag and drop subtitle and video files onto the interface to begin the synchronization process. |
+| **Informative Messages** | Receive clear feedback messages indicating the success or failure of the synchronization process. |
 
 ## `Usage`
 ### Automatic Synchronization
@@ -45,20 +44,18 @@ This is an example use case of AutoSubSync. In this scenario, the tool automatic
    - Drag and drop the video and subtitle files into the respective input boxes.
    - Alternatively, click on the input boxes to browse and select the files.
 2. **Choose Synchronization Tool:**
-   - Select the synchronization tool (`ffsubsync` or `alass`) from the dropdown menu.
-3. **Set Options:**
-   - Configure additional options such as `Don't fix framerate`, `Use golden-section search`, and `Voice activity detector (VAD)` for `ffsubsync`.
-   - For `alass`, configure options like `Disable FPS guessing`, `Disable speed optimization`, and set the `Split Penalty`.
+   - Select the synchronization tool (`ffsubsync`, `autosubsync` or `alass`) from the dropdown menu.
+3. **Configure Options:**
+   - Configure the tools options using "Sync tool settings" section.
 4. **Select Output Location:**
    - Choose where to save the synchronized subtitle file using the dropdown menu.
 5. **Start Synchronization:**
-   - Click the `Start Automatic Sync` button to begin the synchronization process.
+   - Click the `Start` button to begin the synchronization process.
 6. **Batch Mode:**
    - Enable batch mode to process multiple files at once. 
    - Drag and drop multiple files or folders into the batch input area.
    - You can also add `reference subtitle - subtitle` pairs in batch mode. Just drag and drop them into the batch input area.
    - Use `Auto-Pairing with Season/Episode` to automatically pair multiple subtitles with similar names (e.g., S01E01 pairs with 01x01).
-   - Double-click any item to change it.
    - Use the `del` key to delete any item.
 
 <img title="Auto-Pairing" src='images/Auto-Pairing.png'>
@@ -72,28 +69,33 @@ This is an example use case of AutoSubSync. In this scenario, the tool automatic
 3. **Choose Output Option:**
    - Select whether to save the shifted subtitle to the desktop or replace the original subtitle file.
 4. **Start Shifting:**
-   - Click the `Shift Subtitle` button to apply the time shift.
+   - Click the `Start` button to apply the time shift.
 
  
 ### Settings (Top Right Corner)
-- **Language:** `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Tiếng Việt`, `Bahasa Indonesia`, `Bahasa Melayu`, `ไทย`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`, `فارسی`, `اردو` 
-(Thanks to [@bayramhayri](https://github.com/bayramhayri) for helping with translations.)
-- **Theme:** `System`, `Dark`, `Light`
-- **Change log window font:** Configure the font used in the log window. (Trigger log window to preview the changes)
-- **Log records and options:** `Keep log records`, `Open logs folder`, and `Clear all logs`
-- **Additional arguments for ffsubsync:** Configure additional arguments for ffsubsync.
-- **Additional arguments for alass:** Configure additional arguments for alass.
-- **Output subtitle encoding:** Force the encoding for the output subtitle file. Options include `UTF-8`, `UTF-16`, `ISO-8859-1`, and more.
-- **Check video for subtitle stream in alass:** Toggle for checking the subtitle streams in video for alass.
-- **Backup subtitles before overwriting:** Toggle for creating a backup of subtitles before overwriting them.
-- **Add "autosync_" prefix to subtitles:** Toggle for adding a prefix to the synchronized subtitles.
-- **Keep converted subtitles:** Toggle for keeping the converted subtitles after synchronization.
-- **Keep Extracted Subtitles:** Toggle for keeping the extracted subtitles after synchronization.
-- **Remember the Changes:** Toggle for remembering changes made.
-- **Reset to Default Settings:** Restore settings to default values.
+
+| Setting Category | Description | Options |
+|------------------|-------------|---------|
+| **Language** | Choose your preferred interface language | `English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Tiếng Việt`, `Bahasa Indonesia`, `Bahasa Melayu`, `ไทย`, `Українська`, `Русский`, `中国人`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`, `فارسی`, `اردو` |
+| **Theme** | Select the application theme | `System`, `Dark`, `Light` |
+| **Change Output Subtitle Encoding** | Force the encoding for the output subtitle file | `Disabled`, `Same as Input`, `UTF-8`, `UTF-16`, `ISO-8859-1`, and more |
+| **Backup Subtitles Before Overwriting** | Toggle for creating a backup of subtitles before overwriting them | Enable/Disable |
+| **Keep Extracted Subtitles** | Toggle for keeping the extracted subtitles after synchronization | Enable/Disable |
+| **Keep Converted Subtitles** | Toggle for keeping the converted subtitles after synchronization | Enable/Disable |
+| **Add Tool Prefix to Subtitles** | Toggle for adding a prefix to the synchronized subtitles | Enable/Disable |
+| **Open Config File Directory** | Access the configuration file directory | Action button |
+| **Open Logs Directory** | Access the logs directory | Action button |
+| **Keep Log Records** | Toggle for keeping log records | Enable/Disable |
+| **Clear All Logs** | Clear all log files | Action button |
+| **Remember the Changes** | Toggle for remembering changes made | Enable/Disable |
+| **Check for Updates at Startup** | Toggle for checking updates when the app starts | Enable/Disable |
+| **Reset to Default Settings** | Restore settings to default values | Action button |
+| **About** | Show application information | Action button |
+
+> Thanks to [@bayramhayri](https://github.com/bayramhayri) for helping with translations.
 
 ## `For developers and contributors`
-If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding. Also check [here](https://github.com/denizsafak/AutoSubSync/blob/main/main/resources/README.md).
+If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding.
 
 ## `For MacOS/OSX users:`
 - You need to give permissions in "System Settings > Security & Privacy" to run the app.<br />
