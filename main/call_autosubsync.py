@@ -1,8 +1,20 @@
 import sys
-from multiprocessing import freeze_support
+import platform
 import runpy, os, threading
 import logging
+from multiprocessing import freeze_support
 from utils import get_resource_path
+
+# Monkey-patch subprocess.Popen to always use CREATE_NO_WINDOW on Windows
+import subprocess
+if platform.system() == 'Windows':
+    _orig_popen = subprocess.Popen
+    def _patched_popen(*args, **kwargs):
+        flags = kwargs.get('creationflags', 0)
+        flags |= getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+        kwargs['creationflags'] = flags
+        return _orig_popen(*args, **kwargs)
+    subprocess.Popen = _patched_popen
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
