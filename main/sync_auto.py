@@ -263,6 +263,20 @@ class SyncProcess:
                 current_tool_info = SYNC_TOOLS[current_tool]
                 current_tool_type = current_tool_info.get("type", "executable")
             rc = None
+            # --- BACKUP LOGIC (moved here, before running sync for all tool types) ---
+            if not output:
+                output = determine_output_path(self.app, reference, subtitle)
+            config = self.app.config
+            backup_enabled = config.get(
+                "backup_subtitles_before_overwriting",
+                DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
+            )
+            if backup_enabled and os.path.exists(output):
+                try:
+                    create_backup(output)
+                except Exception as e:
+                    logger.error(f"Failed to create backup: {e}")
+            # --- END BACKUP LOGIC ---
             if current_tool_type == "module":
                 module_name = current_tool_info.get("module")
                 idx, total = getattr(self.app, "_current_batch_idx", None), getattr(
@@ -313,18 +327,6 @@ class SyncProcess:
                     )
                     self.signals.finished.emit(False, None)
                     return
-                if not output:
-                    output = determine_output_path(self.app, reference, subtitle)
-                config = self.app.config
-                backup_enabled = config.get(
-                    "backup_subtitles_before_overwriting",
-                    DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
-                )
-                if backup_enabled and os.path.exists(output):
-                    try:
-                        create_backup(output)
-                    except Exception as e:
-                        logger.error(f"Failed to create backup: {e}")
                 cmd = self._build_cmd(current_tool, exe, reference, subtitle, output)
                 with self._process_lock:
                     if self.should_cancel:

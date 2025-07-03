@@ -112,6 +112,7 @@ def create_backup(file_path):
         backup_file = os.path.join(backup_dir, f"backup_{base_name}_{suffix}{ext}")
         suffix += 1
     shutil.copy2(file_path, backup_file)
+    logger.info(f"Backup created at: {backup_file}")
     return backup_file
 
 
