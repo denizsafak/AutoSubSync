@@ -144,6 +144,8 @@ class LogWindow(QWidget):
                 # Special handling for alass split_penalty
                 if sync_tool == "alass" and k == "split_penalty" and val == -1:
                     display_val = texts.NO_SPLITS
+                elif isinstance(val, bool):
+                    display_val = texts.ENABLED if val else texts.DISABLED
                 else:
                     display_val = str(val)
                 self.append_message(f"{prefix}{v.get('label', k)}: ", end="")
@@ -152,9 +154,16 @@ class LogWindow(QWidget):
             self.append_message(
                 texts.UNKNOWN_SYNC_TOOL_NO_OPTIONS, color=COLORS["ORANGE"]
             )
+        # Translate boolean values for display
+        def bool_display(val):
+            if val is True:
+                return texts.ENABLED
+            elif val is False:
+                return texts.DISABLED
+            return str(val)
         self.append_message(f"{texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING}: ", end="")
         self.append_message(
-            str(get("backup_subtitles_before_overwriting")),
+            bool_display(get("backup_subtitles_before_overwriting")),
             bold=True,
             color=COLORS["GREEN"],
         )
@@ -176,16 +185,16 @@ class LogWindow(QWidget):
 
         self.append_message(f"{texts.ADD_TOOL_PREFIX_TO_SUBTITLES}: ", end="")
         self.append_message(
-            str(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"]
+            bool_display(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"]
         )
 
         self.append_message(f"{texts.KEEP_EXTRACTED_SUBTITLES}: ", end="")
         self.append_message(
-            str(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"]
+            bool_display(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"]
         )
         self.append_message(f"{texts.KEEP_CONVERTED_SUBTITLES}: ", end="")
         self.append_message(
-            str(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"]
+            bool_display(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"]
         )
 
         loc = get("automatic_save_location")

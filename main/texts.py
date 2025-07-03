@@ -595,6 +595,31 @@ CHANGE_OUTPUT_SUBTITLE_ENCODING = {
     "ur_PK": "آؤٹ پٹ سب ٹائٹل انکوڈنگ تبدیل کریں",
 }
 
+ENABLED = {
+    "en_US": "Enabled",
+    "es_ES": "Habilitado",
+    "tr_TR": "Etkin",
+    "zh_CN": "已启用",
+    "ru_RU": "Включено",
+    "pl_PL": "Włączone",
+    "uk_UA": "Увімкнено",
+    "ja_JP": "有効",
+    "ko_KR": "활성화됨",
+    "hi_IN": "सक्रिय",
+    "bn_BD": "সক্রিয়",
+    "it_IT": "Abilitato",
+    "fr_FR": "Activé",
+    "de_DE": "Aktiviert",
+    "pt_PT": "Ativado",
+    "ar_SA": "مفعل",
+    "vi_VN": "Đã bật",
+    "fa_IR": "فعال",
+    "id_ID": "Diaktifkan",
+    "ms_MY": "Diaktifkan",
+    "th_TH": "เปิดใช้งานแล้ว",
+    "ur_PK": "فعال",
+}
+
 DISABLED = {
     "en_US": "Disabled",
     "es_ES": "Deshabilitado",
