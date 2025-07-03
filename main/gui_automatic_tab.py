@@ -9,6 +9,7 @@ The module exports:
 
 import os
 import logging
+import texts
 from gui_log_window import LogWindow
 from sync_auto import start_sync_process
 from PyQt6.QtWidgets import (
@@ -89,22 +90,22 @@ def setup_auto_sync_tab(self):
     # Create the input boxes
     self.batch_input = self.InputBox(
         self,
-        "Drag and drop files or folder here or click to browse",
-        "Batch mode",
+        texts.DRAG_DROP_FILE,
+        texts.BATCH_MODE,
         input_type="batch",
     )
 
     self.video_ref_input = self.InputBox(
         self,
-        "Drag and drop video/reference subtitle here or click to browse",
-        "Video/Reference subtitle",
+        texts.DRAG_DROP_VIDEO_SUBTITLE_FILES,
+        texts.VIDEO_OR_SUBTITLE_FILES_LABEL,
         input_type="video_or_subtitle",
     )
 
     self.subtitle_input = self.InputBox(
         self,
-        "Drag and drop subtitle file here or click to browse",
-        "Input Subtitle",
+        texts.DRAG_DROP_SUBTITLE_OR_BROWSE,
+        texts.INPUT_SUBTITLE_LABEL,
         input_type="subtitle",
     )
 
@@ -116,7 +117,7 @@ def setup_auto_sync_tab(self):
     controls.setSpacing(15)
 
     # Create a horizontal layout for the sync options group title and the + button
-    self.sync_options_group = QGroupBox("Sync tool settings")
+    self.sync_options_group = QGroupBox(texts.SYNC_TOOL_SETTINGS)
 
     # Create the + button for additional arguments
     self.btn_add_args = QPushButton("+", self)
@@ -127,7 +128,7 @@ def setup_auto_sync_tab(self):
     # Create the ? button for tool info
     self.btn_tool_info = QPushButton("?", self)
     self.btn_tool_info.setFixedSize(30, 30)
-    self.btn_tool_info.setToolTip("Show tool information")
+    self.btn_tool_info.setToolTip(texts.SHOW_TOOL_INFORMATION)
     self.btn_tool_info.clicked.connect(self.show_tool_info_dialog)
 
     # Set the sync options group layout
@@ -151,7 +152,7 @@ def setup_auto_sync_tab(self):
     self.sync_options_group.resizeEvent = _move_buttons
 
     self.sync_tool_combo = self._dropdown(
-        controls, "Sync tool:", list(SYNC_TOOLS.keys())
+        controls, texts.SYNC_TOOL_LABEL, list(SYNC_TOOLS.keys())
     )
     idx = self.sync_tool_combo.findText(
         self.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
@@ -162,7 +163,7 @@ def setup_auto_sync_tab(self):
         lambda text: update_config(self, "sync_tool", text)
     )
     save_items = list(AUTOMATIC_SAVE_MAP.values())  # Use values as display text
-    self.save_combo = self._dropdown(controls, "Save location:", save_items)
+    self.save_combo = self._dropdown(controls, texts.SAVE_LOCATION_LABEL, save_items)
     # Add label to display selected folder
     self.selected_folder_label = QLabel("", self)
     self.selected_folder_label.setWordWrap(True)
@@ -201,10 +202,10 @@ def setup_auto_sync_tab(self):
         update_folder_label(self.selected_folder_label)
 
     btns = QHBoxLayout()
-    self.btn_batch_mode = self._button("Batch mode", w=120)
+    self.btn_batch_mode = self._button(texts.BATCH_MODE, w=120)
     self.btn_batch_mode.clicked.connect(lambda: gui_batch_mode.toggle_batch_mode(self))
     btns.addWidget(self.btn_batch_mode)
-    self.btn_sync = self._button("Start")
+    self.btn_sync = self._button(texts.START)
     self.btn_sync.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
     btns.addWidget(self.btn_sync)
     # Add input validation for Start button
@@ -216,7 +217,7 @@ def setup_auto_sync_tab(self):
     l.addWidget(cw)
     # Set an object name for the tab so we can find it later
     c.setObjectName("auto_sync_tab")
-    self.tab_widget.addTab(c, "Automatic Sync")
+    self.tab_widget.addTab(c, texts.AUTOMATIC_SYNC_TAB_LABEL)
     self.sync_tool_combo.currentTextChanged.connect(self.update_sync_tool_options)
     self.update_sync_tool_options(self.sync_tool_combo.currentText())
     self.update_auto_sync_ui_for_batch()  # Ensure correct UI for batch mode on startup
@@ -236,11 +237,11 @@ def validate_auto_sync_inputs(self):
         missing = False
         if not self.video_ref_input.file_path:
             self.video_ref_input.show_error(
-                "Please select a video or reference subtitle."
+                texts.PLEASE_SELECT_VIDEO_OR_REFERENCE_SUBTITLE
             )
             missing = True
         if not self.subtitle_input.file_path:
-            self.subtitle_input.show_error("Please select a subtitle file.")
+            self.subtitle_input.show_error(texts.PLEASE_SELECT_SUBTITLE_FILE)
             missing = True
         # Prevent using the same file for both inputs
         if (
@@ -250,7 +251,7 @@ def validate_auto_sync_inputs(self):
         ):
             logger.warning("Cannot use the same file for both inputs.")
             QMessageBox.warning(
-                self, "Invalid Input", "Cannot use the same file for both inputs."
+                self, texts.INVALID_FILE_TITLE, texts.CANNOT_USE_SAME_FILE_FOR_BOTH_INPUTS
             )
             return False
         # Check if files exist
@@ -258,14 +259,14 @@ def validate_auto_sync_inputs(self):
             self.video_ref_input.file_path
         ):
             QMessageBox.warning(
-                self, "File Not Found", f"Video/Reference file does not exist."
+                self, texts.FILE_NOT_FOUND_TITLE, texts.VIDEO_REFERENCE_FILE_DOES_NOT_EXIST
             )
             return False
         if self.subtitle_input.file_path and not os.path.exists(
             self.subtitle_input.file_path
         ):
             QMessageBox.warning(
-                self, "File Not Found", f"Subtitle file does not exist."
+                self, texts.FILE_NOT_FOUND_TITLE, texts.SUBTITLE_FILE_DOES_NOT_EXIST
             )
             return False
         if missing:
@@ -286,8 +287,8 @@ def show_add_arguments_dialog(self):
 
     args, ok = QInputDialog.getText(
         self,
-        f"Additional arguments for {current_tool}",
-        f"Enter additional arguments for {current_tool}:",
+        texts.ADDITIONAL_ARGUMENTS_TITLE.format(tool=current_tool),
+        texts.ENTER_ADDITIONAL_ARGUMENTS_PROMPT.format(tool=current_tool),
         QLineEdit.EchoMode.Normal,
         current_args,
     )
@@ -352,6 +353,13 @@ def show_auto_sync_inputs(self):
 def update_auto_sync_ui_for_batch(self):
     """Update UI for batch mode"""
     self.show_auto_sync_inputs()
+    
+    # Update button text based on current mode
+    if hasattr(self, 'btn_batch_mode'):
+        if self.batch_mode_enabled:
+            self.btn_batch_mode.setText(texts.NORMAL_MODE)
+        else:
+            self.btn_batch_mode.setText(texts.BATCH_MODE)
 
 
 def update_sync_tool_options(self, tool):
@@ -367,7 +375,7 @@ def update_sync_tool_options(self, tool):
     # Update the group box title to include the tool description if available
     tool_info = SYNC_TOOLS.get(tool, {})
     description = tool_info.get("description", "")
-    self.sync_options_group.setTitle(f"Sync tool settings - {tool}")
+    self.sync_options_group.setTitle(f"{texts.SYNC_TOOL_SETTINGS} - {tool}")
 
     # If the tool doesn't exist in SYNC_TOOLS, exit early
     if tool not in SYNC_TOOLS:
@@ -470,7 +478,7 @@ def update_args_tooltip(self):
     args_key = f"{current_tool}_arguments"
     current_args = self.config.get(args_key, "")
 
-    tooltip = "Additional arguments"
+    tooltip = texts.ADDITIONAL_ARGUMENTS
     if current_args:
         tooltip += f"\n⤷ {current_args}"
 
@@ -526,7 +534,7 @@ def show_log_window(self):
             self.tab_widget.removeTab(auto_tab_index)
             self._stored_auto_tab_widget.setParent(None)
             # Insert the log window as a new tab at the same position
-            self.tab_widget.insertTab(auto_tab_index, self.log_window, "Sync Log")
+            self.tab_widget.insertTab(auto_tab_index, self.log_window, texts.SYNC_LOG_TAB_LABEL)
             self.tab_widget.setCurrentIndex(auto_tab_index)
 
     # Show the log window and print configuration
@@ -546,7 +554,7 @@ def restore_auto_sync_tab(self):
 
         # Re-insert the original auto sync tab
         self.tab_widget.insertTab(
-            self._stored_auto_tab_index, self._stored_auto_tab_widget, "Automatic Sync"
+            self._stored_auto_tab_index, self._stored_auto_tab_widget, texts.AUTOMATIC_SYNC_TAB_LABEL
         )
         self.tab_widget.setCurrentIndex(self._stored_auto_tab_index)
 

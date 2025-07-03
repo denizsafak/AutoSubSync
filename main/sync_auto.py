@@ -8,6 +8,7 @@ import platform
 import platformdirs
 import importlib
 import multiprocessing
+import texts
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtWidgets import QApplication
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
@@ -76,7 +77,7 @@ def update_progress(app, percent, idx=None, total=None):
 def handle_completion(app, ok, out, in_path):
     if ok and (not out or not os.path.exists(out)):
         ok = False
-        append_log(app, "Sync failed. Please check the logs.", COLORS["RED"])
+        append_log(app, texts.SYNC_FAILED_CHECK_LOGS, COLORS["RED"])
     if ok and out and os.path.exists(out):
         try:
             match_output_encoding(app, in_path, out)
@@ -207,9 +208,9 @@ class SyncProcess:
 
     def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
         if hasattr(self.app, "log_window"):
-            self.app.log_window.append_message(f"Reference: ", end="")
+            self.app.log_window.append_message(f"{texts.REFERENCE_LABEL} ", end="")
             self.app.log_window.append_message(reference, color=COLORS["GREY"])
-            self.app.log_window.append_message(f"Subtitle: ", end="")
+            self.app.log_window.append_message(f"{texts.SUBTITLE_LABEL} ", end="")
             self.app.log_window.append_message(subtitle, color=COLORS["GREY"])
             self.app.log_window.append_message("")
             self.app.log_window.cancel_button.setEnabled(True)
@@ -220,23 +221,21 @@ class SyncProcess:
     def _run(self, reference, subtitle, tool, output):
         try:
             if not os.path.exists(reference) and not os.path.exists(subtitle):
-                self.signals.error.emit("Skipping: Both files does not exist")
+                self.signals.error.emit(texts.SKIPPING_BOTH_FILES_DO_NOT_EXIST)
                 self.signals.finished.emit(False, None)
                 return
             elif not os.path.exists(reference):
-                self.signals.error.emit("Skipping: Reference file does not exist")
+                self.signals.error.emit(texts.SKIPPING_REFERENCE_FILE_DOES_NOT_EXIST)
                 self.signals.finished.emit(False, None)
                 return
             elif not os.path.exists(subtitle):
-                self.signals.error.emit("Skipping: Subtitle file does not exist")
+                self.signals.error.emit(texts.SKIPPING_SUBTITLE_FILE_DOES_NOT_EXIST)
                 self.signals.finished.emit(False, None)
                 return
             if tool not in SYNC_TOOLS:
-                self.signals.error.emit(f"Unknown sync tool: {tool}")
+                self.signals.error.emit(texts.UNKNOWN_SYNC_TOOL.format(tool=tool))
                 return
-            tool_info, tool_type = SYNC_TOOLS[tool], SYNC_TOOLS[tool].get(
-                "type", "executable"
-            )
+            tool_info, tool_type = SYNC_TOOLS[tool], SYNC_TOOLS[tool].get("type", "executable")
             # Use local variables for tool fallback logic
             current_tool = tool
             current_tool_info = tool_info
@@ -246,7 +245,13 @@ class SyncProcess:
             is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
             if not supports_sub_ref and not is_video_ref:
                 default_tool = DEFAULT_OPTIONS["sync_tool"]
-                append_log(self.app, f"{current_tool} does not support subtitle files as reference. Falling back to {default_tool}.", COLORS["ORANGE"])
+                append_log(
+                    self.app,
+                    texts.TOOL_DOES_NOT_SUPPORT_SUBTITLE_REFERENCE.format(
+                        tool=current_tool, fallback=default_tool
+                    ),
+                    COLORS["ORANGE"]
+                )
                 logger.info(f"{current_tool} does not support subtitle files as reference. Falling back to {default_tool}.")
                 current_tool = default_tool
                 current_tool_info = SYNC_TOOLS[current_tool]
@@ -294,7 +299,7 @@ class SyncProcess:
                 )
                 if not exe:
                     self.signals.error.emit(
-                        f"No executable found for {current_tool} on {current_os}"
+                        texts.NO_EXECUTABLE_FOUND.format(tool=current_tool, os=current_os)
                     )
                     self.signals.finished.emit(False, None)
                     return
@@ -355,7 +360,7 @@ class SyncProcess:
                         self.signals.progress_percent.emit(percent)
                 rc = self.process.wait() if not self.should_cancel else 1
             if rc != 0 and not self.should_cancel:
-                self.signals.error.emit(f"{tool} failed with code {rc}")
+                self.signals.error.emit(texts.TOOL_FAILED_WITH_CODE.format(tool=tool, code=rc))
                 self.signals.finished.emit(False, None)
             elif self.should_cancel:
                 self.signals.finished.emit(False, None)
@@ -363,10 +368,10 @@ class SyncProcess:
                 self.signals.finished.emit(True, output)
         except Exception as e:
             if not self.should_cancel:
-                error_msg = f"Error: {str(e)}"
+                error_msg = texts.ERROR_PREFIX + " " + str(e)
                 if tool == "alass" and "could not convert string to float" in str(e):
                     if any(c in reference or c in subtitle for c in ["[", "]"]):
-                        error_msg += "\n\nThis error is likely caused because of '[' or ']' characters in file or folder names. ALASS cannot process names containing these characters. Please rename your files or folders and try again."
+                        error_msg += "\n\n" + texts.ALASS_BRACKETS_ERROR
                 self.signals.error.emit(error_msg)
                 self.signals.finished.emit(False, None)
             else:
@@ -540,8 +545,8 @@ def start_sync_process(app):
 
                 reply = QMessageBox.question(
                     app,
-                    "Cancel Batch Sync",
-                    f"Are you sure you want to cancel batch sync?",
+                    texts.CANCEL_BATCH_SYNC_TITLE,
+                    texts.CANCEL_BATCH_SYNC_PROMPT,
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,
                 )
@@ -587,16 +592,16 @@ def start_sync_process(app):
                 return
             if current_item_idx >= len(items):
                 if app.batch_mode_enabled and total_items > 1:
-                    append_log(app, "Batch sync completed.", COLORS["BLUE"], True)
-                    append_log(app, f"Total pairs: {total_items}", COLORS["BLUE"])
-                    append_log(app, f"Successful: {batch_success_count}", COLORS["GREEN"])
+                    append_log(app, texts.BATCH_SYNC_COMPLETED, COLORS["BLUE"], True)
+                    append_log(app, f"{texts.TOTAL_PAIRS_LABEL} {total_items}", COLORS["BLUE"])
+                    append_log(app, texts.BATCH_SYNC_SUCCESSFUL.format(count=batch_success_count), COLORS["GREEN"])
                     if batch_fail_count > 0:
-                        append_log(app, f"Failed: {batch_fail_count}", COLORS["RED"], end="\n\n")
+                        append_log(app, texts.BATCH_SYNC_FAILED.format(count=batch_fail_count), COLORS["RED"], end="\n\n")
                         for fail_idx, v, s in failed_pairs:
-                            append_log(app, f"Failed pair: [{fail_idx+1}/{total_items}]", COLORS["RED"])
-                            append_log(app, "Reference: ", end="")
+                            append_log(app, texts.BATCH_SYNC_FAILED_PAIR.format(idx=fail_idx+1, total=total_items), COLORS["RED"])
+                            append_log(app, f"{texts.REFERENCE_LABEL} ", end="")
                             append_log(app, v, COLORS["ORANGE"], end="\n")
-                            append_log(app, "Subtitle: ", end="")
+                            append_log(app, f"{texts.SUBTITLE_LABEL} ", end="")
                             append_log(app, s, COLORS["ORANGE"], end="\n\n")
                     app.log_window.finish_batch_sync()
                 if hasattr(app, "_batch_state"):
@@ -606,8 +611,28 @@ def start_sync_process(app):
             original_idx = current_item_idx
             original_ref_path, original_sub_path = it["reference_path"], it["subtitle_path"]
             if app.batch_mode_enabled and len(items) > 1:
-                append_log(app, f"Processing pair [{current_item_idx+1}/{len(items)}]", COLORS["BLUE"], True)
+                append_log(app, texts.BATCH_SYNC_PROCESSING_PAIR.format(idx=current_item_idx+1, total=len(items)), COLORS["BLUE"], True)
             output_dir = os.path.dirname(determine_output_path(app, original_ref_path, original_sub_path))
+            def convert_if_needed(file_path):
+                ext = os.path.splitext(file_path)[-1].lower()
+                supported = SYNC_TOOLS[tool].get("supported_formats", [])
+                if ext in SUBTITLE_EXTENSIONS and ext not in supported:
+                    converted, msgs = convert_to_srt(file_path, output_dir)
+                    for msg in msgs:
+                        append_log(app, msg, COLORS["GREY"])
+                    if converted:
+                        if not app.config.get("keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]):
+                            converted_files_to_clean.append(converted)
+                        return converted
+                    append_log(app, texts.CONVERSION_FAILED_FOR_FILE.format(filename=os.path.basename(file_path)), COLORS["RED"])
+                    return None
+                return file_path
+            
+            # Convert subtitle file first if needed
+            subtitle_path = convert_if_needed(original_sub_path)
+            subtitle_was_converted = subtitle_path != original_sub_path and subtitle_path is not None
+            
+            # Then check for embedded subtitles in video if applicable
             ref_ext = os.path.splitext(original_ref_path)[1].lower()
             is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
             check_video_subs = is_video_ref and app.config.get(
@@ -616,18 +641,18 @@ def start_sync_process(app):
             )
             extracted_subtitle_path, extracted_folder_to_clean = None, None
             if check_video_subs:
-                append_log(app, "Checking video for embedded subtitles...", COLORS["GREY"])
+                append_log(app, texts.CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES, COLORS["GREY"])
                 extraction_result, extraction_done, log_lock = ([None, None, []], threading.Event(), threading.Lock())
                 def run_extraction():
                     try:
-                        result = extract_subtitles(original_ref_path, original_sub_path, output_dir)
+                        result = extract_subtitles(original_ref_path, subtitle_path, output_dir)
                         extraction_result[0], extraction_result[1] = result[0], result[1]
                         with log_lock:
                             extraction_result[2].extend(result[2])
                     except Exception as e:
                         logger.exception(f"Extraction failed: {e}")
                         with log_lock:
-                            extraction_result[2].append(f"Extraction failed: {str(e)}")
+                            extraction_result[2].append(texts.EXTRACTION_FAILED_PREFIX + str(e))
                     finally:
                         extraction_done.set()
                 threading.Thread(target=run_extraction, daemon=True).start()
@@ -645,29 +670,14 @@ def start_sync_process(app):
                 extracted_subtitle_path, extraction_score = extraction_result[0], extraction_result[1]
                 if extracted_subtitle_path:
                     filename = os.path.basename(extracted_subtitle_path)
-                    append_log(app, f"Selected: {filename} with timestamp difference: {extraction_score}", COLORS["BLUE"])
+                    append_log(app, texts.EXTRACTION_SELECTED_WITH_TIMESTAMP.format(filename=filename, score=extraction_score), COLORS["BLUE"])
                     if not app.config.get("keep_extracted_subtitles", DEFAULT_OPTIONS["keep_extracted_subtitles"]):
                         extracted_folder_to_clean = os.path.dirname(extracted_subtitle_path)
                 else:
-                    append_log(app, "No compatible subtitles found to extract, using video...", COLORS["ORANGE"])
-            def convert_if_needed(file_path):
-                ext = os.path.splitext(file_path)[-1].lower()
-                supported = SYNC_TOOLS[tool].get("supported_formats", [])
-                if ext in SUBTITLE_EXTENSIONS and ext not in supported:
-                    converted, msgs = convert_to_srt(file_path, output_dir)
-                    for msg in msgs:
-                        append_log(app, msg, COLORS["GREY"])
-                    if converted:
-                        if not app.config.get("keep_converted_subtitles", DEFAULT_OPTIONS["keep_converted_subtitles"]):
-                            converted_files_to_clean.append(converted)
-                        return converted
-                    append_log(app, f"Conversion failed for {os.path.basename(file_path)}", COLORS["RED"])
-                    return None
-                return file_path
+                    append_log(app, texts.EXTRACTION_NO_COMPATIBLE_SUBTITLES, COLORS["ORANGE"])
+            
             reference_to_process = extracted_subtitle_path if extracted_subtitle_path else original_ref_path
             reference_path = convert_if_needed(reference_to_process)
-            subtitle_path = convert_if_needed(original_sub_path)
-            subtitle_was_converted = subtitle_path != original_sub_path and subtitle_path is not None
             current_item_idx += 1
             if not reference_path or not subtitle_path:
                 if app.batch_mode_enabled and total_items > 1:
@@ -676,7 +686,7 @@ def start_sync_process(app):
                     update_progress(app, int((original_idx + 1) * 100 / total_items), original_idx + 1, total_items)
                     process_next_item()
                 else:
-                    append_log(app, "Sync cancelled due to conversion failure.", COLORS["RED"])
+                    append_log(app, texts.SYNC_CANCELLED_CONVERSION_FAILURE, COLORS["RED"])
                     app.restore_auto_sync_tab()
                 return
             final_output_path = determine_output_path(app, original_ref_path, original_sub_path, subtitle_was_converted)
@@ -729,7 +739,13 @@ def get_tool_with_fallback(app, ref_path):
     is_video = ref_ext not in SUBTITLE_EXTENSIONS
     if not supports_sub_ref and not is_video:
         fallback = DEFAULT_OPTIONS["sync_tool"]
-        append_log(app, f"{t} does not support subtitle files as reference. Falling back to {fallback}.", COLORS["ORANGE"])
+        append_log(
+            app,
+            texts.TOOL_DOES_NOT_SUPPORT_SUBTITLE_REFERENCE.format(
+                tool=t, fallback=fallback
+            ),
+            COLORS["ORANGE"]
+        )
         logger.info(f"{t} does not support subtitle files as reference. Falling back to {fallback}.")
         t = fallback
         info = SYNC_TOOLS[t]

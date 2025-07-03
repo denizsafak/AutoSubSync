@@ -1,3 +1,5 @@
+import os, base64
+import texts
 import platform
 import logging
 from PyQt6.QtWidgets import (
@@ -17,7 +19,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer
 from PyQt6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QAction, QActionGroup
-import os, base64
+
 from utils import *
 from constants import *
 
@@ -66,7 +68,7 @@ class InputBox(QLabel):
     def __init__(
         self,
         parent=None,
-        text="Drag and drop your file here or click to browse.",
+        text=texts.DRAG_DROP_FILE,
         label=None,
         input_type=None,
     ):
@@ -74,6 +76,7 @@ class InputBox(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setAcceptDrops(True)
         self.setText(text)
+        self.setWordWrap(True)  # Enable word wrapping for all text
         self.setObjectName("inputBox")
         self._active_state_key = "default"  # Initialize current state
         self._apply_style()  # Apply initial style
@@ -92,7 +95,7 @@ class InputBox(QLabel):
         self.clear_btn.hide()  # Initially hidden
 
         # Add Go to folder button
-        self.goto_folder_btn = QPushButton("Go to folder", self)
+        self.goto_folder_btn = QPushButton(texts.GO_TO_FOLDER, self)
         self.goto_folder_btn.setFixedHeight(28)
         self.goto_folder_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.goto_folder_btn.clicked.connect(self.open_file_folder)
@@ -119,11 +122,11 @@ class InputBox(QLabel):
 
     def handle_file_dialog(self):
         if self.input_type == "subtitle":
-            file_filter = f"Subtitle Files (*{' *'.join(SUBTITLE_EXTENSIONS)})"
-            title = "Select Subtitle File"
+            file_filter = f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+            title = texts.SELECT_SUBTITLE_FILE_TITLE
         elif self.input_type == "video_or_subtitle":
-            file_filter = f"Video/Subtitle Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
-            title = "Select Video or Subtitle File"
+            file_filter = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+            title = texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE
         else:
             # For "batch" type, file browsing is handled by the menu triggered from mousePressEvent.
             # For other unknown types, or if this is somehow called for batch, do nothing.
@@ -278,17 +281,17 @@ class InputBox(QLabel):
         # Validate file type
         ext = os.path.splitext(file_path)[1].lower()
         if not ext:
-            self.show_error("This is not a supported subtitle format.")
+            self.show_error(texts.UNSUPPORTED_SUBTITLE_FORMAT)
             return
         # if ext is empty, treat it as an invalid file
         if self.input_type == "subtitle" and ext not in SUBTITLE_EXTENSIONS:
-            self.show_error(f'"{ext}" is not a supported subtitle format.')
+            self.show_error(texts.UNSUPPORTED_SUBTITLE_FORMAT_WITH_EXT.format(ext=ext))
             return
         elif (
             self.input_type == "video_or_subtitle"
             and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS
         ):
-            self.show_error(f'"{ext}" is not a supported video or subtitle format.')
+            self.show_error(texts.UNSUPPORTED_VIDEO_OR_SUBTITLE_FORMAT_WITH_EXT.format(ext=ext))
             return
 
         self.file_path = file_path
@@ -329,7 +332,7 @@ class InputBox(QLabel):
 
         # Update display
         self.setText(
-            f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%; word-break: break-all;"><b>{name}</b></span><br>Size: {format_num(size)}'
+            f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%; word-break: break-all;"><b>{name}</b></span><br>{texts.FILE_SIZE}: {format_num(size)}'
         )
         self.setWordWrap(True)
         self._active_state_key = "active"
@@ -423,8 +426,8 @@ class InputBox(QLabel):
         else:
             QMessageBox.warning(
                 self,
-                "Error",
-                "File does not exist.",
+                texts.ERROR,
+                texts.FILE_DOES_NOT_EXIST,
             )
 
     def _apply_style(self, drag_hover=False):
@@ -588,7 +591,7 @@ class autosubsyncapp(QWidget):
         self.settings_btn.setIcon(
             QIcon(get_resource_path("autosubsyncapp.assets", "settings.svg"))
         )
-        self.settings_btn.setToolTip("Settings")
+        self.settings_btn.setToolTip(texts.SETTINGS)
         self.settings_btn.setFixedSize(36, 36)
         self.settings_btn.move(self.width() - 36 - 15, 15)
 
@@ -596,7 +599,7 @@ class autosubsyncapp(QWidget):
         self.settings_menu = QMenu(self)
 
         # Add Language submenu
-        self.language_menu = self.settings_menu.addMenu("Language")
+        self.language_menu = self.settings_menu.addMenu(texts.LANGUAGE)
         self.language_action_group = QActionGroup(self)
         self.language_action_group.setExclusive(True)
         
@@ -606,7 +609,7 @@ class autosubsyncapp(QWidget):
             action.setCheckable(True)
             action.setActionGroup(self.language_action_group)
             action.triggered.connect(
-                lambda checked, code=language_code: update_config(self, "language", code)
+                lambda checked, code=language_code: self.change_language(code)
             )
             self.language_menu.addAction(action)
             self.language_actions[language_code] = action
@@ -617,20 +620,20 @@ class autosubsyncapp(QWidget):
 
 
         # Add Theme submenu
-        self.theme_menu = self.settings_menu.addMenu("Theme")
+        self.theme_menu = self.settings_menu.addMenu(texts.THEME)
         self.theme_action_group = QActionGroup(self)
         self.theme_action_group.setExclusive(True)
-        self.theme_system_action = QAction("System", self)
+        self.theme_system_action = QAction(texts.SYSTEM, self)
         self.theme_system_action.setCheckable(True)
         self.theme_system_action.setActionGroup(self.theme_action_group)
         self.theme_system_action.triggered.connect(lambda: self.apply_theme("system"))
         self.theme_menu.addAction(self.theme_system_action)
-        self.theme_dark_action = QAction("Dark", self)
+        self.theme_dark_action = QAction(texts.DARK, self)
         self.theme_dark_action.setCheckable(True)
         self.theme_dark_action.setActionGroup(self.theme_action_group)
         self.theme_dark_action.triggered.connect(lambda: self.apply_theme("dark"))
         self.theme_menu.addAction(self.theme_dark_action)
-        self.theme_light_action = QAction("Light", self)
+        self.theme_light_action = QAction(texts.LIGHT, self)
         self.theme_light_action.setCheckable(True)
         self.theme_light_action.setActionGroup(self.theme_action_group)
         self.theme_light_action.triggered.connect(lambda: self.apply_theme("light"))
@@ -648,13 +651,13 @@ class autosubsyncapp(QWidget):
 
         # Add output subtitle encoding submenu
         self.encoding_menu = self.settings_menu.addMenu(
-            "Change output subtitle encoding"
+            texts.CHANGE_OUTPUT_SUBTITLE_ENCODING
         )
         self.encoding_action_group = QActionGroup(self)
         self.encoding_action_group.setExclusive(True)
 
         # Add "Disabled" option
-        self.encoding_disabled_action = QAction("Disabled", self)
+        self.encoding_disabled_action = QAction(texts.DISABLED, self)
         self.encoding_disabled_action.setCheckable(True)
         self.encoding_disabled_action.setActionGroup(self.encoding_action_group)
         self.encoding_disabled_action.triggered.connect(
@@ -663,7 +666,7 @@ class autosubsyncapp(QWidget):
         self.encoding_menu.addAction(self.encoding_disabled_action)
 
         # Add "Same as input" option
-        self.encoding_same_action = QAction("Same as input subtitle", self)
+        self.encoding_same_action = QAction(texts.SAME_AS_INPUT_SUBTITLE, self)
         self.encoding_same_action.setCheckable(True)
         self.encoding_same_action.setActionGroup(self.encoding_action_group)
         self.encoding_same_action.triggered.connect(
@@ -706,7 +709,7 @@ class autosubsyncapp(QWidget):
             update_config(self, "output_subtitle_encoding", "same_as_input")
 
         self.backup_subtitles_action = QAction(
-            "Backup subtitles before overwriting", self
+            texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING, self
         )
         self.backup_subtitles_action.setCheckable(True)
         self.backup_subtitles_action.setChecked(
@@ -722,7 +725,7 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.backup_subtitles_action)
 
-        self.keep_extracted_subtitles_action = QAction("Keep extracted subtitles", self)
+        self.keep_extracted_subtitles_action = QAction(texts.KEEP_EXTRACTED_SUBTITLES, self)
         self.keep_extracted_subtitles_action.setCheckable(True)
         self.keep_extracted_subtitles_action.setChecked(
             self.config.get(
@@ -734,7 +737,7 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.keep_extracted_subtitles_action)
 
-        self.keep_converted_subtitles_action = QAction("Keep converted subtitles", self)
+        self.keep_converted_subtitles_action = QAction(texts.KEEP_CONVERTED_SUBTITLES, self)
         self.keep_converted_subtitles_action.setCheckable(True)
         self.keep_converted_subtitles_action.setChecked(
             self.config.get(
@@ -746,7 +749,7 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.keep_converted_subtitles_action)
 
-        self.add_tool_prefix_action = QAction('Add "tool_" prefix to subtitles', self)
+        self.add_tool_prefix_action = QAction(texts.ADD_TOOL_PREFIX_TO_SUBTITLES, self)
         self.add_tool_prefix_action.setCheckable(True)
         self.add_tool_prefix_action.setChecked(
             self.config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"])
@@ -759,21 +762,21 @@ class autosubsyncapp(QWidget):
         self.settings_menu.addSeparator()
 
         # Add 'Open config directory' option at the top
-        self.open_config_dir_action = QAction("Open config directory", self)
+        self.open_config_dir_action = QAction(texts.OPEN_CONFIG_FILE_DIRECTORY, self)
         self.open_config_dir_action.triggered.connect(
             lambda: open_config_directory(self)
         )
         self.settings_menu.addAction(self.open_config_dir_action)
 
         # Add 'Open logs directory' option at the top
-        self.open_logs_directory_action = QAction("Open logs directory", self)
+        self.open_logs_directory_action = QAction(texts.OPEN_LOGS_DIRECTORY, self)
         self.open_logs_directory_action.triggered.connect(
             lambda: open_logs_directory(self)
         )
         self.settings_menu.addAction(self.open_logs_directory_action)
 
         # Add 'Keep log records' option
-        self.keep_log_records_action = QAction("Keep log records", self)
+        self.keep_log_records_action = QAction(texts.KEEP_LOG_RECORDS, self)
         self.keep_log_records_action.setCheckable(True)
         self.keep_log_records_action.setChecked(
             self.config.get("keep_log_records", DEFAULT_OPTIONS["keep_log_records"])
@@ -784,7 +787,7 @@ class autosubsyncapp(QWidget):
         self.settings_menu.addAction(self.keep_log_records_action)
 
         # Add 'Clear logs directory' option
-        self.clear_logs_directory_action = QAction("Clear all logs", self)
+        self.clear_logs_directory_action = QAction(texts.CLEAR_ALL_LOGS, self)
         self.clear_logs_directory_action.triggered.connect(
             lambda: clear_logs_directory(self)
         )
@@ -792,7 +795,7 @@ class autosubsyncapp(QWidget):
 
         self.settings_menu.addSeparator()
 
-        self.remember_changes_action = QAction("Remember the changes", self)
+        self.remember_changes_action = QAction(texts.REMEMBER_THE_CHANGES, self)
         self.remember_changes_action.setCheckable(True)
         self.remember_changes_action.setChecked(
             self.config.get("remember_changes", DEFAULT_OPTIONS["remember_changes"])
@@ -803,7 +806,7 @@ class autosubsyncapp(QWidget):
         self.settings_menu.addAction(self.remember_changes_action)
 
         # Add 'Check for updates at startup' option
-        self.check_updates_action = QAction("Check for updates at startup", self)
+        self.check_updates_action = QAction(texts.CHECK_FOR_UPDATES_AT_STARTUP, self)
         self.check_updates_action.setCheckable(True)
         self.check_updates_action.setChecked(
             self.config.get(
@@ -816,14 +819,14 @@ class autosubsyncapp(QWidget):
         self.settings_menu.addAction(self.check_updates_action)
 
         # Reset option
-        self.reset_action = QAction("Reset to default settings", self)
+        self.reset_action = QAction(texts.RESET_TO_DEFAULT_SETTINGS, self)
         self.reset_action.triggered.connect(lambda: reset_to_defaults(self))
         self.settings_menu.addAction(self.reset_action)
 
         self.settings_menu.addSeparator()
 
         # Add About option
-        self.about_action = QAction("About", self)
+        self.about_action = QAction(texts.ABOUT, self)
         self.about_action.triggered.connect(lambda: show_about_dialog(self))
         self.settings_menu.addAction(self.about_action)
 
@@ -855,6 +858,46 @@ class autosubsyncapp(QWidget):
         super().resizeEvent(event)
         if hasattr(self, "settings_btn"):
             self.settings_btn.move(self.width() - 36 - 15, 15)
+
+    def change_language(self, language_code):
+        """Handle language change with restart confirmation"""
+        current_language = self.config.get("language", DEFAULT_OPTIONS["language"])
+        
+        # If the language is already selected, do nothing
+        if current_language == language_code:
+            return
+        
+        # Ask user if they want to restart the app
+        reply = QMessageBox.question(
+            self,
+            texts.CHANGE_LANGUAGE_TITLE,
+            texts.RESTART_APPLICATION_FOR_LANGUAGE_CHANGE,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            # Update the config
+            self.config["language"] = language_code
+            save_config(self.config)
+            
+            # Restart the application
+            import sys
+            import subprocess
+            
+            # Get the current executable or script
+            if hasattr(sys, 'frozen'):
+                # Running as compiled executable
+                subprocess.Popen([sys.executable] + sys.argv[1:])
+            else:
+                # Running as Python script
+                subprocess.Popen([sys.executable] + sys.argv)
+            
+            # Close the current application
+            QApplication.quit()
+        else:
+            # Revert the selection to the current language
+            self.language_actions[current_language].setChecked(True)
 
     def _container(self):
         c = QWidget()

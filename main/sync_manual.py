@@ -8,9 +8,10 @@ Supported formats include: SRT, VTT, SBV, SUB, STL, DFXP, TTML/ITT, ASS/SSA, and
 import os
 import re
 import logging
-from typing import Optional, Tuple, List
+import texts
+from typing import Optional, Tuple
 from utils import detect_encoding
-from constants import COLORS, DEFAULT_OPTIONS
+from constants import DEFAULT_OPTIONS
 import platformdirs
 
 logger = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ def shift_subtitle(
             encoding = detect_encoding(subtitle_file)
             lines = raw_data.decode(encoding).splitlines()
     except Exception as e:
-        error_msg = f"Error loading subtitle file: {str(e)}"
+        error_msg = texts.ERROR_LOADING_SUBTITLE_FILE.format(error=str(e))
         logger.error(error_msg)
         return None, False, error_msg
 
@@ -271,12 +272,12 @@ def shift_subtitle(
         with open(output_file, "w", encoding=encoding, errors="replace") as file:
             file.write("\n".join(new_lines))
 
-        success_msg = f"Subtitle shifted successfully by {milliseconds}ms!\nSaved to: {output_file}"
+        success_msg = texts.SUBTITLE_SHIFTED_SUCCESSFULLY.format(milliseconds=milliseconds, output_file=output_file)
         logger.info(f"Successfully shifted subtitle by {milliseconds}ms: {output_file}")
 
         return output_file, True, success_msg
 
     except Exception as e:
-        error_msg = f"Error saving shifted subtitle: {str(e)}"
-        logger.error(error_msg)
+        error_msg = texts.ERROR_SAVING_SHIFTED_SUBTITLE.format(error=str(e))
+        logger.error(f"Error saving shifted subtitle: {str(e)}")
         return None, False, error_msg

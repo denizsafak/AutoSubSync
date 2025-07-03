@@ -9,6 +9,7 @@ The module exports:
 
 import os
 import logging
+import texts
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -67,7 +68,7 @@ class ManualSyncWorker(QThread):
             self.finished.emit(success, result_file if success else "", message)
 
         except Exception as e:
-            error_msg = f"Unexpected error during sync: {str(e)}"
+            error_msg = texts.UNEXPECTED_ERROR_DURING_SYNC.format(error=str(e))
             logger.error(error_msg)
             self.finished.emit(False, "", error_msg)
 
@@ -104,8 +105,8 @@ def setup_manual_sync_tab(self):
 
     self.manual_input_box = self.InputBox(
         self,
-        "Drag and drop subtitle file here or click to browse",
-        "Input Subtitle",
+        texts.DRAG_DROP_SUBTITLE_OR_BROWSE,
+        texts.INPUT_SUBTITLE_LABEL,
         input_type="subtitle",
     )
     l.addWidget(self.manual_input_box, 1)
@@ -114,7 +115,10 @@ def setup_manual_sync_tab(self):
     opts.setSpacing(15)
 
     # Add millisecond prefix checkbox
-    self.add_ms_prefix_checkbox = QCheckBox("Add millisecond prefix to filename", self)
+    self.add_ms_prefix_checkbox = QCheckBox(
+        texts.ADD_MS_PREFIX_TO_FILENAME,
+        self
+    )
     self.add_ms_prefix_checkbox.setChecked(
         self.config.get(
             "add_ms_prefix_to_filename", DEFAULT_OPTIONS["add_ms_prefix_to_filename"]
@@ -124,7 +128,7 @@ def setup_manual_sync_tab(self):
     opts.addWidget(self.add_ms_prefix_checkbox)
 
     shift_input = QHBoxLayout()
-    shift_label = QLabel("Shift subtitle (ms)", self)
+    shift_label = QLabel(texts.SHIFT_SUBTITLE_LABEL, self)
     shift_label.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
     shift_input.addWidget(shift_label)
     self.btn_shift_minus = self._button("-", h=35, w=35)
@@ -134,6 +138,7 @@ def setup_manual_sync_tab(self):
     self.shift_input.setText("0")
     self.shift_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
     self.shift_input.setFixedHeight(35)
+    self.shift_input.setToolTip(texts.SECOND_MS_TOOLTIP)
     shift_input.addWidget(self.shift_input)
     self.shift_input.textChanged.connect(self._update_shift_input_color)
     self.shift_input.installEventFilter(self)
@@ -148,7 +153,11 @@ def setup_manual_sync_tab(self):
     # Install event filter on main window to catch global mouse clicks
     self.installEventFilter(self)
     manual_save_items = list(MANUAL_SAVE_MAP.values())  # Use values as display text
-    self.manual_save_combo = self._dropdown(opts, "Save location:", manual_save_items)
+    self.manual_save_combo = self._dropdown(
+        opts,
+        texts.SAVE_LOCATION_LABEL,
+        manual_save_items
+    )
     # Add label to display selected folder
     self.manual_selected_folder_label = QLabel("", self)
     self.manual_selected_folder_label.setWordWrap(True)
@@ -184,7 +193,7 @@ def setup_manual_sync_tab(self):
     # Initialize prefix checkbox state based on current save location
     self._update_prefix_checkbox_state()
 
-    self.btn_manual_sync = self._button("Start")
+    self.btn_manual_sync = self._button(texts.START)
     opts.addWidget(self.btn_manual_sync)
 
     # Add progress bar (initially hidden)
@@ -213,7 +222,7 @@ def setup_manual_sync_tab(self):
     ow.setLayout(opts)
     ow.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
     l.addWidget(ow)
-    self.tab_widget.addTab(c, "Manual Sync")
+    self.tab_widget.addTab(c, texts.MANUAL_SYNC_TAB_LABEL)
 
     # Connect tab change event to clear focus from shift_input
     self.tab_widget.currentChanged.connect(
@@ -236,11 +245,11 @@ def setup_manual_sync_tab(self):
 def validate_manual_sync_inputs(self):
     """Validate manual sync inputs before processing"""
     if not self.manual_input_box.file_path:
-        self.manual_input_box.show_error("Please select a subtitle file.")
+        self.manual_input_box.show_error(texts.PLEASE_SELECT_SUBTITLE_FILE)
         return False
     if self.shift_input.text() == "0" or not self.shift_input.text():
         logger.warning("Invalid shift value for manual sync.")
-        self._show_message("Please enter a non-zero value.", "error")
+        self._show_message(texts.PLEASE_ENTER_NON_ZERO_VALUE, "error")
         return False
 
     logger.info("Manual sync input validation passed. Starting shift...")
@@ -252,7 +261,7 @@ def validate_manual_sync_inputs(self):
         shift_ms = 0
 
     if shift_ms == 0:
-        self._show_message("Please enter a non-zero value.", "error")
+        self._show_message(texts.PLEASE_ENTER_NON_ZERO_VALUE, "error")
         return False
 
     # Determine output file location using the new function
@@ -265,13 +274,14 @@ def validate_manual_sync_inputs(self):
         folder = self.config.get("manual_save_folder", "")
         if not folder:
             self._show_message(
-                "Please select a destination folder in the save location dropdown.",
+                texts.PLEASE_SELECT_DESTINATION_FOLDER,
                 "error",
             )
             return False
         if not os.path.exists(folder):
             self._show_message(
-                f"The selected destination folder does not exist:\n{folder}", "error"
+                texts.SELECTED_DESTINATION_FOLDER_NOT_EXIST.format(folder=folder),
+                "error",
             )
             return False
 
@@ -285,8 +295,10 @@ def validate_manual_sync_inputs(self):
     if save_location != "overwrite_input_subtitle" and os.path.exists(output_file):
         reply = QMessageBox.question(
             self,
-            "File Already Exists",
-            f"The output file already exists:\n{os.path.basename(output_file)}\n\nDo you want to replace it?",
+            texts.FILE_ALREADY_EXISTS_TITLE,
+            texts.FILE_ALREADY_EXISTS_MESSAGE.format(
+                filename=os.path.basename(output_file)
+            ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -342,7 +354,7 @@ def _start_manual_sync(self, shift_ms, output_file):
     """Start the manual sync operation in a worker thread"""
     # Disable the start button
     self.btn_manual_sync.setEnabled(False)
-    self.btn_manual_sync.setText("Processing...")
+    self.btn_manual_sync.setText(texts.PROCESSING)
 
     # Hide any previous messages and show progress bar
     self.manual_message_label.setVisible(False)
@@ -367,7 +379,7 @@ def _on_sync_finished(self, success, result_file, message):
     # Hide progress bar and re-enable button
     self.manual_progress_bar.setVisible(False)
     self.btn_manual_sync.setEnabled(True)
-    self.btn_manual_sync.setText("Start")
+    self.btn_manual_sync.setText(texts.START)
 
     if success and result_file:
         # Determine if this is actually an overwrite operation by checking the final paths
@@ -402,7 +414,10 @@ def _on_sync_finished(self, success, result_file, message):
         # Store the result file path for click handling
         self.manual_message_label.result_file_path = result_file
     else:
-        self._show_message(f"Failed to shift subtitle:\n{message}", "error")
+        self._show_message(
+            texts.FAILED_TO_SHIFT_SUBTITLE.format(message=message),
+            "error"
+        )
         logger.error(f"Manual sync failed: {message}")
 
     # Clean up worker
@@ -535,7 +550,7 @@ def _update_total_shifted_display(self):
     if will_overwrite and hasattr(self, "session_shifted_files"):
         total_ms = self.session_shifted_files.get(self.manual_input_box.file_path, 0)
         if total_ms != 0:
-            text = f"Total shifted: {total_ms:+d} ms"
+            text = texts.TOTAL_SHIFTED_LABEL.format(total_ms=total_ms)
             self.manual_input_box.total_shifted_label.setText(text)
             self.manual_input_box.total_shifted_label.adjustSize()
             self.manual_input_box.total_shifted_label.show()
@@ -564,7 +579,7 @@ def _update_prefix_checkbox_state(self):
         # Disable checkbox when explicitly overwriting (prefix is not relevant)
         self.add_ms_prefix_checkbox.setEnabled(False)
         self.add_ms_prefix_checkbox.setToolTip(
-            "Prefix is not applicable when overwriting the input file"
+            texts.PREFIX_NOT_APPLICABLE_WHEN_OVERWRITING
         )
     else:
         # Enable checkbox for other save modes
@@ -645,7 +660,7 @@ def _on_message_clicked(self, event):
             # Show error dialog if file not found
             QMessageBox.warning(
                 self,
-                "File Not Found",
-                f"The output file could not be found:\n{os.path.basename(result_file)}\n\nIt may have been moved or deleted.",
+                texts.FILE_NOT_FOUND_TITLE,
+                texts.FILE_NOT_FOUND_MESSAGE.format(filename=os.path.basename(result_file)),
             )
             logger.warning(f"Result file not found: {result_file}")

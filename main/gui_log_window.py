@@ -1,5 +1,6 @@
 import os
 import logging
+import texts
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget,
@@ -85,16 +86,16 @@ class LogWindow(QWidget):
         bottom.setSpacing(15)
 
         # Create additional buttons that will be shown after completion
-        self.go_to_folder_button = self.parent()._button("Go to folder", h=40)
+        self.go_to_folder_button = self.parent()._button(texts.GO_TO_FOLDER, h=40)
         self.go_to_folder_button.setVisible(False)
         bottom.addWidget(self.go_to_folder_button)
 
-        self.new_conversion_button = self.parent()._button("New conversion", h=40)
+        self.new_conversion_button = self.parent()._button(texts.NEW_CONVERSION, h=40)
         self.new_conversion_button.setVisible(False)
         bottom.addWidget(self.new_conversion_button)
 
         # Create Go back button
-        self.go_back_button = self.parent()._button("Go back", h=40)
+        self.go_back_button = self.parent()._button(texts.GO_BACK, h=40)
         self.go_back_button.setVisible(False)
         bottom.addWidget(self.go_back_button)
 
@@ -106,7 +107,7 @@ class LogWindow(QWidget):
         bottom.addLayout(progress_layout)
 
         # Initially setup with just cancel button
-        self.cancel_button = self.parent()._button("Cancel")
+        self.cancel_button = self.parent()._button(texts.CANCEL, h=40)
         self.cancel_button.clicked.connect(self.cancel_clicked.emit)
         bottom.addWidget(self.cancel_button)
 
@@ -119,18 +120,18 @@ class LogWindow(QWidget):
         cfg = app.config
         get = lambda k: cfg.get(k, DEFAULT_OPTIONS.get(k))
         sync_tool = get("sync_tool")
-        self.append_message("Configuration:", bold=True, color=COLORS["BLUE"])
+        self.append_message(texts.CONFIGURATION_LABEL, bold=True, color=COLORS["BLUE"])
         if app.batch_mode_enabled:
             pairs = getattr(app, "batch_tree_view", None)
             n = len(pairs.get_all_valid_pairs()) if pairs else 0
-            self.append_message("Mode: ", end="")
-            self.append_message("Batch", bold=True, color=COLORS["GREEN"])
-            self.append_message("Total pairs: ", end="")
+            self.append_message(texts.MODE_LABEL, end="")
+            self.append_message(texts.BATCH_MODE, bold=True, color=COLORS["GREEN"])
+            self.append_message(f"{texts.TOTAL_PAIRS_LABEL} ", end="")
             self.append_message(str(n), bold=True, color=COLORS["GREEN"])
         else:
-            self.append_message("Mode: ", end="")
-            self.append_message("Normal", bold=True, color=COLORS["GREEN"])
-        self.append_message("Sync tool: ", end="")
+            self.append_message(texts.MODE_LABEL, end="")
+            self.append_message(texts.NORMAL_MODE, bold=True, color=COLORS["GREEN"])
+        self.append_message(f"{texts.SYNC_TOOL_LABEL} ", end="")
         self.append_message(sync_tool, bold=True, color=COLORS["GREEN"])
         tool_info = SYNC_TOOLS.get(sync_tool)
         if tool_info and "options" in tool_info:
@@ -142,16 +143,17 @@ class LogWindow(QWidget):
                 val = cfg.get(f"{sync_tool}_{k}", v.get("default"))
                 # Special handling for alass split_penalty
                 if sync_tool == "alass" and k == "split_penalty" and val == -1:
-                    display_val = "No splits"
+                    display_val = texts.NO_SPLITS
                 else:
                     display_val = str(val)
                 self.append_message(f"{prefix}{v.get('label', k)}: ", end="")
                 self.append_message(display_val, bold=True, color=COLORS["GREEN"])
         else:
             self.append_message(
-                "Unknown sync tool. No options available.", color=COLORS["ORANGE"]
+                texts.UNKNOWN_SYNC_TOOL_NO_OPTIONS,
+                color=COLORS["ORANGE"]
             )
-        self.append_message("Backup subtitles before overwriting: ", end="")
+        self.append_message(f"{texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING}: ", end="")
         self.append_message(
             str(get("backup_subtitles_before_overwriting")),
             bold=True,
@@ -161,28 +163,28 @@ class LogWindow(QWidget):
         # Display output subtitle encoding setting
         encoding_setting = get("output_subtitle_encoding")
         if encoding_setting == "disabled":
-            encoding_display = "Disabled"
+            encoding_display = texts.DISABLED
         elif encoding_setting == "same_as_input":
-            encoding_display = "Same as input subtitle"
+            encoding_display = texts.SAME_AS_INPUT_SUBTITLE
         else:
             # Get the display name for the encoding
             from utils import get_available_encodings
 
             encoding_map = dict(get_available_encodings())
             encoding_display = encoding_map.get(encoding_setting, encoding_setting)
-        self.append_message("Output subtitle encoding: ", end="")
+        self.append_message(texts.OUTPUT_SUBTITLE_ENCODING_LABEL, end="")
         self.append_message(encoding_display, bold=True, color=COLORS["GREEN"])
 
-        self.append_message("Add 'tool_' prefix: ", end="")
+        self.append_message(f"{texts.ADD_TOOL_PREFIX_TO_SUBTITLES}: ", end="")
         self.append_message(
             str(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"]
         )
 
-        self.append_message("Keep extracted subtitles: ", end="")
+        self.append_message(f"{texts.KEEP_EXTRACTED_SUBTITLES}: ", end="")
         self.append_message(
             str(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"]
         )
-        self.append_message("Keep converted subtitles: ", end="")
+        self.append_message(f"{texts.KEEP_CONVERTED_SUBTITLES}: ", end="")
         self.append_message(
             str(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"]
         )
@@ -190,19 +192,19 @@ class LogWindow(QWidget):
         loc = get("automatic_save_location")
         # Get display text for the save location (mapping is now key:internal -> value:display)
         save_location_message = AUTOMATIC_SAVE_MAP.get(loc, loc)
-        self.append_message("Save location: ", end="")
+        self.append_message(f"{texts.SAVE_LOCATION_LABEL} ", end="")
         self.append_message(save_location_message, bold=True, color=COLORS["GREEN"])
         if loc == "select_destination_folder":
-            self.append_message("Folder: ", end="")
+            self.append_message(texts.FOLDER_LABEL, end="")
             self.append_message(
                 cfg.get("automatic_save_folder", ""), bold=True, color=COLORS["GREEN"]
             )
 
         args = cfg.get(f"{sync_tool}_arguments")
         if args:
-            self.append_message("Additional arguments: ", end="")
+            self.append_message(texts.ADDITIONAL_ARGUMENTS_LABEL, end="")
             self.append_message(args, bold=True, color=COLORS["GREEN"])
-        self.append_message("\nSync started:", bold=True, color=COLORS["BLUE"])
+        self.append_message("\n" + texts.SYNC_STARTED_LABEL, bold=True, color=COLORS["BLUE"])
         self._config_printed = True
 
         # Force scroll to bottom after initial configuration is printed
@@ -297,11 +299,14 @@ class LogWindow(QWidget):
 
         if success:
             self.append_message(
-                "\nSynchronization completed successfully.",
+                "\n" + texts.SYNC_COMPLETED_SUCCESSFULLY,
                 color=COLORS["GREEN"],
                 bold=True,
             )
-            self.append_message(f"Saved to: {output}", color=COLORS["GREY"])
+            self.append_message(
+                texts.SAVED_TO_LABEL.format(output=output),
+                color=COLORS["GREY"]
+            )
 
             # Only show "Go to folder" for single file sync
             self.go_to_folder_button.setVisible(True)
@@ -362,11 +367,16 @@ class LogWindow(QWidget):
         """
         if success:
             self.append_message(
-                "\nSynchronization completed successfully.",
+                "\n" + texts.SYNC_COMPLETED_SUCCESSFULLY,
                 color=COLORS["GREEN"],
                 bold=True,
             )
-            self.append_message(f"Saved to: {output}", color=COLORS["GREY"], end="\n\n")
+
+            self.append_message(
+                texts.SAVED_TO_LABEL.format(output=output),
+                color=COLORS["GREY"],
+                end="\n\n",
+            )
         else:
             logger.error("Synchronization canceled/failed")
 
@@ -428,7 +438,7 @@ class LogWindow(QWidget):
         else:
             from PyQt6.QtWidgets import QMessageBox
 
-            QMessageBox.warning(self, "Error", "Output file does not exist.")
+            QMessageBox.warning(self, texts.ERROR, texts.FILE_DOES_NOT_EXIST)
 
     def _reset_and_go_back(self, app):
         """Reset inputs and go back to the automatic sync tab"""
@@ -501,7 +511,7 @@ class LogWindow(QWidget):
         # Hide go back and show cancel
         self.go_back_button.setVisible(False)
         self.cancel_button.setVisible(True)
-        self.cancel_button.setText("Cancel")
+        self.cancel_button.setText(texts.CANCEL)
         self.cancel_button.setEnabled(
             False
         )  # Disable cancel button initially until sync starts

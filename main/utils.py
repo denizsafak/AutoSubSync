@@ -10,6 +10,7 @@ import platform
 import signal
 import time
 import shutil
+import texts
 import cchardet, charset_normalizer, chardet
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
@@ -17,9 +18,12 @@ from PyQt6.QtGui import QDesktopServices
 
 logger = logging.getLogger(__name__)
 
-# Module-level cache for config path
+# Module-level cache for config path and config data
 _config_path_cache = None
 _config_path_logged = False
+_config_cache = None
+_config_cache_lock = threading.Lock()
+_locale_cache = None
 default_encoding = sys.getfilesystemencoding()
 
 # Thread-safe process creation lock
@@ -177,7 +181,7 @@ def match_subtitle_encoding(
         if not os.path.exists(input_subtitle_path) or not os.path.exists(
             output_subtitle_path
         ):
-            msg = "Cannot match encoding: one or both subtitle files do not exist"
+            msg = texts.CANNOT_MATCH_ENCODING_FILES_DO_NOT_EXIST
             logger.warning(msg)
             if log_window:
                 log_window.append_message(msg, color=COLORS["ORANGE"])
@@ -214,7 +218,7 @@ def match_subtitle_encoding(
             with open(output_subtitle_path, "r", encoding=output_encoding, errors="replace") as f:
                 content = f.read()
         except UnicodeDecodeError:
-            warning_msg = f"Failed to read output file with detected encoding {output_encoding}, trying utf-8"
+            warning_msg = texts.FAILED_TO_READ_OUTPUT_WITH_ENCODING.format(encoding=output_encoding)
             logger.warning(warning_msg)
             if log_window:
                 log_window.append_message(warning_msg, color=COLORS["ORANGE"])
@@ -227,20 +231,22 @@ def match_subtitle_encoding(
         try:
             with open(output_subtitle_path, "w", encoding=final_encoding, errors="replace") as f:
                 f.write(content)
-            success_msg = f"Changed output subtitle encoding from {output_encoding} to {final_encoding}"
+            success_msg = texts.CHANGED_OUTPUT_SUBTITLE_ENCODING.format(
+                output_encoding=output_encoding, final_encoding=final_encoding
+            )
             logger.info(success_msg)
             if log_window:
                 log_window.append_message(success_msg, color=COLORS["GREY"])
             return True
         except (UnicodeEncodeError, LookupError) as e:
-            error_msg = f"Failed to re-encode to {final_encoding}: {e}. Keeping original encoding."
+            error_msg = texts.FAILED_TO_REENCODE_KEEPING_ORIGINAL.format(final_encoding=final_encoding, error=e)
             logger.warning(error_msg)
             if log_window:
                 log_window.append_message(error_msg, color=COLORS["ORANGE"])
             return False
 
     except Exception as e:
-        error_msg = f"Error matching subtitle encoding: {e}"
+        error_msg = texts.ERROR_MATCHING_SUBTITLE_ENCODING.format(error=e)
         logger.error(error_msg)
         if log_window:
             log_window.append_message(error_msg, color=COLORS["RED"])
@@ -415,28 +421,64 @@ def get_logs_directory():
 
 
 def load_config():
-    config_path = get_user_config_path()
-    if not os.path.exists(config_path):
-        logger.info("Config file does not exist, using defaults")
-        return {}
+    """
+    Load configuration with caching to avoid multiple file reads.
+    Thread-safe implementation.
+    """
+    global _config_cache
     
-    try:
-        with open(config_path, "r", encoding="utf-8") as f:
-            config = json.load(f)
-        logger.info("Config file loaded successfully")
-        return config
-    except Exception as e:
-        logger.info(f"Failed to load config: {e}")
-        return {}
+    with _config_cache_lock:
+        # Return cached config if available
+        if _config_cache is not None:
+            return _config_cache.copy()  # Return a copy to prevent external modifications
+        
+        config_path = get_user_config_path()
+        if not os.path.exists(config_path):
+            logger.info("Config file does not exist, using defaults")
+            _config_cache = {}
+            return {}
+        
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            logger.info("Config file loaded successfully")
+            _config_cache = config.copy()
+            return config
+        except Exception as e:
+            logger.info(f"Failed to load config: {e}")
+            _config_cache = {}
+            return {}
 
 
 def save_config(config):
+    """
+    Save configuration and update cache.
+    """
+    global _config_cache
+    
     try:
         with open(get_user_config_path(), "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
         logger.info("Config file updated")
+        
+        # Update cache with new config
+        with _config_cache_lock:
+            _config_cache = config.copy()
     except Exception as e:
         logger.warning(f"Failed to save config: {e}")
+
+
+def clear_config_cache():
+    """
+    Clear the config cache to force reload on next access.
+    Useful when config needs to be reloaded from disk.
+    """
+    global _config_cache, _locale_cache
+    
+    with _config_cache_lock:
+        _config_cache = None
+        _locale_cache = None
+    logger.debug("Config cache cleared")
 
 
 def get_version():
@@ -547,7 +589,9 @@ def open_folder(path, parent=None):
         logger.error(f"Could not open folder: {e}")
         if parent:
             QMessageBox.critical(
-                parent, "Open Folder Error", f"Could not open folder:\n{e}"
+                parent,
+                texts.OPEN_FOLDER_ERROR_TITLE,
+                texts.COULD_NOT_OPEN_FOLDER.format(error=e)
             )
         return False
 
@@ -628,8 +672,8 @@ def reset_to_defaults(parent):
     # Show confirmation dialog
     reply = QMessageBox.question(
         parent,
-        "Reset Settings",
-        "Are you sure you want to reset settings to default? This will restart the application and remove your current settings.",
+        texts.RESET_SETTINGS_TITLE,
+        texts.RESET_SETTINGS_CONFIRMATION,
         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         QMessageBox.StandardButton.No,
     )
@@ -647,7 +691,11 @@ def reset_to_defaults(parent):
             QApplication.quit()
         except Exception as e:
             logger.error(f"Failed to reset settings: {e}")
-            QMessageBox.critical(parent, "Error", f"Failed to reset settings: {str(e)}")
+            QMessageBox.critical(
+                parent,
+                texts.ERROR,
+                texts.FAILED_TO_RESET_SETTINGS.format(error=str(e))
+            )
 
 
 def open_config_directory(parent=None):
@@ -659,7 +707,9 @@ def open_config_directory(parent=None):
     except Exception as e:
         logger.error(f"Could not open config location: {e}")
         QMessageBox.critical(
-            parent, "Config Error", f"Could not open config location:\n{e}"
+            parent,
+            texts.ERROR,
+            texts.COULD_NOT_OPEN_CONFIG_LOCATION.format(error=e)
         )
 
 
@@ -688,15 +738,17 @@ def clear_logs_directory(parent=None):
 
         if total_files == 0:
             QMessageBox.information(
-                parent, "Logs Directory", "Logs directory is empty."
+                parent,
+                texts.LOGS_DIRECTORY_TITLE,
+                texts.LOGS_DIRECTORY_EMPTY
             )
             return
 
         # Ask for confirmation with file count
         reply = QMessageBox.question(
             parent,
-            "Delete logs directory",
-            f"Are you sure you want to delete logs directory with {total_files} files?",
+            texts.DELETE_LOGS_DIRECTORY_TITLE,
+            texts.DELETE_LOGS_DIRECTORY_CONFIRMATION.format(total_files=total_files),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -710,13 +762,15 @@ def clear_logs_directory(parent=None):
 
             QMessageBox.information(
                 parent,
-                "Logs Directory Cleared",
-                f"Logs directory has been successfully deleted.",
+                texts.LOGS_DIRECTORY_CLEARED_TITLE,
+                texts.LOGS_DIRECTORY_CLEARED
             )
     except Exception as e:
         logger.error(f"Failed to clear logs directory: {e}")
         QMessageBox.critical(
-            parent, "Error", f"Failed to clear logs directory: {str(e)}"
+            parent,
+            texts.ERROR,
+            texts.FAILED_TO_CLEAR_LOGS_DIRECTORY.format(error=str(e))
         )
 
 
@@ -736,7 +790,7 @@ def show_about_dialog(parent):
 
     icon = parent.windowIcon()
     dialog = QDialog(parent)
-    dialog.setWindowTitle(f"About {PROGRAM_NAME}")
+    dialog.setWindowTitle(texts.ABOUT_PROGRAM_TITLE.format(program_name=PROGRAM_NAME))
     dialog.setWindowFlags(
         dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
     )
@@ -759,21 +813,21 @@ def show_about_dialog(parent):
     layout.addLayout(header_layout)
     desc_label = QLabel(
         f"<p>{PROGRAM_DESCRIPTION}</p>"
-        "<p>Visit the GitHub repository for updates, documentation, and to report issues.</p>"
+        f"<p>{texts.VISIT_GITHUB_PAGE}</p>"
     )
     desc_label.setTextFormat(Qt.TextFormat.RichText)
     desc_label.setWordWrap(True)
     layout.addWidget(desc_label)
-    github_btn = QPushButton("Visit GitHub Repository")
+    github_btn = QPushButton(texts.VISIT_GITHUB_PAGE_BUTTON)
     github_btn.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
     github_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
     github_btn.setFixedHeight(32)
     layout.addWidget(github_btn)
-    update_btn = QPushButton("Check for updates")
+    update_btn = QPushButton(texts.CHECK_FOR_UPDATES_BUTTON)
     update_btn.clicked.connect(lambda: manual_check_for_updates(parent))
     update_btn.setFixedHeight(32)
     layout.addWidget(update_btn)
-    close_btn = QPushButton("Close")
+    close_btn = QPushButton(texts.CLOSE_BUTTON)
     close_btn.clicked.connect(dialog.accept)
     close_btn.setFixedHeight(32)
     layout.addWidget(close_btn)
@@ -791,7 +845,7 @@ def show_tool_info_dialog(parent):
     tool = SYNC_TOOLS.get(tool_name, {})
     if not tool: return
     d = QDialog(parent)
-    d.setWindowTitle(f"About {tool_name}")
+    d.setWindowTitle(texts.ABOUT_PROGRAM_TITLE.format(program_name=tool_name))
     d.setWindowFlags(d.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
     main_layout = QVBoxLayout(d)
     main_layout.setSpacing(10)
@@ -826,21 +880,22 @@ def show_tool_info_dialog(parent):
         lab = QLabel(text)
         lab.setWordWrap(True)
         return lab
-    desc = tool.get('description','').replace('<p>','').replace('</p>','').replace('\n','<br>')
+    desc = str(tool.get('description',''))
+    desc = desc.replace('<p>','').replace('</p>','').replace('\n','<br>')
     desc_label = QLabel(desc)
     desc_label.setWordWrap(True)
     desc_label.setTextFormat(Qt.TextFormat.RichText)
     info_layout.addWidget(desc_label)
     typ = tool.get('type','')
     if typ == 'module':
-        label = 'Module'
+        label = texts.MODULE_LABEL
         val = tool.get('module','')
     elif typ == 'executable':
-        label = 'Executable'
+        label = texts.EXECUTABLE_LABEL
         exe = tool.get('executable','')
         val = exe.get(platform.system(), exe) if isinstance(exe, dict) else exe
     else:
-        label = 'Module/Executable'
+        label = 'Module/Executable' # TODO
         val = tool.get('module', tool.get('executable',''))
     cmd = tool.get('cmd_structure', [])
     cmd_str = ' '.join(str(x) for x in cmd) if isinstance(cmd, list) else str(cmd)
@@ -848,27 +903,27 @@ def show_tool_info_dialog(parent):
     cmd_label.setTextFormat(Qt.TextFormat.RichText)
     cmd_label.setWordWrap(True)
     # Add each field as a row (label and value in same row)
-    info_layout.addLayout(row(bold_label("Type:"), wrap_label(tool.get('type',''))))
+    info_layout.addLayout(row(bold_label(texts.TYPE_LABEL), wrap_label(tool.get('type',''))))
     info_layout.addLayout(row(bold_label(label+":"), wrap_label(val)))
-    info_layout.addLayout(row(bold_label("Command structure:"), cmd_label))
-    info_layout.addLayout(row(bold_label("Supported formats:"), wrap_label(tool.get('supported_formats',''))))
-    info_layout.addLayout(row(bold_label("Supports subtitle as reference:"), wrap_label('Yes' if tool.get('supports_subtitle_as_reference', False) else 'No')))
+    info_layout.addLayout(row(bold_label(texts.COMMAND_STRUCTURE_LABEL), cmd_label))
+    info_layout.addLayout(row(bold_label(texts.SUPPORTED_FORMATS_LABEL), wrap_label(tool.get('supported_formats',''))))
+    info_layout.addLayout(row(bold_label(texts.SUPPORTS_SUBTITLE_REFERENCE_LABEL), wrap_label(texts.YES_LABEL if tool.get('supports_subtitle_as_reference', False) else texts.NO_LABEL)))
     form_widget = QWidget()
     form_widget.setLayout(info_layout)
     main_layout.addWidget(form_widget)
     if tool.get('github'):
-        b = QPushButton("Visit GitHub Repository")
+        b = QPushButton(texts.VISIT_GITHUB_PAGE_BUTTON)
         b.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
         b.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(tool['github'])))
         b.setFixedHeight(32)
         main_layout.addWidget(b)
     if tool.get('documentation'):
-        b = QPushButton("Documentation")
+        b = QPushButton(texts.DOCUMENTATION_BUTTON)
         # b.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
         b.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(tool['documentation'])))
         b.setFixedHeight(32)
         main_layout.addWidget(b)
-    c = QPushButton("Close")
+    c = QPushButton(texts.CLOSE_BUTTON)
     c.clicked.connect(d.accept)
     c.setFixedHeight(32)
     main_layout.addWidget(c)
@@ -893,21 +948,28 @@ class UpdateSignals(QObject):
 
 
 def get_locale():
-    """Get the current locale of the system using PyQt."""
+    """Get the current locale of the system using PyQt with caching."""
+    global _locale_cache
+    
+    # Return cached locale if available
+    if _locale_cache is not None:
+        return _locale_cache
+    
     from PyQt6.QtCore import QLocale
     from constants import LANGUAGES
+    
     config = load_config()
     system_locale = QLocale().name()
     
-
     if config.get("language") in LANGUAGES.values():
-        return config.get("language")
-        # Check if the system locale exists in our supported languages
+        _locale_cache = config.get("language")
     elif system_locale in LANGUAGES.values():
-        return system_locale
+        _locale_cache = system_locale
+    else:
+        # If not found, return default English locale
+        _locale_cache = "en_US"
     
-    # If not found, return default English locale
-    return "en_US"
+    return _locale_cache
 
 
 def _show_update_message(parent, remote_version, local_version):
@@ -915,12 +977,16 @@ def _show_update_message(parent, remote_version, local_version):
 
     msg_box = QMessageBox(parent)
     msg_box.setIcon(QMessageBox.Icon.Information)
-    msg_box.setWindowTitle("Update Available")
+    msg_box.setWindowTitle(texts.UPDATE_AVAILABLE_TITLE)
     msg_box.setText(
-        f"A new version of {PROGRAM_NAME} is available! ({local_version} → {remote_version})"
+        texts.NEW_VERSION_AVAILABLE.format(
+            program_name=PROGRAM_NAME, 
+            local_version=local_version, 
+            remote_version=remote_version
+        )
     )
     msg_box.setInformativeText(
-        "Please visit the GitHub repository and download the latest version. Would you like to open the GitHub releases page?"
+        texts.VISIT_GITHUB_DOWNLOAD_LATEST
     )
     msg_box.setStandardButtons(
         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
@@ -938,14 +1004,16 @@ def _show_up_to_date(parent, version):
 
     QMessageBox.information(
         parent,
-        "Up to Date",
-        f"You are running the latest version of {PROGRAM_NAME} ({version}).",
+        texts.UP_TO_DATE_TITLE,
+        texts.RUNNING_LATEST_VERSION.format(program_name=PROGRAM_NAME, version=version),
     )
 
 
 def _show_check_failed(parent, error_message):
     QMessageBox.warning(
-        parent, "Update Check Failed", f"Could not check for updates:\n{error_message}"
+        parent, 
+        texts.UPDATE_CHECK_FAILED_TITLE, 
+        texts.COULD_NOT_CHECK_FOR_UPDATES.format(error_message=error_message)
     )
 
 
@@ -997,16 +1065,17 @@ def update_folder_label(label, folder_path=""):
     """Helper function to update the folder label consistently"""
     if folder_path:
         # Check if label supports rich text (has setTextFormat method)
-        if hasattr(label, "setTextFormat"):
-            from constants import COLORS
-            from PyQt6.QtCore import Qt
 
-            label.setText(
-                f'Selected folder: <span style="color:{COLORS["GREEN"]}">{shorten_path(folder_path)}</span>'
+        from constants import COLORS
+        from PyQt6.QtCore import Qt
+
+        label.setText(
+            texts.SELECTED_FOLDER.format(
+                color=COLORS["GREEN"], 
+                folder_path=shorten_path(folder_path)
             )
-            label.setTextFormat(Qt.TextFormat.RichText)
-        else:
-            label.setText(f"Selected folder: {shorten_path(folder_path)}")
+        )
+        label.setTextFormat(Qt.TextFormat.RichText)
         # Set tooltip to show full path
         label.setToolTip(folder_path)
         label.show()
@@ -1032,7 +1101,7 @@ def handle_save_location_dropdown(
 
     # Handle folder selection case
     if save_map.get(text) == "select_destination_folder" and not skip_dialog:
-        folder = open_filedialog(obj, "directory", "Select Destination Folder")
+        folder = open_filedialog(obj, "directory", texts.SELECT_DESTINATION_FOLDER)
         if folder:
             update_config(obj, folder_key, folder)
             update_folder_label(label, folder)

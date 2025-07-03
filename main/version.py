@@ -7,7 +7,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # Add parent directory
 sys.path.append((os.path.dirname(__file__)))  # Add current directory
 
-from texts import PROGRAM_NAME
+from constants import PROGRAM_NAME
 
 # Only import Windows-specific modules on Windows
 if platform.system() == "Windows":

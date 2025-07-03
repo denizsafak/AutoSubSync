@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import texts
 from PyQt6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -18,8 +19,8 @@ from PyQt6.QtWidgets import (
     QTreeWidget,
     QTreeWidgetItem,
 )
-from PyQt6.QtCore import Qt, QFileInfo, QUrl
-from PyQt6.QtGui import QColor, QDesktopServices
+from PyQt6.QtCore import Qt, QFileInfo
+from PyQt6.QtGui import QColor
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, PROGRAM_NAME, COLORS
 from utils import open_filedialog, open_folder
 
@@ -114,7 +115,7 @@ class AutoPairingDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent_window = parent
-        self.setWindowTitle(f"{PROGRAM_NAME} - Auto-Pairing with Season/Episode")
+        self.setWindowTitle(f"{PROGRAM_NAME} - {texts.AUTO_PAIRING_SEASON_EPISODE}")
         self.resize(900, 700)
         self.setMinimumSize(600, 500)
 
@@ -136,12 +137,8 @@ class AutoPairingDialog(QDialog):
         exp_widget = QWidget()
         exp_layout = QVBoxLayout(exp_widget)
         exp_layout.setContentsMargins(0, 0, 0, 0)
-        exp_layout.addWidget(QLabel("<h2>How the Pairing Works?</h2>"))
-        desc = QLabel(
-            f"{PROGRAM_NAME} will automatically match videos or reference subtitles with subtitle files using similar names.\n"
-            f'For example: "S01E01.srt/mkv" will be paired with "1x01.srt"\n'
-            f"Supported combinations: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101"
-        )
+        exp_layout.addWidget(QLabel(f"<h2>{texts.HOW_THE_PAIRING_WORKS}</h2>"))
+        desc = QLabel(texts.HOW_THE_PAIRING_WORKS_DESC.format(program_name=PROGRAM_NAME))
         desc.setWordWrap(True)
         exp_layout.addWidget(desc)
         exp_layout.addStretch()
@@ -159,8 +156,8 @@ class AutoPairingDialog(QDialog):
 
         for i, (name, widget) in enumerate(
             [
-                ("Video/Reference Subtitles", self.ref_list_widget),
-                ("Subtitle Files", self.sub_list_widget),
+                (texts.VIDEO_OR_SUBTITLE_FILES_LABEL, self.ref_list_widget),
+                (texts.SUBTITLE_FILES_LABEL, self.sub_list_widget),
             ]
         ):
             panel = self._create_file_panel(name, widget, i == 0)
@@ -171,7 +168,7 @@ class AutoPairingDialog(QDialog):
 
         # Bottom section
         bottom_layout = QHBoxLayout()
-        self.pairs_count_label = QLabel("Total valid pairs: 0")
+        self.pairs_count_label = QLabel("")
         self.pairs_count_label.setStyleSheet("color: grey; font-size: 12px;")
         bottom_layout.addWidget(self.pairs_count_label)
         bottom_layout.addStretch()
@@ -208,10 +205,14 @@ class AutoPairingDialog(QDialog):
         panel_layout.setSpacing(10)
 
         # Input box with drag & drop support
+        if is_reference:
+            input_text = texts.DRAG_DROP_VIDEO_SUBTITLE_FILES_OR_CLICK
+        else:
+            input_text = texts.DRAG_DROP_SUBTITLE_FILES_OR_CLICK
         input_box = self.parent_window.InputBox(
             parent=self,
             label=name,
-            text=f"Drag and drop {name.lower()} here\nor right-click for options",
+            text=input_text,
             input_type="video_or_subtitle" if is_reference else "subtitle",
         )
         input_box.mousePressEvent = lambda e: self.show_add_menu(e, is_reference)
@@ -255,10 +256,10 @@ class AutoPairingDialog(QDialog):
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.setSpacing(5)
 
-        add_files_btn = QPushButton("Add Files")
+        add_files_btn = QPushButton(texts.ADD_FILES)
         add_files_btn.clicked.connect(lambda: self.show_add_menu_button(is_reference))
 
-        remove_btn = QPushButton("Remove selected")
+        remove_btn = QPushButton(texts.REMOVE_SELECTED)
         remove_btn.setObjectName("remove")
         remove_btn.setEnabled(False)
         remove_btn.clicked.connect(lambda: self.remove_selected(is_reference))
@@ -266,7 +267,7 @@ class AutoPairingDialog(QDialog):
         move_btn = QPushButton("⇄")
         move_btn.setFixedWidth(30)
         move_btn.setObjectName("move")
-        move_btn.setToolTip("Move selected items to other list")
+        move_btn.setToolTip(texts.MOVE_SELECTED_ITEMS_TO_OTHER_LIST)
         move_btn.setEnabled(False)
         move_btn.clicked.connect(lambda: self.move_to_other_list(is_reference))
 
@@ -280,28 +281,28 @@ class AutoPairingDialog(QDialog):
     def update_header_labels(self):
         """Update the header labels with file counts."""
         self.ref_list_widget.setHeaderLabel(
-            f"Video/Reference Subtitles (Total files: {len(self.reference_files)})"
+            texts.VIDEO_REFERENCE_SUBTITLES_TOTAL.format(count=len(self.reference_files))
         )
         self.sub_list_widget.setHeaderLabel(
-            f"Subtitle Files (Total files: {len(self.subtitle_files)})"
+            texts.SUBTITLE_FILES_TOTAL.format(count=len(self.subtitle_files))
         )
 
     def show_add_menu(self, event, is_reference):
         """Show context menu for adding files."""
         menu = QMenu(self)
         menu.addAction(
-            "Add multiple files", lambda: self.add_files_dialog(is_reference)
+            texts.ADD_MULTIPLE_FILES, lambda: self.add_files_dialog(is_reference)
         )
-        menu.addAction("Add folder", lambda: self.add_folder(is_reference))
+        menu.addAction(texts.ADD_FOLDER, lambda: self.add_folder(is_reference))
         menu.popup(event.globalPosition().toPoint())
 
     def show_add_menu_button(self, is_reference):
         """Show context menu when Add Files button is clicked."""
         menu = QMenu(self)
         menu.addAction(
-            "Add multiple files", lambda: self.add_files_dialog(is_reference)
+            texts.ADD_MULTIPLE_FILES, lambda: self.add_files_dialog(is_reference)
         )
-        menu.addAction("Add folder", lambda: self.add_folder(is_reference))
+        menu.addAction(texts.ADD_FOLDER, lambda: self.add_folder(is_reference))
 
         button = (
             self.ref_buttons_widget if is_reference else self.sub_buttons_widget
@@ -320,20 +321,20 @@ class AutoPairingDialog(QDialog):
         components = get_list_components(self, is_reference)
 
         menu = QMenu(self)
-        add_files_menu = menu.addMenu("Add files")
+        add_files_menu = menu.addMenu(texts.ADD_FILES)
         add_files_menu.addAction(
-            "Add multiple files", lambda: self.add_files_dialog(is_reference)
+            texts.ADD_MULTIPLE_FILES, lambda: self.add_files_dialog(is_reference)
         )
-        add_files_menu.addAction("Add folder", lambda: self.add_folder(is_reference))
+        add_files_menu.addAction(texts.ADD_FOLDER, lambda: self.add_folder(is_reference))
 
         menu.addSeparator()
 
         has_selection = bool(components["widget"].selectedItems())
-        move_action = menu.addAction("Move to other list")
+        move_action = menu.addAction(texts.MOVE_TO_OTHER_LIST)
         move_action.setEnabled(has_selection)
         move_action.triggered.connect(lambda: self.move_to_other_list(is_reference))
 
-        remove_action = menu.addAction("Remove selected")
+        remove_action = menu.addAction(texts.REMOVE_SELECTED)
         remove_action.setEnabled(has_selection)
         remove_action.triggered.connect(lambda: self.remove_selected(is_reference))
 
@@ -341,12 +342,12 @@ class AutoPairingDialog(QDialog):
 
         # Add "Go to folder" option for any selected item
         if has_selection:
-            go_to_folder_action = menu.addAction("Go to folder")
+            go_to_folder_action = menu.addAction(texts.GO_TO_FOLDER)
             go_to_folder_action.triggered.connect(
                 lambda: self.go_to_folder(components["widget"].selectedItems()[0])
             )
 
-        menu.addAction("Clear all", lambda: self.clear_files(is_reference))
+        menu.addAction(texts.CLEAR_ALL, lambda: self.clear_files(is_reference))
         menu.popup(components["widget"].mapToGlobal(position))
 
     def _handle_drop(self, event, is_reference):
@@ -462,15 +463,15 @@ class AutoPairingDialog(QDialog):
         error_messages = []
         if errors["moving_video"]:
             error_messages.append(
-                f"Skipped {len(errors['moving_video'])} file(s): Video files can't be moved to subtitle list"
+                texts.SKIPPED_FILES_VIDEO_CANT_MOVE.format(count=len(errors['moving_video']))
             )
         if errors["duplicate_episode"]:
             error_messages.append(
-                f"Skipped {len(errors['duplicate_episode'])} file(s): Same season/episode already exists in target list"
+                texts.SKIPPED_FILES_DUPLICATE_EPISODE.format(count=len(errors['duplicate_episode']))
             )
 
         if error_messages:
-            QMessageBox.warning(self, "Move Errors", "\n".join(error_messages))
+            QMessageBox.warning(self, texts.MOVE_ERRORS, "\n".join(error_messages))
 
         if not files_to_move:
             return
@@ -511,8 +512,9 @@ class AutoPairingDialog(QDialog):
         files = open_filedialog(
             self.parent_window,
             "files-open",
-            f"Select {'Video or Reference Subtitle' if is_reference else 'Subtitle'} Files",
-            f"{'Video/Subtitle' if is_reference else 'Subtitle'} Files (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})",
+            texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE if is_reference else texts.SELECT_SUBTITLE_FILE_TITLE,
+            f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL if is_reference else texts.SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})" if is_reference
+            else f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})",
         )
         if files:
             self.add_files(is_reference, files)
@@ -531,7 +533,7 @@ class AutoPairingDialog(QDialog):
             if is_reference
             else SUBTITLE_EXTENSIONS
         )
-        list_type = "reference" if is_reference else "subtitle"
+        list_type = texts.REFERENCE if is_reference else texts.SUBTITLE
 
         # Statistics for detailed reporting
         stats = {
@@ -555,8 +557,8 @@ class AutoPairingDialog(QDialog):
             if stats["invalid_extension"] > 0:
                 QMessageBox.warning(
                     self,
-                    "Invalid File Types",
-                    f"None of the selected files have valid extensions for the {list_type} list.",
+                    texts.INVALID_FILE_TYPE_TITLE,
+                    texts.NONE_OF_SELECTED_FILES_HAVE_VALID_EXTENSIONS.format(list_type=list_type),
                 )
             return
 
@@ -580,8 +582,8 @@ class AutoPairingDialog(QDialog):
         if not unique_files:
             QMessageBox.warning(
                 self,
-                "Duplicate Files",
-                f"All files are already in the {list_type} list or the other list.",
+                texts.DUPLICATES_SKIPPED_TITLE,
+                texts.ALL_FILES_ALREADY_IN_LISTS.format(list_type=list_type),
             )
             return
 
@@ -606,68 +608,29 @@ class AutoPairingDialog(QDialog):
 
         stats["added"] = len(files_with_episodes)
 
-        if not files_with_episodes:
-            # Build detailed error message
-            error_messages = []
+        # Update UI and add files if any are valid
+        if files_with_episodes:
+            input_box.setHidden(True)
+            buttons.setHidden(False)
+            widget.setHidden(False)
 
-            if stats["no_season_episode"] > 0:
-                error_messages.append(
-                    f"{stats['no_season_episode']} file(s) have no season/episode information"
-                )
+            for path in files_with_episodes:
+                file_list.append(path)
+                season, episode, original_match = extract_season_episode(path)
+                name = f"[{original_match.upper()}] {os.path.basename(path)}"
 
-            if stats["duplicate_season_episode"] > 0:
-                error_messages.append(
-                    f"{stats['duplicate_season_episode']} file(s) have duplicate season/episode numbers"
-                )
+                item = QTreeWidgetItem([name])
+                item.setData(0, Qt.ItemDataRole.UserRole, path)
+                item.setIcon(0, self.icon_provider.icon(QFileInfo(path)))
+                item.setToolTip(0, path)
+                widget.addTopLevelItem(item)
 
-            if stats["already_in_list"] > 0:
-                error_messages.append(
-                    f"{stats['already_in_list']} file(s) already in this list"
-                )
+            # Update pairing and UI state
+            self.pair_files()
+            self.update_ui_state()
+            self.update_header_labels()
 
-            if stats["already_in_other_list"] > 0:
-                error_messages.append(
-                    f"{stats['already_in_other_list']} file(s) already in the other list"
-                )
-
-            if stats["invalid_extension"] > 0:
-                error_messages.append(
-                    f"{stats['invalid_extension']} file(s) had invalid extensions"
-                )
-
-            if error_messages:
-                QMessageBox.warning(
-                    self,
-                    "Files Skipped",
-                    "No files were added for the following reasons:\n• "
-                    + "\n• ".join(error_messages),
-                )
-            else:
-                QMessageBox.warning(self, "No Valid Files", "No valid files to add")
-            return
-
-        # Update UI and add files
-        input_box.setHidden(True)
-        buttons.setHidden(False)
-        widget.setHidden(False)
-
-        for path in files_with_episodes:
-            file_list.append(path)
-            season, episode, original_match = extract_season_episode(path)
-            name = f"[{original_match.upper()}] {os.path.basename(path)}"
-
-            item = QTreeWidgetItem([name])
-            item.setData(0, Qt.ItemDataRole.UserRole, path)
-            item.setIcon(0, self.icon_provider.icon(QFileInfo(path)))
-            item.setToolTip(0, path)
-            widget.addTopLevelItem(item)
-
-        # Update pairing and UI state before showing message box
-        self.pair_files()
-        self.update_ui_state()
-        self.update_header_labels()
-
-        # Show detailed import summary
+        # Show import summary message only if there are skipped items to report
         skipped = (
             stats["invalid_extension"]
             + stats["already_in_list"]
@@ -676,43 +639,47 @@ class AutoPairingDialog(QDialog):
             + stats["duplicate_season_episode"]
         )
 
-        if stats["added"] > 0 or skipped > 0:
+        if skipped > 0:
             message_parts = []
-            message_parts.append(f"Successfully added {stats['added']} file(s)")
+            
+            if stats["added"] > 0:
+                message_parts.append(texts.SUCCESSFULLY_ADDED_FILES.format(count=stats['added']))
 
-            if skipped > 0:
+            if stats["no_season_episode"] > 0:
+                message_parts.append(
+                    texts.SKIPPED_FILES_MISSING_SEASON_EPISODE.format(count=stats['no_season_episode'])
+                )
 
-                if stats["no_season_episode"] > 0:
-                    message_parts.append(
-                        f"Skipped {stats['no_season_episode']} file(s): Missing season/episode info"
-                    )
+            if stats["duplicate_season_episode"] > 0:
+                message_parts.append(
+                    texts.SKIPPED_FILES_DUPLICATE_EPISODE.format(count=stats['duplicate_season_episode'])
+                )
 
-                if stats["duplicate_season_episode"] > 0:
-                    message_parts.append(
-                        f"Skipped {stats['duplicate_season_episode']} file(s): Duplicate season/episode"
-                    )
+            if stats["already_in_list"] > 0:
+                message_parts.append(
+                    texts.SKIPPED_FILES_ALREADY_IN_THIS_LIST.format(count=stats['already_in_list'])
+                )
 
-                if stats["already_in_list"] > 0:
-                    message_parts.append(
-                        f"Skipped {stats['already_in_list']} file(s): Already in this list"
-                    )
+            if stats["already_in_other_list"] > 0:
+                message_parts.append(
+                    texts.SKIPPED_FILES_ALREADY_IN_OTHER_LIST.format(count=stats['already_in_other_list'])
+                )
 
-                if stats["already_in_other_list"] > 0:
-                    message_parts.append(
-                        f"Skipped {stats['already_in_other_list']} file(s): Already in other list"
-                    )
+            if stats["invalid_extension"] > 0:
+                message_parts.append(
+                    texts.SKIPPED_FILES_INVALID_EXTENSION.format(count=stats['invalid_extension'])
+                )
 
-                if stats["invalid_extension"] > 0:
-                    message_parts.append(
-                        f"Skipped {stats['invalid_extension']} file(s): Invalid file extension"
-                    )
-
-            QMessageBox.information(self, "Import Summary", "\n".join(message_parts))
+            # Show appropriate message based on whether any files were added
+            if stats["added"] > 0:
+                QMessageBox.information(self, texts.IMPORT_SUMMARY, "\n".join(message_parts))
+            else:
+                QMessageBox.warning(self, texts.IMPORT_SUMMARY, "\n".join(message_parts))
 
     def add_folder(self, is_reference):
         """Add files from folder."""
         folder = open_filedialog(
-            self.parent_window, "directory", "Select Folder Containing Media Files"
+            self.parent_window, "directory", texts.SELECT_FOLDER_CONTAINING_MEDIA_FILES_TITLE
         )
         if not folder:
             return
@@ -820,7 +787,7 @@ class AutoPairingDialog(QDialog):
         # Update pairs count label (only show when > 0 pairs)
         pairs_count = len(self.paired_items)
         if pairs_count > 0:
-            self.pairs_count_label.setText(f"Total valid pairs: {pairs_count}")
+            self.pairs_count_label.setText(texts.TOTAL_VALID_PAIRS.format(pairs_count=pairs_count))
             self.pairs_count_label.setVisible(True)
         else:
             self.pairs_count_label.setVisible(False)
@@ -828,11 +795,7 @@ class AutoPairingDialog(QDialog):
     def add_pairs_to_batch(self):
         """Add pairs to batch processing."""
         if not self.paired_items:
-            QMessageBox.information(self, "No Pairs", "No valid pairs found to add.")
-            return
-
-        if not hasattr(self.parent_window, "batch_tree_view"):
-            QMessageBox.warning(self, "Error", "Could not access batch processing.")
+            QMessageBox.information(self, texts.NO_VALID_PAIRS_TITLE, texts.NO_VALID_PAIRS_MESSAGE)
             return
 
         batch_view = self.parent_window.batch_tree_view
@@ -847,7 +810,7 @@ class AutoPairingDialog(QDialog):
             self.close()
         else:
             QMessageBox.information(
-                self, "No New Pairs", "All pairs already exist in the batch."
+                self, texts.NO_NEW_PAIRS, texts.ALL_PAIRS_ALREADY_EXIST_IN_BATCH
             )
 
     def go_to_folder(self, item):
@@ -859,8 +822,8 @@ class AutoPairingDialog(QDialog):
         if not file_path or not os.path.exists(file_path):
             QMessageBox.warning(
                 self,
-                "File Not Found",
-                "The selected file does not exist or has been moved.",
+                texts.FILE_NOT_FOUND_TITLE,
+                texts.FILE_NOT_FOUND_MESSAGE,
             )
             return
 

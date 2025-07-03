@@ -1,4 +1,5 @@
 import os
+import texts
 from utils import create_process, detect_encoding
 from constants import (
     FFMPEG_EXECUTABLE,
@@ -54,7 +55,7 @@ def choose_best_subtitle(subtitle_file, extracted_subtitles_folder):
             if candidate_times and len(candidate_times) > longest_length:
                 longest_length = len(candidate_times)
                 longest_subtitle = candidate
-        return longest_subtitle, "Used the longest subtitle file"
+        return longest_subtitle, texts.USED_LONGEST_SUBTITLE_FILE
     best_subtitle = None
     best_score = float("inf")
     for file in os.listdir(extracted_subtitles_folder):
@@ -86,7 +87,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
 
     # Fast validation
     if not os.path.exists(video_file):
-        log_messages.append(f"Video file not found: {video_file}")
+        log_messages.append(texts.VIDEO_FILE_NOT_FOUND.format(video_file=video_file))
         return None, None, log_messages
     ffprobe_cmd = [
         FFPROBE_EXECUTABLE,
@@ -106,7 +107,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
         output, _ = probe_process.communicate()
 
         if probe_process.returncode != 0:
-            log_messages.append("FFprobe failed to analyze video file")
+            log_messages.append(texts.FFPROBE_FAILED_TO_ANALYZE_VIDEO)
             return None, None, log_messages
         # Parse subtitle streams
         subtitle_streams = []
@@ -134,7 +135,10 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
         )
         os.makedirs(output_folder, exist_ok=True)
         log_messages.append(
-            f"Found {len(compatible_subtitles)} compatible subtitle(s) in video file. Extracting to: {output_folder}"
+            texts.FOUND_COMPATIBLE_SUBTITLES_EXTRACTING.format(
+                count=len(compatible_subtitles), 
+                output_folder=output_folder
+            )
         )
         # Prepare FFmpeg command
         ffmpeg_base_cmd = [FFMPEG_EXECUTABLE, "-y", "-i", video_file]
@@ -158,9 +162,9 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
         if ffmpeg_process.returncode == 0:
             for output_file in output_files:
                 log_messages.append(
-                    f"Successfully extracted: {os.path.basename(output_file)}"
+                    texts.SUCCESSFULLY_EXTRACTED_SUBTITLE.format(filename=os.path.basename(output_file))
                 )
-            log_messages.append("Choosing best subtitle match...")
+            log_messages.append(texts.CHOOSING_BEST_SUBTITLE_MATCH)
             closest_subtitle, score = choose_best_subtitle(
                 subtitle_file, extracted_subtitles_folder=output_folder
             )
@@ -169,8 +173,8 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
             return None, None, log_messages
 
         error_output = output.decode("utf-8") if isinstance(output, bytes) else output
-        log_messages.append(f"Failed to extract subtitles: {error_output}")
+        log_messages.append(texts.SUBTITLE_EXTRACTION_FAILED.format(error=error_output))
         return None, None, log_messages
     except Exception as e:
-        log_messages.append(f"Subtitle extraction failed: {str(e)}")
+        log_messages.append(texts.SUBTITLE_EXTRACTION_FAILED.format(error=str(e)))
         return None, None, log_messages

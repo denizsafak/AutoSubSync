@@ -7,6 +7,7 @@ Supported formats include: SUB, ASS/SSA, TTML/DFXP/ITT, VTT, SBV, STL, and SMI.
 
 import os
 import re
+import texts
 import xml.etree.ElementTree as ET
 from typing import Optional, Tuple, List
 from utils import detect_encoding
@@ -63,7 +64,7 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
                         srt.write("\n".join(text_lines) + "\n\n")
                         srt_counter += 1
     except Exception as e:
-        raise IOError(f"Error converting SUB to SRT: {str(e)}")
+        raise IOError(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
 
 
 def format_sub_time(time_str: str) -> str:
@@ -141,7 +142,7 @@ def convert_ass_to_srt(input_file: str, output_file: str) -> None:
             if buffer:
                 srt.write(f"{buffer}\n\n")
     except Exception as e:
-        raise IOError(f"Error converting ASS to SRT: {str(e)}")
+        raise IOError(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
 
 
 def format_ass_time(time_str: str) -> str:
@@ -174,9 +175,9 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
             content = data.decode(encoding, errors="replace")
         root = ET.fromstring(content)
     except ET.ParseError as e:
-        raise ValueError(f"Error parsing XML: {e}")
+        raise ValueError(texts.ERROR_PARSING_XML.format(error=str(e)))
     except Exception as e:
-        raise IOError(f"Error reading file: {e}")
+        raise IOError(texts.ERROR_READING_FILE.format(error=str(e)))
     captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == "p"]
     with open(output_file, "w", encoding="utf-8", errors="replace") as srt:
         for idx, caption in enumerate(captions, 1):
@@ -306,7 +307,7 @@ def convert_vtt_to_srt(input_file: str, output_file: str) -> None:
                         text += cleaned_line + "\n"
                     srt.write(f"{text.strip()}\n\n")
     except Exception as e:
-        raise IOError(f"Error converting VTT to SRT: {str(e)}")
+        raise IOError(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
 
 
 def convert_sbv_to_srt(input_file: str, output_file: str) -> None:
@@ -351,7 +352,7 @@ def convert_sbv_to_srt(input_file: str, output_file: str) -> None:
                     srt.write("\n".join(text_lines) + "\n\n")
                     srt_counter += 1
     except Exception as e:
-        raise IOError(f"Error converting SBV to SRT: {str(e)}")
+        raise IOError(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
 
 
 def format_sbv_time(time_str: str) -> str:
@@ -396,7 +397,7 @@ def convert_stl_to_srt(input_file: str, output_file: str) -> None:
                         srt.write(f"{text}\n\n")
                         srt_counter += 1
     except Exception as e:
-        raise IOError(f"Error converting STL to SRT: {str(e)}")
+        raise IOError(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
 
 
 def convert_stl_time(time_str: str) -> str:
@@ -435,7 +436,7 @@ def convert_smi_to_srt(input_file: str, output_file: str) -> None:
         )
 
         if not sync_blocks:
-            raise ValueError("No valid SYNC blocks found in SMI file")
+            raise ValueError(texts.NO_VALID_SYNC_BLOCKS_FOUND_SMI)
 
         with open(output_file, "w", encoding="utf-8", errors="replace") as srt:
             srt_counter = 1
@@ -529,7 +530,7 @@ def convert_smi_to_srt(input_file: str, output_file: str) -> None:
                 srt_counter += 1
 
     except Exception as e:
-        raise ValueError(f"Error converting SMI to SRT: {str(e)}")
+        raise IOError(texts.ERROR_CONVERTING_SUB_TO_SRT.format(error=str(e)))
 
 
 def format_ms_to_srt_time(ms: int) -> str:
@@ -596,14 +597,14 @@ def convert_to_srt(
     converter = converters.get(file_extension)
     if converter:
         try:
-            messages.append(f"Converting {file_extension.upper()} to SRT...")
+            messages.append(texts.CONVERTING_FORMAT_TO_SRT.format(format=file_extension.upper()))
             converter(subtitle_file, srt_file)
         except Exception as e:
-            messages.append(f"Error converting subtitle: {str(e)}")
+            messages.append(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
             return None, messages
         return srt_file, messages
 
     messages.append(
-        f"Error: Unsupported subtitle format for conversion: {file_extension}"
-    )
+        texts.UNSUPPORTED_SUBTITLE_FORMAT_FOR_CONVERSION.format(extension=file_extension)
+)
     return None, messages
