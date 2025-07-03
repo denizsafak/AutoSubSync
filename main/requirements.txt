@@ -1,7 +1,7 @@
 PyQt6
 rich
-faust-cchardet
-charset-normalizer
+faust - cchardet
+charset - normalizer
 chardet
 requests
 pyinstaller

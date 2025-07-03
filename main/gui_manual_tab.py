@@ -115,10 +115,7 @@ def setup_manual_sync_tab(self):
     opts.setSpacing(15)
 
     # Add millisecond prefix checkbox
-    self.add_ms_prefix_checkbox = QCheckBox(
-        texts.ADD_MS_PREFIX_TO_FILENAME,
-        self
-    )
+    self.add_ms_prefix_checkbox = QCheckBox(texts.ADD_MS_PREFIX_TO_FILENAME, self)
     self.add_ms_prefix_checkbox.setChecked(
         self.config.get(
             "add_ms_prefix_to_filename", DEFAULT_OPTIONS["add_ms_prefix_to_filename"]
@@ -154,9 +151,7 @@ def setup_manual_sync_tab(self):
     self.installEventFilter(self)
     manual_save_items = list(MANUAL_SAVE_MAP.values())  # Use values as display text
     self.manual_save_combo = self._dropdown(
-        opts,
-        texts.SAVE_LOCATION_LABEL,
-        manual_save_items
+        opts, texts.SAVE_LOCATION_LABEL, manual_save_items
     )
     # Add label to display selected folder
     self.manual_selected_folder_label = QLabel("", self)
@@ -415,8 +410,7 @@ def _on_sync_finished(self, success, result_file, message):
         self.manual_message_label.result_file_path = result_file
     else:
         self._show_message(
-            texts.FAILED_TO_SHIFT_SUBTITLE.format(message=message),
-            "error"
+            texts.FAILED_TO_SHIFT_SUBTITLE.format(message=message), "error"
         )
         logger.error(f"Manual sync failed: {message}")
 
@@ -661,6 +655,8 @@ def _on_message_clicked(self, event):
             QMessageBox.warning(
                 self,
                 texts.FILE_NOT_FOUND_TITLE,
-                texts.FILE_NOT_FOUND_MESSAGE.format(filename=os.path.basename(result_file)),
+                texts.FILE_NOT_FOUND_MESSAGE.format(
+                    filename=os.path.basename(result_file)
+                ),
             )
             logger.warning(f"Result file not found: {result_file}")

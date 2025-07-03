@@ -3,61 +3,43 @@
 # You can contribute in GitHub by forking the repository and making a pull request.   #
 # Note: There are also translations in "constants.py", so please check there as well. #
 #######################################################################################
-from utils import get_locale
 
-language = get_locale()
 
 class TranslationDict(str):
     def __new__(cls, translations):
-        # Create the string instance with the current language translation
+        from utils import get_locale
+
+        language = get_locale()
         current_text = translations.get(language, translations.get("en_US", ""))
         instance = str.__new__(cls, current_text)
         instance._translations = translations
         return instance
-    
+
     def __missing__(self, key):
         return self._translations.get("en_US", "")
-    
+
     def __str__(self):
+        from utils import get_locale
+
+        language = get_locale()
         return self._translations.get(language, self._translations.get("en_US", ""))
-    
+
     def __repr__(self):
+        from utils import get_locale
+
+        language = get_locale()
         return self._translations.get(language, self._translations.get("en_US", ""))
-    
+
     def format(self, *args, **kwargs):
-        return self._translations.get(language, self._translations.get("en_US", "")).format(*args, **kwargs)
-    
+        from utils import get_locale
+
+        language = get_locale()
+        return self._translations.get(
+            language, self._translations.get("en_US", "")
+        ).format(*args, **kwargs)
+
     def get(self, key, default=""):
         return self._translations.get(key, default)
-    
-    
-############### utils.py ###############   
-
-
-PROGRAM_TAGLINE = {
-    "en_US": "Subtitle Synchronizer",
-    "es_ES": "Sincronizador de subtítulos",
-    "tr_TR": "Altyazı Senkronizörü",
-    "zh_CN": "字幕同步器",
-    "ru_RU": "Синхронизатор субтитров",
-    "pl_PL": "Synchronizator napisów",
-    "uk_UA": "Синхронізатор субтитрів",
-    "ja_JP": "字幕シンクロナイザー",
-    "ko_KR": "자막 동기화 도구",
-    "hi_IN": "उपशीर्षक सिंक्रोनाइज़र",
-    "bn_BD": "সাবটাইটেল সিঙ্ক্রোনাইজার",
-    "it_IT": "Sincronizzatore sottotitoli",
-    "fr_FR": "Synchroniseur de sous-titres",
-    "de_DE": "Untertitel-Synchronisierer",
-    "pt_PT": "Sincronizador de legendas",
-    "ar_SA": "مزامن الترجمات",
-    "vi_VN": "Bộ đồng bộ phụ đề",
-    "fa_IR": "هماهنگ‌ساز زیرنویس",
-    "id_ID": "Sinkronisasi subtitle",
-    "ms_MY": "Penyegerak sari kata",
-    "th_TH": "เครื่องมือซิงค์คำบรรยาย",
-    "ur_PK": "سب ٹائٹل سنکرونائزر"
-}
 
 
 ############### gui.py ###############
@@ -85,7 +67,7 @@ CHANGE_LANGUAGE_TITLE = {
     "id_ID": "Ubah bahasa",
     "ms_MY": "Tukar bahasa",
     "th_TH": "เปลี่ยนภาษา",
-    "ur_PK": "زبان تبدیل کریں"
+    "ur_PK": "زبان تبدیل کریں",
 }
 
 RESTART_APPLICATION_FOR_LANGUAGE_CHANGE = {
@@ -110,7 +92,7 @@ RESTART_APPLICATION_FOR_LANGUAGE_CHANGE = {
     "id_ID": "Aplikasi perlu dimulai ulang untuk menerapkan perubahan bahasa. Apakah Anda ingin memulai ulang sekarang?",
     "ms_MY": "Aplikasi perlu dimulakan semula untuk melaksanakan perubahan bahasa. Adakah anda mahu memulakan semula sekarang?",
     "th_TH": "แอปพลิเคชันต้องเริ่มต้นใหม่เพื่อใช้การเปลี่ยนแปลงภาษา คุณต้องการเริ่มต้นใหม่ตอนนี้หรือไม่?",
-    "ur_PK": "زبان کی تبدیلی کو لاگو کرنے کے لیے ایپلیکیشن کو دوبارہ شروع کرنا ہوگا۔ کیا آپ اب دوبارہ شروع کرنا چاہتے ہیں؟"
+    "ur_PK": "زبان کی تبدیلی کو لاگو کرنے کے لیے ایپلیکیشن کو دوبارہ شروع کرنا ہوگا۔ کیا آپ اب دوبارہ شروع کرنا چاہتے ہیں؟",
 }
 
 DRAG_DROP_FILE = {
@@ -135,7 +117,7 @@ DRAG_DROP_FILE = {
     "id_ID": "Seret dan lepas file atau folder di sini atau klik untuk menelusuri.",
     "ms_MY": "Seret dan lepas fail atau folder di sini atau klik untuk semak imbas.",
     "th_TH": "ลากและวางไฟล์หรือโฟลเดอร์ที่นี่หรือคลิกเพื่อเรียกดู",
-    "ur_PK": "فائلوں یا فولڈرز کو یہاں ڈریگ اور ڈراپ کریں یا براؤز کرنے کے لیے کلک کریں۔"
+    "ur_PK": "فائلوں یا فولڈرز کو یہاں ڈریگ اور ڈراپ کریں یا براؤز کرنے کے لیے کلک کریں۔",
 }
 
 GO_TO_FOLDER = {
@@ -160,7 +142,7 @@ GO_TO_FOLDER = {
     "id_ID": "Pergi ke folder",
     "ms_MY": "Pergi ke folder",
     "th_TH": "ไปที่โฟลเดอร์",
-    "ur_PK": "فولڈر میں جائیں"
+    "ur_PK": "فولڈر میں جائیں",
 }
 
 SELECT_SUBTITLE_FILE_TITLE = {
@@ -185,7 +167,7 @@ SELECT_SUBTITLE_FILE_TITLE = {
     "id_ID": "Pilih file subtitle",
     "ms_MY": "Pilih fail sari kata",
     "th_TH": "เลือกไฟล์คำบรรยาย",
-    "ur_PK": "سب ٹائٹل فائل منتخب کریں"
+    "ur_PK": "سب ٹائٹل فائل منتخب کریں",
 }
 
 SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE = {
@@ -210,7 +192,7 @@ SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE = {
     "id_ID": "Pilih file video atau subtitle",
     "ms_MY": "Pilih fail video atau sari kata",
     "th_TH": "เลือกไฟล์วิดีโอหรือคำบรรยาย",
-    "ur_PK": "ویڈیو یا سب ٹائٹل فائل منتخب کریں"
+    "ur_PK": "ویڈیو یا سب ٹائٹل فائل منتخب کریں",
 }
 
 SELECT_VIDEO_FILE_TITLE = {
@@ -235,7 +217,7 @@ SELECT_VIDEO_FILE_TITLE = {
     "id_ID": "Pilih file video",
     "ms_MY": "Pilih fail video",
     "th_TH": "เลือกไฟล์วิดีโอ",
-    "ur_PK": "ویڈیو فائل منتخب کریں"
+    "ur_PK": "ویڈیو فائل منتخب کریں",
 }
 
 SUBTITLE_FILES_LABEL = {
@@ -260,7 +242,7 @@ SUBTITLE_FILES_LABEL = {
     "id_ID": "File subtitle",
     "ms_MY": "Fail sari kata",
     "th_TH": "ไฟล์คำบรรยาย",
-    "ur_PK": "سب ٹائٹل فائلیں"
+    "ur_PK": "سب ٹائٹل فائلیں",
 }
 
 VIDEO_OR_SUBTITLE_FILES_LABEL = {
@@ -285,7 +267,7 @@ VIDEO_OR_SUBTITLE_FILES_LABEL = {
     "id_ID": "Video/Subtitle Referensi",
     "ms_MY": "Video/Sari Kata Rujukan",
     "th_TH": "วิดีโอ/คำบรรยายอ้างอิง",
-    "ur_PK": "ویڈیو/ریفرنس سب ٹائٹل"
+    "ur_PK": "ویڈیو/ریفرنس سب ٹائٹل",
 }
 
 VIDEO_FILES_LABEL = {
@@ -310,7 +292,7 @@ VIDEO_FILES_LABEL = {
     "id_ID": "File video",
     "ms_MY": "Fail video",
     "th_TH": "ไฟล์วิดีโอ",
-    "ur_PK": "ویڈیو فائلیں"
+    "ur_PK": "ویڈیو فائلیں",
 }
 
 UNSUPPORTED_SUBTITLE_FORMAT = {
@@ -335,7 +317,7 @@ UNSUPPORTED_SUBTITLE_FORMAT = {
     "id_ID": "Ini bukan format subtitle yang didukung.",
     "ms_MY": "Ini bukan format sari kata yang disokong.",
     "th_TH": "นี่ไม่ใช่รูปแบบคำบรรยายที่รองรับ",
-    "ur_PK": "یہ ایک معاون سب ٹائٹل فارمیٹ نہیں ہے۔"
+    "ur_PK": "یہ ایک معاون سب ٹائٹل فارمیٹ نہیں ہے۔",
 }
 
 UNSUPPORTED_SUBTITLE_FORMAT_WITH_EXT = {
@@ -360,7 +342,7 @@ UNSUPPORTED_SUBTITLE_FORMAT_WITH_EXT = {
     "id_ID": '"{ext}" bukan format subtitle yang didukung.',
     "ms_MY": '"{ext}" bukan format sari kata yang disokong.',
     "th_TH": '"{ext}" ไม่ใช่รูปแบบคำบรรยายที่รองรับ',
-    "ur_PK": '"{ext}" ایک معاون سب ٹائٹل فارمیٹ نہیں ہے۔'
+    "ur_PK": '"{ext}" ایک معاون سب ٹائٹل فارمیٹ نہیں ہے۔',
 }
 
 UNSUPPORTED_VIDEO_OR_SUBTITLE_FORMAT_WITH_EXT = {
@@ -385,7 +367,7 @@ UNSUPPORTED_VIDEO_OR_SUBTITLE_FORMAT_WITH_EXT = {
     "id_ID": '"{ext}" bukan format video atau subtitle yang didukung.',
     "ms_MY": '"{ext}" bukan format video atau sari kata yang disokong.',
     "th_TH": '"{ext}" ไม่ใช่รูปแบบวิดีโอหรือคำบรรยายที่รองรับ',
-    "ur_PK": '"{ext}" ایک معاون ویڈیو یا سب ٹائٹل فارمیٹ نہیں ہے۔'
+    "ur_PK": '"{ext}" ایک معاون ویڈیو یا سب ٹائٹل فارمیٹ نہیں ہے۔',
 }
 
 ERROR = {
@@ -410,7 +392,7 @@ ERROR = {
     "id_ID": "Kesalahan",
     "ms_MY": "Ralat",
     "th_TH": "ข้อผิดพลาด",
-    "ur_PK": "خرابی"
+    "ur_PK": "خرابی",
 }
 
 FILE_DOES_NOT_EXIST = {
@@ -435,7 +417,7 @@ FILE_DOES_NOT_EXIST = {
     "id_ID": "File tidak ada.",
     "ms_MY": "Fail tidak wujud.",
     "th_TH": "ไฟล์ไม่มีอยู่",
-    "ur_PK": "فائل موجود نہیں ہے۔"
+    "ur_PK": "فائل موجود نہیں ہے۔",
 }
 
 SETTINGS = {
@@ -460,7 +442,7 @@ SETTINGS = {
     "id_ID": "Pengaturan",
     "ms_MY": "Tetapan",
     "th_TH": "การตั้งค่า",
-    "ur_PK": "ترتیبات"
+    "ur_PK": "ترتیبات",
 }
 
 LANGUAGE = {
@@ -485,7 +467,7 @@ LANGUAGE = {
     "id_ID": "Bahasa",
     "ms_MY": "Bahasa",
     "th_TH": "ภาษา",
-    "ur_PK": "زبان"
+    "ur_PK": "زبان",
 }
 
 THEME = {
@@ -510,7 +492,7 @@ THEME = {
     "id_ID": "Tema",
     "ms_MY": "Tema",
     "th_TH": "ธีม",
-    "ur_PK": "تھیم"
+    "ur_PK": "تھیم",
 }
 
 SYSTEM = {
@@ -535,7 +517,7 @@ SYSTEM = {
     "id_ID": "Sistem",
     "ms_MY": "Sistem",
     "th_TH": "ระบบ",
-    "ur_PK": "سسٹم"
+    "ur_PK": "سسٹم",
 }
 
 DARK = {
@@ -560,7 +542,7 @@ DARK = {
     "id_ID": "Gelap",
     "ms_MY": "Gelap",
     "th_TH": "มืด",
-    "ur_PK": "گہرا"
+    "ur_PK": "گہرا",
 }
 
 LIGHT = {
@@ -585,7 +567,7 @@ LIGHT = {
     "id_ID": "Cerah",
     "ms_MY": "Cerah",
     "th_TH": "สว่าง",
-    "ur_PK": "ہلکا"
+    "ur_PK": "ہلکا",
 }
 
 CHANGE_OUTPUT_SUBTITLE_ENCODING = {
@@ -610,7 +592,7 @@ CHANGE_OUTPUT_SUBTITLE_ENCODING = {
     "id_ID": "Ubah pengkodean subtitle keluaran",
     "ms_MY": "Tukar pengekodan sari kata output",
     "th_TH": "เปลี่ยนการเข้ารหัสคำบรรยายผลลัพธ์",
-    "ur_PK": "آؤٹ پٹ سب ٹائٹل انکوڈنگ تبدیل کریں"
+    "ur_PK": "آؤٹ پٹ سب ٹائٹل انکوڈنگ تبدیل کریں",
 }
 
 DISABLED = {
@@ -635,7 +617,7 @@ DISABLED = {
     "id_ID": "Dinonaktifkan",
     "ms_MY": "Dilumpuhkan",
     "th_TH": "ปิดใช้งานแล้ว",
-    "ur_PK": "غیر فعال"
+    "ur_PK": "غیر فعال",
 }
 
 SAME_AS_INPUT_SUBTITLE = {
@@ -660,7 +642,7 @@ SAME_AS_INPUT_SUBTITLE = {
     "id_ID": "Sama seperti subtitle input",
     "ms_MY": "Sama seperti sari kata input",
     "th_TH": "เหมือนกับคำบรรยายที่ป้อนเข้า",
-    "ur_PK": "ان پٹ سب ٹائٹل جیسا ہی"
+    "ur_PK": "ان پٹ سب ٹائٹل جیسا ہی",
 }
 
 BACKUP_SUBTITLES_BEFORE_OVERWRITING = {
@@ -685,7 +667,7 @@ BACKUP_SUBTITLES_BEFORE_OVERWRITING = {
     "id_ID": "Cadangkan subtitle sebelum menimpa",
     "ms_MY": "Sandarkan sari kata sebelum menimpa",
     "th_TH": "สำรองคำบรรยายก่อนเขียนทับ",
-    "ur_PK": "اووررائٹ کرنے سے پہلے سب ٹائٹلز کا بیک اپ لیں"
+    "ur_PK": "اووررائٹ کرنے سے پہلے سب ٹائٹلز کا بیک اپ لیں",
 }
 
 KEEP_EXTRACTED_SUBTITLES = {
@@ -710,7 +692,7 @@ KEEP_EXTRACTED_SUBTITLES = {
     "id_ID": "Simpan subtitle yang diekstrak",
     "ms_MY": "Simpan sari kata yang diekstrak",
     "th_TH": "เก็บคำบรรยายที่แยกออกมา",
-    "ur_PK": "نکالے گئے سب ٹائٹلز محفوظ رکھیں"
+    "ur_PK": "نکالے گئے سب ٹائٹلز محفوظ رکھیں",
 }
 
 KEEP_CONVERTED_SUBTITLES = {
@@ -735,7 +717,7 @@ KEEP_CONVERTED_SUBTITLES = {
     "id_ID": "Simpan subtitle yang dikonversi",
     "ms_MY": "Simpan sari kata yang ditukar",
     "th_TH": "เก็บคำบรรยายที่แปลงแล้ว",
-    "ur_PK": "تبدیل شدہ سب ٹائٹلز محفوظ رکھیں"
+    "ur_PK": "تبدیل شدہ سب ٹائٹلز محفوظ رکھیں",
 }
 
 ADD_TOOL_PREFIX_TO_SUBTITLES = {
@@ -760,7 +742,7 @@ ADD_TOOL_PREFIX_TO_SUBTITLES = {
     "id_ID": 'Tambahkan awalan "tool_" ke subtitle',
     "ms_MY": 'Tambah awalan "tool_" pada sari kata',
     "th_TH": 'เพิ่มคำนำหน้า "tool_" ให้กับคำบรรยาย',
-    "ur_PK": 'سب ٹائٹلز میں "tool_" پریفکس شامل کریں'
+    "ur_PK": 'سب ٹائٹلز میں "tool_" پریفکس شامل کریں',
 }
 
 OPEN_CONFIG_FILE_DIRECTORY = {
@@ -785,7 +767,7 @@ OPEN_CONFIG_FILE_DIRECTORY = {
     "id_ID": "Buka direktori file konfigurasi",
     "ms_MY": "Buka direktori fail konfigurasi",
     "th_TH": "เปิดไดเรกทอรีไฟล์การตั้งค่า",
-    "ur_PK": "کنفیگ فائل کی ڈائرکٹری کھولیں"
+    "ur_PK": "کنفیگ فائل کی ڈائرکٹری کھولیں",
 }
 
 OPEN_LOGS_DIRECTORY = {
@@ -810,7 +792,7 @@ OPEN_LOGS_DIRECTORY = {
     "id_ID": "Buka direktori log",
     "ms_MY": "Buka direktori log",
     "th_TH": "เปิดไดเรกทอรีบันทึก",
-    "ur_PK": "لاگ ڈائرکٹری کھولیں"
+    "ur_PK": "لاگ ڈائرکٹری کھولیں",
 }
 
 KEEP_LOG_RECORDS = {
@@ -835,7 +817,7 @@ KEEP_LOG_RECORDS = {
     "id_ID": "Simpan catatan log",
     "ms_MY": "Simpan rekod log",
     "th_TH": "เก็บบันทึกล็อก",
-    "ur_PK": "لاگ ریکارڈز محفوظ رکھیں"
+    "ur_PK": "لاگ ریکارڈز محفوظ رکھیں",
 }
 
 CLEAR_ALL_LOGS = {
@@ -860,7 +842,7 @@ CLEAR_ALL_LOGS = {
     "id_ID": "Hapus semua log",
     "ms_MY": "Kosongkan semua log",
     "th_TH": "ล้างบันทึกทั้งหมด",
-    "ur_PK": "تمام لاگز صاف کریں"
+    "ur_PK": "تمام لاگز صاف کریں",
 }
 
 REMEMBER_THE_CHANGES = {
@@ -885,7 +867,7 @@ REMEMBER_THE_CHANGES = {
     "id_ID": "Ingat perubahan",
     "ms_MY": "Ingat perubahan",
     "th_TH": "จดจำการเปลี่ยนแปลง",
-    "ur_PK": "تبدیلیاں یاد رکھیں"
+    "ur_PK": "تبدیلیاں یاد رکھیں",
 }
 
 CHECK_FOR_UPDATES_AT_STARTUP = {
@@ -910,7 +892,7 @@ CHECK_FOR_UPDATES_AT_STARTUP = {
     "id_ID": "Periksa pembaruan saat startup",
     "ms_MY": "Semak kemas kini semasa permulaan",
     "th_TH": "ตรวจสอบการอัปเดตเมื่อเริ่มต้น",
-    "ur_PK": "سٹارٹ اپ پر اپڈیٹس چیک کریں"
+    "ur_PK": "سٹارٹ اپ پر اپڈیٹس چیک کریں",
 }
 
 RESET_TO_DEFAULT_SETTINGS = {
@@ -935,7 +917,7 @@ RESET_TO_DEFAULT_SETTINGS = {
     "id_ID": "Reset ke pengaturan default",
     "ms_MY": "Set semula kepada tetapan lalai",
     "th_TH": "รีเซ็ตเป็นการตั้งค่าเริ่มต้น",
-    "ur_PK": "ڈیفالٹ سیٹنگز پر ری سیٹ کریں"
+    "ur_PK": "ڈیفالٹ سیٹنگز پر ری سیٹ کریں",
 }
 
 ABOUT = {
@@ -960,7 +942,7 @@ ABOUT = {
     "id_ID": "Tentang",
     "ms_MY": "Mengenai",
     "th_TH": "เกี่ยวกับ",
-    "ur_PK": "کے بارے میں"
+    "ur_PK": "کے بارے میں",
 }
 
 FILE_SIZE = {
@@ -985,7 +967,7 @@ FILE_SIZE = {
     "id_ID": "Ukuran file",
     "ms_MY": "Saiz fail",
     "th_TH": "ขนาดไฟล์",
-    "ur_PK": "فائل کا سائز"
+    "ur_PK": "فائل کا سائز",
 }
 
 
@@ -1014,7 +996,7 @@ UNEXPECTED_ERROR_DURING_SYNC = {
     "id_ID": "Kesalahan tak terduga selama sinkronisasi: {error}",
     "ms_MY": "Ralat tidak dijangka semasa penyelarasan: {error}",
     "th_TH": "ข้อผิดพลาดที่ไม่คาดคิดระหว่างการซิงค์: {error}",
-    "ur_PK": "ہم آہنگی کے دوران غیرمتوقع خرابی: {error}"
+    "ur_PK": "ہم آہنگی کے دوران غیرمتوقع خرابی: {error}",
 }
 
 DRAG_DROP_SUBTITLE_OR_BROWSE = {
@@ -1039,7 +1021,7 @@ DRAG_DROP_SUBTITLE_OR_BROWSE = {
     "id_ID": "Seret dan lepas file subtitle di sini atau klik untuk menelusuri",
     "ms_MY": "Seret dan lepaskan fail sari kata di sini atau klik untuk semak imbas",
     "th_TH": "ลากและวางไฟล์คำบรรยายที่นี่ หรือคลิกเพื่อเรียกดู",
-    "ur_PK": "سب ٹائٹل فائل یہاں ڈریگ اور ڈراپ کریں یا براؤز کرنے کے لیے کلک کریں"
+    "ur_PK": "سب ٹائٹل فائل یہاں ڈریگ اور ڈراپ کریں یا براؤز کرنے کے لیے کلک کریں",
 }
 
 INPUT_SUBTITLE_LABEL = {
@@ -1064,7 +1046,7 @@ INPUT_SUBTITLE_LABEL = {
     "id_ID": "Subtitle Masukan",
     "ms_MY": "Sari kata input",
     "th_TH": "คำบรรยายเข้า",
-    "ur_PK": "ان پٹ سب ٹائٹل"
+    "ur_PK": "ان پٹ سب ٹائٹل",
 }
 
 ADD_MS_PREFIX_TO_FILENAME = {
@@ -1089,7 +1071,7 @@ ADD_MS_PREFIX_TO_FILENAME = {
     "id_ID": "Tambahkan awalan milidetik ke nama file",
     "ms_MY": "Tambah awalan milisaat ke nama fail",
     "th_TH": "เพิ่มคำนำหน้ามิลลิวินาทีไปยังชื่อไฟล์",
-    "ur_PK": "فائل کے نام میں ملی سیکنڈ پریفکس شامل کریں"
+    "ur_PK": "فائل کے نام میں ملی سیکنڈ پریفکس شامل کریں",
 }
 
 SHIFT_SUBTITLE_LABEL = {
@@ -1114,7 +1096,7 @@ SHIFT_SUBTITLE_LABEL = {
     "id_ID": "Geser subtitle (ms)",
     "ms_MY": "Gerakkan sari kata (ms)",
     "th_TH": "เลื่อนคำบรรยาย (มิลลิวินาที)",
-    "ur_PK": "سب ٹائٹل شفٹ کریں (ملی سیکنڈ)"
+    "ur_PK": "سب ٹائٹل شفٹ کریں (ملی سیکنڈ)",
 }
 
 SECOND_MS_TOOLTIP = {
@@ -1139,7 +1121,7 @@ SECOND_MS_TOOLTIP = {
     "id_ID": "1 detik = 1000 ms",
     "ms_MY": "1 saat = 1000 ms",
     "th_TH": "1 วินาที = 1000 มิลลิวินาที",
-    "ur_PK": "1 سیکنڈ = 1000 ملی سیکنڈ"
+    "ur_PK": "1 سیکنڈ = 1000 ملی سیکنڈ",
 }
 
 SAVE_LOCATION_LABEL = {
@@ -1164,7 +1146,7 @@ SAVE_LOCATION_LABEL = {
     "id_ID": "Lokasi penyimpanan:",
     "ms_MY": "Lokasi simpan:",
     "th_TH": "ตำแหน่งบันทึก:",
-    "ur_PK": "محفوظ کرنے کی جگہ:"
+    "ur_PK": "محفوظ کرنے کی جگہ:",
 }
 
 START = {
@@ -1189,7 +1171,7 @@ START = {
     "id_ID": "Mulai",
     "ms_MY": "Mula",
     "th_TH": "เริ่มต้น",
-    "ur_PK": "شروع کریں"
+    "ur_PK": "شروع کریں",
 }
 
 AUTOMATIC_SYNC_TAB_LABEL = {
@@ -1214,7 +1196,7 @@ AUTOMATIC_SYNC_TAB_LABEL = {
     "id_ID": "Sinkron Auto",
     "ms_MY": "Auto Segerak",
     "th_TH": "ซิงค์อัตโนมัติ",
-    "ur_PK": "خودکار ہمآہنگ"
+    "ur_PK": "خودکار ہمآہنگ",
 }
 
 MANUAL_SYNC_TAB_LABEL = {
@@ -1239,7 +1221,7 @@ MANUAL_SYNC_TAB_LABEL = {
     "id_ID": "Sinkron Manual",
     "ms_MY": "Segerak Manual",
     "th_TH": "ซิงค์ด้วยตนเอง",
-    "ur_PK": "دستی ہمآہنگ"
+    "ur_PK": "دستی ہمآہنگ",
 }
 
 PLEASE_SELECT_VIDEO_OR_REFERENCE_SUBTITLE = {
@@ -1264,7 +1246,7 @@ PLEASE_SELECT_VIDEO_OR_REFERENCE_SUBTITLE = {
     "id_ID": "Silakan pilih video atau subtitle referensi.",
     "ms_MY": "Sila pilih video atau sari kata rujukan.",
     "th_TH": "โปรดเลือกวิดีโอหรือคำบรรยายอ้างอิง",
-    "ur_PK": "براہ کرم ویڈیو یا ریفرنس سب ٹائٹل منتخب کریں۔"
+    "ur_PK": "براہ کرم ویڈیو یا ریفرنس سب ٹائٹل منتخب کریں۔",
 }
 
 PLEASE_SELECT_SUBTITLE_FILE = {
@@ -1289,7 +1271,7 @@ PLEASE_SELECT_SUBTITLE_FILE = {
     "id_ID": "Silakan pilih file subtitle.",
     "ms_MY": "Sila pilih fail sari kata.",
     "th_TH": "โปรดเลือกไฟล์คำบรรยาย",
-    "ur_PK": "براہ کرم ایک سب ٹائٹل فائل منتخب کریں۔"
+    "ur_PK": "براہ کرم ایک سب ٹائٹل فائل منتخب کریں۔",
 }
 
 PLEASE_ENTER_NON_ZERO_VALUE = {
@@ -1314,7 +1296,7 @@ PLEASE_ENTER_NON_ZERO_VALUE = {
     "id_ID": "Silakan masukkan nilai yang tidak nol.",
     "ms_MY": "Sila masukkan nilai bukan sifar.",
     "th_TH": "กรุณาใส่ค่าที่ไม่ใช่ศูนย์",
-    "ur_PK": "براہ کرم صفر سے مختلف قدر درج کریں۔"
+    "ur_PK": "براہ کرم صفر سے مختلف قدر درج کریں۔",
 }
 
 PLEASE_SELECT_DESTINATION_FOLDER = {
@@ -1339,7 +1321,7 @@ PLEASE_SELECT_DESTINATION_FOLDER = {
     "id_ID": "Silakan pilih folder tujuan di dropdown lokasi penyimpanan.",
     "ms_MY": "Sila pilih folder destinasi dalam dropdown lokasi simpan.",
     "th_TH": "โปรดเลือกโฟลเดอร์ปลายทางในเมนูแบบเลื่อนลงตำแหน่งบันทึก",
-    "ur_PK": "براہ کرم سیو لوکیشن ڈراپ ڈاؤن میں منزل فولڈر منتخب کریں۔"
+    "ur_PK": "براہ کرم سیو لوکیشن ڈراپ ڈاؤن میں منزل فولڈر منتخب کریں۔",
 }
 
 SELECTED_DESTINATION_FOLDER_NOT_EXIST = {
@@ -1364,7 +1346,7 @@ SELECTED_DESTINATION_FOLDER_NOT_EXIST = {
     "id_ID": "Folder tujuan yang dipilih tidak ada:\n{folder}",
     "ms_MY": "Folder destinasi yang dipilih tidak ada:\n{folder}",
     "th_TH": "โฟลเดอร์ปลายทางที่เลือกไม่มีอยู่:\n{folder}",
-    "ur_PK": "منتخب شدہ منزل فولڈر موجود نہیں ہے:\n{folder}"
+    "ur_PK": "منتخب شدہ منزل فولڈر موجود نہیں ہے:\n{folder}",
 }
 
 FILE_ALREADY_EXISTS_TITLE = {
@@ -1389,7 +1371,7 @@ FILE_ALREADY_EXISTS_TITLE = {
     "id_ID": "File sudah ada",
     "ms_MY": "Fail sudah wujud",
     "th_TH": "ไฟล์มีอยู่แล้ว",
-    "ur_PK": "فائل پہلے سے موجود ہے"
+    "ur_PK": "فائل پہلے سے موجود ہے",
 }
 
 FILE_ALREADY_EXISTS_MESSAGE = {
@@ -1414,7 +1396,7 @@ FILE_ALREADY_EXISTS_MESSAGE = {
     "id_ID": "File output sudah ada:\n{filename}\n\nApakah Anda ingin menggantinya?",
     "ms_MY": "Fail output sudah wujud:\n{filename}\n\nAdakah anda mahu menggantikannya?",
     "th_TH": "ไฟล์เอาต์พุตมีอยู่แล้ว:\n{filename}\n\nคุณต้องการแทนที่หรือไม่?",
-    "ur_PK": "آؤٹ پٹ فائل پہلے سے موجود ہے:\n{filename}\n\nکیا آپ اسے تبدیل کرنا چاہتے ہیں؟"
+    "ur_PK": "آؤٹ پٹ فائل پہلے سے موجود ہے:\n{filename}\n\nکیا آپ اسے تبدیل کرنا چاہتے ہیں؟",
 }
 
 PROCESSING = {
@@ -1439,7 +1421,7 @@ PROCESSING = {
     "id_ID": "Sedang memproses...",
     "ms_MY": "Sedang memproses...",
     "th_TH": "กำลังประมวลผล...",
-    "ur_PK": "عملدرآمد ہو رہا ہے..."
+    "ur_PK": "عملدرآمد ہو رہا ہے...",
 }
 
 FAILED_TO_SHIFT_SUBTITLE = {
@@ -1464,7 +1446,7 @@ FAILED_TO_SHIFT_SUBTITLE = {
     "id_ID": "Gagal menggeser subtitle:\n{message}",
     "ms_MY": "Gagal mengalihkan sari kata:\n{message}",
     "th_TH": "ไม่สามารถเลื่อนคำบรรยายได้:\n{message}",
-    "ur_PK": "سب ٹائٹل شفٹ کرنے میں ناکام:\n{message}"
+    "ur_PK": "سب ٹائٹل شفٹ کرنے میں ناکام:\n{message}",
 }
 
 TOTAL_SHIFTED_LABEL = {
@@ -1489,7 +1471,7 @@ TOTAL_SHIFTED_LABEL = {
     "id_ID": "Total digeser: {total_ms:+d} ms",
     "ms_MY": "Jumlah digeser: {total_ms:+d} ms",
     "th_TH": "เลื่อนทั้งหมด: {total_ms:+d} มิลลิวินาที",
-    "ur_PK": "کل شفٹ کیا گیا: {total_ms:+d} ملی سیکنڈ"
+    "ur_PK": "کل شفٹ کیا گیا: {total_ms:+d} ملی سیکنڈ",
 }
 
 PREFIX_NOT_APPLICABLE_WHEN_OVERWRITING = {
@@ -1514,7 +1496,7 @@ PREFIX_NOT_APPLICABLE_WHEN_OVERWRITING = {
     "id_ID": "Awalan tidak berlaku saat menimpa file input",
     "ms_MY": "Awalan tidak terpakai apabila menulis ganti fail input",
     "th_TH": "ไม่สามารถใช้คำนำหน้าเมื่อเขียนทับไฟล์อินพุต",
-    "ur_PK": "ان پٹ فائل اووررائٹ کرتے وقت پریفکس لاگو نہیں ہوتا"
+    "ur_PK": "ان پٹ فائل اووررائٹ کرتے وقت پریفکس لاگو نہیں ہوتا",
 }
 
 FILE_NOT_FOUND_TITLE = {
@@ -1539,7 +1521,7 @@ FILE_NOT_FOUND_TITLE = {
     "id_ID": "File tidak ditemukan",
     "ms_MY": "Fail tidak dijumpai",
     "th_TH": "ไม่พบไฟล์",
-    "ur_PK": "فائل نہیں ملی"
+    "ur_PK": "فائل نہیں ملی",
 }
 
 FILE_NOT_FOUND_MESSAGE = {
@@ -1564,7 +1546,7 @@ FILE_NOT_FOUND_MESSAGE = {
     "id_ID": "File output tidak dapat ditemukan:\n{filename}\n\nMungkin telah dipindahkan atau dihapus.",
     "ms_MY": "Fail output tidak dapat dijumpai:\n{filename}\n\nIa mungkin telah dipindahkan atau dipadam.",
     "th_TH": "ไม่พบไฟล์เอาต์พุต:\n{filename}\n\nอาจถูกย้ายหรือถูกลบไปแล้ว",
-    "ur_PK": "آؤٹ پٹ فائل نہیں مل سکی:\n{filename}\n\nیہ منتقل یا حذف کی جا چکی ہو سکتی ہے۔"
+    "ur_PK": "آؤٹ پٹ فائل نہیں مل سکی:\n{filename}\n\nیہ منتقل یا حذف کی جا چکی ہو سکتی ہے۔",
 }
 
 
@@ -1593,7 +1575,7 @@ NEW_CONVERSION = {
     "id_ID": "Konversi baru",
     "ms_MY": "Penukaran baharu",
     "th_TH": "การแปลงใหม่",
-    "ur_PK": "نیا کنورژن"
+    "ur_PK": "نیا کنورژن",
 }
 
 GO_BACK = {
@@ -1618,7 +1600,7 @@ GO_BACK = {
     "id_ID": "Kembali",
     "ms_MY": "Kembali",
     "th_TH": "ย้อนกลับ",
-    "ur_PK": "واپس جائیں"
+    "ur_PK": "واپس جائیں",
 }
 
 CANCEL = {
@@ -1643,7 +1625,7 @@ CANCEL = {
     "id_ID": "Batal",
     "ms_MY": "Batal",
     "th_TH": "ยกเลิก",
-    "ur_PK": "منسوخ کریں"
+    "ur_PK": "منسوخ کریں",
 }
 
 CONFIGURATION_LABEL = {
@@ -1668,7 +1650,7 @@ CONFIGURATION_LABEL = {
     "id_ID": "Konfigurasi:",
     "ms_MY": "Konfigurasi:",
     "th_TH": "การกำหนดค่า:",
-    "ur_PK": "تشکیل:"
+    "ur_PK": "تشکیل:",
 }
 
 MODE_LABEL = {
@@ -1693,7 +1675,7 @@ MODE_LABEL = {
     "id_ID": "Mode: ",
     "ms_MY": "Mod: ",
     "th_TH": "โหมด: ",
-    "ur_PK": "موڈ: "
+    "ur_PK": "موڈ: ",
 }
 
 TOTAL_PAIRS_LABEL = {
@@ -1718,7 +1700,7 @@ TOTAL_PAIRS_LABEL = {
     "id_ID": "Total pasangan:",
     "ms_MY": "Jumlah pasangan:",
     "th_TH": "คู่ทั้งหมด:",
-    "ur_PK": "کل جوڑے:"
+    "ur_PK": "کل جوڑے:",
 }
 
 SYNC_TOOL_LABEL = {
@@ -1743,7 +1725,7 @@ SYNC_TOOL_LABEL = {
     "id_ID": "Alat sinkronisasi:",
     "ms_MY": "Alat segerak:",
     "th_TH": "เครื่องมือซิงค์:",
-    "ur_PK": "سنک ٹول:"
+    "ur_PK": "سنک ٹول:",
 }
 
 NO_SPLITS = {
@@ -1768,7 +1750,7 @@ NO_SPLITS = {
     "id_ID": "Tidak ada pemisahan",
     "ms_MY": "Tiada pecahan",
     "th_TH": "ไม่มีการแบ่ง",
-    "ur_PK": "کوئی تقسیم نہیں"
+    "ur_PK": "کوئی تقسیم نہیں",
 }
 
 UNKNOWN_SYNC_TOOL_NO_OPTIONS = {
@@ -1793,7 +1775,7 @@ UNKNOWN_SYNC_TOOL_NO_OPTIONS = {
     "id_ID": "Alat sinkronisasi tidak diketahui. Tidak ada opsi yang tersedia.",
     "ms_MY": "Alat segerak tidak diketahui. Tiada pilihan tersedia.",
     "th_TH": "เครื่องมือซิงค์ที่ไม่รู้จัก ไม่มีตัวเลือกให้ใช้",
-    "ur_PK": "نامعلوم سنک ٹول۔ کوئی آپشن دستیاب نہیں۔"
+    "ur_PK": "نامعلوم سنک ٹول۔ کوئی آپشن دستیاب نہیں۔",
 }
 
 OUTPUT_SUBTITLE_ENCODING_LABEL = {
@@ -1818,7 +1800,7 @@ OUTPUT_SUBTITLE_ENCODING_LABEL = {
     "id_ID": "Enkoding subtitle keluaran: ",
     "ms_MY": "Pengekodan sari kata output: ",
     "th_TH": "การเข้ารหัสคำบรรยายผลลัพธ์: ",
-    "ur_PK": "آؤٹ پٹ سب ٹائٹل انکوڈنگ: "
+    "ur_PK": "آؤٹ پٹ سب ٹائٹل انکوڈنگ: ",
 }
 
 FOLDER_LABEL = {
@@ -1843,7 +1825,7 @@ FOLDER_LABEL = {
     "id_ID": "Folder: ",
     "ms_MY": "Folder: ",
     "th_TH": "โฟลเดอร์: ",
-    "ur_PK": "فولڈر: "
+    "ur_PK": "فولڈر: ",
 }
 
 ADDITIONAL_ARGUMENTS_LABEL = {
@@ -1868,7 +1850,7 @@ ADDITIONAL_ARGUMENTS_LABEL = {
     "id_ID": "Argumen tambahan: ",
     "ms_MY": "Argumen tambahan: ",
     "th_TH": "อาร์กิวเมนต์เพิ่มเติม: ",
-    "ur_PK": "اضافی دلائل: "
+    "ur_PK": "اضافی دلائل: ",
 }
 
 SYNC_STARTED_LABEL = {
@@ -1893,7 +1875,7 @@ SYNC_STARTED_LABEL = {
     "id_ID": "Sinkronisasi dimulai:",
     "ms_MY": "Penyegerakan bermula:",
     "th_TH": "เริ่มการซิงค์:",
-    "ur_PK": "سنک شروع ہو گئی:"
+    "ur_PK": "سنک شروع ہو گئی:",
 }
 
 SYNC_COMPLETED_SUCCESSFULLY = {
@@ -1918,7 +1900,7 @@ SYNC_COMPLETED_SUCCESSFULLY = {
     "id_ID": "Sinkronisasi berhasil diselesaikan.",
     "ms_MY": "Penyegerakan berjaya diselesaikan.",
     "th_TH": "ซิงค์เสร็จสมบูรณ์แล้ว",
-    "ur_PK": "سنک کامیابی سے مکمل ہو گئی۔"
+    "ur_PK": "سنک کامیابی سے مکمل ہو گئی۔",
 }
 
 SAVED_TO_LABEL = {
@@ -1943,7 +1925,7 @@ SAVED_TO_LABEL = {
     "id_ID": "Disimpan di: {output}",
     "ms_MY": "Disimpan ke: {output}",
     "th_TH": "บันทึกที่: {output}",
-    "ur_PK": "یہاں محفوظ کیا گیا: {output}"
+    "ur_PK": "یہاں محفوظ کیا گیا: {output}",
 }
 
 
@@ -1972,7 +1954,7 @@ PAIRS_HEADER_LABEL = {
     "id_ID": "Pasangan ({valid} valid, {invalid} tidak valid)",
     "ms_MY": "Pasangan ({valid} sah, {invalid} tidak sah)",
     "th_TH": "คู่ ({valid} ถูกต้อง, {invalid} ไม่ถูกต้อง)",
-    "ur_PK": "جوڑے ({valid} درست، {invalid} غلط)"
+    "ur_PK": "جوڑے ({valid} درست، {invalid} غلط)",
 }
 
 BATCH_PAIR_STATUS_INVALID_LABEL = {
@@ -2047,7 +2029,7 @@ BATCH_VALIDATE_ADD_SUBTITLE = {
     "id_ID": "Tambahkan file subtitle ke item ini",
     "ms_MY": "Tambah fail sari kata ke item ini",
     "th_TH": "เพิ่มไฟล์คำบรรยายให้กับรายการนี้",
-    "ur_PK": "اس آئٹم میں سب ٹائٹل فائل شامل کریں"
+    "ur_PK": "اس آئٹم میں سب ٹائٹل فائل شامل کریں",
 }
 
 BATCH_VALIDATE_TOO_MANY_FILES = {
@@ -2072,7 +2054,7 @@ BATCH_VALIDATE_TOO_MANY_FILES = {
     "id_ID": "Terlalu banyak file - simpan hanya satu subtitle per item",
     "ms_MY": "Terlalu banyak fail - simpan satu sari kata sahaja setiap item",
     "th_TH": "ไฟล์มากเกินไป - ให้มีคำบรรยายเพียงไฟล์เดียวต่อรายการ",
-    "ur_PK": "بہت زیادہ فائلیں - ہر آئٹم کے لیے صرف ایک سب ٹائٹل رکھیں"
+    "ur_PK": "بہت زیادہ فائلیں - ہر آئٹم کے لیے صرف ایک سب ٹائٹل رکھیں",
 }
 
 BATCH_VALIDATE_NESTED_NOT_ALLOWED = {
@@ -2097,7 +2079,7 @@ BATCH_VALIDATE_NESTED_NOT_ALLOWED = {
     "id_ID": "Item bersarang tidak diizinkan - hapus level tambahan",
     "ms_MY": "Item bersarang tidak dibenarkan - buang aras tambahan",
     "th_TH": "ไม่อนุญาตให้มีรายการซ้อนกัน - ลบระดับที่เกินออก",
-    "ur_PK": "نیسٹڈ آئٹمز کی اجازت نہیں - اضافی لیول ہٹا دیں"
+    "ur_PK": "نیسٹڈ آئٹمز کی اجازت نہیں - اضافی لیول ہٹا دیں",
 }
 
 BATCH_VALIDATE_VIDEO_NOT_ALLOWED = {
@@ -2122,7 +2104,7 @@ BATCH_VALIDATE_VIDEO_NOT_ALLOWED = {
     "id_ID": "File video tidak dapat menjadi anak - tambahkan subtitle",
     "ms_MY": "Fail video tidak boleh menjadi anak - tambah sari kata",
     "th_TH": "ไฟล์วิดีโอไม่สามารถเป็นลูกได้ - เพิ่มคำบรรยายแทน",
-    "ur_PK": "ویڈیو فائلیں چائلڈ نہیں ہو سکتیں - سب ٹائٹل شامل کریں"
+    "ur_PK": "ویڈیو فائلیں چائلڈ نہیں ہو سکتیں - سب ٹائٹل شامل کریں",
 }
 
 BATCH_VALIDATE_MISSING_FILE_PATH = {
@@ -2147,7 +2129,7 @@ BATCH_VALIDATE_MISSING_FILE_PATH = {
     "id_ID": "Jalur file hilang",
     "ms_MY": "Laluan fail tiada",
     "th_TH": "ไม่มีเส้นทางไฟล์",
-    "ur_PK": "فائل کا راستہ غائب ہے"
+    "ur_PK": "فائل کا راستہ غائب ہے",
 }
 
 BATCH_VALIDATE_SAME_FILE = {
@@ -2172,7 +2154,7 @@ BATCH_VALIDATE_SAME_FILE = {
     "id_ID": "File induk dan subtitle tidak boleh sama",
     "ms_MY": "Fail induk dan sari kata tidak boleh sama",
     "th_TH": "ไฟล์หลักและคำบรรยายต้องไม่ใช่ไฟล์เดียวกัน",
-    "ur_PK": "پیرنٹ اور سب ٹائٹل ایک ہی فائل نہیں ہو سکتے"
+    "ur_PK": "پیرنٹ اور سب ٹائٹل ایک ہی فائل نہیں ہو سکتے",
 }
 
 BATCH_VALIDATE_CHILD_NOT_SUBTITLE = {
@@ -2197,7 +2179,7 @@ BATCH_VALIDATE_CHILD_NOT_SUBTITLE = {
     "id_ID": "Anak harus berupa file subtitle",
     "ms_MY": "Anak mesti fail sari kata",
     "th_TH": "ไฟล์ลูกต้องเป็นไฟล์คำบรรยาย",
-    "ur_PK": "چائلڈ کو سب ٹائٹل فائل ہونا چاہیے"
+    "ur_PK": "چائلڈ کو سب ٹائٹل فائل ہونا چاہیے",
 }
 
 BATCH_VALIDATE_DUPLICATE_PAIR = {
@@ -2222,7 +2204,7 @@ BATCH_VALIDATE_DUPLICATE_PAIR = {
     "id_ID": "Pasangan ini sudah ada",
     "ms_MY": "Pasangan ini sudah wujud",
     "th_TH": "คู่นี้มีอยู่แล้ว",
-    "ur_PK": "یہ جوڑا پہلے سے موجود ہے"
+    "ur_PK": "یہ جوڑا پہلے سے موجود ہے",
 }
 
 ADD_FILES = {
@@ -2247,7 +2229,7 @@ ADD_FILES = {
     "id_ID": "Tambahkan file",
     "ms_MY": "Tambah fail",
     "th_TH": "เพิ่มไฟล์",
-    "ur_PK": "فائلیں شامل کریں"
+    "ur_PK": "فائلیں شامل کریں",
 }
 
 ADD_PAIR = {
@@ -2272,7 +2254,7 @@ ADD_PAIR = {
     "id_ID": "Tambahkan pasangan",
     "ms_MY": "Tambah pasangan",
     "th_TH": "เพิ่มคู่",
-    "ur_PK": "جوڑا شامل کریں"
+    "ur_PK": "جوڑا شامل کریں",
 }
 
 ADD_PAIR_CONTINUOUSLY = {
@@ -2297,7 +2279,7 @@ ADD_PAIR_CONTINUOUSLY = {
     "id_ID": "Tambahkan pasangan (terus menerus)",
     "ms_MY": "Tambah pasangan (berterusan)",
     "th_TH": "เพิ่มคู่ (ต่อเนื่อง)",
-    "ur_PK": "جوڑا شامل کریں (مسلسل)"
+    "ur_PK": "جوڑا شامل کریں (مسلسل)",
 }
 
 ADD_FOLDER = {
@@ -2322,7 +2304,7 @@ ADD_FOLDER = {
     "id_ID": "Tambahkan folder",
     "ms_MY": "Tambah folder",
     "th_TH": "เพิ่มโฟลเดอร์",
-    "ur_PK": "فولڈر شامل کریں"
+    "ur_PK": "فولڈر شامل کریں",
 }
 
 ADD_MULTIPLE_FILES = {
@@ -2347,7 +2329,7 @@ ADD_MULTIPLE_FILES = {
     "id_ID": "Tambahkan beberapa file",
     "ms_MY": "Tambah berbilang fail",
     "th_TH": "เพิ่มหลายไฟล์",
-    "ur_PK": "متعدد فائلیں شامل کریں"
+    "ur_PK": "متعدد فائلیں شامل کریں",
 }
 
 AUTO_PAIRING_SEASON_EPISODE = {
@@ -2372,7 +2354,7 @@ AUTO_PAIRING_SEASON_EPISODE = {
     "id_ID": "Pemasangan Otomatis dengan Musim/Episode",
     "ms_MY": "Ganding Auto dengan Musim/Episod",
     "th_TH": "จับคู่อัตโนมัติด้วยซีซั่น/ตอน",
-    "ur_PK": "سیزن/ایپی سوڈ کے ساتھ خودکار جوڑا بنانا"
+    "ur_PK": "سیزن/ایپی سوڈ کے ساتھ خودکار جوڑا بنانا",
 }
 
 ADD_SUBTITLE_TO_ITEM = {
@@ -2472,7 +2454,7 @@ CHANGE_SELECTED = {
     "id_ID": "Ubah yang dipilih",
     "ms_MY": "Tukar yang dipilih",
     "th_TH": "เปลี่ยนรายการที่เลือก",
-    "ur_PK": "منتخب کو تبدیل کریں۔"
+    "ur_PK": "منتخب کو تبدیل کریں۔",
 }
 
 REMOVE = {
@@ -2497,7 +2479,7 @@ REMOVE = {
     "id_ID": "Hapus",
     "ms_MY": "Alih keluar",
     "th_TH": "ลบ",
-    "ur_PK": "ہٹائیں"
+    "ur_PK": "ہٹائیں",
 }
 
 REMOVE_SELECTED_COUNT = {
@@ -2572,7 +2554,7 @@ CLEAR_ALL = {
     "id_ID": "Bersihkan semua",
     "ms_MY": "Kosongkan semua",
     "th_TH": "ล้างทั้งหมด",
-    "ur_PK": "سب صاف کریں"
+    "ur_PK": "سب صاف کریں",
 }
 
 INVALID_PAIR_TITLE = {
@@ -3351,7 +3333,7 @@ HOW_THE_PAIRING_WORKS = {
     "id_ID": "Bagaimana Cara Kerja Pemasangan?",
     "ms_MY": "Bagaimana Gandaan Berfungsi?",
     "th_TH": "การจับคู่ทำงานอย่างไร?",
-    "ur_PK": "جوڑا بنانا کیسے کام کرتا ہے؟"
+    "ur_PK": "جوڑا بنانا کیسے کام کرتا ہے؟",
 }
 
 HOW_THE_PAIRING_WORKS_DESC = {
@@ -3376,7 +3358,7 @@ HOW_THE_PAIRING_WORKS_DESC = {
     "id_ID": '{program_name} secara otomatis mencocokkan file video atau subtitle referensi dengan file subtitle yang memiliki nomor episode serupa dalam namanya.\nContoh: "S01E01.srt/mkv" akan dipasangkan dengan "1x01.srt"\nFormat yang didukung: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
     "ms_MY": '{program_name} secara automatik memasangkan fail video atau sari kata rujukan dengan fail sari kata yang mempunyai nombor episod serupa dalam namanya.\nContoh: "S01E01.srt/mkv" akan dipasangkan dengan "1x01.srt"\nFormat yang disokong: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
     "th_TH": '{program_name} จับคู่ไฟล์วิดีโอหรือคำบรรยายอ้างอิงกับไฟล์คำบรรยายที่มีหมายเลขตอนคล้ายกันในชื่อโดยอัตโนมัติ\nตัวอย่าง: "S01E01.srt/mkv" จะจับคู่กับ "1x01.srt"\nรูปแบบที่รองรับ: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
-    "ur_PK": '{program_name} خودکار طور پر ویڈیو یا ریفرنس سب ٹائٹل فائلوں کو سب ٹائٹل فائلوں کے ساتھ میچ کرتا ہے جن کے ناموں میں ملتے جلتے ایپی سوڈ نمبر ہوں۔\nمثال: "S01E01.srt/mkv" کو "1x01.srt" کے ساتھ جوڑا جائے گا\nمعاون فارمیٹس: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101'
+    "ur_PK": '{program_name} خودکار طور پر ویڈیو یا ریفرنس سب ٹائٹل فائلوں کو سب ٹائٹل فائلوں کے ساتھ میچ کرتا ہے جن کے ناموں میں ملتے جلتے ایپی سوڈ نمبر ہوں۔\nمثال: "S01E01.srt/mkv" کو "1x01.srt" کے ساتھ جوڑا جائے گا\nمعاون فارمیٹس: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
 }
 
 TOTAL_VALID_PAIRS = {
@@ -3401,7 +3383,7 @@ TOTAL_VALID_PAIRS = {
     "id_ID": "Total pasangan valid: {pairs_count}",
     "ms_MY": "Jumlah pasangan yang sah: {pairs_count}",
     "th_TH": "จำนวนคู่ที่ถูกต้องทั้งหมด: {pairs_count}",
-    "ur_PK": "کل درست جوڑے: {pairs_count}"
+    "ur_PK": "کل درست جوڑے: {pairs_count}",
 }
 
 DRAG_DROP_VIDEO_SUBTITLE_FILES = {
@@ -3426,7 +3408,7 @@ DRAG_DROP_VIDEO_SUBTITLE_FILES = {
     "id_ID": "Seret dan lepas file video atau subtitle referensi di sini atau klik untuk menelusuri",
     "ms_MY": "Seret dan lepas fail video atau sari kata rujukan di sini atau klik untuk melihat-lihat",
     "th_TH": "ลากและวางไฟล์วิดีโอหรือคำบรรยายอ้างอิงที่นี่หรือคลิกเพื่อเรียกดู",
-    "ur_PK": "ویڈیو یا ریفرنس سب ٹائٹل فائل یہاں ڈریگ اور ڈراپ کریں یا براؤز کرنے کے لیے کلک کریں"
+    "ur_PK": "ویڈیو یا ریفرنس سب ٹائٹل فائل یہاں ڈریگ اور ڈراپ کریں یا براؤز کرنے کے لیے کلک کریں",
 }
 
 DRAG_DROP_VIDEO_SUBTITLE_FILES_OR_CLICK = {
@@ -3451,7 +3433,7 @@ DRAG_DROP_VIDEO_SUBTITLE_FILES_OR_CLICK = {
     "id_ID": "Seret dan lepas file video atau subtitle referensi di sini atau klik untuk opsi",
     "ms_MY": "Seret dan lepas fail video atau sari kata rujukan di sini atau klik untuk pilihan",
     "th_TH": "ลากและวางไฟล์วิดีโอหรือคำบรรยายอ้างอิงที่นี่หรือคลิกเพื่อดูตัวเลือก",
-    "ur_PK": "ویڈیو یا ریفرنس سب ٹائٹل فائلوں کو یہاں ڈریگ اور ڈراپ کریں یا آپشنز کے لیے کلک کریں"
+    "ur_PK": "ویڈیو یا ریفرنس سب ٹائٹل فائلوں کو یہاں ڈریگ اور ڈراپ کریں یا آپشنز کے لیے کلک کریں",
 }
 
 DRAG_DROP_SUBTITLE_FILES_OR_CLICK = {
@@ -3476,7 +3458,7 @@ DRAG_DROP_SUBTITLE_FILES_OR_CLICK = {
     "id_ID": "Seret dan lepas file subtitle di sini atau klik untuk opsi",
     "ms_MY": "Seret dan lepas fail sari kata di sini atau klik untuk pilihan",
     "th_TH": "ลากและวางไฟล์คำบรรยายที่นี่หรือคลิกเพื่อดูตัวเลือก",
-    "ur_PK": "سب ٹائٹل فائلوں کو یہاں ڈریگ اور ڈراپ کریں یا آپشنز کے لیے کلک کریں"
+    "ur_PK": "سب ٹائٹل فائلوں کو یہاں ڈریگ اور ڈراپ کریں یا آپشنز کے لیے کلک کریں",
 }
 
 MOVE_SELECTED_ITEMS_TO_OTHER_LIST = {
@@ -3501,7 +3483,7 @@ MOVE_SELECTED_ITEMS_TO_OTHER_LIST = {
     "id_ID": "Pindahkan item yang dipilih ke daftar lain",
     "ms_MY": "Alihkan item yang dipilih ke senarai lain",
     "th_TH": "ย้ายรายการที่เลือกไปยังรายการอื่น",
-    "ur_PK": "منتخب آئٹمز کو دوسری فہرست میں منتقل کریں"
+    "ur_PK": "منتخب آئٹمز کو دوسری فہرست میں منتقل کریں",
 }
 
 VIDEO_REFERENCE_SUBTITLES_TOTAL = {
@@ -3526,7 +3508,7 @@ VIDEO_REFERENCE_SUBTITLES_TOTAL = {
     "id_ID": "Video/Subtitle Referensi (Total file: {count})",
     "ms_MY": "Video/Sari Kata Rujukan (Jumlah fail: {count})",
     "th_TH": "วิดีโอ/คำบรรยายอ้างอิง (ไฟล์ทั้งหมด: {count})",
-    "ur_PK": "ویڈیو/ریفرنس سب ٹائٹلز (کل فائلیں: {count})"
+    "ur_PK": "ویڈیو/ریفرنس سب ٹائٹلز (کل فائلیں: {count})",
 }
 
 SUBTITLE_FILES_TOTAL = {
@@ -3551,7 +3533,7 @@ SUBTITLE_FILES_TOTAL = {
     "id_ID": "File Subtitle (Total file: {count})",
     "ms_MY": "Fail Sari Kata (Jumlah fail: {count})",
     "th_TH": "ไฟล์คำบรรยาย (ไฟล์ทั้งหมด: {count})",
-    "ur_PK": "سب ٹائٹل فائلیں (کل فائلیں: {count})"
+    "ur_PK": "سب ٹائٹل فائلیں (کل فائلیں: {count})",
 }
 
 MOVE_TO_OTHER_LIST = {
@@ -3576,7 +3558,7 @@ MOVE_TO_OTHER_LIST = {
     "id_ID": "Pindah ke daftar lain",
     "ms_MY": "Alih ke senarai lain",
     "th_TH": "ย้ายไปยังรายการอื่น",
-    "ur_PK": "دوسری فہرست میں منتقل کریں"
+    "ur_PK": "دوسری فہرست میں منتقل کریں",
 }
 
 SKIPPED_FILES_VIDEO_CANT_MOVE = {
@@ -3601,7 +3583,7 @@ SKIPPED_FILES_VIDEO_CANT_MOVE = {
     "id_ID": "Dilewati {count} file: File video tidak bisa dipindah ke daftar subtitle",
     "ms_MY": "Dilangkau {count} fail: Fail video tidak boleh dipindahkan ke senarai sari kata",
     "th_TH": "ข้าม {count} ไฟล์: ไฟล์วิดีโอไม่สามารถย้ายไปยังรายการคำบรรยายได้",
-    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: ویڈیو فائلوں کو سب ٹائٹل فہرست میں منتقل نہیں کیا جا سکتا"
+    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: ویڈیو فائلوں کو سب ٹائٹل فہرست میں منتقل نہیں کیا جا سکتا",
 }
 
 MOVE_ERRORS = {
@@ -3626,7 +3608,7 @@ MOVE_ERRORS = {
     "id_ID": "Kesalahan pemindahan",
     "ms_MY": "Ralat pemindahan",
     "th_TH": "ข้อผิดพลาดในการย้าย",
-    "ur_PK": "منتقلی کی خرابیاں"
+    "ur_PK": "منتقلی کی خرابیاں",
 }
 
 NONE_OF_SELECTED_FILES_HAVE_VALID_EXTENSIONS = {
@@ -3651,7 +3633,7 @@ NONE_OF_SELECTED_FILES_HAVE_VALID_EXTENSIONS = {
     "id_ID": "Tidak ada file yang dipilih memiliki ekstensi yang valid untuk daftar {list_type}.",
     "ms_MY": "Tiada fail yang dipilih mempunyai sambungan yang sah untuk senarai {list_type}.",
     "th_TH": "ไม่มีไฟล์ที่เลือกมีนามสกุลที่ถูกต้องสำหรับรายการ {list_type}",
-    "ur_PK": "منتخب فائلوں میں سے کوئی بھی {list_type} فہرست کے لیے درست ایکسٹینشن نہیں رکھتی۔"
+    "ur_PK": "منتخب فائلوں میں سے کوئی بھی {list_type} فہرست کے لیے درست ایکسٹینشن نہیں رکھتی۔",
 }
 
 REFERENCE = {
@@ -3676,7 +3658,7 @@ REFERENCE = {
     "id_ID": "referensi",
     "ms_MY": "rujukan",
     "th_TH": "อ้างอิง",
-    "ur_PK": "ریفرنس"
+    "ur_PK": "ریفرنس",
 }
 
 SUBTITLE = {
@@ -3701,7 +3683,7 @@ SUBTITLE = {
     "id_ID": "subtitle",
     "ms_MY": "sari kata",
     "th_TH": "คำบรรยาย",
-    "ur_PK": "سب ٹائٹل"
+    "ur_PK": "سب ٹائٹل",
 }
 
 ALL_FILES_ALREADY_IN_LISTS = {
@@ -3726,7 +3708,7 @@ ALL_FILES_ALREADY_IN_LISTS = {
     "id_ID": "Semua file sudah ada dalam daftar {list_type} atau daftar lainnya.",
     "ms_MY": "Semua fail sudah ada dalam senarai {list_type} atau senarai lain.",
     "th_TH": "ไฟล์ทั้งหมดอยู่ในรายการ {list_type} หรือรายการอื่นแล้ว",
-    "ur_PK": "تمام فائلیں پہلے سے ہی {list_type} فہرست یا دوسری فہرست میں موجود ہیں۔"
+    "ur_PK": "تمام فائلیں پہلے سے ہی {list_type} فہرست یا دوسری فہرست میں موجود ہیں۔",
 }
 
 SUCCESSFULLY_ADDED_FILES = {
@@ -3751,7 +3733,7 @@ SUCCESSFULLY_ADDED_FILES = {
     "id_ID": "Berhasil menambahkan {count} file",
     "ms_MY": "Berjaya menambah {count} fail",
     "th_TH": "เพิ่ม {count} ไฟล์สำเร็จ",
-    "ur_PK": "{count} فائل(یں) کامیابی سے شامل کی گئیں"
+    "ur_PK": "{count} فائل(یں) کامیابی سے شامل کی گئیں",
 }
 
 SKIPPED_FILES_MISSING_SEASON_EPISODE = {
@@ -3776,7 +3758,7 @@ SKIPPED_FILES_MISSING_SEASON_EPISODE = {
     "id_ID": "Dilewati {count} file: Informasi season/episode hilang",
     "ms_MY": "Dilangkau {count} fail: Maklumat musim/episod hilang",
     "th_TH": "ข้าม {count} ไฟล์: ขาดข้อมูลซีซัน/ตอน",
-    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: سیزن/ایپی سوڈ کی معلومات غائب"
+    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: سیزن/ایپی سوڈ کی معلومات غائب",
 }
 
 SKIPPED_FILES_ALREADY_IN_THIS_LIST = {
@@ -3801,7 +3783,7 @@ SKIPPED_FILES_ALREADY_IN_THIS_LIST = {
     "id_ID": "Dilewati {count} file: Sudah ada dalam daftar ini",
     "ms_MY": "Dilangkau {count} fail: Sudah ada dalam senarai ini",
     "th_TH": "ข้าม {count} ไฟล์: อยู่ในรายการนี้แล้ว",
-    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: پہلے سے اس فہرست میں موجود ہیں"
+    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: پہلے سے اس فہرست میں موجود ہیں",
 }
 
 SKIPPED_FILES_ALREADY_IN_OTHER_LIST = {
@@ -3826,7 +3808,7 @@ SKIPPED_FILES_ALREADY_IN_OTHER_LIST = {
     "id_ID": "Dilewati {count} file: Sudah ada dalam daftar lain",
     "ms_MY": "Dilangkau {count} fail: Sudah ada dalam senarai lain",
     "th_TH": "ข้าม {count} ไฟล์: อยู่ในรายการอื่นแล้ว",
-    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: پہلے سے دوسری فہرست میں موجود ہیں"
+    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: پہلے سے دوسری فہرست میں موجود ہیں",
 }
 
 SKIPPED_FILES_INVALID_EXTENSION = {
@@ -3851,7 +3833,7 @@ SKIPPED_FILES_INVALID_EXTENSION = {
     "id_ID": "Dilewati {count} file: Ekstensi file tidak valid",
     "ms_MY": "Dilangkau {count} fail: Sambungan fail tidak sah",
     "th_TH": "ข้าม {count} ไฟล์: นามสกุลไฟล์ไม่ถูกต้อง",
-    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: غلط فائل ایکسٹینشن"
+    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: غلط فائل ایکسٹینشن",
 }
 
 SKIPPED_FILES_DUPLICATE_EPISODE = {
@@ -3876,7 +3858,7 @@ SKIPPED_FILES_DUPLICATE_EPISODE = {
     "id_ID": "Dilewati {count} file: Season/episode duplikat",
     "ms_MY": "Dilangkau {count} fail: Musim/episod pendua",
     "th_TH": "ข้าม {count} ไฟล์: ซีซัน/ตอนซ้ำ",
-    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: ڈپلیکیٹ سیزن/ایپی سوڈ"
+    "ur_PK": "{count} فائل(یں) چھوڑی گئیں: ڈپلیکیٹ سیزن/ایپی سوڈ",
 }
 
 IMPORT_SUMMARY = {
@@ -3901,7 +3883,7 @@ IMPORT_SUMMARY = {
     "id_ID": "Ringkasan impor",
     "ms_MY": "Ringkasan import",
     "th_TH": "สรุปการนำเข้า",
-    "ur_PK": "درآمد کا خلاصہ"
+    "ur_PK": "درآمد کا خلاصہ",
 }
 
 NO_NEW_PAIRS = {
@@ -3926,7 +3908,7 @@ NO_NEW_PAIRS = {
     "id_ID": "Tidak ada pasangan baru",
     "ms_MY": "Tiada pasangan baharu",
     "th_TH": "ไม่มีคู่ใหม่",
-    "ur_PK": "کوئی نئے جوڑے نہیں"
+    "ur_PK": "کوئی نئے جوڑے نہیں",
 }
 
 ALL_PAIRS_ALREADY_EXIST_IN_BATCH = {
@@ -3951,7 +3933,7 @@ ALL_PAIRS_ALREADY_EXIST_IN_BATCH = {
     "id_ID": "Semua pasangan sudah ada dalam batch.",
     "ms_MY": "Semua pasangan sudah wujud dalam kumpulan.",
     "th_TH": "คู่ทั้งหมดมีอยู่ในชุดแล้ว",
-    "ur_PK": "تمام جوڑے پہلے سے ہی بیچ میں موجود ہیں۔"
+    "ur_PK": "تمام جوڑے پہلے سے ہی بیچ میں موجود ہیں۔",
 }
 
 ############### gui_automatic_tab.py ###############
@@ -3978,7 +3960,7 @@ SYNC_TOOL_SETTINGS = {
     "id_ID": "Pengaturan alat sinkronisasi",
     "ms_MY": "Tetapan alat penyegerakan",
     "th_TH": "การตั้งค่าเครื่องมือซิงค์",
-    "ur_PK": "سنک ٹول کی سیٹنگز"
+    "ur_PK": "سنک ٹول کی سیٹنگز",
 }
 
 SHOW_TOOL_INFORMATION = {
@@ -4003,7 +3985,7 @@ SHOW_TOOL_INFORMATION = {
     "id_ID": "Tampilkan informasi alat",
     "ms_MY": "Tunjukkan maklumat alat",
     "th_TH": "แสดงข้อมูลเครื่องมือ",
-    "ur_PK": "ٹول کی معلومات دکھائیں"
+    "ur_PK": "ٹول کی معلومات دکھائیں",
 }
 
 CANNOT_USE_SAME_FILE_FOR_BOTH_INPUTS = {
@@ -4028,7 +4010,7 @@ CANNOT_USE_SAME_FILE_FOR_BOTH_INPUTS = {
     "id_ID": "Tidak dapat menggunakan file yang sama untuk kedua input.",
     "ms_MY": "Tidak boleh menggunakan fail yang sama untuk kedua-dua input.",
     "th_TH": "ไม่สามารถใช้ไฟล์เดียวกันสำหรับทั้งสองอินพุตได้",
-    "ur_PK": "دونوں ان پٹ کے لیے ایک ہی فائل استعمال نہیں کی جا سکتی۔"
+    "ur_PK": "دونوں ان پٹ کے لیے ایک ہی فائل استعمال نہیں کی جا سکتی۔",
 }
 
 VIDEO_REFERENCE_FILE_DOES_NOT_EXIST = {
@@ -4053,7 +4035,7 @@ VIDEO_REFERENCE_FILE_DOES_NOT_EXIST = {
     "id_ID": "File video/referensi tidak ada.",
     "ms_MY": "Fail video/rujukan tidak wujud.",
     "th_TH": "ไฟล์วิดีโอ/อ้างอิงไม่มีอยู่",
-    "ur_PK": "ویڈیو/ریفرنس فائل موجود نہیں ہے۔"
+    "ur_PK": "ویڈیو/ریفرنس فائل موجود نہیں ہے۔",
 }
 
 SUBTITLE_FILE_DOES_NOT_EXIST = {
@@ -4078,7 +4060,7 @@ SUBTITLE_FILE_DOES_NOT_EXIST = {
     "id_ID": "File subtitle tidak ada.",
     "ms_MY": "Fail sari kata tidak wujud.",
     "th_TH": "ไฟล์คำบรรยายไม่มีอยู่",
-    "ur_PK": "سب ٹائٹل فائل موجود نہیں ہے۔"
+    "ur_PK": "سب ٹائٹل فائل موجود نہیں ہے۔",
 }
 
 ADDITIONAL_ARGUMENTS_TITLE = {
@@ -4103,7 +4085,7 @@ ADDITIONAL_ARGUMENTS_TITLE = {
     "id_ID": "Argumen tambahan untuk {tool}",
     "ms_MY": "Argumen tambahan untuk {tool}",
     "th_TH": "อาร์กิวเมนต์เพิ่มเติมสำหรับ {tool}",
-    "ur_PK": "{tool} کے لیے اضافی دلائل"
+    "ur_PK": "{tool} کے لیے اضافی دلائل",
 }
 
 ENTER_ADDITIONAL_ARGUMENTS_PROMPT = {
@@ -4128,7 +4110,7 @@ ENTER_ADDITIONAL_ARGUMENTS_PROMPT = {
     "id_ID": "Masukkan argumen tambahan untuk {tool}:",
     "ms_MY": "Masukkan argumen tambahan untuk {tool}:",
     "th_TH": "ป้อนอาร์กิวเมนต์เพิ่มเติมสำหรับ {tool}:",
-    "ur_PK": "{tool} کے لیے اضافی دلائل درج کریں:"
+    "ur_PK": "{tool} کے لیے اضافی دلائل درج کریں:",
 }
 
 ADDITIONAL_ARGUMENTS = {
@@ -4153,7 +4135,7 @@ ADDITIONAL_ARGUMENTS = {
     "id_ID": "Argumen tambahan",
     "ms_MY": "Argumen tambahan",
     "th_TH": "อาร์กิวเมนต์เพิ่มเติม",
-    "ur_PK": "اضافی دلائل"
+    "ur_PK": "اضافی دلائل",
 }
 
 SYNC_LOG_TAB_LABEL = {
@@ -4178,7 +4160,7 @@ SYNC_LOG_TAB_LABEL = {
     "id_ID": "Log Sinkronisasi",
     "ms_MY": "Log Penyegerakan",
     "th_TH": "บันทึกการซิงค์",
-    "ur_PK": "سنک لاگ"
+    "ur_PK": "سنک لاگ",
 }
 
 
@@ -4207,7 +4189,7 @@ SYNC_FAILED_CHECK_LOGS = {
     "id_ID": "Sinkronisasi gagal. Silakan periksa log.",
     "ms_MY": "Penyegerakan gagal. Sila semak log.",
     "th_TH": "การซิงค์ล้มเหลว โปรดตรวจสอบบันทึก",
-    "ur_PK": "سنک ناکام ہوگئی۔ براہ کرم لاگز چیک کریں۔"
+    "ur_PK": "سنک ناکام ہوگئی۔ براہ کرم لاگز چیک کریں۔",
 }
 
 REFERENCE_LABEL = {
@@ -4232,7 +4214,7 @@ REFERENCE_LABEL = {
     "id_ID": "Referensi:",
     "ms_MY": "Rujukan:",
     "th_TH": "อ้างอิง:",
-    "ur_PK": "حوالہ:"
+    "ur_PK": "حوالہ:",
 }
 
 SUBTITLE_LABEL = {
@@ -4257,7 +4239,7 @@ SUBTITLE_LABEL = {
     "id_ID": "Subtitle:",
     "ms_MY": "Sarikata:",
     "th_TH": "คำบรรยาย:",
-    "ur_PK": "سب ٹائٹل:"
+    "ur_PK": "سب ٹائٹل:",
 }
 
 SKIPPING_BOTH_FILES_DO_NOT_EXIST = {
@@ -4282,7 +4264,7 @@ SKIPPING_BOTH_FILES_DO_NOT_EXIST = {
     "id_ID": "Melewati: Kedua file tidak ada",
     "ms_MY": "Langkau: Kedua-dua fail tidak wujud",
     "th_TH": "ข้าม: ไฟล์ทั้งสองไม่มีอยู่",
-    "ur_PK": "چھوڑا جا رہا ہے: دونوں فائلیں موجود نہیں ہیں"
+    "ur_PK": "چھوڑا جا رہا ہے: دونوں فائلیں موجود نہیں ہیں",
 }
 
 SKIPPING_REFERENCE_FILE_DOES_NOT_EXIST = {
@@ -4307,7 +4289,7 @@ SKIPPING_REFERENCE_FILE_DOES_NOT_EXIST = {
     "id_ID": "Melewati: File referensi tidak ada",
     "ms_MY": "Langkau: Fail rujukan tidak wujud",
     "th_TH": "ข้าม: ไฟล์อ้างอิงไม่มีอยู่",
-    "ur_PK": "چھوڑا جا رہا ہے: ریفرنس فائل موجود نہیں ہے"
+    "ur_PK": "چھوڑا جا رہا ہے: ریفرنس فائل موجود نہیں ہے",
 }
 
 SKIPPING_SUBTITLE_FILE_DOES_NOT_EXIST = {
@@ -4332,7 +4314,7 @@ SKIPPING_SUBTITLE_FILE_DOES_NOT_EXIST = {
     "id_ID": "Melewati: File subtitle tidak ada",
     "ms_MY": "Langkau: Fail sari kata tidak wujud",
     "th_TH": "ข้าม: ไฟล์คำบรรยายไม่มีอยู่",
-    "ur_PK": "چھوڑا جا رہا ہے: سب ٹائٹل فائل موجود نہیں ہے"
+    "ur_PK": "چھوڑا جا رہا ہے: سب ٹائٹل فائل موجود نہیں ہے",
 }
 
 UNKNOWN_SYNC_TOOL = {
@@ -4357,7 +4339,7 @@ UNKNOWN_SYNC_TOOL = {
     "id_ID": "Alat sinkronisasi tidak dikenal: {tool}",
     "ms_MY": "Alat penyegerakan tidak diketahui: {tool}",
     "th_TH": "เครื่องมือซิงค์ที่ไม่รู้จัก: {tool}",
-    "ur_PK": "نامعلوم سنک ٹول: {tool}"
+    "ur_PK": "نامعلوم سنک ٹول: {tool}",
 }
 
 TOOL_DOES_NOT_SUPPORT_SUBTITLE_REFERENCE = {
@@ -4382,7 +4364,7 @@ TOOL_DOES_NOT_SUPPORT_SUBTITLE_REFERENCE = {
     "id_ID": "{tool} tidak mendukung file subtitle sebagai referensi. Kembali ke {fallback}.",
     "ms_MY": "{tool} tidak menyokong fail sari kata sebagai rujukan. Beralih ke {fallback}.",
     "th_TH": "{tool} ไม่รองรับไฟล์คำบรรยายเป็นข้อมูลอ้างอิง กำลังกลับไปใช้ {fallback}",
-    "ur_PK": "{tool} سب ٹائٹل فائلوں کو ریفرنس کے طور پر سپورٹ نہیں کرتا۔ {fallback} پر واپس جا رہے ہیں۔"
+    "ur_PK": "{tool} سب ٹائٹل فائلوں کو ریفرنس کے طور پر سپورٹ نہیں کرتا۔ {fallback} پر واپس جا رہے ہیں۔",
 }
 
 NO_EXECUTABLE_FOUND = {
@@ -4407,7 +4389,7 @@ NO_EXECUTABLE_FOUND = {
     "id_ID": "Tidak ada file executable yang ditemukan untuk {tool} di {os}",
     "ms_MY": "Tiada fail boleh laksana ditemui untuk {tool} di {os}",
     "th_TH": "ไม่พบไฟล์ที่รันได้สำหรับ {tool} บน {os}",
-    "ur_PK": "{os} پر {tool} کے لیے کوئی ایگزیکیوٹیبل نہیں ملا"
+    "ur_PK": "{os} پر {tool} کے لیے کوئی ایگزیکیوٹیبل نہیں ملا",
 }
 
 TOOL_FAILED_WITH_CODE = {
@@ -4432,7 +4414,7 @@ TOOL_FAILED_WITH_CODE = {
     "id_ID": "{tool} gagal. Kode kesalahan: {code}",
     "ms_MY": "{tool} gagal. Kod ralat: {code}",
     "th_TH": "{tool} ล้มเหลว รหัสข้อผิดพลาด: {code}",
-    "ur_PK": "{tool} ناکام ہوگیا۔ غلطی کا کوڈ: {code}"
+    "ur_PK": "{tool} ناکام ہوگیا۔ غلطی کا کوڈ: {code}",
 }
 
 ALASS_BRACKETS_ERROR = {
@@ -4457,7 +4439,7 @@ ALASS_BRACKETS_ERROR = {
     "id_ID": "Kesalahan ini kemungkinan disebabkan oleh karakter '[' atau ']' dalam nama file atau folder. ALASS tidak dapat memproses nama yang mengandung karakter ini. Silakan ganti nama file atau folder Anda dan coba lagi.",
     "ms_MY": "Ralat ini mungkin disebabkan oleh aksara '[' atau ']' dalam nama fail atau folder. ALASS tidak dapat memproses nama yang mengandungi aksara ini. Sila namakan semula fail atau folder anda dan cuba lagi.",
     "th_TH": "ข้อผิดพลาดนี้อาจเกิดจากอักขระ '[' หรือ ']' ในชื่อไฟล์หรือโฟลเดอร์ ALASS ไม่สามารถประมวลผลชื่อที่มีอักขระเหล่านี้ได้ กรุณาเปลี่ยนชื่อไฟล์หรือโฟลเดอร์ของคุณแล้วลองใหม่",
-    "ur_PK": "یہ خرابی ممکنہ طور پر فائل یا فولڈر کے نام میں '[' یا ']' حروف کی وجہ سے ہے۔ ALASS ان حروف والے ناموں کو پراسیس نہیں کر سکتا۔ براہ کرم اپنی فائلوں یا فولڈرز کا نام تبدیل کریں اور دوبارہ کوشش کریں۔"
+    "ur_PK": "یہ خرابی ممکنہ طور پر فائل یا فولڈر کے نام میں '[' یا ']' حروف کی وجہ سے ہے۔ ALASS ان حروف والے ناموں کو پراسیس نہیں کر سکتا۔ براہ کرم اپنی فائلوں یا فولڈرز کا نام تبدیل کریں اور دوبارہ کوشش کریں۔",
 }
 
 ERROR_PREFIX = {
@@ -4482,7 +4464,7 @@ ERROR_PREFIX = {
     "id_ID": "Kesalahan:",
     "ms_MY": "Ralat:",
     "th_TH": "ข้อผิดพลาด:",
-    "ur_PK": "خرابی:"
+    "ur_PK": "خرابی:",
 }
 
 CANCEL_BATCH_SYNC_TITLE = {
@@ -4507,7 +4489,7 @@ CANCEL_BATCH_SYNC_TITLE = {
     "id_ID": "Batalkan Sinkronisasi Batch",
     "ms_MY": "Batalkan Segerak Kumpulan",
     "th_TH": "ยกเลิกการซิงค์แบบกลุ่ม",
-    "ur_PK": "بیچ سنک منسوخ کریں"
+    "ur_PK": "بیچ سنک منسوخ کریں",
 }
 
 CANCEL_BATCH_SYNC_PROMPT = {
@@ -4532,7 +4514,7 @@ CANCEL_BATCH_SYNC_PROMPT = {
     "id_ID": "Anda yakin ingin membatalkan sinkronisasi batch?",
     "ms_MY": "Adakah anda pasti mahu batalkan segerak kumpulan?",
     "th_TH": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการซิงค์แบบกลุ่ม?",
-    "ur_PK": "کیا آپ واقعی بیچ سنک منسوخ کرنا چاہتے ہیں؟"
+    "ur_PK": "کیا آپ واقعی بیچ سنک منسوخ کرنا چاہتے ہیں؟",
 }
 
 BATCH_SYNC_COMPLETED = {
@@ -4557,7 +4539,7 @@ BATCH_SYNC_COMPLETED = {
     "id_ID": "Sinkronisasi batch selesai.",
     "ms_MY": "Penyegerakan kumpulan selesai.",
     "th_TH": "การซิงค์แบบกลุ่มเสร็จสมบูรณ์",
-    "ur_PK": "بیچ سنک مکمل ہو گیا۔"
+    "ur_PK": "بیچ سنک مکمل ہو گیا۔",
 }
 
 BATCH_SYNC_SUCCESSFUL = {
@@ -4582,7 +4564,7 @@ BATCH_SYNC_SUCCESSFUL = {
     "id_ID": "Berhasil: {count}",
     "ms_MY": "Berjaya: {count}",
     "th_TH": "สำเร็จ: {count}",
-    "ur_PK": "کامیاب: {count}"
+    "ur_PK": "کامیاب: {count}",
 }
 
 BATCH_SYNC_FAILED_PAIR = {
@@ -4607,7 +4589,7 @@ BATCH_SYNC_FAILED_PAIR = {
     "id_ID": "Pasangan gagal: [{idx}/{total}]",
     "ms_MY": "Pasangan gagal: [{idx}/{total}]",
     "th_TH": "คู่ที่ล้มเหลว: [{idx}/{total}]",
-    "ur_PK": "ناکام جوڑا: [{idx}/{total}]"
+    "ur_PK": "ناکام جوڑا: [{idx}/{total}]",
 }
 
 BATCH_SYNC_FAILED = {
@@ -4632,7 +4614,7 @@ BATCH_SYNC_FAILED = {
     "id_ID": "Gagal: {count}",
     "ms_MY": "Gagal: {count}",
     "th_TH": "ล้มเหลว: {count}",
-    "ur_PK": "ناکام: {count}"
+    "ur_PK": "ناکام: {count}",
 }
 
 BATCH_SYNC_PROCESSING_PAIR = {
@@ -4657,7 +4639,7 @@ BATCH_SYNC_PROCESSING_PAIR = {
     "id_ID": "Memproses pasangan [{idx}/{total}]",
     "ms_MY": "Memproses pasangan [{idx}/{total}]",
     "th_TH": "กำลังประมวลผลคู่ [{idx}/{total}]",
-    "ur_PK": "جوڑا پروسیس ہو رہا ہے [{idx}/{total}]"
+    "ur_PK": "جوڑا پروسیس ہو رہا ہے [{idx}/{total}]",
 }
 
 CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES = {
@@ -4682,7 +4664,7 @@ CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES = {
     "id_ID": "Memeriksa subtitle tertanam dalam video...",
     "ms_MY": "Memeriksa sari kata terbenam dalam video...",
     "th_TH": "กำลังตรวจสอบวิดีโอสำหรับคำบรรยายที่ฝังอยู่...",
-    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز چیک کیے جا رہے ہیں..."
+    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز چیک کیے جا رہے ہیں...",
 }
 
 EXTRACTION_FAILED_PREFIX = {
@@ -4707,7 +4689,7 @@ EXTRACTION_FAILED_PREFIX = {
     "id_ID": "Ekstraksi gagal: ",
     "ms_MY": "Pengekstrakan gagal: ",
     "th_TH": "การแยกข้อมูลล้มเหลว: ",
-    "ur_PK": "ایکسٹریکشن ناکام: "
+    "ur_PK": "ایکسٹریکشن ناکام: ",
 }
 
 EXTRACTION_SELECTED_WITH_TIMESTAMP = {
@@ -4732,7 +4714,7 @@ EXTRACTION_SELECTED_WITH_TIMESTAMP = {
     "id_ID": "Dipilih: {filename} dengan perbedaan timestamp: {score}",
     "ms_MY": "Dipilih: {filename} dengan perbezaan cap masa: {score}",
     "th_TH": "เลือกแล้ว: {filename} โดยมีความแตกต่างของ timestamp: {score}",
-    "ur_PK": "منتخب: {filename} ٹائم اسٹیمپ فرق کے ساتھ: {score}"
+    "ur_PK": "منتخب: {filename} ٹائم اسٹیمپ فرق کے ساتھ: {score}",
 }
 
 EXTRACTION_NO_COMPATIBLE_SUBTITLES = {
@@ -4757,7 +4739,7 @@ EXTRACTION_NO_COMPATIBLE_SUBTITLES = {
     "id_ID": "Tidak ditemukan subtitle yang kompatibel untuk diekstrak, menggunakan video...",
     "ms_MY": "Tiada sari kata serasi untuk diekstrak, menggunakan video...",
     "th_TH": "ไม่พบคำบรรยายที่เข้ากันได้สำหรับการแยก ใช้วิดีโอแทน...",
-    "ur_PK": "ایکسٹریکٹ کے لیے کوئی ہم آہنگ سب ٹائٹلز نہیں ملے، ویڈیو استعمال کی جا رہی ہے..."
+    "ur_PK": "ایکسٹریکٹ کے لیے کوئی ہم آہنگ سب ٹائٹلز نہیں ملے، ویڈیو استعمال کی جا رہی ہے...",
 }
 
 CONVERSION_FAILED_FOR_FILE = {
@@ -4782,7 +4764,7 @@ CONVERSION_FAILED_FOR_FILE = {
     "id_ID": "Konversi gagal untuk {filename}",
     "ms_MY": "Penukaran gagal untuk {filename}",
     "th_TH": "การแปลงล้มเหลวสำหรับ {filename}",
-    "ur_PK": "{filename} کے لیے کنورژن ناکام ہوگئی"
+    "ur_PK": "{filename} کے لیے کنورژن ناکام ہوگئی",
 }
 
 SYNC_CANCELLED_CONVERSION_FAILURE = {
@@ -4807,7 +4789,7 @@ SYNC_CANCELLED_CONVERSION_FAILURE = {
     "id_ID": "Sinkronisasi dibatalkan karena kegagalan konversi.",
     "ms_MY": "Penyegerakan dibatalkan kerana kegagalan penukaran.",
     "th_TH": "ยกเลิกการซิงค์เนื่องจากการแปลงล้มเหลว",
-    "ur_PK": "کنورژن کی ناکامی کی وجہ سے سنک منسوخ کر دی گئی۔"
+    "ur_PK": "کنورژن کی ناکامی کی وجہ سے سنک منسوخ کر دی گئی۔",
 }
 
 
@@ -4836,7 +4818,7 @@ ERROR_LOADING_SUBTITLE_FILE = {
     "id_ID": "Kesalahan memuat file subtitle: {error}",
     "ms_MY": "Ralat memuatkan fail sari kata: {error}",
     "th_TH": "เกิดข้อผิดพลาดในการโหลดไฟล์คำบรรยาย: {error}",
-    "ur_PK": "سب ٹائٹل فائل لوڈ کرنے میں خرابی: {error}"
+    "ur_PK": "سب ٹائٹل فائل لوڈ کرنے میں خرابی: {error}",
 }
 
 SUBTITLE_SHIFTED_SUCCESSFULLY = {
@@ -4861,7 +4843,7 @@ SUBTITLE_SHIFTED_SUCCESSFULLY = {
     "id_ID": "Subtitle berhasil digeser {milliseconds}ms!\nDisimpan di: {output_file}",
     "ms_MY": "Sari kata berjaya dianjak {milliseconds}ms!\nDisimpan di: {output_file}",
     "th_TH": "เลื่อนคำบรรยายสำเร็จ {milliseconds}ms!\nบันทึกที่: {output_file}",
-    "ur_PK": "سب ٹائٹل کامیابی سے {milliseconds}ms شفٹ ہو گیا!\nمحفوظ: {output_file}"
+    "ur_PK": "سب ٹائٹل کامیابی سے {milliseconds}ms شفٹ ہو گیا!\nمحفوظ: {output_file}",
 }
 
 ERROR_SAVING_SHIFTED_SUBTITLE = {
@@ -4886,7 +4868,7 @@ ERROR_SAVING_SHIFTED_SUBTITLE = {
     "id_ID": "Kesalahan menyimpan subtitle yang digeser: {error}",
     "ms_MY": "Ralat menyimpan sari kata yang dianjak: {error}",
     "th_TH": "เกิดข้อผิดพลาดในการบันทึกคำบรรยายที่เลื่อน: {error}",
-    "ur_PK": "شفٹ شدہ سب ٹائٹل محفوظ کرنے میں خرابی: {error}"
+    "ur_PK": "شفٹ شدہ سب ٹائٹل محفوظ کرنے میں خرابی: {error}",
 }
 
 
@@ -4915,7 +4897,7 @@ USED_LONGEST_SUBTITLE_FILE = {
     "id_ID": "Menggunakan file subtitle terpanjang",
     "ms_MY": "Menggunakan fail sari kata terpanjang",
     "th_TH": "ใช้ไฟล์คำบรรยายที่ยาวที่สุด",
-    "ur_PK": "سب سے لمبی سب ٹائٹل فائل استعمال کی گئی"
+    "ur_PK": "سب سے لمبی سب ٹائٹل فائل استعمال کی گئی",
 }
 
 VIDEO_FILE_NOT_FOUND = {
@@ -4940,7 +4922,7 @@ VIDEO_FILE_NOT_FOUND = {
     "id_ID": "File video tidak ditemukan: {video_file}",
     "ms_MY": "Fail video tidak dijumpai: {video_file}",
     "th_TH": "ไม่พบไฟล์วิดีโอ: {video_file}",
-    "ur_PK": "ویڈیو فائل نہیں ملی: {video_file}"
+    "ur_PK": "ویڈیو فائل نہیں ملی: {video_file}",
 }
 
 FFPROBE_FAILED_TO_ANALYZE_VIDEO = {
@@ -4965,7 +4947,7 @@ FFPROBE_FAILED_TO_ANALYZE_VIDEO = {
     "id_ID": "FFprobe gagal menganalisis file video",
     "ms_MY": "FFprobe gagal menganalisis fail video",
     "th_TH": "FFprobe ไม่สามารถวิเคราะห์ไฟล์วิดีโอได้",
-    "ur_PK": "FFprobe ویڈیو فائل کا تجزیہ کرنے میں ناکام"
+    "ur_PK": "FFprobe ویڈیو فائل کا تجزیہ کرنے میں ناکام",
 }
 
 FOUND_COMPATIBLE_SUBTITLES_EXTRACTING = {
@@ -4990,7 +4972,7 @@ FOUND_COMPATIBLE_SUBTITLES_EXTRACTING = {
     "id_ID": "Ditemukan {count} subtitle yang kompatibel dalam file video. Mengekstrak ke: {output_folder}",
     "ms_MY": "Ditemui {count} sari kata serasi dalam fail video. Mengekstrak ke: {output_folder}",
     "th_TH": "พบคำบรรยายที่เข้ากันได้ {count} รายการในไฟล์วิดีโอ กำลังแยกไปยัง: {output_folder}",
-    "ur_PK": "ویڈیو فائل میں {count} ہم آہنگ سب ٹائٹل ملے۔ ایکسٹریکٹ کیا جا رہا ہے: {output_folder}"
+    "ur_PK": "ویڈیو فائل میں {count} ہم آہنگ سب ٹائٹل ملے۔ ایکسٹریکٹ کیا جا رہا ہے: {output_folder}",
 }
 
 SUCCESSFULLY_EXTRACTED_SUBTITLE = {
@@ -5015,7 +4997,7 @@ SUCCESSFULLY_EXTRACTED_SUBTITLE = {
     "id_ID": "Berhasil diekstrak: {filename}",
     "ms_MY": "Berjaya diekstrak: {filename}",
     "th_TH": "แยกเสร็จสิ้น: {filename}",
-    "ur_PK": "کامیابی سے ایکسٹریکٹ کیا گیا: {filename}"
+    "ur_PK": "کامیابی سے ایکسٹریکٹ کیا گیا: {filename}",
 }
 
 CHOOSING_BEST_SUBTITLE_MATCH = {
@@ -5040,7 +5022,7 @@ CHOOSING_BEST_SUBTITLE_MATCH = {
     "id_ID": "Memilih kecocokan subtitle terbaik...",
     "ms_MY": "Memilih padanan sari kata terbaik...",
     "th_TH": "กำลังเลือกคำบรรยายที่ตรงกันที่สุด...",
-    "ur_PK": "بہترین سب ٹائٹل میچ منتخب کیا جا رہا ہے..."
+    "ur_PK": "بہترین سب ٹائٹل میچ منتخب کیا جا رہا ہے...",
 }
 
 SUBTITLE_EXTRACTION_FAILED = {
@@ -5065,7 +5047,7 @@ SUBTITLE_EXTRACTION_FAILED = {
     "id_ID": "Ekstraksi subtitle gagal: {error}",
     "ms_MY": "Pengekstrakan sari kata gagal: {error}",
     "th_TH": "การแยกคำบรรยายล้มเหลว: {error}",
-    "ur_PK": "سب ٹائٹل ایکسٹریکشن ناکام: {error}"
+    "ur_PK": "سب ٹائٹل ایکسٹریکشن ناکام: {error}",
 }
 
 
@@ -5094,7 +5076,7 @@ ERROR_CONVERTING_SUBTITLE = {
     "id_ID": "Kesalahan mengonversi subtitle: {error}",
     "ms_MY": "Ralat menukar sari kata: {error}",
     "th_TH": "เกิดข้อผิดพลาดในการแปลงคำบรรยาย: {error}",
-    "ur_PK": "سب ٹائٹل تبدیل کرنے میں خرابی: {error}"
+    "ur_PK": "سب ٹائٹل تبدیل کرنے میں خرابی: {error}",
 }
 
 ERROR_PARSING_XML = {
@@ -5119,7 +5101,7 @@ ERROR_PARSING_XML = {
     "id_ID": "Kesalahan parsing XML: {error}",
     "ms_MY": "Ralat menghurai XML: {error}",
     "th_TH": "เกิดข้อผิดพลาดในการแยกวิเคราะห์ XML: {error}",
-    "ur_PK": "XML پارس کرنے میں خرابی: {error}"
+    "ur_PK": "XML پارس کرنے میں خرابی: {error}",
 }
 
 ERROR_READING_FILE = {
@@ -5144,7 +5126,7 @@ ERROR_READING_FILE = {
     "id_ID": "Kesalahan membaca file: {error}",
     "ms_MY": "Ralat membaca fail: {error}",
     "th_TH": "เกิดข้อผิดพลาดในการอ่านไฟล์: {error}",
-    "ur_PK": "فائل پڑھنے میں خرابی: {error}"
+    "ur_PK": "فائل پڑھنے میں خرابی: {error}",
 }
 
 NO_VALID_SYNC_BLOCKS_FOUND_SMI = {
@@ -5169,7 +5151,7 @@ NO_VALID_SYNC_BLOCKS_FOUND_SMI = {
     "id_ID": "Tidak ditemukan blok SYNC yang valid dalam file SMI",
     "ms_MY": "Tiada blok SYNC yang sah ditemui dalam fail SMI",
     "th_TH": "ไม่พบบล็อก SYNC ที่ถูกต้องในไฟล์ SMI",
-    "ur_PK": "SMI فائل میں کوئی درست SYNC بلاک نہیں ملا"
+    "ur_PK": "SMI فائل میں کوئی درست SYNC بلاک نہیں ملا",
 }
 
 UNSUPPORTED_SUBTITLE_FORMAT_FOR_CONVERSION = {
@@ -5194,7 +5176,7 @@ UNSUPPORTED_SUBTITLE_FORMAT_FOR_CONVERSION = {
     "id_ID": "Kesalahan: Format subtitle tidak didukung untuk konversi: {extension}",
     "ms_MY": "Ralat: Format sari kata tidak disokong untuk penukaran: {extension}",
     "th_TH": "ข้อผิดพลาด: รูปแบบคำบรรยายไม่รองรับสำหรับการแปลง: {extension}",
-    "ur_PK": "خرابی: کنورژن کے لیے غیر معاون سب ٹائٹل فارمیٹ: {extension}"
+    "ur_PK": "خرابی: کنورژن کے لیے غیر معاون سب ٹائٹل فارمیٹ: {extension}",
 }
 
 CONVERTING_FORMAT_TO_SRT = {
@@ -5219,7 +5201,7 @@ CONVERTING_FORMAT_TO_SRT = {
     "id_ID": "Mengonversi {format} ke SRT...",
     "ms_MY": "Menukar {format} kepada SRT...",
     "th_TH": "กำลังแปลง {format} เป็น SRT...",
-    "ur_PK": "{format} کو SRT میں تبدیل کیا جا رہا ہے..."
+    "ur_PK": "{format} کو SRT میں تبدیل کیا جا رہا ہے...",
 }
 
 
@@ -5248,7 +5230,7 @@ CANNOT_MATCH_ENCODING_FILES_DO_NOT_EXIST = {
     "id_ID": "Tidak dapat mencocokkan encoding: satu atau kedua file subtitle tidak ada",
     "ms_MY": "Tidak dapat memadankan pengekodan: satu atau kedua-dua fail sari kata tiada",
     "th_TH": "ไม่สามารถจับคู่การเข้ารหัส: ไฟล์คำบรรยายหนึ่งหรือทั้งสองไม่มีอยู่",
-    "ur_PK": "اینکوڈنگ میچ نہیں ہو سکتی: ایک یا دونوں سب ٹائٹل فائلیں موجود نہیں"
+    "ur_PK": "اینکوڈنگ میچ نہیں ہو سکتی: ایک یا دونوں سب ٹائٹل فائلیں موجود نہیں",
 }
 
 FAILED_TO_READ_OUTPUT_WITH_ENCODING = {
@@ -5273,7 +5255,7 @@ FAILED_TO_READ_OUTPUT_WITH_ENCODING = {
     "id_ID": "Gagal membaca file output dengan encoding terdeteksi {encoding}, mencoba utf-8",
     "ms_MY": "Gagal membaca fail output dengan pengekodan dikesan {encoding}, mencuba utf-8",
     "th_TH": "ไม่สามารถอ่านไฟล์ผลลัพธ์ด้วยรหัสที่ตรวจพบ {encoding} กำลังลอง utf-8",
-    "ur_PK": "ڈیٹیکٹڈ اینکوڈنگ {encoding} کے ساتھ آؤٹ پٹ فائل پڑھنے میں ناکامی، utf-8 آزمایا جا رہا ہے"
+    "ur_PK": "ڈیٹیکٹڈ اینکوڈنگ {encoding} کے ساتھ آؤٹ پٹ فائل پڑھنے میں ناکامی، utf-8 آزمایا جا رہا ہے",
 }
 
 CHANGED_OUTPUT_SUBTITLE_ENCODING = {
@@ -5298,7 +5280,7 @@ CHANGED_OUTPUT_SUBTITLE_ENCODING = {
     "id_ID": "Pengkodean subtitle output diubah dari {output_encoding} ke {final_encoding}",
     "ms_MY": "Pengekodan sari kata output ditukar dari {output_encoding} ke {final_encoding}",
     "th_TH": "เปลี่ยนการเข้ารหัสคำบรรยายผลลัพธ์จาก {output_encoding} เป็น {final_encoding}",
-    "ur_PK": "آؤٹ پٹ سب ٹائٹل اینکوڈنگ {output_encoding} سے {final_encoding} میں تبدیل کر دی گئی"
+    "ur_PK": "آؤٹ پٹ سب ٹائٹل اینکوڈنگ {output_encoding} سے {final_encoding} میں تبدیل کر دی گئی",
 }
 
 FAILED_TO_REENCODE_KEEPING_ORIGINAL = {
@@ -5323,7 +5305,7 @@ FAILED_TO_REENCODE_KEEPING_ORIGINAL = {
     "id_ID": "Gagal mengenkode ulang ke {final_encoding}: {error}. Tetap menggunakan encoding asli.",
     "ms_MY": "Gagal mengekod semula kepada {final_encoding}: {error}. Mengekalkan pengekodan asal.",
     "th_TH": "ไม่สามารถเข้ารหัสใหม่เป็น {final_encoding}: {error} จะคงการเข้ารหัสเดิมไว้",
-    "ur_PK": "{final_encoding} میں دوبارہ اینکوڈ کرنے میں ناکامی: {error}. اصل اینکوڈنگ برقرار رکھی گئی ہے۔"
+    "ur_PK": "{final_encoding} میں دوبارہ اینکوڈ کرنے میں ناکامی: {error}. اصل اینکوڈنگ برقرار رکھی گئی ہے۔",
 }
 
 ERROR_MATCHING_SUBTITLE_ENCODING = {
@@ -5348,7 +5330,7 @@ ERROR_MATCHING_SUBTITLE_ENCODING = {
     "id_ID": "Kesalahan mencocokkan encoding subtitle: {error}",
     "ms_MY": "Ralat memadankan pengekodan sari kata: {error}",
     "th_TH": "เกิดข้อผิดพลาดในการจับคู่การเข้ารหัสคำบรรยาย: {error}",
-    "ur_PK": "سب ٹائٹل اینکوڈنگ میچ کرنے میں خرابی: {error}"
+    "ur_PK": "سب ٹائٹل اینکوڈنگ میچ کرنے میں خرابی: {error}",
 }
 
 OPEN_FOLDER_ERROR_TITLE = {
@@ -5373,7 +5355,7 @@ OPEN_FOLDER_ERROR_TITLE = {
     "id_ID": "Kesalahan membuka folder",
     "ms_MY": "Ralat membuka folder",
     "th_TH": "ข้อผิดพลาดในการเปิดโฟลเดอร์",
-    "ur_PK": "فولڈر کھولنے میں خرابی"
+    "ur_PK": "فولڈر کھولنے میں خرابی",
 }
 
 COULD_NOT_OPEN_FOLDER = {
@@ -5398,7 +5380,7 @@ COULD_NOT_OPEN_FOLDER = {
     "id_ID": "Tidak dapat membuka folder:\n{error}",
     "ms_MY": "Tidak dapat membuka folder:\n{error}",
     "th_TH": "ไม่สามารถเปิดโฟลเดอร์ได้:\n{error}",
-    "ur_PK": "فولڈر نہیں کھولا جا سکا:\n{error}"
+    "ur_PK": "فولڈر نہیں کھولا جا سکا:\n{error}",
 }
 
 RESET_SETTINGS_TITLE = {
@@ -5423,7 +5405,7 @@ RESET_SETTINGS_TITLE = {
     "id_ID": "Setel ulang pengaturan",
     "ms_MY": "Tetapkan semula tetapan",
     "th_TH": "รีเซ็ตการตั้งค่า",
-    "ur_PK": "سیٹنگز ری سیٹ کریں"
+    "ur_PK": "سیٹنگز ری سیٹ کریں",
 }
 
 RESET_SETTINGS_CONFIRMATION = {
@@ -5448,7 +5430,7 @@ RESET_SETTINGS_CONFIRMATION = {
     "id_ID": "Anda yakin ingin mengatur ulang pengaturan ke default? Ini akan memulai ulang aplikasi dan menghapus pengaturan Anda saat ini.",
     "ms_MY": "Adakah anda pasti mahu tetapkan semula tetapan kepada lalai? Ini akan memulakan semula aplikasi dan membuang tetapan semasa anda.",
     "th_TH": "คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตการตั้งค่าเป็นค่าเริ่มต้น? การดำเนินการนี้จะรีสตาร์ทแอปพลิเคชันและลบการตั้งค่าปัจจุบันของคุณ",
-    "ur_PK": "کیا آپ واقعی سیٹنگز کو ڈیفالٹ پر ری سیٹ کرنا چاہتے ہیں؟ اس سے ایپلیکیشن دوبارہ شروع ہوگی اور آپ کی موجودہ سیٹنگز ہٹا دی جائیں گی۔"
+    "ur_PK": "کیا آپ واقعی سیٹنگز کو ڈیفالٹ پر ری سیٹ کرنا چاہتے ہیں؟ اس سے ایپلیکیشن دوبارہ شروع ہوگی اور آپ کی موجودہ سیٹنگز ہٹا دی جائیں گی۔",
 }
 
 FAILED_TO_RESET_SETTINGS = {
@@ -5473,7 +5455,7 @@ FAILED_TO_RESET_SETTINGS = {
     "id_ID": "Gagal mengatur ulang pengaturan: {error}",
     "ms_MY": "Gagal menetapkan semula tetapan: {error}",
     "th_TH": "ไม่สามารถรีเซ็ตการตั้งค่าได้: {error}",
-    "ur_PK": "سیٹنگز ری سیٹ کرنے میں ناکامی: {error}"
+    "ur_PK": "سیٹنگز ری سیٹ کرنے میں ناکامی: {error}",
 }
 
 COULD_NOT_OPEN_CONFIG_LOCATION = {
@@ -5498,7 +5480,7 @@ COULD_NOT_OPEN_CONFIG_LOCATION = {
     "id_ID": "Tidak dapat membuka lokasi konfigurasi:\n{error}",
     "ms_MY": "Tidak dapat membuka lokasi konfigurasi:\n{error}",
     "th_TH": "ไม่สามารถเปิดตำแหน่งการกำหนดค่าได้:\n{error}",
-    "ur_PK": "کنفیگ لوکیشن نہیں کھولی جا سکی:\n{error}"
+    "ur_PK": "کنفیگ لوکیشن نہیں کھولی جا سکی:\n{error}",
 }
 
 LOGS_DIRECTORY_TITLE = {
@@ -5523,7 +5505,7 @@ LOGS_DIRECTORY_TITLE = {
     "id_ID": "Direktori log",
     "ms_MY": "Direktori log",
     "th_TH": "ไดเรกทอรีล็อก",
-    "ur_PK": "لاگز ڈائریکٹری"
+    "ur_PK": "لاگز ڈائریکٹری",
 }
 
 LOGS_DIRECTORY_EMPTY = {
@@ -5548,7 +5530,7 @@ LOGS_DIRECTORY_EMPTY = {
     "id_ID": "Direktori log kosong.",
     "ms_MY": "Direktori log kosong.",
     "th_TH": "ไดเรกทอรีล็อกว่างเปล่า",
-    "ur_PK": "لاگز ڈائریکٹری خالی ہے۔"
+    "ur_PK": "لاگز ڈائریکٹری خالی ہے۔",
 }
 
 DELETE_LOGS_DIRECTORY_TITLE = {
@@ -5573,7 +5555,7 @@ DELETE_LOGS_DIRECTORY_TITLE = {
     "id_ID": "Hapus direktori log",
     "ms_MY": "Padam direktori log",
     "th_TH": "ลบไดเรกทอรีล็อก",
-    "ur_PK": "لاگز ڈائریکٹری حذف کریں"
+    "ur_PK": "لاگز ڈائریکٹری حذف کریں",
 }
 
 DELETE_LOGS_DIRECTORY_CONFIRMATION = {
@@ -5598,7 +5580,7 @@ DELETE_LOGS_DIRECTORY_CONFIRMATION = {
     "id_ID": "Anda yakin ingin menghapus direktori log dengan {total_files} file?",
     "ms_MY": "Adakah anda pasti mahu padam direktori log dengan {total_files} fail?",
     "th_TH": "คุณแน่ใจหรือไม่ว่าต้องการลบไดเรกทอรีล็อกที่มี {total_files} ไฟล์?",
-    "ur_PK": "کیا آپ واقعی {total_files} فائلوں کے ساتھ لاگز ڈائریکٹری حذف کرنا چاہتے ہیں؟"
+    "ur_PK": "کیا آپ واقعی {total_files} فائلوں کے ساتھ لاگز ڈائریکٹری حذف کرنا چاہتے ہیں؟",
 }
 
 LOGS_DIRECTORY_CLEARED_TITLE = {
@@ -5623,7 +5605,7 @@ LOGS_DIRECTORY_CLEARED_TITLE = {
     "id_ID": "Direktori log telah dihapus",
     "ms_MY": "Direktori log telah dipadam",
     "th_TH": "ไดเรกทอรีล็อกถูกล้างแล้ว",
-    "ur_PK": "لاگز ڈائریکٹری صاف کر دی گئی"
+    "ur_PK": "لاگز ڈائریکٹری صاف کر دی گئی",
 }
 
 LOGS_DIRECTORY_CLEARED = {
@@ -5648,7 +5630,7 @@ LOGS_DIRECTORY_CLEARED = {
     "id_ID": "Direktori log berhasil dihapus.",
     "ms_MY": "Direktori log berjaya dipadam.",
     "th_TH": "ไดเรกทอรีล็อกถูกลบเรียบร้อยแล้ว",
-    "ur_PK": "لاگز ڈائریکٹری کامیابی سے حذف کر دی گئی ہے۔"
+    "ur_PK": "لاگز ڈائریکٹری کامیابی سے حذف کر دی گئی ہے۔",
 }
 
 FAILED_TO_CLEAR_LOGS_DIRECTORY = {
@@ -5673,7 +5655,7 @@ FAILED_TO_CLEAR_LOGS_DIRECTORY = {
     "id_ID": "Gagal menghapus direktori log: {error}",
     "ms_MY": "Gagal memadam direktori log: {error}",
     "th_TH": "ไม่สามารถล้างไดเรกทอรีล็อกได้: {error}",
-    "ur_PK": "لاگز ڈائریکٹری صاف کرنے میں ناکامی: {error}"
+    "ur_PK": "لاگز ڈائریکٹری صاف کرنے میں ناکامی: {error}",
 }
 
 ABOUT_PROGRAM_TITLE = {
@@ -5698,7 +5680,7 @@ ABOUT_PROGRAM_TITLE = {
     "id_ID": "Tentang {program_name}",
     "ms_MY": "Perihal {program_name}",
     "th_TH": "เกี่ยวกับ {program_name}",
-    "ur_PK": "{program_name} کے بارے میں"
+    "ur_PK": "{program_name} کے بارے میں",
 }
 
 VISIT_GITHUB_PAGE = {
@@ -5723,7 +5705,7 @@ VISIT_GITHUB_PAGE = {
     "id_ID": "Kunjungi halaman GitHub untuk pembaruan, dokumentasi, dan melaporkan masalah.",
     "ms_MY": "Lawati halaman GitHub untuk kemas kini, dokumentasi dan melaporkan isu.",
     "th_TH": "เยี่ยมชมหน้า GitHub สำหรับการอัปเดต เอกสาร และการรายงานปัญหา",
-    "ur_PK": "اپڈیٹس، دستاویزات اور مسائل کی رپورٹ کے لیے GitHub صفحہ ملاحظہ کریں۔"
+    "ur_PK": "اپڈیٹس، دستاویزات اور مسائل کی رپورٹ کے لیے GitHub صفحہ ملاحظہ کریں۔",
 }
 
 VISIT_GITHUB_PAGE_BUTTON = {
@@ -5748,7 +5730,7 @@ VISIT_GITHUB_PAGE_BUTTON = {
     "id_ID": "Kunjungi halaman GitHub",
     "ms_MY": "Lawati halaman GitHub",
     "th_TH": "เยี่ยมชมหน้า GitHub",
-    "ur_PK": "GitHub صفحہ ملاحظہ کریں"
+    "ur_PK": "GitHub صفحہ ملاحظہ کریں",
 }
 
 CHECK_FOR_UPDATES_BUTTON = {
@@ -5773,7 +5755,7 @@ CHECK_FOR_UPDATES_BUTTON = {
     "id_ID": "Periksa pembaruan",
     "ms_MY": "Semak kemas kini",
     "th_TH": "ตรวจสอบการอัปเดต",
-    "ur_PK": "اپڈیٹس چیک کریں"
+    "ur_PK": "اپڈیٹس چیک کریں",
 }
 
 CLOSE_BUTTON = {
@@ -5798,7 +5780,7 @@ CLOSE_BUTTON = {
     "id_ID": "Tutup",
     "ms_MY": "Tutup",
     "th_TH": "ปิด",
-    "ur_PK": "بند کریں"
+    "ur_PK": "بند کریں",
 }
 
 MODULE_LABEL = {
@@ -5823,7 +5805,7 @@ MODULE_LABEL = {
     "id_ID": "Modul",
     "ms_MY": "Modul",
     "th_TH": "โมดูล",
-    "ur_PK": "ماڈیول"
+    "ur_PK": "ماڈیول",
 }
 
 EXECUTABLE_LABEL = {
@@ -5848,7 +5830,7 @@ EXECUTABLE_LABEL = {
     "id_ID": "File yang dapat dieksekusi",
     "ms_MY": "Fail boleh laksana",
     "th_TH": "ไฟล์ปฏิบัติการ",
-    "ur_PK": "قابل عمل فائل"
+    "ur_PK": "قابل عمل فائل",
 }
 
 TYPE_LABEL = {
@@ -5873,7 +5855,7 @@ TYPE_LABEL = {
     "id_ID": "Tipe:",
     "ms_MY": "Jenis:",
     "th_TH": "ประเภท:",
-    "ur_PK": "قسم:"
+    "ur_PK": "قسم:",
 }
 
 COMMAND_STRUCTURE_LABEL = {
@@ -5898,7 +5880,7 @@ COMMAND_STRUCTURE_LABEL = {
     "id_ID": "Struktur perintah:",
     "ms_MY": "Struktur arahan:",
     "th_TH": "โครงสร้างคำสั่ง:",
-    "ur_PK": "کمانڈ کی ساخت:"
+    "ur_PK": "کمانڈ کی ساخت:",
 }
 
 SUPPORTED_FORMATS_LABEL = {
@@ -5923,7 +5905,7 @@ SUPPORTED_FORMATS_LABEL = {
     "id_ID": "Format yang didukung:",
     "ms_MY": "Format yang disokong:",
     "th_TH": "รูปแบบที่รองรับ:",
-    "ur_PK": "معاون شدہ فارمیٹس:"
+    "ur_PK": "معاون شدہ فارمیٹس:",
 }
 
 SUPPORTS_SUBTITLE_REFERENCE_LABEL = {
@@ -5948,7 +5930,7 @@ SUPPORTS_SUBTITLE_REFERENCE_LABEL = {
     "id_ID": "Mendukung subtitle sebagai referensi:",
     "ms_MY": "Menyokong sari kata sebagai rujukan:",
     "th_TH": "รองรับคำบรรยายเป็นข้อมูลอ้างอิง:",
-    "ur_PK": "ریفرنس کے طور پر سب ٹائٹل کی حمایت:"
+    "ur_PK": "ریفرنس کے طور پر سب ٹائٹل کی حمایت:",
 }
 
 YES_LABEL = {
@@ -5973,7 +5955,7 @@ YES_LABEL = {
     "id_ID": "Ya",
     "ms_MY": "Ya",
     "th_TH": "ใช่",
-    "ur_PK": "ہاں"
+    "ur_PK": "ہاں",
 }
 
 NO_LABEL = {
@@ -5998,7 +5980,7 @@ NO_LABEL = {
     "id_ID": "Tidak",
     "ms_MY": "Tidak",
     "th_TH": "ไม่",
-    "ur_PK": "نہیں"
+    "ur_PK": "نہیں",
 }
 
 DOCUMENTATION_BUTTON = {
@@ -6023,7 +6005,7 @@ DOCUMENTATION_BUTTON = {
     "id_ID": "Dokumentasi",
     "ms_MY": "Dokumentasi",
     "th_TH": "เอกสาร",
-    "ur_PK": "دستاویزات"
+    "ur_PK": "دستاویزات",
 }
 
 UPDATE_AVAILABLE_TITLE = {
@@ -6048,7 +6030,7 @@ UPDATE_AVAILABLE_TITLE = {
     "id_ID": "Pembaruan tersedia",
     "ms_MY": "Kemas kini tersedia",
     "th_TH": "มีการอัปเดต",
-    "ur_PK": "اپڈیٹ دستیاب ہے"
+    "ur_PK": "اپڈیٹ دستیاب ہے",
 }
 
 NEW_VERSION_AVAILABLE = {
@@ -6073,7 +6055,7 @@ NEW_VERSION_AVAILABLE = {
     "id_ID": "Versi baru {program_name} tersedia! ({local_version} → {remote_version})",
     "ms_MY": "Versi baharu {program_name} tersedia! ({local_version} → {remote_version})",
     "th_TH": "มี {program_name} เวอร์ชันใหม่! ({local_version} → {remote_version})",
-    "ur_PK": "{program_name} کا نیا ورژن دستیاب ہے! ({local_version} → {remote_version})"
+    "ur_PK": "{program_name} کا نیا ورژن دستیاب ہے! ({local_version} → {remote_version})",
 }
 
 VISIT_GITHUB_DOWNLOAD_LATEST = {
@@ -6098,7 +6080,7 @@ VISIT_GITHUB_DOWNLOAD_LATEST = {
     "id_ID": "Silakan kunjungi halaman GitHub dan unduh versi terbaru. Apakah Anda ingin membuka halaman rilis GitHub?",
     "ms_MY": "Sila lawati halaman GitHub dan muat turun versi terkini. Adakah anda mahu membuka halaman keluaran GitHub?",
     "th_TH": "โปรดเยี่ยมชมหน้า GitHub และดาวน์โหลดเวอร์ชันล่าสุด คุณต้องการเปิดหน้าการเผยแพร่ GitHub หรือไม่?",
-    "ur_PK": "براہ کرم GitHub صفحہ ملاحظہ کریں اور تازہ ترین ورژن ڈاؤن لوڈ کریں۔ کیا آپ GitHub ریلیز صفحہ کھولنا چاہتے ہیں؟"
+    "ur_PK": "براہ کرم GitHub صفحہ ملاحظہ کریں اور تازہ ترین ورژن ڈاؤن لوڈ کریں۔ کیا آپ GitHub ریلیز صفحہ کھولنا چاہتے ہیں؟",
 }
 
 UP_TO_DATE_TITLE = {
@@ -6123,7 +6105,7 @@ UP_TO_DATE_TITLE = {
     "id_ID": "Terbaru",
     "ms_MY": "Terkini",
     "th_TH": "เป็นเวอร์ชันล่าสุด",
-    "ur_PK": "اپ ٹو ڈیٹ"
+    "ur_PK": "اپ ٹو ڈیٹ",
 }
 
 RUNNING_LATEST_VERSION = {
@@ -6148,7 +6130,7 @@ RUNNING_LATEST_VERSION = {
     "id_ID": "Anda menggunakan versi terbaru ({version}) dari {program_name}.",
     "ms_MY": "Anda menggunakan versi terkini ({version}) bagi {program_name}.",
     "th_TH": "คุณกำลังใช้ {program_name} เวอร์ชันล่าสุด ({version})",
-    "ur_PK": "آپ {program_name} کا تازہ ترین ورژن ({version}) استعمال کر رہے ہیں۔"
+    "ur_PK": "آپ {program_name} کا تازہ ترین ورژن ({version}) استعمال کر رہے ہیں۔",
 }
 
 UPDATE_CHECK_FAILED_TITLE = {
@@ -6173,7 +6155,7 @@ UPDATE_CHECK_FAILED_TITLE = {
     "id_ID": "Pemeriksaan pembaruan gagal",
     "ms_MY": "Semakan kemas kini gagal",
     "th_TH": "การตรวจสอบการอัปเดตล้มเหลว",
-    "ur_PK": "اپڈیٹ چیک ناکام"
+    "ur_PK": "اپڈیٹ چیک ناکام",
 }
 
 COULD_NOT_CHECK_FOR_UPDATES = {
@@ -6198,7 +6180,7 @@ COULD_NOT_CHECK_FOR_UPDATES = {
     "id_ID": "Tidak dapat memeriksa pembaruan:\n{error_message}",
     "ms_MY": "Tidak dapat menyemak kemas kini:\n{error_message}",
     "th_TH": "ไม่สามารถตรวจสอบการอัปเดตได้:\n{error_message}",
-    "ur_PK": "اپڈیٹس چیک نہیں کر سکے:\n{error_message}"
+    "ur_PK": "اپڈیٹس چیک نہیں کر سکے:\n{error_message}",
 }
 
 SELECTED_FOLDER = {
@@ -6223,7 +6205,7 @@ SELECTED_FOLDER = {
     "id_ID": 'Folder yang dipilih: <span style="color:{color}">{folder_path}</span>',
     "ms_MY": 'Folder yang dipilih: <span style="color:{color}">{folder_path}</span>',
     "th_TH": 'โฟลเดอร์ที่เลือก: <span style="color:{color}">{folder_path}</span>',
-    "ur_PK": 'منتخب کردہ فولڈر: <span style="color:{color}">{folder_path}</span>'
+    "ur_PK": 'منتخب کردہ فولڈر: <span style="color:{color}">{folder_path}</span>',
 }
 
 SELECT_DESTINATION_FOLDER = {
@@ -6248,7 +6230,7 @@ SELECT_DESTINATION_FOLDER = {
     "id_ID": "Pilih folder tujuan",
     "ms_MY": "Pilih folder destinasi",
     "th_TH": "เลือกโฟลเดอร์ปลายทาง",
-    "ur_PK": "منزل کا فولڈر منتخب کریں"
+    "ur_PK": "منزل کا فولڈر منتخب کریں",
 }
 
 for name, obj in list(globals().items()):

@@ -597,7 +597,9 @@ def convert_to_srt(
     converter = converters.get(file_extension)
     if converter:
         try:
-            messages.append(texts.CONVERTING_FORMAT_TO_SRT.format(format=file_extension.upper()))
+            messages.append(
+                texts.CONVERTING_FORMAT_TO_SRT.format(format=file_extension.upper())
+            )
             converter(subtitle_file, srt_file)
         except Exception as e:
             messages.append(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
@@ -605,6 +607,8 @@ def convert_to_srt(
         return srt_file, messages
 
     messages.append(
-        texts.UNSUPPORTED_SUBTITLE_FORMAT_FOR_CONVERSION.format(extension=file_extension)
-)
+        texts.UNSUPPORTED_SUBTITLE_FORMAT_FOR_CONVERSION.format(
+            extension=file_extension
+        )
+    )
     return None, messages

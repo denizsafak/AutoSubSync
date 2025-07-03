@@ -33,9 +33,7 @@ from utils import update_config, open_filedialog, open_folder
 logger = logging.getLogger(__name__)
 
 # Constants for file dialogs
-VIDEO_SUBTITLE_FILTER = (
-    f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
-)
+VIDEO_SUBTITLE_FILTER = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
 VIDEO_FILTER = f"{texts.VIDEO_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS)})"
 SUBTITLE_FILTER = f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
 
@@ -343,7 +341,9 @@ class BatchTreeView(QTreeWidget):
             else:
                 invalid_pairs += 1
 
-        header_text = texts.PAIRS_HEADER_LABEL.format(valid=valid_pairs, invalid=invalid_pairs)
+        header_text = texts.PAIRS_HEADER_LABEL.format(
+            valid=valid_pairs, invalid=invalid_pairs
+        )
         self.setHeaderLabel(header_text)
 
     def _apply_expansion_recursive(self, parent_item_or_tree):
@@ -397,7 +397,12 @@ class BatchTreeView(QTreeWidget):
             return
 
         if message:
-            item.setToolTip(0, texts.BATCH_PAIR_STATUS_INVALID_LABEL.format(id_text=id_text, message=message))
+            item.setToolTip(
+                0,
+                texts.BATCH_PAIR_STATUS_INVALID_LABEL.format(
+                    id_text=id_text, message=message
+                ),
+            )
             return
 
         item.setToolTip(0, texts.BATCH_PAIR_STATUS_VALID_LABEL.format(id_text=id_text))
@@ -628,7 +633,10 @@ class BatchTreeView(QTreeWidget):
             )
             # Check if the top-level item is a subtitle file
             item_path = item_at_pos.data(0, Qt.ItemDataRole.UserRole)
-            if item_path and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS:
+            if (
+                item_path
+                and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS
+            ):
                 menu.addAction(
                     texts.ADD_VIDEO_TO_ITEM,
                     lambda: self.add_video_to_subtitle_dialog(item_at_pos),
@@ -636,13 +644,17 @@ class BatchTreeView(QTreeWidget):
 
         # Add 'Go to folder' option for any item
         if item_at_pos:
-            menu.addAction(texts.GO_TO_FOLDER, lambda: self.open_item_folder(item_at_pos))
+            menu.addAction(
+                texts.GO_TO_FOLDER, lambda: self.open_item_folder(item_at_pos)
+            )
 
         if selected_items:  # Operations for selected items
             if (
                 len(selected_items) == 1 and item_at_pos
             ):  # Change only makes sense for a single item
-                menu.addAction(texts.CHANGE, lambda: self.change_file_for_item(item_at_pos))
+                menu.addAction(
+                    texts.CHANGE, lambda: self.change_file_for_item(item_at_pos)
+                )
             menu.addAction(
                 texts.REMOVE_SELECTED_COUNT.format(len=len(selected_items)),
                 self.remove_selected_items,
@@ -661,11 +673,14 @@ class BatchTreeView(QTreeWidget):
         ):  # Disable remove/change if not on item and no selection
             for act in menu.actions():
                 # Disable actions whose triggered slot is self.remove_item or self.change_file_for_item
-                if hasattr(act, 'triggered'):
+                if hasattr(act, "triggered"):
                     # Check if the action's triggered signal is connected to the relevant methods
                     # This is a heuristic: check if the slot lambda contains 'remove_item' or 'change_file_for_item'
                     slot_repr = repr(act.triggered)
-                    if 'remove_item' in slot_repr or 'change_file_for_item' in slot_repr:
+                    if (
+                        "remove_item" in slot_repr
+                        or "change_file_for_item" in slot_repr
+                    ):
                         act.setEnabled(False)
 
         menu.popup(self.viewport().mapToGlobal(event.pos()))
@@ -700,9 +715,9 @@ class BatchTreeView(QTreeWidget):
         if len(paths) == 2 and all(os.path.isfile(p) for p in paths):
             if paths[0] == paths[1]:
                 QMessageBox.warning(
-                    self.app_parent, 
-                    texts.INVALID_PAIR_TITLE, 
-                    texts.CANNOT_PAIR_FILE_WITH_ITSELF
+                    self.app_parent,
+                    texts.INVALID_PAIR_TITLE,
+                    texts.CANNOT_PAIR_FILE_WITH_ITSELF,
                 )
                 return
             exts = [os.path.splitext(path)[1].lower() for path in paths]
@@ -710,7 +725,9 @@ class BatchTreeView(QTreeWidget):
             if exts[0] in VIDEO_EXTENSIONS and exts[1] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[0], paths[1]):
                     QMessageBox.warning(
-                        self.app_parent, texts.BATCH_VALIDATE_DUPLICATE_PAIR, texts.BATCH_VALIDATE_DUPLICATE_PAIR
+                        self.app_parent,
+                        texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+                        texts.BATCH_VALIDATE_DUPLICATE_PAIR,
                     )
                     return
                 reference_path, sub_path = paths[0], paths[1]
@@ -722,7 +739,9 @@ class BatchTreeView(QTreeWidget):
             elif exts[1] in VIDEO_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[1], paths[0]):
                     QMessageBox.warning(
-                        self.app_parent, texts.BATCH_VALIDATE_DUPLICATE_PAIR, texts.BATCH_VALIDATE_DUPLICATE_PAIR
+                        self.app_parent,
+                        texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+                        texts.BATCH_VALIDATE_DUPLICATE_PAIR,
                     )
                     return
                 reference_path, sub_path = paths[1], paths[0]
@@ -914,7 +933,10 @@ class BatchTreeView(QTreeWidget):
             return
 
         file_paths = open_filedialog(
-            self.app_parent, "files-open", texts.SELECT_SUBTITLE_FILE_TITLE, SUBTITLE_FILTER
+            self.app_parent,
+            "files-open",
+            texts.SELECT_SUBTITLE_FILE_TITLE,
+            SUBTITLE_FILTER,
         )
 
         if file_paths:
@@ -933,7 +955,9 @@ class BatchTreeView(QTreeWidget):
                     QMessageBox.warning(
                         self.app_parent,
                         texts.INVALID_FILE_TITLE,
-                        texts.INVALID_SUBTITLE_FILE_MESSAGE.format(filename=get_basename(file_path)),
+                        texts.INVALID_SUBTITLE_FILE_MESSAGE.format(
+                            filename=get_basename(file_path)
+                        ),
                     )
                     continue
                 if self.is_duplicate_pair(
@@ -975,7 +999,11 @@ class BatchTreeView(QTreeWidget):
         item_path = subtitle_item.data(0, Qt.ItemDataRole.UserRole)
         if not item_path or not is_subtitle_file(item_path):
             QMessageBox.warning(
-                self.app_parent, texts.INVALID_FILE_TITLE, texts.INVALID_SUBTITLE_FILE_MESSAGE.format(filename=get_basename(item_path))
+                self.app_parent,
+                texts.INVALID_FILE_TITLE,
+                texts.INVALID_SUBTITLE_FILE_MESSAGE.format(
+                    filename=get_basename(item_path)
+                ),
             )
             return
 
@@ -988,7 +1016,9 @@ class BatchTreeView(QTreeWidget):
 
         if reference_path == subtitle_item.data(0, Qt.ItemDataRole.UserRole):
             QMessageBox.warning(
-                self.app_parent, texts.INVALID_PAIR_TITLE, texts.CANNOT_PAIR_FILE_WITH_ITSELF
+                self.app_parent,
+                texts.INVALID_PAIR_TITLE,
+                texts.CANNOT_PAIR_FILE_WITH_ITSELF,
             )
             return
 
@@ -996,7 +1026,9 @@ class BatchTreeView(QTreeWidget):
             reference_path, subtitle_item.data(0, Qt.ItemDataRole.UserRole)
         ):
             QMessageBox.warning(
-                self.app_parent, texts.BATCH_VALIDATE_DUPLICATE_PAIR, texts.BATCH_VALIDATE_DUPLICATE_PAIR
+                self.app_parent,
+                texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+                texts.BATCH_VALIDATE_DUPLICATE_PAIR,
             )
             return
 
@@ -1192,7 +1224,9 @@ def create_batch_interface(self):
         self.batch_buttons_widget = QWidget(self)
         batch_buttons_layout = QHBoxLayout(self.batch_buttons_widget)
         batch_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        self.btn_batch_add_files = QPushButton(texts.ADD_FILES, self.batch_buttons_widget)
+        self.btn_batch_add_files = QPushButton(
+            texts.ADD_FILES, self.batch_buttons_widget
+        )
         self.btn_batch_add_files.clicked.connect(
             lambda: self.show_batch_add_menu(self.btn_batch_add_files)
         )
@@ -1295,11 +1329,17 @@ def handle_add_pair(self):
         return
 
     if video_ref_path == sub_path:
-        QMessageBox.warning(self, texts.INVALID_PAIR_TITLE, texts.CANNOT_PAIR_FILE_WITH_ITSELF)
+        QMessageBox.warning(
+            self, texts.INVALID_PAIR_TITLE, texts.CANNOT_PAIR_FILE_WITH_ITSELF
+        )
         return
 
     if self.batch_tree_view.is_duplicate_pair(video_ref_path, sub_path):
-        QMessageBox.warning(self, texts.BATCH_VALIDATE_DUPLICATE_PAIR, texts.BATCH_VALIDATE_DUPLICATE_PAIR)
+        QMessageBox.warning(
+            self,
+            texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+            texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+        )
         return
     self.batch_tree_view.add_explicit_pair(video_ref_path, sub_path)
 
@@ -1405,11 +1445,17 @@ def handle_add_pairs_continuously(self):
             continue
 
         if video_ref_path == sub_path:
-            QMessageBox.warning(self, texts.INVALID_PAIR_TITLE, texts.CANNOT_PAIR_FILE_WITH_ITSELF)
+            QMessageBox.warning(
+                self, texts.INVALID_PAIR_TITLE, texts.CANNOT_PAIR_FILE_WITH_ITSELF
+            )
             continue
 
         if self.batch_tree_view.is_duplicate_pair(video_ref_path, sub_path):
-            QMessageBox.warning(self, texts.BATCH_VALIDATE_DUPLICATE_PAIR, texts.BATCH_VALIDATE_DUPLICATE_PAIR)
+            QMessageBox.warning(
+                self,
+                texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+                texts.BATCH_VALIDATE_DUPLICATE_PAIR,
+            )
             continue
         self.batch_tree_view.add_explicit_pair(video_ref_path, sub_path)
 
@@ -1463,7 +1509,9 @@ def validate_batch_inputs(self):
     valid_pairs = self.batch_tree_view.get_all_valid_pairs()
     if not valid_pairs:
         logger.warning("No valid pairs found for batch processing.")
-        QMessageBox.warning(self, texts.NO_VALID_PAIRS_TITLE, texts.NO_VALID_PAIRS_MESSAGE)
+        QMessageBox.warning(
+            self, texts.NO_VALID_PAIRS_TITLE, texts.NO_VALID_PAIRS_MESSAGE
+        )
         return False
 
     # Log information about valid pairs for debugging

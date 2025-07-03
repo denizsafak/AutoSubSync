@@ -6,6 +6,8 @@ import zipfile
 import tarfile
 import importlib.util
 import json
+import re
+import ast
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
@@ -122,48 +124,24 @@ def ensure_ffmpeg():
         print("FFmpeg executables already exist. Skipping download.")
 
 
-def load_constants():
-    """Load constants module using importlib with venv python"""
+def get_version_info(module_name):
+    """Return a version information of package."""
+    from importlib.metadata import version, PackageNotFoundError
     try:
-        # Use venv python to load constants
-        if platform.system() == "Windows":
-            python_executable = "venv\\Scripts\\python"
-        else:
-            python_executable = "venv/bin/python"
-        
-        # Execute a subprocess to get constants with offscreen display and additional headless settings
-        env = os.environ.copy()
-        env["QT_QPA_PLATFORM"] = "offscreen"
-        env["DISPLAY"] = ""
-        env["HEADLESS"] = "1"
-        
-        result = subprocess.run([
-            python_executable, "-c",
-            "import os; os.environ['QT_QPA_PLATFORM'] = 'offscreen'; "
-            "import sys; sys.path.insert(0, 'main'); "
-            "from constants import VERSION, SYNC_TOOLS; "
-            "import json; "
-            "data = {'VERSION': VERSION, 'SYNC_TOOLS': {k: {'version': v.get('version', 'unknown'), 'github': v.get('github', '')} for k, v in SYNC_TOOLS.items()}}; "
-            "print(json.dumps(data))"
-        ], capture_output=True, text=True, cwd=script_dir, env=env)
-        
-        if result.returncode == 0:
-            return json.loads(result.stdout.strip())
-        else:
-            print(f"Error loading constants: {result.stderr}")
-            return None
-    except Exception as e:
-        print(f"Error loading constants: {e}")
-        return None
+        return version(module_name)
+    except PackageNotFoundError:
+        return "0.0"
 
 
 def get_autosubsync_version():
-    constants = load_constants()
-    if constants:
-        version = constants["VERSION"]
-        print("Detected AutoSubSync version: " + version)
-        return version
-    return "unknown"
+    try:
+        with open(os.path.join("main", "VERSION"), "r") as f:
+            version = f.read().strip()
+            print("Detected AutoSubSync version: " + version)
+            return version
+    except Exception as e:
+        print(f"Error reading AutoSubSync version: {e}")
+        return "unknown"
 
 
 def get_ffmpeg_version():
@@ -182,21 +160,49 @@ def get_ffmpeg_version():
         return "unknown"
 
 
+def get_sync_tools_names_from_constants():
+    """Parse constants.py using ast to extract SYNC_TOOLS dictionary top-level keys as a list of tool names."""
+    constants_path = os.path.join(script_dir, "main", "constants.py")
+    with open(constants_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    tree = ast.parse(content, filename=constants_path)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "SYNC_TOOLS":
+                    if isinstance(node.value, ast.Dict):
+                        tool_names = []
+                        for key in node.value.keys:
+                            if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                                tool_names.append(key.value)
+                        return tool_names
+    return []
+
+
 def get_sync_tools_versions():
-    """Get versions of sync tools from constants.py"""
-    constants = load_constants()
-    if constants:
-        sync_tools_versions = {}
-        for tool_name, tool_info in constants["SYNC_TOOLS"].items():
-            version = tool_info.get("version", "unknown")
-            github = tool_info.get("github", "")
-            sync_tools_versions[tool_name] = {
-                "version": version,
-                "github": github
-            }
-            print(f"Detected {tool_name} version: {version}")
-        return sync_tools_versions
-    return {}
+    """Get versions of sync tools by parsing constants.py for tool names and using get_version_info or the version field for executables."""
+    constants_path = os.path.join(script_dir, "main", "constants.py")
+    with open(constants_path, "r", encoding="utf-8") as f:
+        tree = ast.parse(f.read(), filename=constants_path)
+    sync_tools = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id == "SYNC_TOOLS" for t in node.targets
+        ) and isinstance(node.value, ast.Dict):
+            for key, value in zip(node.value.keys, node.value.values):
+                if isinstance(key, ast.Constant) and isinstance(key.value, str) and isinstance(value, ast.Dict):
+                    tool_name = key.value
+                    tool_type = tool_version = None
+                    for k, v in zip(value.keys, value.values):
+                        if isinstance(k, ast.Constant):
+                            if k.value == "type" and isinstance(v, ast.Constant):
+                                tool_type = v.value
+                            elif k.value == "version" and isinstance(v, ast.Constant):
+                                tool_version = v.value
+                    sync_tools[tool_name] = {"version": tool_version if tool_type == "executable" and tool_version else get_version_info(tool_name)}
+    for tool_name, info in sync_tools.items():
+        print(f"Detected {tool_name} version: {info['version']}")
+    return sync_tools
 
 
 def check_versions():

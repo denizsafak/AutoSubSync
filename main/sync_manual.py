@@ -272,7 +272,9 @@ def shift_subtitle(
         with open(output_file, "w", encoding=encoding, errors="replace") as file:
             file.write("\n".join(new_lines))
 
-        success_msg = texts.SUBTITLE_SHIFTED_SUCCESSFULLY.format(milliseconds=milliseconds, output_file=output_file)
+        success_msg = texts.SUBTITLE_SHIFTED_SUCCESSFULLY.format(
+            milliseconds=milliseconds, output_file=output_file
+        )
         logger.info(f"Successfully shifted subtitle by {milliseconds}ms: {output_file}")
 
         return output_file, True, success_msg

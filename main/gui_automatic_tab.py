@@ -139,6 +139,7 @@ def setup_auto_sync_tab(self):
     # Position the + and ? buttons in the top right of the group box
     self.btn_add_args.setParent(self.sync_options_group)
     self.btn_tool_info.setParent(self.sync_options_group)
+
     def _move_buttons(event=None):
         # Place + to the left of ?
         x_info = self.sync_options_group.width() - self.btn_tool_info.width() - 10
@@ -149,6 +150,7 @@ def setup_auto_sync_tab(self):
         # Ensure both buttons are on top
         self.btn_add_args.raise_()
         self.btn_tool_info.raise_()
+
     self.sync_options_group.resizeEvent = _move_buttons
 
     self.sync_tool_combo = self._dropdown(
@@ -251,7 +253,9 @@ def validate_auto_sync_inputs(self):
         ):
             logger.warning("Cannot use the same file for both inputs.")
             QMessageBox.warning(
-                self, texts.INVALID_FILE_TITLE, texts.CANNOT_USE_SAME_FILE_FOR_BOTH_INPUTS
+                self,
+                texts.INVALID_FILE_TITLE,
+                texts.CANNOT_USE_SAME_FILE_FOR_BOTH_INPUTS,
             )
             return False
         # Check if files exist
@@ -259,7 +263,9 @@ def validate_auto_sync_inputs(self):
             self.video_ref_input.file_path
         ):
             QMessageBox.warning(
-                self, texts.FILE_NOT_FOUND_TITLE, texts.VIDEO_REFERENCE_FILE_DOES_NOT_EXIST
+                self,
+                texts.FILE_NOT_FOUND_TITLE,
+                texts.VIDEO_REFERENCE_FILE_DOES_NOT_EXIST,
             )
             return False
         if self.subtitle_input.file_path and not os.path.exists(
@@ -353,9 +359,9 @@ def show_auto_sync_inputs(self):
 def update_auto_sync_ui_for_batch(self):
     """Update UI for batch mode"""
     self.show_auto_sync_inputs()
-    
+
     # Update button text based on current mode
-    if hasattr(self, 'btn_batch_mode'):
+    if hasattr(self, "btn_batch_mode"):
         if self.batch_mode_enabled:
             self.btn_batch_mode.setText(texts.NORMAL_MODE)
         else:
@@ -399,7 +405,11 @@ def update_sync_tool_options(self, tool):
             # Create checkbox
             checkbox = self._checkbox(label)
             argument = option_data.get("argument", "")
-            tooltip_text = f"{argument}: {tooltip}" if argument and tooltip else (argument if argument else tooltip)
+            tooltip_text = (
+                f"{argument}: {tooltip}"
+                if argument and tooltip
+                else (argument if argument else tooltip)
+            )
             checkbox.setToolTip(tooltip_text)
             checkbox.setChecked(self.config.get(config_key, default))
             checkbox.toggled.connect(
@@ -416,7 +426,11 @@ def update_sync_tool_options(self, tool):
                 self.sync_options_layout, label, [labels.get(v, v) for v in values]
             )
             argument = option_data.get("argument", "")
-            tooltip_text = f"{argument}: {tooltip}" if argument and tooltip else (argument if argument else tooltip)
+            tooltip_text = (
+                f"{argument}: {tooltip}"
+                if argument and tooltip
+                else (argument if argument else tooltip)
+            )
             dropdown.setToolTip(tooltip_text)
 
             saved = self.config.get(config_key, default)
@@ -440,14 +454,20 @@ def update_sync_tool_options(self, tool):
                 self.sync_options_layout, label, range_min, range_max, current_value
             )
             argument = option_data.get("argument", "")
-            tooltip_text = f"{argument}: {tooltip}" if argument and tooltip else (argument if argument else tooltip)
+            tooltip_text = (
+                f"{argument}: {tooltip}"
+                if argument and tooltip
+                else (argument if argument else tooltip)
+            )
             slider.setToolTip(tooltip_text)
-            
+
             # Special handling for alass split_penalty slider
             if tool == "alass" and option_name == "split_penalty":
+
                 def update_split_penalty_display(value):
                     val_label.setText("No splits" if value == -1 else str(value))
                     update_config(self, config_key, value)
+
                 # Set initial display
                 update_split_penalty_display(current_value)
                 slider.valueChanged.connect(update_split_penalty_display)
@@ -534,7 +554,9 @@ def show_log_window(self):
             self.tab_widget.removeTab(auto_tab_index)
             self._stored_auto_tab_widget.setParent(None)
             # Insert the log window as a new tab at the same position
-            self.tab_widget.insertTab(auto_tab_index, self.log_window, texts.SYNC_LOG_TAB_LABEL)
+            self.tab_widget.insertTab(
+                auto_tab_index, self.log_window, texts.SYNC_LOG_TAB_LABEL
+            )
             self.tab_widget.setCurrentIndex(auto_tab_index)
 
     # Show the log window and print configuration
@@ -554,7 +576,9 @@ def restore_auto_sync_tab(self):
 
         # Re-insert the original auto sync tab
         self.tab_widget.insertTab(
-            self._stored_auto_tab_index, self._stored_auto_tab_widget, texts.AUTOMATIC_SYNC_TAB_LABEL
+            self._stored_auto_tab_index,
+            self._stored_auto_tab_widget,
+            texts.AUTOMATIC_SYNC_TAB_LABEL,
         )
         self.tab_widget.setCurrentIndex(self._stored_auto_tab_index)
 

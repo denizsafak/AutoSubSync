@@ -138,7 +138,9 @@ class AutoPairingDialog(QDialog):
         exp_layout = QVBoxLayout(exp_widget)
         exp_layout.setContentsMargins(0, 0, 0, 0)
         exp_layout.addWidget(QLabel(f"<h2>{texts.HOW_THE_PAIRING_WORKS}</h2>"))
-        desc = QLabel(texts.HOW_THE_PAIRING_WORKS_DESC.format(program_name=PROGRAM_NAME))
+        desc = QLabel(
+            texts.HOW_THE_PAIRING_WORKS_DESC.format(program_name=PROGRAM_NAME)
+        )
         desc.setWordWrap(True)
         exp_layout.addWidget(desc)
         exp_layout.addStretch()
@@ -281,7 +283,9 @@ class AutoPairingDialog(QDialog):
     def update_header_labels(self):
         """Update the header labels with file counts."""
         self.ref_list_widget.setHeaderLabel(
-            texts.VIDEO_REFERENCE_SUBTITLES_TOTAL.format(count=len(self.reference_files))
+            texts.VIDEO_REFERENCE_SUBTITLES_TOTAL.format(
+                count=len(self.reference_files)
+            )
         )
         self.sub_list_widget.setHeaderLabel(
             texts.SUBTITLE_FILES_TOTAL.format(count=len(self.subtitle_files))
@@ -325,7 +329,9 @@ class AutoPairingDialog(QDialog):
         add_files_menu.addAction(
             texts.ADD_MULTIPLE_FILES, lambda: self.add_files_dialog(is_reference)
         )
-        add_files_menu.addAction(texts.ADD_FOLDER, lambda: self.add_folder(is_reference))
+        add_files_menu.addAction(
+            texts.ADD_FOLDER, lambda: self.add_folder(is_reference)
+        )
 
         menu.addSeparator()
 
@@ -463,11 +469,15 @@ class AutoPairingDialog(QDialog):
         error_messages = []
         if errors["moving_video"]:
             error_messages.append(
-                texts.SKIPPED_FILES_VIDEO_CANT_MOVE.format(count=len(errors['moving_video']))
+                texts.SKIPPED_FILES_VIDEO_CANT_MOVE.format(
+                    count=len(errors["moving_video"])
+                )
             )
         if errors["duplicate_episode"]:
             error_messages.append(
-                texts.SKIPPED_FILES_DUPLICATE_EPISODE.format(count=len(errors['duplicate_episode']))
+                texts.SKIPPED_FILES_DUPLICATE_EPISODE.format(
+                    count=len(errors["duplicate_episode"])
+                )
             )
 
         if error_messages:
@@ -512,9 +522,16 @@ class AutoPairingDialog(QDialog):
         files = open_filedialog(
             self.parent_window,
             "files-open",
-            texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE if is_reference else texts.SELECT_SUBTITLE_FILE_TITLE,
-            f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL if is_reference else texts.SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})" if is_reference
-            else f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})",
+            (
+                texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE
+                if is_reference
+                else texts.SELECT_SUBTITLE_FILE_TITLE
+            ),
+            (
+                f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL if is_reference else texts.SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+                if is_reference
+                else f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+            ),
         )
         if files:
             self.add_files(is_reference, files)
@@ -558,7 +575,9 @@ class AutoPairingDialog(QDialog):
                 QMessageBox.warning(
                     self,
                     texts.INVALID_FILE_TYPE_TITLE,
-                    texts.NONE_OF_SELECTED_FILES_HAVE_VALID_EXTENSIONS.format(list_type=list_type),
+                    texts.NONE_OF_SELECTED_FILES_HAVE_VALID_EXTENSIONS.format(
+                        list_type=list_type
+                    ),
                 )
             return
 
@@ -641,45 +660,63 @@ class AutoPairingDialog(QDialog):
 
         if skipped > 0:
             message_parts = []
-            
+
             if stats["added"] > 0:
-                message_parts.append(texts.SUCCESSFULLY_ADDED_FILES.format(count=stats['added']))
+                message_parts.append(
+                    texts.SUCCESSFULLY_ADDED_FILES.format(count=stats["added"])
+                )
 
             if stats["no_season_episode"] > 0:
                 message_parts.append(
-                    texts.SKIPPED_FILES_MISSING_SEASON_EPISODE.format(count=stats['no_season_episode'])
+                    texts.SKIPPED_FILES_MISSING_SEASON_EPISODE.format(
+                        count=stats["no_season_episode"]
+                    )
                 )
 
             if stats["duplicate_season_episode"] > 0:
                 message_parts.append(
-                    texts.SKIPPED_FILES_DUPLICATE_EPISODE.format(count=stats['duplicate_season_episode'])
+                    texts.SKIPPED_FILES_DUPLICATE_EPISODE.format(
+                        count=stats["duplicate_season_episode"]
+                    )
                 )
 
             if stats["already_in_list"] > 0:
                 message_parts.append(
-                    texts.SKIPPED_FILES_ALREADY_IN_THIS_LIST.format(count=stats['already_in_list'])
+                    texts.SKIPPED_FILES_ALREADY_IN_THIS_LIST.format(
+                        count=stats["already_in_list"]
+                    )
                 )
 
             if stats["already_in_other_list"] > 0:
                 message_parts.append(
-                    texts.SKIPPED_FILES_ALREADY_IN_OTHER_LIST.format(count=stats['already_in_other_list'])
+                    texts.SKIPPED_FILES_ALREADY_IN_OTHER_LIST.format(
+                        count=stats["already_in_other_list"]
+                    )
                 )
 
             if stats["invalid_extension"] > 0:
                 message_parts.append(
-                    texts.SKIPPED_FILES_INVALID_EXTENSION.format(count=stats['invalid_extension'])
+                    texts.SKIPPED_FILES_INVALID_EXTENSION.format(
+                        count=stats["invalid_extension"]
+                    )
                 )
 
             # Show appropriate message based on whether any files were added
             if stats["added"] > 0:
-                QMessageBox.information(self, texts.IMPORT_SUMMARY, "\n".join(message_parts))
+                QMessageBox.information(
+                    self, texts.IMPORT_SUMMARY, "\n".join(message_parts)
+                )
             else:
-                QMessageBox.warning(self, texts.IMPORT_SUMMARY, "\n".join(message_parts))
+                QMessageBox.warning(
+                    self, texts.IMPORT_SUMMARY, "\n".join(message_parts)
+                )
 
     def add_folder(self, is_reference):
         """Add files from folder."""
         folder = open_filedialog(
-            self.parent_window, "directory", texts.SELECT_FOLDER_CONTAINING_MEDIA_FILES_TITLE
+            self.parent_window,
+            "directory",
+            texts.SELECT_FOLDER_CONTAINING_MEDIA_FILES_TITLE,
         )
         if not folder:
             return
@@ -787,7 +824,9 @@ class AutoPairingDialog(QDialog):
         # Update pairs count label (only show when > 0 pairs)
         pairs_count = len(self.paired_items)
         if pairs_count > 0:
-            self.pairs_count_label.setText(texts.TOTAL_VALID_PAIRS.format(pairs_count=pairs_count))
+            self.pairs_count_label.setText(
+                texts.TOTAL_VALID_PAIRS.format(pairs_count=pairs_count)
+            )
             self.pairs_count_label.setVisible(True)
         else:
             self.pairs_count_label.setVisible(False)
@@ -795,7 +834,9 @@ class AutoPairingDialog(QDialog):
     def add_pairs_to_batch(self):
         """Add pairs to batch processing."""
         if not self.paired_items:
-            QMessageBox.information(self, texts.NO_VALID_PAIRS_TITLE, texts.NO_VALID_PAIRS_MESSAGE)
+            QMessageBox.information(
+                self, texts.NO_VALID_PAIRS_TITLE, texts.NO_VALID_PAIRS_MESSAGE
+            )
             return
 
         batch_view = self.parent_window.batch_tree_view

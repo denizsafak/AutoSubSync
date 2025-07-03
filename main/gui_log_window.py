@@ -150,8 +150,7 @@ class LogWindow(QWidget):
                 self.append_message(display_val, bold=True, color=COLORS["GREEN"])
         else:
             self.append_message(
-                texts.UNKNOWN_SYNC_TOOL_NO_OPTIONS,
-                color=COLORS["ORANGE"]
+                texts.UNKNOWN_SYNC_TOOL_NO_OPTIONS, color=COLORS["ORANGE"]
             )
         self.append_message(f"{texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING}: ", end="")
         self.append_message(
@@ -204,7 +203,9 @@ class LogWindow(QWidget):
         if args:
             self.append_message(texts.ADDITIONAL_ARGUMENTS_LABEL, end="")
             self.append_message(args, bold=True, color=COLORS["GREEN"])
-        self.append_message("\n" + texts.SYNC_STARTED_LABEL, bold=True, color=COLORS["BLUE"])
+        self.append_message(
+            "\n" + texts.SYNC_STARTED_LABEL, bold=True, color=COLORS["BLUE"]
+        )
         self._config_printed = True
 
         # Force scroll to bottom after initial configuration is printed
@@ -304,8 +305,7 @@ class LogWindow(QWidget):
                 bold=True,
             )
             self.append_message(
-                texts.SAVED_TO_LABEL.format(output=output),
-                color=COLORS["GREY"]
+                texts.SAVED_TO_LABEL.format(output=output), color=COLORS["GREY"]
             )
 
             # Only show "Go to folder" for single file sync
@@ -487,7 +487,9 @@ class LogWindow(QWidget):
             log_content = self.log_text.toPlainText()
 
             # Write to file
-            with open(log_file_path, "w", encoding="utf-8", errors="replace") as log_file:
+            with open(
+                log_file_path, "w", encoding="utf-8", errors="replace"
+            ) as log_file:
                 log_file.write(f"AutoSubSync Log - {mode.title()} Mode\n")
                 log_file.write(
                     f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"

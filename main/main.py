@@ -10,7 +10,9 @@ from PyQt6.QtCore import qInstallMessageHandler, QtMsgType, Qt
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from gui import autosubsyncapp
-from gui_automatic_tab import attach_functions_to_autosubsyncapp as attach_auto_functions
+from gui_automatic_tab import (
+    attach_functions_to_autosubsyncapp as attach_auto_functions,
+)
 from gui_manual_tab import attach_functions_to_autosubsyncapp as attach_manual_functions
 from gui_batch_mode import attach_functions_to_autosubsyncapp as attach_batch_functions
 from gui_auto_pairing import (
@@ -118,5 +120,6 @@ def main():
 
 if __name__ == "__main__":
     import multiprocessing
+
     multiprocessing.freeze_support()  # Fix for PyInstaller on Windows
     main()

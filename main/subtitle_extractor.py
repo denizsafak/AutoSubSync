@@ -136,8 +136,7 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
         os.makedirs(output_folder, exist_ok=True)
         log_messages.append(
             texts.FOUND_COMPATIBLE_SUBTITLES_EXTRACTING.format(
-                count=len(compatible_subtitles), 
-                output_folder=output_folder
+                count=len(compatible_subtitles), output_folder=output_folder
             )
         )
         # Prepare FFmpeg command
@@ -162,7 +161,9 @@ def extract_subtitles(video_file, subtitle_file, output_dir):
         if ffmpeg_process.returncode == 0:
             for output_file in output_files:
                 log_messages.append(
-                    texts.SUCCESSFULLY_EXTRACTED_SUBTITLE.format(filename=os.path.basename(output_file))
+                    texts.SUCCESSFULLY_EXTRACTED_SUBTITLE.format(
+                        filename=os.path.basename(output_file)
+                    )
                 )
             log_messages.append(texts.CHOOSING_BEST_SUBTITLE_MATCH)
             closest_subtitle, score = choose_best_subtitle(

@@ -1,38 +1,46 @@
 import platform
 from utils import get_version, get_resource_path, get_version_info
 
+
 class TranslationDict(str):
     def __new__(cls, translations):
         # Import here to avoid circular import
         from utils import get_locale
+
         language = get_locale()
         # Create the string instance with the current language translation
         current_text = translations.get(language, translations.get("en_US", ""))
         instance = str.__new__(cls, current_text)
         instance._translations = translations
         return instance
-    
+
     def __missing__(self, key):
         return self._translations.get("en_US", "")
-    
+
     def __str__(self):
         from utils import get_locale
+
         language = get_locale()
         return self._translations.get(language, self._translations.get("en_US", ""))
-    
+
     def __repr__(self):
         from utils import get_locale
+
         language = get_locale()
         return self._translations.get(language, self._translations.get("en_US", ""))
-    
+
     def format(self, *args, **kwargs):
         from utils import get_locale
+
         language = get_locale()
-        return self._translations.get(language, self._translations.get("en_US", "")).format(*args, **kwargs)
-    
+        return self._translations.get(
+            language, self._translations.get("en_US", "")
+        ).format(*args, **kwargs)
+
     def get(self, key, default=""):
         return self._translations.get(key, default)
-    
+
+
 LANGUAGES = {
     "English": "en_US",
     "Español": "es_ES",
@@ -169,7 +177,7 @@ SYNC_TOOLS = {
             "id_ID": "Sinkronkan subtitle dengan video secara otomatis",
             "ms_MY": "Segerakkan sarikata dengan video secara automatik",
             "th_TH": "ซิงค์คำบรรยายกับวิดีโอโดยอัตโนมัติ",
-            "ur_PK": "سب ٹائٹلز کو ویڈیو کے ساتھ خودکار طور پر سنکرونائز کریں"
+            "ur_PK": "سب ٹائٹلز کو ویڈیو کے ساتھ خودکار طور پر سنکرونائز کریں",
         },
         "github": "https://github.com/smacke/ffsubsync",
         "documentation": "https://ffsubsync.readthedocs.io/",
@@ -203,7 +211,7 @@ SYNC_TOOLS = {
                     "id_ID": "Jangan perbaiki framerate",
                     "ms_MY": "Jangan betulkan kadar bingkai",
                     "th_TH": "ไม่ต้องแก้ไขอัตราเฟรม",
-                    "ur_PK": "فریم ریٹ کو ٹھیک نہ کریں"
+                    "ur_PK": "فریم ریٹ کو ٹھیک نہ کریں",
                 },
                 "tooltip": {
                     "en_US": "If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles.\nThis can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync.",
@@ -227,7 +235,7 @@ SYNC_TOOLS = {
                     "id_ID": "Jika ditentukan, ffsubsync tidak akan mencoba memperbaiki ketidakcocokan framerate antara referensi dan subtitle.\nIni bisa berguna ketika Anda tahu bahwa framerate video dan subtitle sama, hanya subtitle yang tidak sinkron.",
                     "ms_MY": "Jika dinyatakan, ffsubsync tidak akan cuba membetulkan ketidakpadanan kadar bingkai antara rujukan dan sarikata.\nIni boleh berguna apabila anda tahu bahawa kadar bingkai video dan sarikata adalah sama, hanya sarikata yang tidak segerak.",
                     "th_TH": "หากระบุ ffsubsync จะไม่พยายามแก้ไขความไม่ตรงกันของอัตราเฟรมระหว่างอ้างอิงและคำบรรยาย\nสิ่งนี้อาจมีประโยชน์เมื่อคุณรู้ว่าอัตราเฟรมของวิดีโอและคำบรรยายเหมือนกัน เพียงแค่คำบรรยายไม่ตรงกัน",
-                    "ur_PK": "اگر مخصوص کیا جائے تو، ffsubsync ریفرنس اور سب ٹائٹلز کے درمیان فریم ریٹ کی عدم مطابقت کو ٹھیک کرنے کی کوشش نہیں کرے گا۔\nیہ اس وقت مفید ہو سکتا ہے جب آپ جانتے ہیں کہ ویڈیو اور سب ٹائٹل فریم ریٹ یکساں ہیں، صرف سب ٹائٹلز سنک سے باہر ہیں۔"
+                    "ur_PK": "اگر مخصوص کیا جائے تو، ffsubsync ریفرنس اور سب ٹائٹلز کے درمیان فریم ریٹ کی عدم مطابقت کو ٹھیک کرنے کی کوشش نہیں کرے گا۔\nیہ اس وقت مفید ہو سکتا ہے جب آپ جانتے ہیں کہ ویڈیو اور سب ٹائٹل فریم ریٹ یکساں ہیں، صرف سب ٹائٹلز سنک سے باہر ہیں۔",
                 },
                 "argument": "--no-fix-framerate",
                 "default": False,
@@ -256,7 +264,7 @@ SYNC_TOOLS = {
                     "id_ID": "Gunakan pencarian bagian emas",
                     "ms_MY": "Gunakan carian bahagian emas",
                     "th_TH": "ใช้การค้นหาส่วนทอง",
-                    "ur_PK": "گولڈن سیکشن سرچ استعمال کریں"
+                    "ur_PK": "گولڈن سیکشن سرچ استعمال کریں",
                 },
                 "tooltip": {
                     "en_US": "Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
@@ -280,7 +288,7 @@ SYNC_TOOLS = {
                     "id_ID": "Gunakan pencarian bagian emas untuk menemukan rasio optimal antara framerate video dan subtitle (secara default, hanya beberapa rasio umum yang dievaluasi)",
                     "ms_MY": "Gunakan carian bahagian emas untuk mencari nisbah optimum antara kadar bingkai video dan sarikata (secara lalai, hanya beberapa nisbah biasa yang dinilai)",
                     "th_TH": "ใช้การค้นหาส่วนทองเพื่อหาอัตราส่วนที่เหมาะสมที่สุดระหว่างอัตราเฟรมของวิดีโอและคำบรรยาย (โดยค่าเริ่มต้น จะประเมินเพียงอัตราส่วนทั่วไปไม่กี่อัน)",
-                    "ur_PK": "ویڈیو اور سب ٹائٹل فریم ریٹس کے درمیان بہترین تناسب تلاش کرنے کے لیے گولڈن سیکشن سرچ استعمال کریں (ڈیفالٹ کے ذریعے، صرف کچھ عام تناسب کا جائزہ لیا جاتا ہے)"
+                    "ur_PK": "ویڈیو اور سب ٹائٹل فریم ریٹس کے درمیان بہترین تناسب تلاش کرنے کے لیے گولڈن سیکشن سرچ استعمال کریں (ڈیفالٹ کے ذریعے، صرف کچھ عام تناسب کا جائزہ لیا جاتا ہے)",
                 },
                 "argument": "--gss",
                 "default": False,
@@ -309,7 +317,7 @@ SYNC_TOOLS = {
                     "id_ID": "Detektor aktivitas suara",
                     "ms_MY": "Pengesan aktiviti suara",
                     "th_TH": "เครื่องตรวจจับกิจกรรมเสียง",
-                    "ur_PK": "آواز کی سرگرمی کا پتہ لگانے والا"
+                    "ur_PK": "آواز کی سرگرمی کا پتہ لگانے والا",
                 },
                 "tooltip": {
                     "en_US": "Which voice activity detector (VAD) to use for speech extraction (if using video / audio as a reference, default=subs_then_webrtc).\nAuditok can sometimes work better in the case of low-quality audio than WebRTC.",
@@ -333,7 +341,7 @@ SYNC_TOOLS = {
                     "id_ID": "Detektor aktivitas suara (VAD) mana yang digunakan untuk ekstraksi bicara (jika menggunakan video/audio sebagai referensi, default=subs_then_webrtc).\nAuditok terkadang dapat bekerja lebih baik dalam kasus audio berkualitas rendah daripada WebRTC.",
                     "ms_MY": "Pengesan aktiviti suara (VAD) yang manakah untuk digunakan bagi pengekstrakan pertuturan (jika menggunakan video/audio sebagai rujukan, lalai=subs_then_webrtc).\nAuditok kadangkala boleh berfungsi lebih baik dalam kes audio berkualiti rendah berbanding WebRTC.",
                     "th_TH": "เครื่องตรวจจับกิจกรรมเสียง (VAD) ไหนที่จะใช้สำหรับการแยกเสียงพูด (หากใช้วิดีโอ/เสียงเป็นอ้างอิง ค่าเริ่มต้น=subs_then_webrtc)\nAuditok บางครั้งอาจทำงานได้ดีกว่าในกรณีของเสียงคุณภาพต่ำกว่า WebRTC",
-                    "ur_PK": "تقریر نکالنے کے لیے کون سا آواز کی سرگرمی کا پتہ لگانے والا (VAD) استعمال کرنا ہے (اگر ویڈیو/آڈیو کو ریفرنس کے طور پر استعمال کر رہے ہیں، ڈیفالٹ=subs_then_webrtc)۔\nAuditok کبھی کبھی کم معیار کی آڈیو کے معاملے میں WebRTC سے بہتر کام کر سکتا ہے۔"
+                    "ur_PK": "تقریر نکالنے کے لیے کون سا آواز کی سرگرمی کا پتہ لگانے والا (VAD) استعمال کرنا ہے (اگر ویڈیو/آڈیو کو ریفرنس کے طور پر استعمال کر رہے ہیں، ڈیفالٹ=subs_then_webrtc)۔\nAuditok کبھی کبھی کم معیار کی آڈیو کے معاملے میں WebRTC سے بہتر کام کر سکتا ہے۔",
                 },
                 "argument": "--vad",
                 "default": "default",
@@ -369,7 +377,7 @@ SYNC_TOOLS = {
                         "id_ID": "Default",
                         "ms_MY": "Lalai",
                         "th_TH": "ค่าเริ่มต้น",
-                        "ur_PK": "ڈیفالٹ"
+                        "ur_PK": "ڈیفالٹ",
                     },
                     "subs_then_webrtc": {
                         "en_US": "Subs then WebRTC",
@@ -393,7 +401,7 @@ SYNC_TOOLS = {
                         "id_ID": "Subtitle lalu WebRTC",
                         "ms_MY": "Sarikata kemudian WebRTC",
                         "th_TH": "คำบรรยายแล้ว WebRTC",
-                        "ur_PK": "سب ٹائٹل پھر WebRTC"
+                        "ur_PK": "سب ٹائٹل پھر WebRTC",
                     },
                     "subs_then_auditok": {
                         "en_US": "Subs then Auditok",
@@ -417,7 +425,7 @@ SYNC_TOOLS = {
                         "id_ID": "Subtitle lalu Auditok",
                         "ms_MY": "Sarikata kemudian Auditok",
                         "th_TH": "คำบรรยายแล้ว Auditok",
-                        "ur_PK": "سب ٹائٹل پھر Auditok"
+                        "ur_PK": "سب ٹائٹل پھر Auditok",
                     },
                     "subs_then_silero": {
                         "en_US": "Subs then Silero",
@@ -441,7 +449,7 @@ SYNC_TOOLS = {
                         "id_ID": "Subtitle lalu Silero",
                         "ms_MY": "Sarikata kemudian Silero",
                         "th_TH": "คำบรรยายแล้ว Silero",
-                        "ur_PK": "سب ٹائٹل پھر Silero"
+                        "ur_PK": "سب ٹائٹل پھر Silero",
                     },
                     "webrtc": "WebRTC",
                     "auditok": "Auditok",
@@ -474,7 +482,7 @@ SYNC_TOOLS = {
             "id_ID": "Sinkronisasi subtitle otomatis yang tidak bergantung pada bahasa",
             "ms_MY": "Segerak sarikata automatik yang tidak bergantung pada bahasa",
             "th_TH": "การซิงค์คำบรรยายอัตโนมัติที่ไม่ขึ้นกับภาษา",
-            "ur_PK": "خودکار زبان سے آزاد سب ٹائٹل سنکرونائزیشن"
+            "ur_PK": "خودکار زبان سے آزاد سب ٹائٹل سنکرونائزیشن",
         },
         "github": "https://github.com/kaegi/alass",
         "documentation": "https://github.com/kaegi/alass/blob/master/documentation/slides.pdf",
@@ -516,7 +524,7 @@ SYNC_TOOLS = {
                     "id_ID": "Gunakan subtitle tertanam di video",
                     "ms_MY": "Guna sarikata terbenam dalam video",
                     "th_TH": "ใช้คำบรรยายที่ฝังในวิดีโอ",
-                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز استعمال کریں"
+                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز استعمال کریں",
                 },
                 "tooltip": {
                     "en_US": "Extract the embedded subtitles in the video and perform synchronization with these subtitles.",
@@ -540,7 +548,7 @@ SYNC_TOOLS = {
                     "id_ID": "Ekstrak subtitle tertanam di video dan lakukan sinkronisasi dengan subtitle tersebut.",
                     "ms_MY": "Ekstrak sarikata terbenam dalam video dan lakukan penyegerakan dengan sarikata tersebut.",
                     "th_TH": "แยกคำบรรยายที่ฝังในวิดีโอและซิงค์กับคำบรรยายนั้น",
-                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز نکالیں اور ان کے ساتھ سنکرونائز کریں۔"
+                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز نکالیں اور ان کے ساتھ سنکرونائز کریں۔",
                 },
                 "default": True,
             },
@@ -568,7 +576,7 @@ SYNC_TOOLS = {
                     "id_ID": "Nonaktifkan penebakan FPS",
                     "ms_MY": "Lumpuhkan tekaan FPS",
                     "th_TH": "ปิดการคาดเดาอัตราเฟรม",
-                    "ur_PK": "FPS اندازہ غیر فعال کریں"
+                    "ur_PK": "FPS اندازہ غیر فعال کریں",
                 },
                 "tooltip": {
                     "en_US": "Disables guessing and correcting of framerate differences between reference file and input file.",
@@ -592,7 +600,7 @@ SYNC_TOOLS = {
                     "id_ID": "Menonaktifkan penebakan dan koreksi perbedaan framerate antara file referensi dan file input.",
                     "ms_MY": "Melumpuhkan tekaan dan pembetulan perbezaan kadar bingkai antara fail rujukan dan fail input.",
                     "th_TH": "ปิดการคาดเดาและการแก้ไขความแตกต่างของอัตราเฟรมระหว่างไฟล์อ้างอิงและไฟล์อินพุต",
-                    "ur_PK": "حوالہ فائل اور ان پٹ فائل کے درمیان فریم ریٹ کے فرق کا اندازہ لگانا اور درست کرنا غیر فعال کرتا ہے۔"
+                    "ur_PK": "حوالہ فائل اور ان پٹ فائل کے درمیان فریم ریٹ کے فرق کا اندازہ لگانا اور درست کرنا غیر فعال کرتا ہے۔",
                 },
                 "argument": "--disable-fps-guessing",
                 "default": False,
@@ -621,7 +629,7 @@ SYNC_TOOLS = {
                     "id_ID": "Nonaktifkan optimasi kecepatan",
                     "ms_MY": "Lumpuhkan pengoptimuman kelajuan",
                     "th_TH": "ปิดการเพิ่มประสิทธิภาพความเร็ว",
-                    "ur_PK": "رفتار کی بہتری غیر فعال کریں"
+                    "ur_PK": "رفتار کی بہتری غیر فعال کریں",
                 },
                 "tooltip": {
                     "en_US": "Disable speed optimization for better accuracy. This will increase the processing time.",
@@ -645,7 +653,7 @@ SYNC_TOOLS = {
                     "id_ID": "Nonaktifkan optimasi kecepatan untuk akurasi yang lebih baik. Ini akan meningkatkan waktu pemrosesan.",
                     "ms_MY": "Lumpuhkan pengoptimuman kelajuan untuk ketepatan yang lebih baik. Ini akan meningkatkan masa pemprosesan.",
                     "th_TH": "ปิดการเพิ่มประสิทธิภาพความเร็วเพื่อความแม่นยำที่ดีขึ้น ซึ่งจะเพิ่มเวลาการประมวลผล",
-                    "ur_PK": "بہتر درستگی کے لیے رفتار کی بہتری کو غیر فعال کریں۔ یہ پروسیسنگ کا وقت بڑھا دے گا۔"
+                    "ur_PK": "بہتر درستگی کے لیے رفتار کی بہتری کو غیر فعال کریں۔ یہ پروسیسنگ کا وقت بڑھا دے گا۔",
                 },
                 "argument": "--speed-optimization 0",
                 "default": False,
@@ -674,7 +682,7 @@ SYNC_TOOLS = {
                     "id_ID": "Penalti pemisahan",
                     "ms_MY": "Penalti pemisahan",
                     "th_TH": "บทลงโทษการแบ่ง",
-                    "ur_PK": "تقسیم کی سزا"
+                    "ur_PK": "تقسیم کی سزا",
                 },
                 "argument": "--split-penalty",
                 "tooltip": {
@@ -699,7 +707,7 @@ SYNC_TOOLS = {
                     "id_ID": "Penalti untuk memisahkan subtitle selama penyelarasan\n(Default: 7, Direkomendasikan: 5-20, Tanpa pemisahan: -1)",
                     "ms_MY": "Penalti untuk memisahkan sarikata semasa penjajaran\n(Lalai: 7, Disyorkan: 5-20, Tiada pemisahan: -1)",
                     "th_TH": "บทลงโทษสำหรับการแบ่งคำบรรยายระหว่างการปรับแนว\n(ค่าเริ่มต้น: 7, แนะนำ: 5-20, ไม่แบ่ง: -1)",
-                    "ur_PK": "ہم آہنگی کے دوران سب ٹائٹلز کو تقسیم کرنے کی سزا\n(ڈیفالٹ: 7، تجویز کردہ: 5-20، کوئی تقسیم نہیں: -1)"
+                    "ur_PK": "ہم آہنگی کے دوران سب ٹائٹلز کو تقسیم کرنے کی سزا\n(ڈیفالٹ: 7، تجویز کردہ: 5-20، کوئی تقسیم نہیں: -1)",
                 },
                 "no_split_argument": "--no-split",
                 "range": [-1, 100],
@@ -731,7 +739,7 @@ SYNC_TOOLS = {
             "id_ID": "Sinkronkan subtitle dengan audio secara otomatis menggunakan pembelajaran mesin",
             "ms_MY": "Segerakkan sarikata dengan audio secara automatik menggunakan pembelajaran mesin",
             "th_TH": "ซิงค์คำบรรยายกับเสียงโดยอัตโนมัติโดยใช้การเรียนรู้ของเครื่อง",
-            "ur_PK": "مشین لرننگ کا استعمال کرتے ہوئے خودکار طور پر آڈیو کے ساتھ سب ٹائٹلز کو سنکرونائز کریں"
+            "ur_PK": "مشین لرننگ کا استعمال کرتے ہوئے خودکار طور پر آڈیو کے ساتھ سب ٹائٹلز کو سنکرونائز کریں",
         },
         "github": "https://github.com/oseiskar/autosubsync",
         "documentation": "https://github.com/oseiskar/autosubsync?tab=readme-ov-file#usage",
@@ -769,7 +777,7 @@ SYNC_TOOLS = {
                     "id_ID": "Gunakan subtitle tertanam di video",
                     "ms_MY": "Guna sarikata terbenam dalam video",
                     "th_TH": "ใช้คำบรรยายที่ฝังในวิดีโอ",
-                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز استعمال کریں"
+                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز استعمال کریں",
                 },
                 "tooltip": {
                     "en_US": "Extract the embedded subtitles in the video and perform synchronization with these subtitles.",
@@ -793,7 +801,7 @@ SYNC_TOOLS = {
                     "id_ID": "Ekstrak subtitle tertanam di video dan lakukan sinkronisasi dengan subtitle tersebut.",
                     "ms_MY": "Ekstrak sarikata terbenam dalam video dan lakukan penyegerakan dengan sarikata tersebut.",
                     "th_TH": "แยกคำบรรยายที่ฝังในวิดีโอและซิงค์กับคำบรรยายนั้น",
-                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز نکالیں اور ان کے ساتھ سنکرونائز کریں۔"
+                    "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز نکالیں اور ان کے ساتھ سنکرونائز کریں۔",
                 },
                 "default": True,
             },
@@ -825,7 +833,7 @@ SYNC_TOOLS = {
                     "id_ID": "Pergeseran maksimum (detik)",
                     "ms_MY": "Anjakan maksimum (saat)",
                     "th_TH": "การเลื่อนสูงสุด (วินาที)",
-                    "ur_PK": "زیادہ سے زیادہ شفٹ (سیکنڈز)"
+                    "ur_PK": "زیادہ سے زیادہ شفٹ (سیکنڈز)",
                 },
                 "tooltip": {
                     "en_US": "Maximum subtitle shift in seconds (default 20)",
@@ -849,7 +857,7 @@ SYNC_TOOLS = {
                     "id_ID": "Pergeseran maksimum subtitle dalam detik (default 20)",
                     "ms_MY": "Anjakan maksimum sarikata dalam saat (lalai 20)",
                     "th_TH": "การเลื่อนคำบรรยายสูงสุดเป็นวินาที (ค่าเริ่มต้น 20)",
-                    "ur_PK": "سیکنڈز میں زیادہ سے زیادہ سب ٹائٹل شفٹ (ڈیفالٹ 20)"
+                    "ur_PK": "سیکنڈز میں زیادہ سے زیادہ سب ٹائٹل شفٹ (ڈیفالٹ 20)",
                 },
                 "argument": "--max_shift_secs",
                 "range": [1, 120],
@@ -879,7 +887,7 @@ SYNC_TOOLS = {
                     "id_ID": "Paralelisme",
                     "ms_MY": "Keselarian",
                     "th_TH": "การประมวลผลแบบขนาน",
-                    "ur_PK": "متوازی پن"
+                    "ur_PK": "متوازی پن",
                 },
                 "tooltip": {
                     "en_US": "Number of parallel worker processes (default 3)",
@@ -903,12 +911,12 @@ SYNC_TOOLS = {
                     "id_ID": "Jumlah proses pekerja paralel (default 3)",
                     "ms_MY": "Bilangan proses pekerja selari (lalai 3)",
                     "th_TH": "จำนวนกระบวนการทำงานแบบขนาน (ค่าเริ่มต้น 3)",
-                    "ur_PK": "متوازی ورکر پروسیسز کی تعداد (ڈیفالٹ 3)"
+                    "ur_PK": "متوازی ورکر پروسیسز کی تعداد (ڈیفالٹ 3)",
                 },
                 "argument": "--parallelism",
                 "range": [1, 16],
                 "default": 3,
-            }
+            },
         },
     },
 }
@@ -936,7 +944,7 @@ AUTOMATIC_SAVE_MAP = {
         "id_ID": "Simpan di sebelah subtitle masukan",
         "ms_MY": "Simpan bersebelahan dengan sarikata input",
         "th_TH": "บันทึกถัดจากคำบรรยายนำเข้า",
-        "ur_PK": "ان پٹ سب ٹائٹل کے ساتھ محفوظ کریں"
+        "ur_PK": "ان پٹ سب ٹائٹل کے ساتھ محفوظ کریں",
     },
     "overwrite_input_subtitle": {
         "en_US": "Overwrite input subtitle",
@@ -960,7 +968,7 @@ AUTOMATIC_SAVE_MAP = {
         "id_ID": "Timpa subtitle masukan",
         "ms_MY": "Tulis ganti sarikata input",
         "th_TH": "เขียนทับคำบรรยายนำเข้า",
-        "ur_PK": "ان پٹ سب ٹائٹل پر لکھیں"
+        "ur_PK": "ان پٹ سب ٹائٹل پر لکھیں",
     },
     "save_next_to_video": {
         "en_US": "Save next to video",
@@ -984,7 +992,7 @@ AUTOMATIC_SAVE_MAP = {
         "id_ID": "Simpan di sebelah video",
         "ms_MY": "Simpan bersebelahan dengan video",
         "th_TH": "บันทึกถัดจากวิดีโอ",
-        "ur_PK": "ویڈیو کے ساتھ محفوظ کریں"
+        "ur_PK": "ویڈیو کے ساتھ محفوظ کریں",
     },
     "save_next_to_video_with_same_filename": {
         "en_US": "Save next to video with same filename",
@@ -1008,7 +1016,7 @@ AUTOMATIC_SAVE_MAP = {
         "id_ID": "Simpan di sebelah video dengan nama file yang sama",
         "ms_MY": "Simpan bersebelahan dengan video dengan nama fail yang sama",
         "th_TH": "บันทึกถัดจากวิดีโอด้วยชื่อไฟล์เดียวกัน",
-        "ur_PK": "ویڈیو کے ساتھ ایک ہی فائل نام کے ساتھ محفوظ کریں"
+        "ur_PK": "ویڈیو کے ساتھ ایک ہی فائل نام کے ساتھ محفوظ کریں",
     },
     "save_to_desktop": {
         "en_US": "Save to desktop",
@@ -1032,7 +1040,7 @@ AUTOMATIC_SAVE_MAP = {
         "id_ID": "Simpan ke desktop",
         "ms_MY": "Simpan ke desktop",
         "th_TH": "บันทึกไปที่เดสก์ท็อป",
-        "ur_PK": "ڈیسک ٹاپ پر محفوظ کریں"
+        "ur_PK": "ڈیسک ٹاپ پر محفوظ کریں",
     },
     "select_destination_folder": {
         "en_US": "Select destination folder",
@@ -1056,7 +1064,7 @@ AUTOMATIC_SAVE_MAP = {
         "id_ID": "Pilih folder tujuan",
         "ms_MY": "Pilih folder destinasi",
         "th_TH": "เลือกโฟลเดอร์ปลายทาง",
-        "ur_PK": "منزل فولڈر منتخب کریں"
+        "ur_PK": "منزل فولڈر منتخب کریں",
     },
 }
 
@@ -1083,7 +1091,7 @@ MANUAL_SAVE_MAP = {
         "id_ID": "Simpan di sebelah subtitle masukan",
         "ms_MY": "Simpan bersebelahan dengan sarikata input",
         "th_TH": "บันทึกถัดจากคำบรรยายนำเข้า",
-        "ur_PK": "ان پٹ سب ٹائٹل کے ساتھ محفوظ کریں"
+        "ur_PK": "ان پٹ سب ٹائٹل کے ساتھ محفوظ کریں",
     },
     "overwrite_input_subtitle": {
         "en_US": "Overwrite input subtitle",
@@ -1107,7 +1115,7 @@ MANUAL_SAVE_MAP = {
         "id_ID": "Timpa subtitle masukan",
         "ms_MY": "Tulis ganti sarikata input",
         "th_TH": "เขียนทับคำบรรยายนำเข้า",
-        "ur_PK": "ان پٹ سب ٹائٹل پر لکھیں"
+        "ur_PK": "ان پٹ سب ٹائٹل پر لکھیں",
     },
     "save_to_desktop": {
         "en_US": "Save to desktop",
@@ -1131,7 +1139,7 @@ MANUAL_SAVE_MAP = {
         "id_ID": "Simpan ke desktop",
         "ms_MY": "Simpan ke desktop",
         "th_TH": "บันทึกไปที่เดสก์ท็อป",
-        "ur_PK": "ڈیسک ٹاپ پر محفوظ کریں"
+        "ur_PK": "ڈیسک ٹاپ پر محفوظ کریں",
     },
     "select_destination_folder": {
         "en_US": "Select destination folder",
@@ -1155,7 +1163,7 @@ MANUAL_SAVE_MAP = {
         "id_ID": "Pilih folder tujuan",
         "ms_MY": "Pilih folder destinasi",
         "th_TH": "เลือกโฟลเดอร์ปลายทาง",
-        "ur_PK": "منزل فولڈر منتخب کریں"
+        "ur_PK": "منزل فولڈر منتخب کریں",
     },
 }
 
@@ -1218,7 +1226,7 @@ VIDEO_EXTENSIONS = [
 EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt"}
 
 # Convert translation dictionaries to TranslationDict objects
-translation_dicts = ['PROGRAM_TAGLINE', 'PROGRAM_DESCRIPTION']
+translation_dicts = ["PROGRAM_TAGLINE", "PROGRAM_DESCRIPTION"]
 for name in translation_dicts:
     if name in globals() and isinstance(globals()[name], dict):
         globals()[name] = TranslationDict(globals()[name])
@@ -1234,26 +1242,27 @@ for key in MANUAL_SAVE_MAP:
 
 # Convert SYNC_TOOLS descriptions and options to TranslationDict objects
 for tool_name, tool_data in SYNC_TOOLS.items():
-    if isinstance(tool_data.get('description'), dict):
-        tool_data['description'] = TranslationDict(tool_data['description'])
-    
+    if isinstance(tool_data.get("description"), dict):
+        tool_data["description"] = TranslationDict(tool_data["description"])
+
     # Convert options labels and tooltips
-    if 'options' in tool_data:
-        for option_name, option_data in tool_data['options'].items():
-            if isinstance(option_data.get('label'), dict):
-                option_data['label'] = TranslationDict(option_data['label'])
-            if isinstance(option_data.get('tooltip'), dict):
-                option_data['tooltip'] = TranslationDict(option_data['tooltip'])
-            
+    if "options" in tool_data:
+        for option_name, option_data in tool_data["options"].items():
+            if isinstance(option_data.get("label"), dict):
+                option_data["label"] = TranslationDict(option_data["label"])
+            if isinstance(option_data.get("tooltip"), dict):
+                option_data["tooltip"] = TranslationDict(option_data["tooltip"])
+
             # Convert value_labels if present
-            if 'value_labels' in option_data:
-                for value, label in option_data['value_labels'].items():
+            if "value_labels" in option_data:
+                for value, label in option_data["value_labels"].items():
                     if isinstance(label, dict):
-                        option_data['value_labels'][value] = TranslationDict(label)
+                        option_data["value_labels"][value] = TranslationDict(label)
 
 # Set proper default language after LANGUAGES is defined
 try:
     from utils import get_locale
+
     DEFAULT_OPTIONS["language"] = get_locale()
 except ImportError:
     # Fallback to en_US if circular import occurs during initialization

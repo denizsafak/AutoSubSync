@@ -122,7 +122,9 @@ class InputBox(QLabel):
 
     def handle_file_dialog(self):
         if self.input_type == "subtitle":
-            file_filter = f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+            file_filter = (
+                f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
+            )
             title = texts.SELECT_SUBTITLE_FILE_TITLE
         elif self.input_type == "video_or_subtitle":
             file_filter = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
@@ -213,7 +215,7 @@ class InputBox(QLabel):
                             item_path = os.path.join(file_path, item)
                             if os.path.isfile(item_path):
                                 folder_files.append(item_path)
-                        
+
                         # If folder has 1 or 2 files, extract them
                         if 1 <= len(folder_files) <= 2:
                             expanded_files.extend(folder_files)
@@ -225,7 +227,7 @@ class InputBox(QLabel):
                         expanded_files.append(file_path)
                 else:
                     expanded_files.append(file_path)
-            
+
             # Update files list with expanded files
             files = expanded_files
 
@@ -291,7 +293,9 @@ class InputBox(QLabel):
             self.input_type == "video_or_subtitle"
             and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS
         ):
-            self.show_error(texts.UNSUPPORTED_VIDEO_OR_SUBTITLE_FORMAT_WITH_EXT.format(ext=ext))
+            self.show_error(
+                texts.UNSUPPORTED_VIDEO_OR_SUBTITLE_FORMAT_WITH_EXT.format(ext=ext)
+            )
             return
 
         self.file_path = file_path
@@ -564,7 +568,7 @@ class autosubsyncapp(QWidget):
         for widget in app.topLevelWidgets():
             app.style().polish(widget)
             widget.update()
-        
+
         # Save config since theme actually changed
         self.config["theme"] = theme
         save_config(self.config)
@@ -602,7 +606,7 @@ class autosubsyncapp(QWidget):
         self.language_menu = self.settings_menu.addMenu(texts.LANGUAGE)
         self.language_action_group = QActionGroup(self)
         self.language_action_group.setExclusive(True)
-        
+
         self.language_actions = {}
         for language_name, language_code in LANGUAGES.items():
             action = QAction(language_name, self)
@@ -613,11 +617,10 @@ class autosubsyncapp(QWidget):
             )
             self.language_menu.addAction(action)
             self.language_actions[language_code] = action
-        
+
         # Set the current selection
         current_language = self.config.get("language", DEFAULT_OPTIONS["language"])
         self.language_actions[current_language].setChecked(True)
-
 
         # Add Theme submenu
         self.theme_menu = self.settings_menu.addMenu(texts.THEME)
@@ -725,7 +728,9 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.backup_subtitles_action)
 
-        self.keep_extracted_subtitles_action = QAction(texts.KEEP_EXTRACTED_SUBTITLES, self)
+        self.keep_extracted_subtitles_action = QAction(
+            texts.KEEP_EXTRACTED_SUBTITLES, self
+        )
         self.keep_extracted_subtitles_action.setCheckable(True)
         self.keep_extracted_subtitles_action.setChecked(
             self.config.get(
@@ -737,7 +742,9 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.keep_extracted_subtitles_action)
 
-        self.keep_converted_subtitles_action = QAction(texts.KEEP_CONVERTED_SUBTITLES, self)
+        self.keep_converted_subtitles_action = QAction(
+            texts.KEEP_CONVERTED_SUBTITLES, self
+        )
         self.keep_converted_subtitles_action.setCheckable(True)
         self.keep_converted_subtitles_action.setChecked(
             self.config.get(
@@ -862,37 +869,37 @@ class autosubsyncapp(QWidget):
     def change_language(self, language_code):
         """Handle language change with restart confirmation"""
         current_language = self.config.get("language", DEFAULT_OPTIONS["language"])
-        
+
         # If the language is already selected, do nothing
         if current_language == language_code:
             return
-        
+
         # Ask user if they want to restart the app
         reply = QMessageBox.question(
             self,
             texts.CHANGE_LANGUAGE_TITLE,
             texts.RESTART_APPLICATION_FOR_LANGUAGE_CHANGE,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
+            QMessageBox.StandardButton.Yes,
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             # Update the config
             self.config["language"] = language_code
             save_config(self.config)
-            
+
             # Restart the application
             import sys
             import subprocess
-            
+
             # Get the current executable or script
-            if hasattr(sys, 'frozen'):
+            if hasattr(sys, "frozen"):
                 # Running as compiled executable
                 subprocess.Popen([sys.executable] + sys.argv[1:])
             else:
                 # Running as Python script
                 subprocess.Popen([sys.executable] + sys.argv)
-            
+
             # Close the current application
             QApplication.quit()
         else:
