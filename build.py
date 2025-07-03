@@ -190,7 +190,7 @@ def get_sync_tools_names_from_constants():
 
 
 def get_sync_tools_versions():
-    """Get versions of sync tools by parsing constants.py for tool names and using get_version_info or the version field for executables."""
+    """Get versions of sync tools by parsing constants.py for tool names and using get_version_info or the version field for executables. Also extract github url if present."""
     constants_path = os.path.join(script_dir, "main", "constants.py")
     with open(constants_path, "r", encoding="utf-8") as f:
         tree = ast.parse(f.read(), filename=constants_path)
@@ -202,16 +202,24 @@ def get_sync_tools_versions():
             for key, value in zip(node.value.keys, node.value.values):
                 if isinstance(key, ast.Constant) and isinstance(key.value, str) and isinstance(value, ast.Dict):
                     tool_name = key.value
-                    tool_type = tool_version = None
+                    tool_type = tool_version = github_url = None
                     for k, v in zip(value.keys, value.values):
                         if isinstance(k, ast.Constant):
                             if k.value == "type" and isinstance(v, ast.Constant):
                                 tool_type = v.value
                             elif k.value == "version" and isinstance(v, ast.Constant):
                                 tool_version = v.value
-                    sync_tools[tool_name] = {"version": tool_version if tool_type == "executable" and tool_version else get_version_info(tool_name)}
+                            elif k.value == "github" and isinstance(v, ast.Constant):
+                                github_url = v.value
+                    sync_tools[tool_name] = {
+                        "version": tool_version if tool_type == "executable" and tool_version else get_version_info(tool_name)
+                    }
+                    if github_url:
+                        sync_tools[tool_name]["github"] = github_url
     for tool_name, info in sync_tools.items():
         print(f"Detected {tool_name} version: {info['version']}")
+        if "github" in info:
+            print(f"  GitHub: {info['github']}")
     return sync_tools
 
 

@@ -1,1 +1,12 @@
-The entire application was written from scratch using the PyQt6 framework.
+✨ **AutoSubSync has been completely redesigned and rebuilt from scratch with the PyQt6 framework, bringing you a modern interface and a smoother, better user experience!**
+
+Key changes:
+- Added a new tool: [autosubsync](https://github.com/oseiskar/autosubsync)
+- ffsubsync now runs at the module level instead of as an external executable, improving integration and performance.
+
+There are too many improvements and fixes to list here.
+
+**Full changelog:** https://github.com/denizsafak/AutoSubSync/compare/v6.0...v5.8
+
+> [!Note]
+> I haven't tested the macOS build. Please open an issue if you encounter any problems.
