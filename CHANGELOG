@@ -1,6 +1,12 @@
-- Added `Output subtitle encoding` option to allow users to force the encoding of the output subtitle file, mentioned in #36 by @babywin
-- Added `.smi` subtitle format support, mentioned in #40 by @SHRIMP159
-- Added `.vtt` to supported extensions for ffsubsync.
-- Switched to platformdirs for finding paths in different operating systems.
-- Separated some utility functions and configurations into different files.
-- Fixed alass not working in MacOS, fixes #38
+✨ **AutoSubSync has been completely redesigned and rebuilt from scratch with the PyQt6 framework, bringing you a modern interface and a smoother, better user experience!**
+
+Key changes:
+- Added a new tool: [autosubsync](https://github.com/oseiskar/autosubsync)
+- ffsubsync now runs at the module level instead of as an external executable, improving integration and performance.
+
+There are too many improvements and fixes to list here.
+
+**Full changelog:** https://github.com/denizsafak/AutoSubSync/compare/v6.0...v5.8
+
+> [!Note]
+> I haven't tested the macOS build. Please open an issue if you encounter any problems.

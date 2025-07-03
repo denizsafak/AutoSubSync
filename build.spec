@@ -3,18 +3,24 @@
 import os
 import sys
 import platform
+from PyQt6.QtCore import QLibraryInfo
 
 # Add current directory to Python path
 sys.path.insert(0, os.getcwd())
 
+# Find the Qt platform plugins directory
+qt_plugins_dir = QLibraryInfo.path(QLibraryInfo.LibraryPath.PluginsPath)
+qt_platforms_dir = os.path.join(qt_plugins_dir, 'platforms')
+
 ffmpeg_bin = os.path.join(os.curdir, 'main', 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'main', 'resources', 'alass-bin')
-ffsubsync_bin = os.path.join(os.curdir, 'main', 'resources', 'ffsubsync-bin')
+autosubsync = os.path.join(os.curdir, 'main', 'resources', 'autosubsync')
+#ffsubsync_bin = os.path.join(os.curdir, 'main', 'resources', 'ffsubsync-bin')
 
 datas = [
     (os.path.join(os.curdir, 'main', 'VERSION'), '.'),
-    (os.path.join(os.curdir, 'main', 'settings.png'), '.'),
-    (os.path.join(os.curdir, 'main', 'icon.ico'), '.')
+    (os.path.join(os.curdir, 'main', 'assets'), 'assets'),
+    (qt_platforms_dir, 'platforms'),
 ]
 
 with open('main/VERSION', 'r') as f:
@@ -29,16 +35,17 @@ else:
 folder_name = f'AutoSubSync-v{version}'
 
 a = Analysis(
-    ['main/AutoSubSync.py'],
+    ['main/main.py'],
     pathex=[],
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
         (alass_bin, 'resources/alass-bin'),
-        (ffsubsync_bin, 'resources/ffsubsync-bin'),
+        (autosubsync, 'resources/autosubsync'),
+    #    (ffsubsync_bin, 'resources/ffsubsync-bin'),
     ],
     datas=datas,
-    hiddenimports=[],
-    hookspath=['main/resources/hooks'],
+    hiddenimports=['ffsubsync', 'call_ffsubsync', 'autosubsync', 'call_autosubsync'],
+    #hookspath=['main/resources/hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
@@ -67,7 +74,7 @@ if platform.system() == 'Darwin':
         target_arch=None,
         codesign_identity=None,
         entitlements_file=None,
-        icon=os.path.join(os.curdir, 'main', 'icon.icns'),
+        icon=os.path.join(os.curdir, 'main', 'assets', 'icon.icns'),
         info_plist={
             'CFBundleName': 'AutoSubSync',
             'CFBundleDisplayName': 'AutoSubSync',
@@ -95,7 +102,7 @@ else:
         target_arch=None,
         codesign_identity=None,
         entitlements_file=None,
-        icon=os.path.join(os.curdir, 'main', 'icon.ico'),
+        icon=os.path.join(os.curdir, 'main', 'assets', 'icon.ico'),
         version=VSVersionInfo,
     )
 

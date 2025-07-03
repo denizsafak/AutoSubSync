@@ -28,8 +28,7 @@ jobs:
     outputs:
       version: ${{ steps.set-version.outputs.version }}
       ffmpeg_version: ${{ steps.set-version.outputs.ffmpeg_version }}
-      ffsubsync_version: ${{ steps.set-version.outputs.ffsubsync_version }}
-      alass_version: ${{ steps.set-version.outputs.alass_version }}
+      sync_tools_info: ${{ steps.set-version.outputs.sync_tools_info }}
 
     steps:
       - name: Check out the repository
@@ -55,10 +54,22 @@ jobs:
         run: |
           if (Test-Path main/resources/versions.json) {
             $json = Get-Content -Raw -Path main/resources/versions.json | ConvertFrom-Json
-            echo "version=$($json.AutoSubSync)" >> $env:GITHUB_OUTPUT
-            echo "ffmpeg_version=$($json.ffmpeg)" >> $env:GITHUB_OUTPUT
-            echo "ffsubsync_version=$($json.ffsubsync)" >> $env:GITHUB_OUTPUT
-            echo "alass_version=$($json.alass)" >> $env:GITHUB_OUTPUT
+            $version = $json.AutoSubSync
+            $ffmpeg_version = $json.ffmpeg
+            
+            # Build sync tools info string
+            $sync_tools_info = ""
+            foreach ($tool in $json.sync_tools.PSObject.Properties.Name) {
+              $tool_version = $json.sync_tools.$tool.version
+              $tool_github = $json.sync_tools.$tool.github
+              $sync_tools_info += ">[${tool}](${tool_github}): ${tool_version}`n"
+            }
+            
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+            echo "ffmpeg_version=$ffmpeg_version" >> $env:GITHUB_OUTPUT
+            echo "sync_tools_info<<EOF" >> $env:GITHUB_OUTPUT
+            echo $sync_tools_info >> $env:GITHUB_OUTPUT
+            echo "EOF" >> $env:GITHUB_OUTPUT
           } else {
             Write-Host "versions.json not found"
           }
@@ -86,7 +97,7 @@ jobs:
             --entrypoint bash \
             python:3.12.8-slim \
             -c "apt-get update && \
-                apt-get install -y tzdata tk-dev && \
+                apt-get install -y tzdata tk-dev libglib2.0-0 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xkb1 libxrender1 libsm6 libxext6 libx11-xcb1 libdbus-1-3 libxcb-sync1 libxcb-glx0 libgdk-pixbuf2.0-0 libgtk-3-0 libpango-1.0-0 libcairo2 libatk1.0-0 libpangocairo-1.0-0 libcairo-gobject2 && \
                 echo 'GLIBC Version:' && \
                 ldd --version | head -n 1 && \
                 pip install --upgrade pip setuptools wheel requests pyinstaller && \
@@ -135,8 +146,7 @@ jobs:
             
             >Included:
             >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
-            >[ffsubsync](https://github.com/smacke/ffsubsync): ${{ needs.build.outputs.ffsubsync_version }}
-            >[alass](https://github.com/kaegi/alass): ${{ needs.build.outputs.alass_version }}
+            ${{ needs.build.outputs.sync_tools_info }}
           files: ${{ env.DIST_DIR }}/*
           generate_release_notes: false
           draft: true

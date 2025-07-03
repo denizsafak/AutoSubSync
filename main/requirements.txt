@@ -1,11 +1,11 @@
+PyQt6
+rich
 faust-cchardet
 charset-normalizer
 chardet
-tkinterdnd2
-python-bidi
-arabic-reshaper
-tkmacosx
 requests
 pyinstaller
 psutil
 platformdirs
+ffsubsync
+autosubsync
