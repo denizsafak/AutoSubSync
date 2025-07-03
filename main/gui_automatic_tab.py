@@ -466,7 +466,9 @@ def update_sync_tool_options(self, tool):
 
                 def update_split_penalty_display(value):
                     val_label.setText("No splits" if value == -1 else str(value))
-                    update_config(self, config_key, value)
+                    # Only update config if value changed
+                    if self.config.get(config_key) != value:
+                        update_config(self, config_key, value)
 
                 # Set initial display
                 update_split_penalty_display(current_value)

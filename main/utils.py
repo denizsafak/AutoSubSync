@@ -666,6 +666,8 @@ def open_filedialog(
 def update_config(obj, key, value):
     from constants import DEFAULT_OPTIONS
 
+    # logger.info(f"Updating {key} to {value}")
+
     obj.config[key] = value
     # Only save settings if remember_changes is enabled (default: True)
     if obj.config.get("remember_changes", DEFAULT_OPTIONS["remember_changes"]):
