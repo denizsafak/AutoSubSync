@@ -780,6 +780,32 @@ def clear_logs_directory(parent=None):
         )
 
 
+def safe_open_url(url):
+    """Open a URL in the default browser, handling PyInstaller LD_LIBRARY_PATH issues on Linux."""
+    import sys
+    import platform
+    import subprocess
+    if platform.system() == "Linux" and getattr(sys, "frozen", False):
+        # Use xdg-open with a clean environment
+        env = os.environ.copy()
+        if "LD_LIBRARY_PATH_ORIG" in env:
+            env["LD_LIBRARY_PATH"] = env["LD_LIBRARY_PATH_ORIG"]
+        elif "LD_LIBRARY_PATH" in env:
+            del env["LD_LIBRARY_PATH"]
+        try:
+            subprocess.Popen(["xdg-open", url], env=env)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to open URL with xdg-open: {e}")
+            return False
+    else:
+        try:
+            return webbrowser.open(url, new=2)
+        except Exception as e:
+            logger.error(f"Failed to open URL with webbrowser: {e}")
+            return False
+
+
 def show_about_dialog(parent):
     """Show an About dialog with program information including GitHub link."""
     from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
@@ -825,7 +851,7 @@ def show_about_dialog(parent):
     layout.addWidget(desc_label)
     github_btn = QPushButton(texts.VISIT_GITHUB_PAGE_BUTTON)
     github_btn.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
-    github_btn.clicked.connect(lambda: webbrowser.open(GITHUB_URL, new=2))
+    github_btn.clicked.connect(lambda: safe_open_url(GITHUB_URL))
     github_btn.setFixedHeight(32)
     layout.addWidget(github_btn)
     update_btn = QPushButton(texts.CHECK_FOR_UPDATES_BUTTON)
@@ -852,7 +878,7 @@ def show_tool_info_dialog(parent):
     from PyQt6.QtCore import Qt, QUrl
     from PyQt6.QtGui import QIcon, QDesktopServices
     from constants import SYNC_TOOLS, COLORS
-    from utils import get_resource_path
+    from utils import get_resource_path, safe_open_url
     import platform
 
     tool_name = getattr(parent.sync_tool_combo, "currentText", lambda: "")()
@@ -953,12 +979,12 @@ def show_tool_info_dialog(parent):
     if tool.get("github"):
         b = QPushButton(texts.VISIT_GITHUB_PAGE_BUTTON)
         b.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
-        b.clicked.connect(lambda: webbrowser.open(tool["github"], new=2))
+        b.clicked.connect(lambda: safe_open_url(tool["github"]))
         b.setFixedHeight(32)
         main_layout.addWidget(b)
     if tool.get("documentation"):
         b = QPushButton(texts.DOCUMENTATION_BUTTON)
-        b.clicked.connect(lambda: webbrowser.open(tool["documentation"], new=2))
+        b.clicked.connect(lambda: safe_open_url(tool["documentation"]))
         b.setFixedHeight(32)
         main_layout.addWidget(b)
     c = QPushButton(texts.CLOSE_BUTTON)
@@ -1022,6 +1048,7 @@ def get_locale():
 
 def _show_update_message(parent, remote_version, local_version):
     from constants import GITHUB_LATEST_RELEASE_URL, PROGRAM_NAME
+    from utils import safe_open_url
 
     msg_box = QMessageBox(parent)
     msg_box.setIcon(QMessageBox.Icon.Information)
@@ -1040,7 +1067,7 @@ def _show_update_message(parent, remote_version, local_version):
     msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
     if msg_box.exec() == QMessageBox.StandardButton.Yes:
         try:
-            webbrowser.open(GITHUB_LATEST_RELEASE_URL, new=2)
+            safe_open_url(GITHUB_LATEST_RELEASE_URL)
         except Exception:
             pass
 
