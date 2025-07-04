@@ -616,6 +616,8 @@ class autosubsyncapp(QWidget):
 
         # Set the current selection
         current_language = self.config.get("language", DEFAULT_OPTIONS["language"])
+        if current_language not in self.language_actions:
+            current_language = "en_US"
         self.language_actions[current_language].setChecked(True)
 
         # Add Theme submenu
