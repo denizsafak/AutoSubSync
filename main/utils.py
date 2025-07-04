@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import tempfile
-import urllib.request
 import threading
 import logging
 import subprocess
@@ -15,6 +14,8 @@ import cchardet, charset_normalizer, chardet
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
+import requests
+import webbrowser
 
 logger = logging.getLogger(__name__)
 
@@ -824,7 +825,7 @@ def show_about_dialog(parent):
     layout.addWidget(desc_label)
     github_btn = QPushButton(texts.VISIT_GITHUB_PAGE_BUTTON)
     github_btn.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
-    github_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(GITHUB_URL)))
+    github_btn.clicked.connect(lambda: webbrowser.open(GITHUB_URL, new=2))
     github_btn.setFixedHeight(32)
     layout.addWidget(github_btn)
     update_btn = QPushButton(texts.CHECK_FOR_UPDATES_BUTTON)
@@ -952,13 +953,12 @@ def show_tool_info_dialog(parent):
     if tool.get("github"):
         b = QPushButton(texts.VISIT_GITHUB_PAGE_BUTTON)
         b.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
-        b.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(tool["github"])))
+        b.clicked.connect(lambda: webbrowser.open(tool["github"], new=2))
         b.setFixedHeight(32)
         main_layout.addWidget(b)
     if tool.get("documentation"):
         b = QPushButton(texts.DOCUMENTATION_BUTTON)
-        # b.setIcon(QIcon(get_resource_path("autosubsyncapp.assets", "github.svg")))
-        b.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(tool["documentation"])))
+        b.clicked.connect(lambda: webbrowser.open(tool["documentation"], new=2))
         b.setFixedHeight(32)
         main_layout.addWidget(b)
     c = QPushButton(texts.CLOSE_BUTTON)
@@ -1040,7 +1040,7 @@ def _show_update_message(parent, remote_version, local_version):
     msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
     if msg_box.exec() == QMessageBox.StandardButton.Yes:
         try:
-            QDesktopServices.openUrl(QUrl(GITHUB_LATEST_RELEASE_URL))
+            webbrowser.open(GITHUB_LATEST_RELEASE_URL, new=2)
         except Exception:
             pass
 
@@ -1087,8 +1087,10 @@ def check_for_updates_startup(parent):
     def worker():
         try:
             logger.info("Checking for updates...")
-            with urllib.request.urlopen(GITHUB_VERSION_URL, timeout=5) as response:
-                remote = response.read().decode().strip()
+            import certifi
+            response = requests.get(GITHUB_VERSION_URL, timeout=5, verify=certifi.where())
+            response.raise_for_status()
+            remote = response.text.strip()
             try:
                 if int("".join(remote.split("."))) > int("".join(VERSION.split("."))):
                     logger.info(f"Update available: {VERSION} -> {remote}")
