@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  autosubsync:
+    build: .
+    container_name: autosubsync
+    ports:
+      - "6080:6080"  # Web VNC interface
+      - "5900:5900"  # VNC port (optional)
+    volumes:
+      - $PWD/input:/app/input       # Mount for input files
+      - ./output:/app/output     # Mount for output files
+      - $PWD/desktop:/home/autosubsync/Desktop  # Desktop directory
+    environment:
+      - DISPLAY=:0
+      - QT_QPA_PLATFORM=xcb
+    restart: unless-stopped
