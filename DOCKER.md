@@ -23,7 +23,7 @@ This Docker container packages AutoSubSync with all its dependencies, including 
 
 4. **Access the GUI:**
    Open your web browser and go to: http://localhost:6080
-   
+
    Click "Connect" in the noVNC interface to access the desktop.
 
 ### Using provided scripts
@@ -43,7 +43,7 @@ run-docker.bat
 ## What's Included
 
 - ✅ AutoSubSync GUI with PySide6 (converted from PyQt6)
-- ✅ FFmpeg for media processing  
+- ✅ FFmpeg for media processing
 - ✅ All synchronization tools (ffsubsync, autosubsync, alass)
 - ✅ Web-based VNC interface (noVNC)
 - ✅ Fluxbox window manager
@@ -51,20 +51,20 @@ run-docker.bat
 
 ## Usage
 
-1. **Access the application:** 
+1. **Access the application:**
    - Open http://localhost:6080 in your web browser
    - Click "Connect" to access the desktop
    - AutoSubSync will be running automatically
 
-2. **Upload files:** 
+2. **Upload files:**
    - Place your video and subtitle files in the `input/` directory
    - They will be accessible within the container at `/app/input/`
    - Use the file manager in the VNC interface to navigate
 
-3. **Use AutoSubSync:** 
+3. **Use AutoSubSync:**
    - The GUI works exactly like the desktop version
    - Load your video and subtitle files
-   - Configure synchronization settings  
+   - Configure synchronization settings
    - Process your subtitles
 
 4. **Download results:**
@@ -76,7 +76,7 @@ run-docker.bat
 The container uses volume mounts to share files between your host system and the container:
 
 - `./input/` ↔ `/app/input/` - Place your input files here
-- `./output/` ↔ `/app/output/` - Output files will appear here  
+- `./output/` ↔ `/app/output/` - Output files will appear here
 - `./desktop/` ↔ `/home/autosubsync/Desktop/` - Desktop directory for the container
 
 ## Features
@@ -105,7 +105,7 @@ The container runs multiple services managed by supervisor:
 
 The container automatically converts PyQt6 imports to PySide6 during the build process:
 - Handles import statement conversion
-- Updates signal/slot syntax 
+- Updates signal/slot syntax
 - Manages Qt resource paths
 - Safely handles None values in path operations
 

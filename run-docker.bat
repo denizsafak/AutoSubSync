@@ -14,7 +14,7 @@ if errorlevel 1 (
 REM Create necessary directories
 echo Creating directories...
 if not exist "input" mkdir input
-if not exist "output" mkdir output  
+if not exist "output" mkdir output
 if not exist "desktop" mkdir desktop
 
 echo ✓ Directories created:
@@ -64,7 +64,7 @@ echo 🖥️  VNC Client: localhost:5900 (no password)
 echo.
 echo File locations:
 echo 📁 Input files: Place in .\input\ directory
-echo 📁 Output files: Check .\output\ directory  
+echo 📁 Output files: Check .\output\ directory
 echo 📁 Desktop: .\desktop\ directory
 echo.
 echo Container management:

@@ -13,12 +13,12 @@ try:
     from PyQt6.QtGui import *
     QT_LIB = "PyQt6"
     print("Qt compatibility: Using PyQt6")
-    
+
     # PyQt6 uses exec() instead of exec_()
     def exec_():
         """Compatibility wrapper for exec()"""
         return QApplication.exec()
-        
+
 except ImportError:
     try:
         # PySide6 imports
@@ -27,12 +27,12 @@ except ImportError:
         from PySide6.QtGui import *
         QT_LIB = "PySide6"
         print("Qt compatibility: Using PySide6")
-        
+
         # PySide6 uses exec() method name
         def exec_():
             """Compatibility wrapper for exec()"""
             return QApplication.exec()
-            
+
     except ImportError:
         print("ERROR: Neither PyQt6 nor PySide6 is available!")
         sys.exit(1)

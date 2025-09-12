@@ -34,7 +34,7 @@ mkdir -p input output desktop
 
 echo -e "${GREEN}✓ Directories created:${NC}"
 echo "  - input/  (place your video and subtitle files here)"
-echo "  - output/ (processed files will appear here)" 
+echo "  - output/ (processed files will appear here)"
 echo "  - desktop/ (container desktop directory)"
 
 # Check if we should build or just run
