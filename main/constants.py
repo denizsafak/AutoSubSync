@@ -1223,7 +1223,7 @@ VIDEO_EXTENSIONS = [
     ".hevc",
 ]
 
-EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt"}
+EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt", "mov_text": "srt"}
 
 # Convert translation dictionaries to TranslationDict objects
 translation_dicts = ["PROGRAM_TAGLINE", "PROGRAM_DESCRIPTION"]
