@@ -94,6 +94,11 @@ AutoSubSync is a user-friendly Python tool that automatically synchronizes your 
 
 > Thanks to [@bayramhayri](https://github.com/bayramhayri) for helping with translations.
 
+## `Docker Guide`
+Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync in a Docker container. This makes it easier to deploy and run the application in different environments without worrying about dependencies.
+> ### [Go to Docker Guide](DOCKER.md)
+
+
 ## `For developers and contributors`
 If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding.
 
