@@ -1,2 +1,3 @@
 - Added Docker support by [@IlmariKu](https://github.com/IlmariKu).
 - Added `mov_text` as extractable subtitle format for ffmpeg.
+- Fixed autosubsync creating 0‑byte files when overwriting existing files, mentioned by [@chschmit](https://github.com/chschmit) in [#59](https://github.com/denizsafak/AutoSubSync/issues/59).

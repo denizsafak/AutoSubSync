@@ -277,13 +277,35 @@ class SyncProcess:
                 except Exception as e:
                     logger.error(f"Failed to create backup: {e}")
             # --- END BACKUP LOGIC ---
+
+            # --- AUTOSUBSYNC TEMP-OUTPUT TO AVOID OVERWRITE ---
+            effective_output = output
+            use_temp_output = False
+            temp_output_path = None
+            try:
+                if current_tool == "autosubsync" and os.path.abspath(output) == os.path.abspath(subtitle):
+                    base, ext = os.path.splitext(output)
+                    temp_output_path = f"{base}.autosubsync-tmp{ext}"
+                    counter = 2
+                    while os.path.exists(temp_output_path):
+                        temp_output_path = f"{base}.autosubsync-tmp-{counter}{ext}"
+                        counter += 1
+                    effective_output = temp_output_path
+                    use_temp_output = True
+                    logger.info(
+                        "Autosubsync overwrite avoided: using temp output '%s'", effective_output
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to prepare temp output for autosubsync: {e}")
+            # --- END AUTOSUBSYNC TEMP-OUTPUT ---
+
             if current_tool_type == "module":
                 module_name = current_tool_info.get("module")
                 idx, total = getattr(self.app, "_current_batch_idx", None), getattr(
                     self.app, "_current_batch_total", None
                 )
                 cmd_args = self._build_cmd(
-                    current_tool, None, reference, subtitle, output
+                    current_tool, None, reference, subtitle, effective_output
                 )[1:]
                 # Print and log what is executing
                 exec_msg = f"Executing: {module_name} {' '.join(cmd_args)}"
@@ -327,7 +349,7 @@ class SyncProcess:
                     )
                     self.signals.finished.emit(False, None)
                     return
-                cmd = self._build_cmd(current_tool, exe, reference, subtitle, output)
+                cmd = self._build_cmd(current_tool, exe, reference, subtitle, effective_output)
                 with self._process_lock:
                     if self.should_cancel:
                         return
@@ -371,6 +393,28 @@ class SyncProcess:
                     if percent is not None:
                         self.signals.progress_percent.emit(percent)
                 rc = self.process.wait() if not self.should_cancel else 1
+            # --- POST-PROCESS FOR AUTOSUBSYNC TEMP-OUTPUT ---
+            if rc == 0 and use_temp_output and not self.should_cancel:
+                try:
+                    if not os.path.exists(temp_output_path):
+                        self.signals.error.emit("Autosubsync did not produce an output file.")
+                        rc = 1
+                    else:
+                        logger.info("Replacing original output '%s' with temp '%s'", output, temp_output_path)
+                        os.replace(temp_output_path, output)
+                        logger.info("Replacement successful")
+                except Exception as e:
+                    self.signals.error.emit(f"Failed to replace original subtitle: {e}")
+                    logger.error("Replacement failed: %s", e)
+                    rc = 1
+            if (rc != 0 or self.should_cancel) and use_temp_output and temp_output_path and os.path.exists(temp_output_path):
+                try:
+                    os.remove(temp_output_path)
+                    logger.info("Removed temp output '%s'", temp_output_path)
+                except Exception:
+                    logger.warning("Failed to remove temp output '%s'", temp_output_path)
+            # --- END POST-PROCESS ---
+
             if rc != 0 and not self.should_cancel:
                 self.signals.error.emit(
                     texts.TOOL_FAILED_WITH_CODE.format(tool=tool, code=rc)
