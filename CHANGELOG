@@ -1,3 +1,5 @@
+- Added new option `Pair multiple subtitles with single source` in batch mode, allowing users to pair multiple subtitle files with a single video or reference subtitle file, mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
 - Added Docker support by [@IlmariKu](https://github.com/IlmariKu).
 - Added `mov_text` as extractable subtitle format for ffmpeg.
 - Fixed autosubsync creating 0‑byte files when overwriting existing files, mentioned by [@chschmit](https://github.com/chschmit) in [#59](https://github.com/denizsafak/AutoSubSync/issues/59).
+- Improvements in code and documentation.

@@ -610,6 +610,10 @@ class BatchTreeView(QTreeWidget):
         action_auto_pairing = add_files_menu.addAction(
             texts.AUTO_PAIRING_SEASON_EPISODE
         )
+        # Add "pair multiple subtitles with single source" option
+        action_pair_multiple_subs = add_files_menu.addAction(
+            texts.PAIR_MULTIPLE_SUBTITLES_WITH_SINGLE_SOURCE
+        )
 
         action_add_pair.triggered.connect(lambda: self.app_parent.handle_add_pair())
         action_add_folder.triggered.connect(lambda: self.app_parent.handle_add_folder())
@@ -622,6 +626,10 @@ class BatchTreeView(QTreeWidget):
         # Connect the new auto-pairing option
         action_auto_pairing.triggered.connect(
             lambda: self.app_parent.open_auto_pairing_dialog()
+        )
+        # Connect the "pair multiple subtitles with single source" option
+        action_pair_multiple_subs.triggered.connect(
+            lambda: self.app_parent.open_pair_multiple_subs_dialog()
         )
 
         menu.addSeparator()
@@ -1265,6 +1273,8 @@ def show_batch_add_menu(self, source_widget=None, position=None):
     # Add new auto-pairing option
     menu.addSeparator()
     action_auto_pairing = menu.addAction(texts.AUTO_PAIRING_SEASON_EPISODE)
+    # Add "pair multiple subtitles with single source" option
+    action_pair_multiple_subs = menu.addAction(texts.PAIR_MULTIPLE_SUBTITLES_WITH_SINGLE_SOURCE)
 
     action_add_pair.triggered.connect(lambda: handle_add_pair(self))
     action_add_folder.triggered.connect(lambda: handle_add_folder(self))
@@ -1274,6 +1284,8 @@ def show_batch_add_menu(self, source_widget=None, position=None):
     )
     # Connect the new auto-pairing option
     action_auto_pairing.triggered.connect(lambda: self.open_auto_pairing_dialog())
+    # Connect the "pair multiple subtitles with single source" option
+    action_pair_multiple_subs.triggered.connect(lambda: self.open_pair_multiple_subs_dialog())
 
     # Show menu at the specified position, or at a position relevant to the source widget
     if position:

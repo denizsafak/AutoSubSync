@@ -2382,6 +2382,31 @@ AUTO_PAIRING_SEASON_EPISODE = {
     "ur_PK": "سیزن/ایپی سوڈ کے ساتھ خودکار جوڑا بنانا",
 }
 
+PAIR_MULTIPLE_SUBTITLES_WITH_SINGLE_SOURCE  = {
+    "en_US": "Pair multiple subtitles with single source",
+    "es_ES": "Emparejar múltiples subtítulos con una sola fuente",
+    "tr_TR": "Birden fazla altyazıyı tek bir kaynağa eşleştir",
+    "zh_CN": "将多个字幕与单个源配对",
+    "ru_RU": "Сопоставить несколько субтитров с одним источником",
+    "pl_PL": "Sparuj wiele napisów z jednym źródłem",
+    "uk_UA": "Сопоставити кілька субтитрів з одним джерелом",
+    "ja_JP": "複数の字幕を単一のソースとペアリング",
+    "ko_KR": "여러 자막을 단일 소스와 페어링",
+    "hi_IN": "एकल स्रोत के साथ कई उपशीर्षकों को जोड़ें",
+    "bn_BD": "একক উৎসের সাথে একাধিক সাবটাইটেল জোড়া",
+    "it_IT": "Associa più sottotitoli a una singola fonte",
+    "fr_FR": "Associer plusieurs sous-titres à une seule source",
+    "de_DE": "Mehrere Untertitel mit einer einzigen Quelle zuordnen",
+    "pt_PT": "Emparelhar vários legendas com uma única fonte",
+    "ar_SA": "ربط عدة ترجمات بمصدر واحد",
+    "vi_VN": "Ghép nhiều phụ đề với một nguồn",
+    "fa_IR": "جفت‌سازی چند زیرنویس با یک منبع",
+    "id_ID": "Pasangkan beberapa subtitle dengan satu sumber",
+    "ms_MY": "Pasangkan beberapa sari kata dengan satu sumber",
+    "th_TH": "จับคู่คำบรรยายหลายรายการกับแหล่งเดียว",
+    "ur_PK": "ایک ہی ماخذ کے ساتھ متعدد ذیلی عنوانات کو جوڑیں",
+}
+
 ADD_SUBTITLE_TO_ITEM = {
     "en_US": "Add subtitle to this item",
     "es_ES": "Añadir subtítulo a este elemento",
@@ -3384,6 +3409,31 @@ HOW_THE_PAIRING_WORKS_DESC = {
     "ms_MY": '{program_name} secara automatik memasangkan fail video atau sari kata rujukan dengan fail sari kata yang mempunyai nombor episod serupa dalam namanya.\nContoh: "S01E01.srt/mkv" akan dipasangkan dengan "1x01.srt"\nFormat yang disokong: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
     "th_TH": '{program_name} จับคู่ไฟล์วิดีโอหรือคำบรรยายอ้างอิงกับไฟล์คำบรรยายที่มีหมายเลขตอนคล้ายกันในชื่อโดยอัตโนมัติ\nตัวอย่าง: "S01E01.srt/mkv" จะจับคู่กับ "1x01.srt"\nรูปแบบที่รองรับ: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
     "ur_PK": '{program_name} خودکار طور پر ویڈیو یا ریفرنس سب ٹائٹل فائلوں کو سب ٹائٹل فائلوں کے ساتھ میچ کرتا ہے جن کے ناموں میں ملتے جلتے ایپی سوڈ نمبر ہوں۔\nمثال: "S01E01.srt/mkv" کو "1x01.srt" کے ساتھ جوڑا جائے گا\nمعاون فارمیٹس: S01E01, S1E1, S01E1, S1E01, S01B01, S1B1, S01B1, S1B01, 1x01, 01x1, 01x01, 1x1, 101',
+}
+
+MULTIPLE_SUBTITLES_DESC = {
+    "en_US": "{program_name} lets you pair multiple subtitles with a single video or reference subtitle. You can select the source on the left, add subtitles on the right, then click OK to create multiple pairs easily.",
+    "es_ES": "{program_name} te permite emparejar múltiples subtítulos con un solo vídeo o subtítulo de referencia. Puedes seleccionar la fuente a la izquierda, añadir subtítulos a la derecha y luego hacer clic en OK para crear fácilmente varias parejas.",
+    "tr_TR": "{program_name}, birden fazla altyazıyı tek bir video veya referans altyazı ile eşleştirmenizi sağlar. Soldan kaynağı seçip, sağ tarafa altyazıları ekleyebilir ve ardından OK'ye tıklayarak kolayca birden fazla çift oluşturabilirsiniz.",
+    "zh_CN": "{program_name} 允许您将多个字幕与单个视频或参考字幕配对。您可以在左侧选择来源，在右侧添加字幕，然后点击 OK 以轻松创建多个配对。",
+    "ru_RU": "{program_name} позволяет сопоставлять несколько файлов субтитров с одним видео или эталонными субтитрами. Вы можете выбрать источник слева, добавить субтитры справа, затем нажать OK, чтобы легко создать несколько пар.",
+    "pl_PL": "{program_name} pozwala sparować wiele plików napisów z jednym wideo lub napisami referencyjnymi. Możesz wybrać źródło po lewej stronie, dodać napisy po prawej, a następnie kliknąć OK, aby łatwo utworzyć wiele par.",
+    "uk_UA": "{program_name} дозволяє зіставляти кілька субтитрів з одним відео або еталонними субтитрами. Ви можете вибрати джерело ліворуч, додати субтитри праворуч, а потім натиснути OK, щоб легко створити кілька пар.",
+    "ja_JP": "{program_name} は、複数の字幕を1つのビデオまたは参照字幕とペアリングできます。左側でソースを選択し、右側で字幕を追加して、OK をクリックすると複数のペアを簡単に作成できます。",
+    "ko_KR": "{program_name}는 여러 자막을 하나의 비디오 또는 참조 자막과 페어링할 수 있습니다. 왼쪽에서 소스를 선택하고 오른쪽에 자막을 추가한 다음 OK를 클릭하여 여러 쌍을 쉽게 생성할 수 있습니다.",
+    "hi_IN": "{program_name} आपको एक ही वीडियो या संदर्भ उपशीर्षक के साथ कई उपशीर्षकों को पेयर करने देता है। आप बाईं ओर स्रोत चुन सकते हैं, दाईं ओर उपशीर्षक जोड़ सकते हैं, फिर OK पर क्लिक करके आसानी से कई पेयर बना सकते हैं.",
+    "bn_BD": "{program_name} আপনাকে একাধিক সাবটাইটেলকে একটি ভিডিও বা রেফারেন্স সাবটাইটেলের সাথে জোড়া লাগাতে দেয়। আপনি বামদিকে উৎস নির্বাচন করতে পারেন, ডানদিকে সাবটাইটেল যোগ করতে পারেন, তারপর একাধিক জোড়া সহজে তৈরি করতে OK ক্লিক করুন.",
+    "it_IT": "{program_name} consente di associare più sottotitoli a un singolo video o a un sottotitolo di riferimento. Seleziona la sorgente a sinistra, aggiungi i sottotitoli a destra e poi fai clic su OK per creare facilmente più coppie.",
+    "fr_FR": "{program_name} permet d'associer plusieurs sous-titres à une seule vidéo ou à un sous-titre de référence. Vous pouvez sélectionner la source à gauche, ajouter des sous-titres à droite, puis cliquer sur OK pour créer facilement plusieurs paires.",
+    "de_DE": "{program_name} ermöglicht es Ihnen, mehrere Untertitel mit einem einzelnen Video oder Referenz-Untertitel zu verknüpfen. Wählen Sie links die Quelle, fügen Sie rechts Untertitel hinzu und klicken Sie dann auf OK, um einfach mehrere Paare zu erstellen.",
+    "pt_PT": "{program_name} permite emparelhar várias legendas com um único vídeo ou legenda de referência. Pode selecionar a fonte à esquerda, adicionar legendas à direita e depois clicar em OK para criar facilmente vários pares.",
+    "ar_SA": "يمكّن {program_name} من إقران عدة ترجمات بفيديو واحد أو ترجمة مرجعية واحدة. يمكنك تحديد المصدر على اليسار، وإضافة الترجمات على اليمين، ثم النقر على OK لإنشاء عدة أزواج بسهولة.",
+    "vi_VN": "{program_name} cho phép bạn ghép nhiều phụ đề với một video hoặc phụ đề tham chiếu. Bạn có thể chọn nguồn ở bên trái, thêm phụ đề ở bên phải, rồi nhấp OK để dễ dàng tạo nhiều cặp.",
+    "fa_IR": "{program_name} به شما امکان می‌دهد چند زیرنویس را با یک ویدیو یا زیرنویس مرجع جفت کنید. می‌توانید منبع را در سمت چپ انتخاب کرده، در سمت راست زیرنویس‌ها را اضافه کنید و سپس با کلیک روی OK به‌راحتی چندین جفت ایجاد کنید.",
+    "id_ID": "{program_name} memungkinkan Anda memasangkan beberapa subtitle dengan satu video atau subtitle referensi. Anda dapat memilih sumber di sebelah kiri, menambahkan subtitle di sebelah kanan, lalu klik OK untuk dengan mudah membuat beberapa pasangan.",
+    "ms_MY": "{program_name} membolehkan anda memasangkan berbilang sari kata dengan satu video atau sari kata rujukan. Anda boleh memilih sumber di sebelah kiri, menambah sari kata di sebelah kanan, kemudian klik OK untuk mencipta berbilang pasangan dengan mudah.",
+    "th_TH": "{program_name} ช่วยให้คุณจับคู่คำบรรยายหลายไฟล์กับวิดีโอเดียวหรือคำบรรยายอ้างอิง คุณสามารถเลือกแหล่งที่มาทางซ้าย เพิ่มคำบรรยายทางขวา จากนั้นคลิก OK เพื่อสร้างหลายคู่ได้อย่างง่ายดาย",
+    "ur_PK": "{program_name} آپ کو متعدد سب ٹائٹلز کو ایک ہی ویڈیو یا ریفرنس سب ٹائٹل کے ساتھ جوڑنے دیتا ہے۔ آپ بائیں جانب ذریعہ منتخب کریں، دائیں جانب سب ٹائٹلز شامل کریں، پھر متعدد جوڑے آسانی سے بنانے کے لیے OK پر کلک کریں۔",
 }
 
 TOTAL_VALID_PAIRS = {

@@ -18,6 +18,9 @@ from gui_batch_mode import attach_functions_to_autosubsyncapp as attach_batch_fu
 from gui_auto_pairing import (
     attach_functions_to_autosubsyncapp as attach_auto_pairing_functions,
 )
+from gui_multiple_subs import (
+    attach_functions_to_autosubsyncapp as attach_multiple_subs_functions,
+)
 from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
 
@@ -49,6 +52,7 @@ attach_auto_functions(autosubsyncapp)
 attach_manual_functions(autosubsyncapp)
 attach_batch_functions(autosubsyncapp)
 attach_auto_pairing_functions(autosubsyncapp)
+attach_multiple_subs_functions(autosubsyncapp)
 
 
 # Custom message handler to filter out specific Qt warnings

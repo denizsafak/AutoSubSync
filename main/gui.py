@@ -120,6 +120,11 @@ class InputBox(QLabel):
             l.move(10, 8)
             l.show()
 
+    def showEvent(self, event):
+        """Reapply stylesheet when the widget is shown to ensure hover and state work correctly."""
+        super().showEvent(event)
+        self._apply_style()  # Force reapply the current stylesheet
+
     def handle_file_dialog(self):
         if self.input_type == "subtitle":
             file_filter = (
