@@ -108,7 +108,7 @@ If you'd like to modify the code and contribute to development, you can download
 - Use `brew install alass` command to make alass work.
 
 ## `Credits`
-Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. Automatic subtitle synchronization is possible because of these these tools. This is just a GUI application that makes the process a bit easier.
+Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. Automatic subtitle synchronization is possible because of these tools. This is just a GUI application that makes the process a bit easier.
 
 > [!IMPORTANT]
 > The automatic sync feature is not always perfect. I recommend you to check the subtitles after syncing.
