@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from PyQt6.QtCore import Qt, QTimer, QFileInfo, QPoint
-from PyQt6.QtGui import QCursor, QColor
+from PyQt6.QtGui import QCursor, QColor, QShortcut, QKeySequence
 
 import os
 import re
@@ -185,21 +185,26 @@ class BatchTreeView(QTreeWidget):
     ITEM_ID_ROLE = Qt.ItemDataRole.UserRole + 11  # Role to store the item's unique ID
 
     def _is_parent_item_valid(self, item):
-        """Helper to determine if a parent item is valid (has exactly one child, and that child has no children and is not a video file)."""
+        """Helper to determine if a parent item is valid.
+        
+        A parent is valid if:
+        - It has at least one child
+        - All children are subtitle files (not video files)
+        - No children have nested children
+        """
         # Quick early returns for invalid cases
-        if not item or item.parent() or item.childCount() != 1:
+        if not item or item.parent() or item.childCount() < 1:
             return False
 
-        first_child = item.child(0)
-        if not first_child or first_child.childCount() > 0:
-            return False
-
-        # Check if child is a subtitle (not a video)
-        child_file_path = first_child.data(0, Qt.ItemDataRole.UserRole)
-        return (
-            child_file_path
-            and get_file_extension(child_file_path) not in VIDEO_EXTENSIONS
-        )
+        # Check all children - all must be valid subtitles with no nested children
+        for i in range(item.childCount()):
+            child = item.child(i)
+            if not child or child.childCount() > 0:
+                return False
+            child_file_path = child.data(0, Qt.ItemDataRole.UserRole)
+            if not child_file_path or get_file_extension(child_file_path) in VIDEO_EXTENSIONS:
+                return False
+        return True
 
     def is_duplicate_pair(self, reference_path, sub_path):
         """Return True if (reference_path, sub_path) matches an existing valid top-level pair."""
@@ -246,6 +251,45 @@ class BatchTreeView(QTreeWidget):
         model.rowsRemoved.connect(self._schedule_ui_update)
         model.modelReset.connect(self._schedule_ui_update)
 
+        # Undo/Redo stacks
+        self._undo_stack = []  # Stack of saved states for undo
+        self._redo_stack = []  # Stack of saved states for redo
+        self._max_undo_levels = 100  # Maximum number of undo levels
+        self._is_restoring_state = False  # Flag to prevent saving state during restore
+        
+        # Set up keyboard shortcuts for undo/redo (work even without focus)
+        self._setup_shortcuts()
+
+    def _setup_shortcuts(self):
+        """Set up keyboard shortcuts for undo/redo operations."""
+        # Use WindowShortcut context so shortcuts work when the main window is active
+        # and the batch tree view is visible, regardless of which specific widget has focus
+        
+        # Ctrl+Z for Undo
+        self._undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        self._undo_shortcut.setContext(Qt.ShortcutContext.WindowShortcut)
+        self._undo_shortcut.activated.connect(self._handle_undo_shortcut)
+        
+        # Ctrl+Y for Redo (explicit)
+        self._redo_shortcut = QShortcut(QKeySequence("Ctrl+Y"), self)
+        self._redo_shortcut.setContext(Qt.ShortcutContext.WindowShortcut)
+        self._redo_shortcut.activated.connect(self._handle_redo_shortcut)
+        
+        # Ctrl+Shift+Z for Redo (alternative)
+        self._redo_shortcut_alt = QShortcut(QKeySequence("Ctrl+Shift+Z"), self)
+        self._redo_shortcut_alt.setContext(Qt.ShortcutContext.WindowShortcut)
+        self._redo_shortcut_alt.activated.connect(self._handle_redo_shortcut)
+    
+    def _handle_undo_shortcut(self):
+        """Handle undo shortcut - only if batch tree is visible."""
+        if self.isVisible():
+            self.undo()
+    
+    def _handle_redo_shortcut(self):
+        """Handle redo shortcut - only if batch tree is visible."""
+        if self.isVisible():
+            self.redo()
+
     def _get_next_id(self):
         """Get the next available unique ID for a tree item."""
         current_id = self._next_item_id
@@ -260,29 +304,38 @@ class BatchTreeView(QTreeWidget):
         is_internal_move = hasattr(self, "_in_internal_drag") and self._in_internal_drag
 
         # Phase 1: Rebuild pair ID set and item-to-pair_id map for efficient validation
+        # Now supports one-to-many: a single parent can have multiple subtitle children
         self._current_pair_id_set.clear()
         self._item_to_pair_id_map.clear()
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
-            if item and item.childCount() == 1:  # Potential pair structure
+            if item and item.childCount() >= 1:  # Potential pair structure (one or more children)
                 parent_path = item.data(0, Qt.ItemDataRole.UserRole)
-                child_item = item.child(0)
-                child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
+                if not parent_path:
+                    continue
+                
+                norm_parent = os.path.normpath(parent_path)
+                item_pairs = []  # Store all valid pairs for this parent item
+                
+                # Process all children of this parent
+                for j in range(item.childCount()):
+                    child_item = item.child(j)
+                    child_path = child_item.data(0, Qt.ItemDataRole.UserRole) if child_item else None
 
-                if (
-                    parent_path
-                    and child_path
-                    and not child_item.childCount()
-                    and is_subtitle_file(child_path)
-                ):
-                    norm_parent = os.path.normpath(parent_path)
-                    norm_child = os.path.normpath(child_path)
                     if (
-                        norm_parent != norm_child
-                    ):  # Ensure parent and child are not the same file
-                        pair_id = (norm_parent, norm_child)
-                        self._current_pair_id_set.add(pair_id)
-                        self._item_to_pair_id_map[id(item)] = pair_id
+                        child_path
+                        and not child_item.childCount()
+                        and is_subtitle_file(child_path)
+                    ):
+                        norm_child = os.path.normpath(child_path)
+                        if norm_parent != norm_child:  # Ensure parent and child are not the same file
+                            pair_id = (norm_parent, norm_child)
+                            self._current_pair_id_set.add(pair_id)
+                            item_pairs.append(pair_id)
+                
+                # Store all pairs for this item (for duplicate detection)
+                if item_pairs:
+                    self._item_to_pair_id_map[id(item)] = item_pairs
 
         # Continue with existing UI update logic - but ONLY trigger app parent updates if not an internal move
         if (
@@ -331,18 +384,23 @@ class BatchTreeView(QTreeWidget):
         return "valid" if is_valid else "invalid"
 
     def _update_header_pair_counts(self):
-        """Updates the header with counts of valid and invalid pairs."""
+        """Updates the header with counts of valid and invalid pairs.
+        
+        For one-to-many relationships, each child subtitle under a valid parent
+        counts as one valid pair. Invalid parents count as one invalid entry.
+        """
         valid_pairs = 0
-        invalid_pairs = 0
+        invalid_parents = 0
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if item.data(0, self.VALID_STATE_ROLE) == "valid":
-                valid_pairs += 1
+                # Count each child as a separate valid pair
+                valid_pairs += item.childCount()
             else:
-                invalid_pairs += 1
+                invalid_parents += 1
 
         header_text = texts.PAIRS_HEADER_LABEL.format(
-            valid=valid_pairs, invalid=invalid_pairs
+            valid=valid_pairs, invalid=invalid_parents
         )
         self.setHeaderLabel(header_text)
 
@@ -409,58 +467,108 @@ class BatchTreeView(QTreeWidget):
 
     def _validate_item(self, item):
         """Validate an item and return its validity state.
+        
+        Supports one-to-many relationships: a parent can have multiple subtitle children.
+        Each child must be a subtitle file (not video), and must not be nested.
+        Also checks for duplicate children within the same parent and marks them.
         Uses precomputed _current_pair_id_set for duplicate checks.
         """
 
-        # Check if item has exactly one child
+        # Check if item has at least one child
         if item.childCount() == 0:
             return False, texts.BATCH_VALIDATE_ADD_SUBTITLE
 
-        # Check if item has more than one child
-        if item.childCount() > 1:
-            return False, texts.BATCH_VALIDATE_TOO_MANY_FILES
-
-        # Check if the child has no children
-        child_item = item.child(0)
-        if child_item.childCount() > 0:
-            return False, texts.BATCH_VALIDATE_NESTED_NOT_ALLOWED
-
-        # Check if the child is a video file
-        if is_video_file(child_item.data(0, Qt.ItemDataRole.UserRole)):
-            return False, texts.BATCH_VALIDATE_VIDEO_NOT_ALLOWED
-
-        # Path validation
         parent_path = item.data(0, Qt.ItemDataRole.UserRole)
-        child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
-
-        if not parent_path or not child_path:
+        if not parent_path:
             return False, texts.BATCH_VALIDATE_MISSING_FILE_PATH
-
+        
         norm_parent = os.path.normpath(parent_path)
-        norm_child = os.path.normpath(child_path)
+        
+        # Track child paths to detect duplicates within this parent
+        # Maps normalized path -> list of child items with that path
+        child_path_items = {}
+        has_duplicates = False
 
-        if norm_parent == norm_child:
-            return False, texts.BATCH_VALIDATE_SAME_FILE
+        # First pass: collect all children and check basic validity
+        for i in range(item.childCount()):
+            child_item = item.child(i)
+            
+            # Check if the child has no nested children
+            if child_item.childCount() > 0:
+                return False, texts.BATCH_VALIDATE_NESTED_NOT_ALLOWED
 
-        if not is_subtitle_file(child_path):
-            return False, texts.BATCH_VALIDATE_CHILD_NOT_SUBTITLE
+            child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
+            
+            if not child_path:
+                return False, texts.BATCH_VALIDATE_MISSING_FILE_PATH
+
+            # Check if the child is a video file (not allowed)
+            if is_video_file(child_path):
+                return False, texts.BATCH_VALIDATE_VIDEO_NOT_ALLOWED
+
+            norm_child = os.path.normpath(child_path)
+
+            if norm_parent == norm_child:
+                return False, texts.BATCH_VALIDATE_SAME_FILE
+
+            if not is_subtitle_file(child_path):
+                return False, texts.BATCH_VALIDATE_CHILD_NOT_SUBTITLE
+            
+            # Track this child for duplicate detection
+            if norm_child not in child_path_items:
+                child_path_items[norm_child] = []
+            child_path_items[norm_child].append(child_item)
+        
+        # Second pass: mark duplicates with prefix and update display
+        duplicate_prefix = texts.DUPLICATE_PREFIX
+        for norm_path, items in child_path_items.items():
+            if len(items) > 1:
+                has_duplicates = True
+                # Mark duplicate items with prefix, but skip the first (original) item
+                for idx, child_item in enumerate(items):
+                    child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
+                    basename = get_basename(child_path)
+                    current_text = child_item.text(0)
+                    if idx == 0:
+                        # First item is the original - remove prefix if present
+                        if current_text.startswith(duplicate_prefix):
+                            child_item.setText(0, basename)
+                    else:
+                        # Subsequent items are duplicates - add prefix if not present
+                        if not current_text.startswith(duplicate_prefix):
+                            child_item.setText(0, f"{duplicate_prefix} {basename}")
+            else:
+                # Ensure non-duplicates don't have the prefix
+                child_item = items[0]
+                child_path = child_item.data(0, Qt.ItemDataRole.UserRole)
+                basename = get_basename(child_path)
+                current_text = child_item.text(0)
+                if current_text.startswith(duplicate_prefix):
+                    child_item.setText(0, basename)
+        
+        if has_duplicates:
+            return False, texts.BATCH_VALIDATE_DUPLICATE_CHILD
 
         # Check for duplicates using the precomputed set
-        current_item_pair_id = self._item_to_pair_id_map.get(id(item))
-        if current_item_pair_id:
-            # Only invalidate the newest duplicate (highest ITEM_ID_ROLE)
-            duplicate_ids = []
-            for i in range(self.topLevelItemCount()):
-                top = self.topLevelItem(i)
-                if top.childCount() == 1:
-                    p = os.path.normpath(top.data(0, Qt.ItemDataRole.UserRole))
-                    c = os.path.normpath(top.child(0).data(0, Qt.ItemDataRole.UserRole))
-                    if (p, c) == current_item_pair_id:
-                        duplicate_ids.append(top.data(0, self.ITEM_ID_ROLE))
-            if len(duplicate_ids) > 1:
-                current_id = item.data(0, self.ITEM_ID_ROLE)
-                if current_id == max(duplicate_ids):
-                    return False, texts.BATCH_VALIDATE_DUPLICATE_PAIR
+        # For one-to-many, check if any pair in this item duplicates another item's pair
+        current_item_pairs = self._item_to_pair_id_map.get(id(item), [])
+        if current_item_pairs:
+            for pair_id in current_item_pairs:
+                # Count how many times this pair appears across all items
+                duplicate_count = 0
+                duplicate_item_ids = []
+                for j in range(self.topLevelItemCount()):
+                    top = self.topLevelItem(j)
+                    top_pairs = self._item_to_pair_id_map.get(id(top), [])
+                    if pair_id in top_pairs:
+                        duplicate_count += 1
+                        duplicate_item_ids.append(top.data(0, self.ITEM_ID_ROLE))
+                
+                if duplicate_count > 1:
+                    # Only invalidate the newest duplicate (highest ITEM_ID_ROLE)
+                    current_id = item.data(0, self.ITEM_ID_ROLE)
+                    if current_id == max(duplicate_item_ids):
+                        return False, texts.BATCH_VALIDATE_DUPLICATE_PAIR
 
         return True, None
 
@@ -593,6 +701,8 @@ class BatchTreeView(QTreeWidget):
                 self.add_files_or_folders(paths, drop_target_item=drop_target_item)
             event.acceptProposedAction()
         else:
+            # Internal drag-and-drop move - save state for undo
+            self._save_state_for_undo()
             # This is still an internal drop even if we're calling super
             super().dropEvent(event)
 
@@ -676,6 +786,17 @@ class BatchTreeView(QTreeWidget):
         action_clear_all.triggered.connect(self.clear_all_items)
         if not self.has_items():
             action_clear_all.setEnabled(False)
+        
+        # Add Undo/Redo actions
+        menu.addSeparator()
+        action_undo = menu.addAction(f"{texts.UNDO} (Ctrl+Z)")
+        action_undo.triggered.connect(self.undo)
+        action_undo.setEnabled(self.can_undo())
+        
+        action_redo = menu.addAction(f"{texts.REDO} (Ctrl+Y)")
+        action_redo.triggered.connect(self.redo)
+        action_redo.setEnabled(self.can_redo())
+        
         if (
             not selected_items and not item_at_pos
         ):  # Disable remove/change if not on item and no selection
@@ -719,6 +840,8 @@ class BatchTreeView(QTreeWidget):
 
     def add_files_or_folders(self, paths, drop_target_item=None):
         logger.info(f"Adding files/folders: {len(paths)} items")
+        # Save state for undo before making changes
+        self._save_state_for_undo()
         # Special case: Check if there are exactly 2 files, one video and one subtitle
         if len(paths) == 2 and all(os.path.isfile(p) for p in paths):
             if paths[0] == paths[1]:
@@ -912,6 +1035,8 @@ class BatchTreeView(QTreeWidget):
         logger.info(
             f"Adding pair: {os.path.basename(video_ref_path)} + {os.path.basename(sub_path)}"
         )
+        # Save state for undo before making changes
+        self._save_state_for_undo()
         parent_item_id = self._get_next_id()
         parent_item = create_tree_widget_item(
             video_ref_path, None, self.icon_provider, item_id=parent_item_id
@@ -948,6 +1073,8 @@ class BatchTreeView(QTreeWidget):
         )
 
         if file_paths:
+            # Save state for undo before making changes
+            self._save_state_for_undo()
             # Set internal operation flag to prevent full UI updates
             self._in_internal_drag = True
 
@@ -1040,6 +1167,9 @@ class BatchTreeView(QTreeWidget):
             )
             return
 
+        # Save state for undo before making changes
+        self._save_state_for_undo()
+
         # Set internal operation flag to prevent full UI updates
         self._in_internal_drag = True
 
@@ -1087,6 +1217,8 @@ class BatchTreeView(QTreeWidget):
             logger.info(
                 f"Removing item: {os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)) if item.data(0, Qt.ItemDataRole.UserRole) else None}"
             )
+            # Save state for undo before making changes
+            self._save_state_for_undo()
             # Set internal operation flag to prevent full UI updates
             self._in_internal_drag = True
             root = self.invisibleRootItem()
@@ -1114,6 +1246,9 @@ class BatchTreeView(QTreeWidget):
             )
             if reply != QMessageBox.StandardButton.Yes:
                 return
+        
+        # Save state for undo before making changes
+        self._save_state_for_undo()
 
         # Set internal operation flag to prevent full UI updates
         self._in_internal_drag = True
@@ -1168,6 +1303,9 @@ class BatchTreeView(QTreeWidget):
                 )
                 return
 
+            # Save state for undo before making changes
+            self._save_state_for_undo()
+
             item.setText(0, os.path.basename(new_file_path))
             item.setData(0, Qt.ItemDataRole.UserRole, new_file_path)
             item.setIcon(0, self._get_file_icon(new_file_path))
@@ -1186,6 +1324,8 @@ class BatchTreeView(QTreeWidget):
             if reply != QMessageBox.StandardButton.Yes:
                 return
         if pair_count > 0:
+            # Save state for undo before making changes
+            self._save_state_for_undo()
             self.clear()
 
     def open_item_folder(self, item):
@@ -1205,23 +1345,178 @@ class BatchTreeView(QTreeWidget):
         open_folder(file_path)
 
     def get_all_valid_pairs(self):
+        """Get all valid pairs from the batch tree.
+        
+        Supports one-to-many relationships: each child subtitle under a valid
+        parent creates a separate pair with the same reference/video.
+        
+        Returns:
+            List of tuples (reference_path, subtitle_path)
+        """
         pairs = []
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if (
                 item
-                and item.childCount() == 1
+                and item.childCount() >= 1
                 and item.data(0, self.VALID_STATE_ROLE) == "valid"
             ):
                 reference_path = item.data(0, Qt.ItemDataRole.UserRole)
-                sub_item = item.child(0)
-                sub_path = sub_item.data(0, Qt.ItemDataRole.UserRole)
-                if reference_path and sub_path:
-                    pairs.append((reference_path, sub_path))
+                if not reference_path:
+                    continue
+                # Collect all child subtitles as separate pairs
+                for j in range(item.childCount()):
+                    sub_item = item.child(j)
+                    if sub_item:
+                        sub_path = sub_item.data(0, Qt.ItemDataRole.UserRole)
+                        if sub_path:
+                            pairs.append((reference_path, sub_path))
         return pairs
 
     def has_items(self):
         return self.topLevelItemCount() > 0
+
+    # ==================== Undo/Redo System ====================
+    
+    def _save_state_for_undo(self):
+        """Save the current tree state to the undo stack.
+        
+        Only saves state if the tree has items. This prevents undoing
+        back to an empty state when first adding files.
+        """
+        if self._is_restoring_state:
+            return  # Don't save state while restoring
+        
+        # Don't save empty state - we don't want to undo back to empty
+        if self.topLevelItemCount() == 0:
+            return
+        
+        state = self._serialize_tree_state()
+        self._undo_stack.append(state)
+        
+        # Limit undo stack size
+        if len(self._undo_stack) > self._max_undo_levels:
+            self._undo_stack.pop(0)
+        
+        # Clear redo stack when a new action is performed
+        self._redo_stack.clear()
+        
+        logger.info(f"State saved for undo. Undo stack size: {len(self._undo_stack)}")
+    
+    def _serialize_tree_state(self):
+        """Serialize the current tree state to a list of dictionaries."""
+        state = {
+            'next_item_id': self._next_item_id,
+            'items': []
+        }
+        
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                state['items'].append(self._serialize_item(item))
+        
+        return state
+    
+    def _serialize_item(self, item):
+        """Serialize a single tree item and its children."""
+        item_data = {
+            'file_path': item.data(0, Qt.ItemDataRole.UserRole),
+            'item_id': item.data(0, self.ITEM_ID_ROLE),
+            'text': item.text(0),
+            'children': []
+        }
+        
+        for i in range(item.childCount()):
+            child = item.child(i)
+            if child:
+                item_data['children'].append(self._serialize_item(child))
+        
+        return item_data
+    
+    def _restore_tree_state(self, state):
+        """Restore the tree state from a serialized state dictionary."""
+        self._is_restoring_state = True
+        
+        try:
+            # Clear current tree without triggering undo save
+            self.clear()
+            
+            # Restore next_item_id
+            self._next_item_id = state.get('next_item_id', 1)
+            
+            # Restore all items
+            for item_data in state.get('items', []):
+                item = self._deserialize_item(item_data)
+                if item:
+                    self.addTopLevelItem(item)
+                    item.setExpanded(True)
+            
+            # Trigger UI update
+            self._schedule_ui_update()
+            
+        finally:
+            self._is_restoring_state = False
+    
+    def _deserialize_item(self, item_data):
+        """Deserialize a single tree item and its children from saved data."""
+        file_path = item_data.get('file_path')
+        if not file_path:
+            return None
+        
+        item = QTreeWidgetItem([item_data.get('text', get_basename(file_path))])
+        item.setData(0, Qt.ItemDataRole.UserRole, file_path)
+        item.setData(0, self.ITEM_ID_ROLE, item_data.get('item_id'))
+        item.setIcon(0, self.icon_provider.icon(QFileInfo(file_path)))
+        
+        # Restore children
+        for child_data in item_data.get('children', []):
+            child = self._deserialize_item(child_data)
+            if child:
+                item.addChild(child)
+        
+        return item
+    
+    def undo(self):
+        """Undo the last action by restoring the previous state."""
+        if not self._undo_stack:
+            logger.info("Nothing to undo")
+            return False
+        
+        # Save current state to redo stack before undoing
+        current_state = self._serialize_tree_state()
+        self._redo_stack.append(current_state)
+        
+        # Pop and restore the previous state
+        previous_state = self._undo_stack.pop()
+        self._restore_tree_state(previous_state)
+        
+        logger.info(f"Undo performed. Undo stack: {len(self._undo_stack)}, Redo stack: {len(self._redo_stack)}")
+        return True
+    
+    def redo(self):
+        """Redo the last undone action by restoring the next state."""
+        if not self._redo_stack:
+            logger.info("Nothing to redo")
+            return False
+        
+        # Save current state to undo stack before redoing
+        current_state = self._serialize_tree_state()
+        self._undo_stack.append(current_state)
+        
+        # Pop and restore the next state
+        next_state = self._redo_stack.pop()
+        self._restore_tree_state(next_state)
+        
+        logger.info(f"Redo performed. Undo stack: {len(self._undo_stack)}, Redo stack: {len(self._redo_stack)}")
+        return True
+    
+    def can_undo(self):
+        """Check if undo is available."""
+        return len(self._undo_stack) > 0
+    
+    def can_redo(self):
+        """Check if redo is available."""
+        return len(self._redo_stack) > 0
 
 
 # Helper functions for the main application's batch mode

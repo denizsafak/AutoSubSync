@@ -1,5 +1,3 @@
-- Added new option `Pair multiple subtitles with single source` in batch mode, allowing users to pair multiple subtitle files with a single video or reference subtitle file, mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
-- Added Docker support by [@IlmariKu](https://github.com/IlmariKu).
-- Added `mov_text` as extractable subtitle format for ffmpeg.
-- Fixed autosubsync creating 0‑byte files when overwriting existing files, mentioned by [@chschmit](https://github.com/chschmit) in [#59](https://github.com/denizsafak/AutoSubSync/issues/59).
-- Improvements in code and documentation.
+- Batch Input system now supports **adding multiple subtitle files to a single Video/Reference** parent item. Each subtitle file is automatically interpreted as its own individual processing task, all linked to the same parent video/reference file, feature mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
+- Added **Undo/Redo** support to the Batch Input, including `Ctrl+Z` and `Ctrl+Y` shortcuts and new right-click menu options, allowing users to easily revert or reapply actions while managing items.
+- Upgraded [ffsubsync](https://github.com/smacke/ffsubsync) from `0.4.30` to `0.4.31`.
