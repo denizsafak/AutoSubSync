@@ -1,15 +1,26 @@
 import os
-import sys
 import platform
 from datetime import datetime
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # Add parent directory
-sys.path.append((os.path.dirname(__file__)))  # Add current directory
-
 PROGRAM_NAME = "AutoSubSync"
+_current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Only import Windows-specific modules on Windows
+# Read version from VERSION file
+with open(os.path.join(_current_dir, "VERSION"), "r", encoding="utf-8") as version_file:
+    version = version_file.read().strip()
+
+
+def parse_version(version_string):
+    """Parse version string into a 4-part tuple for Windows version info."""
+    parts = [int(x) for x in version_string.split(".")]
+    while len(parts) < 4:
+        parts.append(0)
+    return tuple(parts[:4])  # Ensure exactly 4 parts
+
+
+version_parts = parse_version(version)
+
+# Only create version info on Windows (required for PyInstaller --version-file)
 if platform.system() == "Windows":
     from PyInstaller.utils.win32.versioninfo import (
         VSVersionInfo,
@@ -21,29 +32,14 @@ if platform.system() == "Windows":
         VarStruct,
     )
 
-with open(os.path.join(os.path.dirname(__file__), "VERSION"), "r") as version_file:
-    version = version_file.read().strip()
-
-
-def parse_version():
-    parts = [int(x) for x in version.split(".")]
-    while len(parts) < 4:
-        parts.append(0)
-    return tuple(parts)
-
-
-version_parts = parse_version()
-
-# Only create VSVersionInfo on Windows
-if platform.system() == "Windows":
-    VSVersionInfo = VSVersionInfo(
+    version_info = VSVersionInfo(
         ffi=FixedFileInfo(
             filevers=version_parts,
             prodvers=version_parts,
             mask=0x3F,
             flags=0x0,
-            OS=0x40004,
-            fileType=0x1,
+            OS=0x40004,  # VOS_NT_WINDOWS32
+            fileType=0x1,  # VFT_APP
             subtype=0x0,
             date=(0, 0),
         ),
@@ -51,17 +47,17 @@ if platform.system() == "Windows":
             StringFileInfo(
                 [
                     StringTable(
-                        "040904B0",
+                        "040904B0",  # US English, Unicode
                         [
                             StringStruct("CompanyName", "Deniz Şafak"),
                             StringStruct(
                                 "FileDescription",
-                                f"{PROGRAM_NAME} is a user-friendly Python tool that helps you easily synchronize subtitle files.",
+                                f"{PROGRAM_NAME} - Automatic subtitle synchronization tool",
                             ),
                             StringStruct("FileVersion", version),
                             StringStruct("InternalName", PROGRAM_NAME),
                             StringStruct(
-                                "LegalCopyright", f"(c) {datetime.now().year}"
+                                "LegalCopyright", f"© {datetime.now().year} Deniz Şafak"
                             ),
                             StringStruct("OriginalFilename", f"{PROGRAM_NAME}.exe"),
                             StringStruct("ProductName", PROGRAM_NAME),
@@ -74,5 +70,5 @@ if platform.system() == "Windows":
         ],
     )
 else:
-    # Dummy VSVersionInfo for non-Windows platforms
-    VSVersionInfo = None
+    # Placeholder for non-Windows platforms
+    version_info = None

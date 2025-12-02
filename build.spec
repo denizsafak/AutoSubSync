@@ -35,11 +35,11 @@ for site_dir in site_packages_dirs:
 with open('main/VERSION', 'r') as f:
     version = f.read().strip()
 
-# Only import VSVersionInfo on Windows, because it gives error when building in other OS's.
+# Only import version_info on Windows, because it gives error when building in other OS's.
 if platform.system() == 'Windows':
-    from main.version import VSVersionInfo
+    from main.version import version_info
 else:
-    VSVersionInfo = version
+    version_info = version
 
 folder_name = f'AutoSubSync-v{version}'
 
@@ -112,7 +112,7 @@ else:
         codesign_identity=None,
         entitlements_file=None,
         icon=os.path.join(os.curdir, 'main', 'assets', 'icon.ico'),
-        version=VSVersionInfo,
+        version=version_info,
     )
 
     coll = COLLECT(
