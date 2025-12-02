@@ -1053,6 +1053,126 @@ class BatchTreeView(QTreeWidget):
         )  # Insert the configured parent item at the top
         # UI update (including sort) will be scheduled by model signals
 
+    def add_parent_with_children(self, reference_path, subtitle_paths):
+        """Add a parent (video/reference subtitle) with multiple subtitle children.
+        
+        Returns tuple: (added_count, skipped_same_count, skipped_duplicate_count)
+        """
+        logger.info(
+            f"Adding parent with {len(subtitle_paths)} children: {os.path.basename(reference_path)}"
+        )
+        
+        added = 0
+        skipped_same = 0
+        skipped_dups = 0
+        
+        # Filter out invalid subtitles first
+        valid_subs = []
+        for sub_path in subtitle_paths:
+            norm_ref = os.path.normpath(reference_path)
+            norm_sub = os.path.normpath(sub_path)
+            
+            # Cannot pair file with itself
+            if norm_ref == norm_sub:
+                skipped_same += 1
+                continue
+            
+            # Check if this pair already exists
+            if self.is_duplicate_pair(reference_path, sub_path):
+                skipped_dups += 1
+                continue
+            
+            valid_subs.append(sub_path)
+        
+        if not valid_subs:
+            return (0, skipped_same, skipped_dups)
+        
+        # Save state for undo before making changes
+        self._save_state_for_undo()
+        
+        # Create parent item
+        parent_item_id = self._get_next_id()
+        parent_item = create_tree_widget_item(
+            reference_path, None, self.icon_provider, item_id=parent_item_id
+        )
+        
+        # Add all valid children
+        for sub_path in valid_subs:
+            child_item_id = self._get_next_id()
+            child_item = create_tree_widget_item(
+                sub_path, parent_item, self.icon_provider, item_id=child_item_id
+            )
+            added += 1
+        
+        parent_item.setExpanded(True)
+        self.insertTopLevelItem(0, parent_item)
+        # UI update (including sort) will be scheduled by model signals
+        
+        return (added, skipped_same, skipped_dups)
+
+    def find_parent_by_path(self, reference_path):
+        """Find an existing top-level parent item by its file path."""
+        norm_ref = os.path.normpath(reference_path)
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            item_path = item.data(0, Qt.ItemDataRole.UserRole)
+            if item_path and os.path.normpath(item_path) == norm_ref:
+                return item
+        return None
+
+    def add_children_to_parent(self, parent_item, subtitle_paths):
+        """Add multiple subtitle children to an existing parent item.
+        
+        Returns tuple: (added_count, skipped_same_count, skipped_duplicate_count)
+        """
+        if not parent_item:
+            return (0, 0, 0)
+        
+        reference_path = parent_item.data(0, Qt.ItemDataRole.UserRole)
+        logger.info(
+            f"Adding {len(subtitle_paths)} children to existing parent: {os.path.basename(reference_path)}"
+        )
+        
+        added = 0
+        skipped_same = 0
+        skipped_dups = 0
+        
+        valid_subs = []
+        for sub_path in subtitle_paths:
+            norm_ref = os.path.normpath(reference_path)
+            norm_sub = os.path.normpath(sub_path)
+            
+            # Cannot pair file with itself
+            if norm_ref == norm_sub:
+                skipped_same += 1
+                continue
+            
+            # Check if this pair already exists
+            if self.is_duplicate_pair(reference_path, sub_path):
+                skipped_dups += 1
+                continue
+            
+            valid_subs.append(sub_path)
+        
+        if not valid_subs:
+            return (0, skipped_same, skipped_dups)
+        
+        # Save state for undo before making changes
+        self._save_state_for_undo()
+        
+        # Add all valid children
+        for sub_path in valid_subs:
+            child_item_id = self._get_next_id()
+            child_item = create_tree_widget_item(
+                sub_path, parent_item, self.icon_provider, item_id=child_item_id
+            )
+            added += 1
+        
+        parent_item.setExpanded(True)
+        self._schedule_ui_update()
+        
+        return (added, skipped_same, skipped_dups)
+
     def add_subtitle_to_item_dialog(self, parent_item):
         logger.info(
             f"Adding subtitle to item: {os.path.basename(parent_item.data(0, Qt.ItemDataRole.UserRole)) if parent_item and parent_item.data(0, Qt.ItemDataRole.UserRole) else None}"

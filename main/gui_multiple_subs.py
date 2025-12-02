@@ -438,18 +438,20 @@ class MultipleSubsDialog(QDialog):
             return
 
         view = self.parent_window.batch_tree_view
-        added = 0
-        skipped_same = 0
-        skipped_dups = 0
-        for sub in self.subtitle_files:
-            if os.path.normpath(ref) == os.path.normpath(sub):
-                skipped_same += 1
-                continue
-            if view.is_duplicate_pair(ref, sub):
-                skipped_dups += 1
-                continue
-            view.add_explicit_pair(ref, sub)
-            added += 1
+        
+        # Check if the reference already exists as a parent in the batch
+        existing_parent = view.find_parent_by_path(ref)
+        
+        if existing_parent:
+            # Add subtitles as children to the existing parent
+            added, skipped_same, skipped_dups = view.add_children_to_parent(
+                existing_parent, self.subtitle_files
+            )
+        else:
+            # Create a new parent with all subtitles as children
+            added, skipped_same, skipped_dups = view.add_parent_with_children(
+                ref, self.subtitle_files
+            )
 
         if added == 0:
             # Nothing was added; inform why
