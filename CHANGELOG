@@ -1,3 +1,32 @@
+- Added **Sync tracking** system for Batch Mode. This system keeps track of all videos that have been successfully synced, so when you add a large library of videos to the batch list, the app automatically identifies and skips the ones you've already processed before. This is especially useful when working with large media collections where you periodically add new content and want to avoid re-syncing existing files. Feature requested by [@M10pnl](https://github.com/M10pnl) in [#54](https://github.com/denizsafak/AutoSubSync/issues/54).
+  - **Designed for video files only**; reference or output subtitle files are not tracked.
+  - Videos are identified by their content using a unique fingerprint (hash), **not by filename or path**. This means you can rename, move, or reorganize your files and the system will still recognize them as already processed.
+  - When you add videos to the batch list, previously processed ones automatically appear greyed out with a `Status: Skipped` tooltip, making it easy to see at a glance which files will be skipped.
+  - **When sync tracking is disabled**: No videos will be automatically skipped, newly synced videos will not be added to the database, and sync-related options will not appear in Batch Mode.
+  - Access all sync tracking features via multiple locations:
+    - **Batch Mode:** `Sync tracking` button (shows green text when enabled) or right-click context menu
+    - **Settings Menu:** `Sync tracking` submenu (shows "Enabled" or "Disabled" status in title)
+  - **Sync tracking menu options:**
+    - `Sync tracking system: Enabled/Disabled` - Toggle the system on or off
+    - `Clear processed items database` - Reset the tracking database (**Please be careful with this action, as it cannot be undone if you have not backed up your database.**)
+    - `Backup processed items database` - Export your database for safekeeping
+    - `Import processed items database` - Import items from another database (merges without duplicates)
+    - `Manage library folders` - Open the Library Folders Manager
+    - `Load library` - Quickly load all saved library folders into Batch Mode (Batch Mode menu only)
+  - **Right-click context menu** provides manual control over individual items:
+    - `Force process selected video(s)` - Temporarily override the skip and process the video again
+    - `Skip processing selected video(s)` - Manually mark videos to be skipped without adding them to the database
+    - `Add selected video(s) to processed items database` - Mark videos as already processed without syncing them
+    - `Remove selected video(s) from processed items database` - Remove videos from the database so they can be processed again
+  - `Refresh` button re-checks all videos in the current list against the database.
+  - Database file location: `processed_items.db` in the config directory (accessible via `Settings` → `Open config file directory`).
+- Added **Library Manager** system for Batch Mode. The Library Manager allows you to save frequently used folders for quick access in Batch Mode. Add folders containing video files and their corresponding subtitle files. These folders will be remembered between sessions, so you don't have to re-add them each time. You can add, remove, or clear folders as needed. When 'Load library' is clicked, it will load all videos and subtitles that exist in the folders you added.
+  - Access via the `Sync tracking` menu → `Manage library folders` or directly in Batch Mode via the `Sync tracking` button
+  - Add, remove, and organize your library folders
+  - Folders that no longer exist are highlighted in red
+  - Click `Load library` to load all saved folders, or press OK in the manager to load and close
+  - Database file location: `library_folders.db` in the config directory (accessible via `Settings` → `Open config file directory`).
 - Batch Input system now supports **adding multiple subtitle files to a single Video/Reference** parent item. Each subtitle file is automatically interpreted as its own individual processing task, all linked to the same parent video/reference file, feature mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
 - Added **Undo/Redo** support to the Batch Input, including `Ctrl+Z` and `Ctrl+Y` shortcuts and new right-click menu options, allowing users to easily revert or reapply actions while managing items.
 - Upgraded [ffsubsync](https://github.com/smacke/ffsubsync) from `0.4.30` to `0.4.31`.
+- Improvements in documentation, translations, and code.

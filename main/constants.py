@@ -140,6 +140,7 @@ DEFAULT_OPTIONS = {
     "add_ms_prefix_to_filename": True,
     "keep_log_records": True,
     "theme": "system",
+    "skip_previously_processed_videos": True,
 }
 
 # ffmpeg and ffprobe paths
@@ -1181,6 +1182,9 @@ COLORS = {
     "GREEN_BACKGROUND_HOVER": "rgba(66, 173, 73, 0.15)",
     "RED_BACKGROUND": "rgba(232, 78, 60, 0.1)",
     "RED_BACKGROUND_HOVER": "rgba(232, 78, 60, 0.15)",
+    # Smart Deduplication - processed items styling
+    "PROCESSED_BACKGROUND": "rgba(128, 128, 128, 0.25)",
+    "PROCESSED_BACKGROUND_HOVER": "rgba(128, 128, 128, 0.35)",
     # Theme palette colors
     "DARK_BG": "#202326",
     "DARK_BASE": "#141618",

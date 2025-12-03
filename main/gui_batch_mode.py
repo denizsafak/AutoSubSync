@@ -19,15 +19,16 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QWidget,
 )
-from PyQt6.QtCore import Qt, QTimer, QFileInfo, QPoint
+from PyQt6.QtCore import Qt, QTimer, QFileInfo, QPoint, QThread, pyqtSignal, QObject
 from PyQt6.QtGui import QCursor, QColor, QShortcut, QKeySequence
 
 import os
 import re
 import logging
+import threading
 import texts
-from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS
-from utils import update_config, open_filedialog, open_folder
+from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS, DEFAULT_OPTIONS
+from utils import update_config, open_filedialog, open_folder, load_config
 
 # Set up logging for batch events
 logger = logging.getLogger(__name__)
@@ -176,6 +177,118 @@ def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
     autosubsyncapp_class.update_batch_buttons_state = update_batch_buttons_state
     autosubsyncapp_class.toggle_batch_mode = toggle_batch_mode
     autosubsyncapp_class.validate_batch_inputs = validate_batch_inputs
+    # Sync tracking functions
+    autosubsyncapp_class.show_sync_tracking_menu = show_sync_tracking_menu
+    autosubsyncapp_class.smart_load_library = smart_load_library
+    autosubsyncapp_class.open_library_manager = open_library_manager
+
+
+class ProcessedItemsScanner(QObject):
+    """
+    Worker object for scanning files to check if they are already processed.
+    Runs in a background thread to keep the UI responsive.
+    """
+    # Signals
+    scan_started = pyqtSignal()
+    scan_progress = pyqtSignal(int, int)  # current, total
+    item_scanned = pyqtSignal(str, bool)  # filepath, is_processed
+    scan_finished = pyqtSignal(dict)  # results: {filepath: is_processed}
+    
+    def __init__(self):
+        super().__init__()
+        self._files_to_scan = []
+        self._is_running = False
+        self._should_stop = False
+    
+    def set_files(self, files):
+        """Set the files to scan."""
+        self._files_to_scan = files.copy()
+    
+    def stop(self):
+        """Request the scanner to stop."""
+        self._should_stop = True
+    
+    def run(self):
+        """Perform the scanning operation."""
+        from processed_items_manager import get_processed_items_manager
+        
+        self._is_running = True
+        self._should_stop = False
+        self.scan_started.emit()
+        
+        results = {}
+        manager = get_processed_items_manager()
+        total = len(self._files_to_scan)
+        
+        for i, filepath in enumerate(self._files_to_scan):
+            if self._should_stop:
+                break
+            
+            is_processed = manager.is_processed(filepath)
+            results[filepath] = is_processed
+            self.item_scanned.emit(filepath, is_processed)
+            self.scan_progress.emit(i + 1, total)
+        
+        self._is_running = False
+        self.scan_finished.emit(results)
+
+
+class DatabaseOperationWorker(QObject):
+    """
+    Worker object for adding/removing items from the processed database.
+    Runs in a background thread to keep the UI responsive.
+    """
+    # Signals
+    operation_started = pyqtSignal()
+    operation_progress = pyqtSignal(int, int)  # current, total
+    item_processed = pyqtSignal(str, bool)  # filepath, success
+    operation_finished = pyqtSignal(int, str)  # count, operation_type ('add' or 'remove')
+    
+    def __init__(self):
+        super().__init__()
+        self._file_paths = []
+        self._operation = 'add'  # 'add' or 'remove'
+        self._is_running = False
+        self._should_stop = False
+    
+    def set_files(self, file_paths, operation='add'):
+        """Set the files to process and the operation type."""
+        self._file_paths = file_paths.copy()
+        self._operation = operation
+    
+    def stop(self):
+        """Request the worker to stop."""
+        self._should_stop = True
+    
+    def run(self):
+        """Perform the database operation."""
+        from processed_items_manager import get_processed_items_manager
+        
+        self._is_running = True
+        self._should_stop = False
+        self.operation_started.emit()
+        
+        manager = get_processed_items_manager()
+        total = len(self._file_paths)
+        success_count = 0
+        
+        for i, filepath in enumerate(self._file_paths):
+            if self._should_stop:
+                break
+            
+            if self._operation == 'add':
+                success = manager.mark_as_processed(filepath, silent=True)
+            else:  # remove
+                success = manager.remove_from_processed(filepath, silent=True)
+            
+            if success:
+                success_count += 1
+            
+            self.item_processed.emit(filepath, success)
+            self.operation_progress.emit(i + 1, total)
+        
+        self._is_running = False
+        self.operation_finished.emit(success_count, self._operation)
 
 
 class BatchTreeView(QTreeWidget):
@@ -183,6 +296,8 @@ class BatchTreeView(QTreeWidget):
         Qt.ItemDataRole.UserRole + 10
     )  # Role to store parent item's validity state
     ITEM_ID_ROLE = Qt.ItemDataRole.UserRole + 11  # Role to store the item's unique ID
+    PROCESSED_STATE_ROLE = Qt.ItemDataRole.UserRole + 12  # Role to store if item is already processed
+    FORCE_PROCESS_ROLE = Qt.ItemDataRole.UserRole + 13  # Role to store if item should be force processed
 
     def _is_parent_item_valid(self, item):
         """Helper to determine if a parent item is valid.
@@ -232,6 +347,17 @@ class BatchTreeView(QTreeWidget):
         self._update_ui_timer.setInterval(0)  # Process on next event loop iteration
         self._update_ui_timer.timeout.connect(self._perform_actual_ui_update)
 
+        # Smart Deduplication - async scanning setup
+        self._processed_items_cache = {}  # Cache: filepath -> is_processed
+        self._scanner_thread = None
+        self._scanner = None
+        self._is_scanning = False
+        self._pending_scan_files = []  # Files waiting to be scanned
+        self._scan_debounce_timer = QTimer(self)
+        self._scan_debounce_timer.setSingleShot(True)
+        self._scan_debounce_timer.setInterval(100)  # Debounce scan requests
+        self._scan_debounce_timer.timeout.connect(self._start_pending_scan)
+
         self._items_to_re_expand_paths = (
             set()
         )  # For preserving expansion state during moves
@@ -257,8 +383,14 @@ class BatchTreeView(QTreeWidget):
         self._max_undo_levels = 100  # Maximum number of undo levels
         self._is_restoring_state = False  # Flag to prevent saving state during restore
         
+        # Track if library has been loaded (for Load/Reload library text)
+        self._library_loaded = False
+        
         # Set up keyboard shortcuts for undo/redo (work even without focus)
         self._setup_shortcuts()
+        
+        # Set up loading overlay label (centered in the tree view)
+        self._setup_loading_overlay()
 
     def _setup_shortcuts(self):
         """Set up keyboard shortcuts for undo/redo operations."""
@@ -289,12 +421,679 @@ class BatchTreeView(QTreeWidget):
         """Handle redo shortcut - only if batch tree is visible."""
         if self.isVisible():
             self.redo()
+    
+    def _setup_loading_overlay(self):
+        """Set up a centered loading overlay label."""
+        self._loading_overlay = QLabel(self.viewport())
+        self._loading_overlay.setText(texts.LOADING_PLEASE_WAIT)
+        self._loading_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._loading_overlay.setStyleSheet(f"""
+            QLabel {{
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                padding: 20px 40px;
+                border-radius: 8px;
+            }}
+        """)
+        self._loading_overlay.setVisible(False)
+        self._loading_overlay.adjustSize()
+        self._is_loading = False  # Track loading state for disabling interaction
+    
+    def _show_loading_overlay(self, show):
+        """Show or hide the loading overlay (centered in the tree view)."""
+        self._is_loading = show
+        if show:
+            # Disable interaction while loading
+            self.setEnabled(False)
+            # Re-center the overlay
+            self._loading_overlay.adjustSize()
+            viewport = self.viewport()
+            x = (viewport.width() - self._loading_overlay.width()) // 2
+            y = (viewport.height() - self._loading_overlay.height()) // 2
+            self._loading_overlay.move(x, y)
+            self._loading_overlay.raise_()
+        else:
+            # Re-enable interaction when done loading
+            self.setEnabled(True)
+        self._loading_overlay.setVisible(show)
+    
+    def resizeEvent(self, event):
+        """Handle resize to keep loading overlay centered."""
+        super().resizeEvent(event)
+        if hasattr(self, '_loading_overlay') and self._loading_overlay.isVisible():
+            viewport = self.viewport()
+            x = (viewport.width() - self._loading_overlay.width()) // 2
+            y = (viewport.height() - self._loading_overlay.height()) // 2
+            self._loading_overlay.move(x, y)
 
     def _get_next_id(self):
         """Get the next available unique ID for a tree item."""
         current_id = self._next_item_id
         self._next_item_id += 1
         return current_id
+
+    # --- Smart Deduplication Methods ---
+    
+    def _is_skip_processed_enabled(self):
+        """Check if skip previously processed items is enabled in settings."""
+        if self.app_parent and hasattr(self.app_parent, 'config'):
+            return self.app_parent.config.get(
+                "skip_previously_processed_videos",
+                DEFAULT_OPTIONS.get("skip_previously_processed_videos", True)
+            )
+        config = load_config()
+        return config.get(
+            "skip_previously_processed_videos",
+            DEFAULT_OPTIONS.get("skip_previously_processed_videos", True)
+        )
+    
+    def _queue_files_for_scan(self, filepaths):
+        """Queue files for processed status scanning."""
+        if not self._is_skip_processed_enabled():
+            return
+        
+        # Only scan video files (references)
+        video_files = [f for f in filepaths if is_video_file(f)]
+        if not video_files:
+            return
+        
+        # Add to pending scan list (avoid duplicates, but always re-check if not in cache)
+        for f in video_files:
+            norm_f = os.path.normpath(f)
+            if norm_f not in self._pending_scan_files:
+                self._pending_scan_files.append(norm_f)
+        
+        # Debounce the scan start
+        self._scan_debounce_timer.start()
+    
+    def _start_pending_scan(self):
+        """Start scanning pending files in background thread."""
+        if not self._pending_scan_files:
+            return
+        
+        if self._is_scanning:
+            # Already scanning, will be retriggered when current scan finishes
+            return
+        
+        files_to_scan = self._pending_scan_files.copy()
+        self._pending_scan_files.clear()
+        
+        # Show scanning status
+        self._show_scanning_status(True)
+        
+        # Create scanner and thread
+        self._scanner_thread = QThread()
+        self._scanner = ProcessedItemsScanner()
+        self._scanner.set_files(files_to_scan)
+        self._scanner.moveToThread(self._scanner_thread)
+        
+        # Connect signals
+        self._scanner_thread.started.connect(self._scanner.run)
+        self._scanner.item_scanned.connect(self._on_item_scanned)
+        self._scanner.scan_finished.connect(self._on_scan_finished)
+        self._scanner.scan_finished.connect(self._scanner_thread.quit)
+        self._scanner_thread.finished.connect(self._cleanup_scanner)
+        
+        self._is_scanning = True
+        self._scanner_thread.start()
+    
+    def _on_item_scanned(self, filepath, is_processed):
+        """Handle individual item scan result."""
+        self._processed_items_cache[filepath] = is_processed
+        if is_processed:
+            self._mark_item_as_processed(filepath)
+    
+    def _on_scan_finished(self, results):
+        """Handle scan completion."""
+        self._is_scanning = False
+        self._show_scanning_status(False)
+        
+        # Update cache with all results
+        self._processed_items_cache.update(results)
+        
+        # Update all items with processed status
+        self._update_processed_visual_state()
+        
+        # Update header to reflect skipped items
+        self._update_header_pair_counts()
+        
+        # Check if there are more files to scan
+        if self._pending_scan_files:
+            self._scan_debounce_timer.start()
+    
+    def _cleanup_scanner(self):
+        """Clean up scanner resources."""
+        if self._scanner:
+            self._scanner.deleteLater()
+            self._scanner = None
+        if self._scanner_thread:
+            self._scanner_thread.deleteLater()
+            self._scanner_thread = None
+    
+    def _show_scanning_status(self, show):
+        """Show or hide the scanning status indicator (centered overlay)."""
+        self._show_loading_overlay(show)
+    
+    def _mark_item_as_processed(self, filepath):
+        """Mark a specific item as processed based on filepath."""
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path and os.path.normpath(item_path) == os.path.normpath(filepath):
+                    # Check if not force processed
+                    if not item.data(0, self.FORCE_PROCESS_ROLE):
+                        item.setData(0, self.PROCESSED_STATE_ROLE, True)
+                        self._apply_processed_style(item, True)
+    
+    def _update_processed_visual_state(self):
+        """Update visual state for all items based on processed status."""
+        if not self._is_skip_processed_enabled():
+            # Clear all processed states if feature is disabled
+            for i in range(self.topLevelItemCount()):
+                item = self.topLevelItem(i)
+                if item:
+                    item.setData(0, self.PROCESSED_STATE_ROLE, False)
+                    item.setToolTip(0, "")  # Clear processed tooltip
+            # Trigger full UI update to restore normal styling
+            self._schedule_ui_update()
+            return
+        
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path:
+                    # Check cache first
+                    is_processed = self._processed_items_cache.get(
+                        os.path.normpath(item_path), False
+                    )
+                    # Only mark as processed if not force processed
+                    if item.data(0, self.FORCE_PROCESS_ROLE):
+                        is_processed = False
+                    
+                    item.setData(0, self.PROCESSED_STATE_ROLE, is_processed)
+                    self._apply_processed_style(item, is_processed)
+        
+        # Trigger UI update to apply correct styling
+        self._schedule_ui_update()
+    
+    def _apply_processed_style(self, item, is_processed):
+        """Apply visual styling to indicate an item is already processed."""
+        if is_processed and self._is_skip_processed_enabled():
+            processed_color = self._parse_rgba_to_qcolor(COLORS["PROCESSED_BACKGROUND"])
+            item.setBackground(0, processed_color)
+            # Set tooltip
+            item.setToolTip(0, str(texts.ITEM_ALREADY_PROCESSED))
+        else:
+            # Clear processed state - let _apply_item_styles handle the normal styling
+            item.setToolTip(0, "")  # Clear tooltip so validation can set it
+    
+    def rescan_processed_items(self):
+        """Re-scan all items for processed status. Called when settings change."""
+        # Clear cache
+        self._processed_items_cache.clear()
+        
+        if not self._is_skip_processed_enabled():
+            # Clear all processed states
+            self._update_processed_visual_state()
+            return
+        
+        # Collect all reference files
+        files_to_scan = []
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path and is_video_file(item_path):
+                    files_to_scan.append(item_path)
+        
+        if files_to_scan:
+            self._pending_scan_files.extend(files_to_scan)
+            self._scan_debounce_timer.start()
+    
+    def refresh_processed_status(self):
+        """Refresh the processed status of all items and scan library folders for new items.
+        
+        This clears the cache and rescans all video files to check their
+        current status in the processed items database.
+        """
+        if not self.topLevelItemCount():
+            return
+        
+        # Clear existing cache to force fresh database lookups
+        self._processed_items_cache.clear()
+        
+        # Clear any pending scans
+        self._pending_scan_files.clear()
+        
+        # Also clear any force process / manual skip states
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item.setData(0, self.FORCE_PROCESS_ROLE, False)
+                item.setData(0, self.PROCESSED_STATE_ROLE, False)
+        
+        # Collect all video files to scan
+        files_to_scan = []
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path and is_video_file(item_path):
+                    norm_path = os.path.normpath(item_path)
+                    if norm_path not in files_to_scan:
+                        files_to_scan.append(norm_path)
+        
+        if files_to_scan:
+            self._pending_scan_files.extend(files_to_scan)
+            # Start scan immediately (no debounce for manual refresh)
+            self._start_pending_scan()
+
+    def scan_library_for_new_items(self, folders):
+        """Scan library folders for new files and add them at the beginning of the list.
+        Also removes items whose files no longer exist on disk.
+        
+        Args:
+            folders: List of folder paths to scan
+        """
+        # First, remove items that no longer exist on disk
+        items_to_remove = []
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path and not os.path.exists(item_path):
+                    items_to_remove.append(item)
+                # Also check children (subtitles) - if subtitle is missing, just clear it
+                for j in range(item.childCount()):
+                    child = item.child(j)
+                    if child:
+                        child_path = child.data(0, Qt.ItemDataRole.UserRole)
+                        if child_path and not os.path.exists(child_path):
+                            # Mark for removal from parent
+                            item.removeChild(child)
+        
+        if items_to_remove:
+            self._save_state_for_undo()
+            for item in items_to_remove:
+                index = self.indexOfTopLevelItem(item)
+                if index >= 0:
+                    self.takeTopLevelItem(index)
+            logger.info(f"Removed {len(items_to_remove)} items - files no longer exist on disk")
+            self._update_header_pair_counts()
+        
+        if not folders:
+            return
+        
+        # Get valid folders that exist
+        valid_folders = [f for f in folders if os.path.isdir(f)]
+        if not valid_folders:
+            return
+        
+        # Collect all existing file paths in the batch list (both references and subtitles)
+        existing_files = set()
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path:
+                    existing_files.add(os.path.normpath(item_path))
+                # Also check children (subtitles)
+                for j in range(item.childCount()):
+                    child = item.child(j)
+                    if child:
+                        child_path = child.data(0, Qt.ItemDataRole.UserRole)
+                        if child_path:
+                            existing_files.add(os.path.normpath(child_path))
+        
+        # Collect new files from library folders
+        new_files = []
+        for folder in valid_folders:
+            for root, _, filenames in os.walk(folder):
+                for filename in filenames:
+                    file_path = os.path.join(root, filename)
+                    norm_path = os.path.normpath(file_path)
+                    ext = os.path.splitext(file_path)[1].lower()
+                    if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                        if norm_path not in existing_files:
+                            new_files.append(file_path)
+        
+        if not new_files:
+            return
+        
+        # Save state for undo before making changes
+        self._save_state_for_undo()
+        
+        # Process and pair the new files, then insert at the beginning
+        logger.info(f"Found {len(new_files)} new files in library folders")
+        
+        # Separate into videos and subtitles
+        new_videos = [f for f in new_files if get_file_extension(f) in VIDEO_EXTENSIONS]
+        new_subs = [f for f in new_files if get_file_extension(f) in SUBTITLE_EXTENSIONS]
+        
+        # Pair them using the existing pairing logic
+        paired_references = set()
+        paired_subs = set()
+        pairs_to_add = []
+        
+        # Try to pair videos with subtitles
+        for video in new_videos:
+            video_base = effective_basename(video).lower().strip(".-_ [](){}")
+            best_match = None
+            for sub in new_subs:
+                if sub in paired_subs:
+                    continue
+                sub_base = effective_basename(sub).lower().strip(".-_ [](){}")
+                if video_base == sub_base:
+                    best_match = sub
+                    break
+            
+            if best_match:
+                pairs_to_add.append((video, best_match))
+                paired_references.add(video)
+                paired_subs.add(best_match)
+            else:
+                # Add video without subtitle
+                pairs_to_add.append((video, None))
+                paired_references.add(video)
+        
+        # Add remaining unpaired subtitles as standalone items
+        for sub in new_subs:
+            if sub not in paired_subs:
+                pairs_to_add.append((None, sub))
+        
+        # Create all items first, then sort them
+        newly_created_items = []
+        for video, sub in pairs_to_add:
+            if video and sub:
+                # Create paired item
+                if not self.is_duplicate_pair(video, sub):
+                    item = self._create_tree_item(video)
+                    sub_item = self._create_tree_item(sub)
+                    item.addChild(sub_item)
+                    item.setExpanded(True)
+                    # Track the pair
+                    norm_v, norm_s = os.path.normpath(video), os.path.normpath(sub)
+                    self._current_pair_id_set.add((norm_v, norm_s))
+                    newly_created_items.append(item)
+            elif video:
+                # Add video without subtitle
+                item = self._create_tree_item(video)
+                newly_created_items.append(item)
+            elif sub:
+                # Add subtitle without video (rare case)
+                item = self._create_tree_item(sub)
+                newly_created_items.append(item)
+        
+        if newly_created_items:
+            # Check processed status directly from database for sorting
+            from processed_items_manager import get_processed_items_manager
+            manager = get_processed_items_manager()
+            
+            # Sort items: invalid first (0), valid not-processed (1), valid processed/skipped (2)
+            def get_sort_key(item):
+                is_valid = self._get_provisional_validity(item) == "valid"
+                # Check if item is processed (will be skipped)
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                is_processed = False
+                if item_path and is_valid and is_video_file(item_path):
+                    # Check database directly for accurate status
+                    is_processed = manager.is_processed(item_path)
+                    # Also update cache
+                    norm_path = os.path.normpath(item_path)
+                    self._processed_items_cache[norm_path] = is_processed
+                
+                if not is_valid:
+                    return (0, os.path.basename(item_path or "").lower())  # Invalid first
+                elif is_processed:
+                    return (2, os.path.basename(item_path or "").lower())  # Processed/skipped last
+                else:
+                    return (1, os.path.basename(item_path or "").lower())  # Valid not-processed in middle
+            
+            newly_created_items.sort(key=get_sort_key)
+            
+            # Insert items at the beginning of the list (in reverse order to maintain sort)
+            # Also apply processed state immediately based on cache
+            for item in reversed(newly_created_items):
+                self.insertTopLevelItem(0, item)
+                # Apply processed visual state if applicable
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path:
+                    norm_path = os.path.normpath(item_path)
+                    is_processed = self._processed_items_cache.get(norm_path, False)
+                    if is_processed:
+                        item.setData(0, self.PROCESSED_STATE_ROLE, True)
+                        self._apply_processed_style(item, True)
+            
+            # Mark library as loaded
+            self._library_loaded = True
+            
+            logger.info(f"Added {len(newly_created_items)} new items from library folders")
+            self._update_header_pair_counts()
+    
+    def force_process_items(self, items):
+        """Mark items to be force processed, ignoring their processed status."""
+        self._save_state_for_undo()  # Save state before modifying
+        for item in items:
+            if item and not item.parent():  # Only top-level items
+                item.setData(0, self.FORCE_PROCESS_ROLE, True)
+                item.setData(0, self.PROCESSED_STATE_ROLE, False)
+                # Clear the processed tooltip
+                item.setToolTip(0, "")
+        
+        # Trigger UI update to restore proper styling
+        self._schedule_ui_update()
+    
+    def skip_process_items(self, items):
+        """Mark items to be skipped (not processed), applying processed status."""
+        self._save_state_for_undo()  # Save state before modifying
+        for item in items:
+            if item and not item.parent():  # Only top-level items
+                item.setData(0, self.FORCE_PROCESS_ROLE, False)
+                item.setData(0, self.PROCESSED_STATE_ROLE, True)
+                self._apply_processed_style(item, True)
+        
+        # Update header to reflect skipped items
+        self._update_header_pair_counts()
+        # Trigger UI update
+        self._schedule_ui_update()
+    
+    def add_items_to_processed_database(self, items):
+        """Add selected video items to the processed items database asynchronously."""
+        # Collect file paths
+        file_paths = []
+        self._pending_db_items = {}  # Map filepath -> item for updating after operation
+        
+        for item in items:
+            if item and not item.parent():  # Only top-level items
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path and is_video_file(item_path):
+                    norm_path = os.path.normpath(item_path)
+                    file_paths.append(item_path)
+                    self._pending_db_items[norm_path] = item
+        
+        if not file_paths:
+            return
+        
+        # Show confirmation dialog if more than 3 items
+        if len(file_paths) > 3:
+            reply = QMessageBox.question(
+                self,
+                texts.CONFIRMATION,
+                texts.CONFIRM_ADD_TO_DATABASE.format(count=len(file_paths)),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                self._pending_db_items.clear()
+                return
+        
+        # Show loading indicator
+        self._show_scanning_status(True)
+        
+        # Create worker and thread
+        self._db_worker_thread = QThread()
+        self._db_worker = DatabaseOperationWorker()
+        self._db_worker.set_files(file_paths, 'add')
+        self._db_worker.moveToThread(self._db_worker_thread)
+        
+        # Connect signals
+        self._db_worker_thread.started.connect(self._db_worker.run)
+        self._db_worker.item_processed.connect(self._on_db_item_added)
+        self._db_worker.operation_finished.connect(self._on_db_add_finished)
+        self._db_worker.operation_finished.connect(self._db_worker_thread.quit)
+        self._db_worker_thread.finished.connect(self._cleanup_db_worker)
+        
+        self._db_worker_thread.start()
+    
+    def _on_db_item_added(self, filepath, success):
+        """Handle individual item added to database."""
+        if success:
+            norm_path = os.path.normpath(filepath)
+            self._processed_items_cache[norm_path] = True
+            
+            # Update item visual state if we have reference to it
+            if hasattr(self, '_pending_db_items') and norm_path in self._pending_db_items:
+                item = self._pending_db_items[norm_path]
+                if item:
+                    item.setData(0, self.PROCESSED_STATE_ROLE, True)
+                    item.setData(0, self.FORCE_PROCESS_ROLE, False)
+                    self._apply_processed_style(item, True)
+    
+    def _on_db_add_finished(self, count, operation):
+        """Handle add operation completion."""
+        self._show_scanning_status(False)
+        
+        if count > 0:
+            logger.info(f"[Sync Tracking] Added {count} video(s) to processed items database.")
+            # Update header to reflect changes
+            self._update_header_pair_counts()
+            # Trigger UI update
+            self._schedule_ui_update()
+        
+        # Clear pending items
+        if hasattr(self, '_pending_db_items'):
+            self._pending_db_items.clear()
+    
+    def remove_items_from_processed_database(self, items):
+        """Remove selected video items from the processed items database asynchronously."""
+        # Collect file paths
+        file_paths = []
+        self._pending_db_remove_items = {}  # Map filepath -> item for updating after operation
+        
+        for item in items:
+            if item and not item.parent():  # Only top-level items
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path and is_video_file(item_path):
+                    norm_path = os.path.normpath(item_path)
+                    file_paths.append(item_path)
+                    self._pending_db_remove_items[norm_path] = item
+        
+        if not file_paths:
+            return
+        
+        # Show confirmation dialog if more than 3 items
+        if len(file_paths) > 3:
+            reply = QMessageBox.question(
+                self,
+                texts.CONFIRMATION,
+                texts.CONFIRM_REMOVE_FROM_DATABASE.format(count=len(file_paths)),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                self._pending_db_remove_items.clear()
+                return
+        
+        # Show loading indicator
+        self._show_scanning_status(True)
+        
+        # Create worker and thread
+        self._db_remove_worker_thread = QThread()
+        self._db_remove_worker = DatabaseOperationWorker()
+        self._db_remove_worker.set_files(file_paths, 'remove')
+        self._db_remove_worker.moveToThread(self._db_remove_worker_thread)
+        
+        # Connect signals
+        self._db_remove_worker_thread.started.connect(self._db_remove_worker.run)
+        self._db_remove_worker.item_processed.connect(self._on_db_item_removed)
+        self._db_remove_worker.operation_finished.connect(self._on_db_remove_finished)
+        self._db_remove_worker.operation_finished.connect(self._db_remove_worker_thread.quit)
+        self._db_remove_worker_thread.finished.connect(self._cleanup_db_remove_worker)
+        
+        self._db_remove_worker_thread.start()
+    
+    def _on_db_item_removed(self, filepath, success):
+        """Handle individual item removed from database."""
+        if success:
+            norm_path = os.path.normpath(filepath)
+            self._processed_items_cache[norm_path] = False
+            
+            # Update item visual state if we have reference to it
+            if hasattr(self, '_pending_db_remove_items') and norm_path in self._pending_db_remove_items:
+                item = self._pending_db_remove_items[norm_path]
+                if item:
+                    item.setData(0, self.PROCESSED_STATE_ROLE, False)
+                    item.setToolTip(0, "")
+    
+    def _on_db_remove_finished(self, count, operation):
+        """Handle remove operation completion."""
+        self._show_scanning_status(False)
+        
+        if count > 0:
+            logger.info(f"[Sync Tracking] Removed {count} video(s) from processed items database.")
+            # Update header to reflect changes
+            self._update_header_pair_counts()
+            # Trigger UI update to restore normal styling
+            self._schedule_ui_update()
+        
+        # Clear pending items
+        if hasattr(self, '_pending_db_remove_items'):
+            self._pending_db_remove_items.clear()
+    
+    def _cleanup_db_worker(self):
+        """Clean up add database worker resources."""
+        if hasattr(self, '_db_worker') and self._db_worker:
+            self._db_worker.deleteLater()
+            self._db_worker = None
+        if hasattr(self, '_db_worker_thread') and self._db_worker_thread:
+            self._db_worker_thread.deleteLater()
+            self._db_worker_thread = None
+    
+    def _cleanup_db_remove_worker(self):
+        """Clean up remove database worker resources."""
+        if hasattr(self, '_db_remove_worker') and self._db_remove_worker:
+            self._db_remove_worker.deleteLater()
+            self._db_remove_worker = None
+        if hasattr(self, '_db_remove_worker_thread') and self._db_remove_worker_thread:
+            self._db_remove_worker_thread.deleteLater()
+            self._db_remove_worker_thread = None
+    
+    def is_item_processed(self, item):
+        """Check if an item is marked as processed and should be skipped."""
+        if not self._is_skip_processed_enabled():
+            return False
+        
+        # If force process is set, never skip
+        if item.data(0, self.FORCE_PROCESS_ROLE):
+            return False
+        
+        return item.data(0, self.PROCESSED_STATE_ROLE) or False
+    
+    def get_processable_items(self):
+        """Get list of valid pairs that should be processed (excluding skipped items)."""
+        processable = []
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item and self._is_parent_item_valid(item):
+                if not self.is_item_processed(item):
+                    processable.append(item)
+        return processable
+    
+    # --- End Smart Deduplication Methods ---
 
     def _schedule_ui_update(self, *args):  # Accept any arguments from signals
         self._update_ui_timer.start()
@@ -384,23 +1183,48 @@ class BatchTreeView(QTreeWidget):
         return "valid" if is_valid else "invalid"
 
     def _update_header_pair_counts(self):
-        """Updates the header with counts of valid and invalid pairs.
+        """Updates the header with counts of valid, invalid, and skipped pairs.
         
         For one-to-many relationships, each child subtitle under a valid parent
         counts as one valid pair. Invalid parents count as one invalid entry.
+        Processed/skipped items are counted separately.
         """
         valid_pairs = 0
         invalid_parents = 0
+        skipped_pairs = 0
+        
+        skip_enabled = self._is_skip_processed_enabled()
+        
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
-            if item.data(0, self.VALID_STATE_ROLE) == "valid":
-                # Count each child as a separate valid pair
-                valid_pairs += item.childCount()
+            is_valid = item.data(0, self.VALID_STATE_ROLE) == "valid"
+            
+            # Check processed status from both item data and cache
+            is_processed_data = item.data(0, self.PROCESSED_STATE_ROLE)
+            is_force_process = item.data(0, self.FORCE_PROCESS_ROLE)
+            
+            # Also check cache for processed status
+            item_path = item.data(0, Qt.ItemDataRole.UserRole)
+            is_processed_cache = False
+            if item_path:
+                norm_path = os.path.normpath(item_path)
+                is_processed_cache = self._processed_items_cache.get(norm_path, False)
+            
+            is_processed = (is_processed_data or is_processed_cache) and not is_force_process
+            
+            if is_valid:
+                child_count = item.childCount()
+                if skip_enabled and is_processed:
+                    # Count as skipped
+                    skipped_pairs += child_count
+                else:
+                    # Count as valid
+                    valid_pairs += child_count
             else:
                 invalid_parents += 1
 
         header_text = texts.PAIRS_HEADER_LABEL.format(
-            valid=valid_pairs, invalid=invalid_parents
+            valid=valid_pairs, invalid=invalid_parents, skipped=skipped_pairs
         )
         self.setHeaderLabel(header_text)
 
@@ -452,6 +1276,25 @@ class BatchTreeView(QTreeWidget):
         # If it has a parent, it is a child item, so we don't show validity status
         if item.parent():
             item.setToolTip(0, f"{id_text}")
+            return
+
+        # Check if item is skipped (processed) - this takes priority over invalid status
+        is_processed_data = item.data(0, self.PROCESSED_STATE_ROLE)
+        is_force_process = item.data(0, self.FORCE_PROCESS_ROLE)
+        
+        # Also check cache
+        item_path = item.data(0, Qt.ItemDataRole.UserRole)
+        is_processed_cache = False
+        if item_path:
+            norm_path = os.path.normpath(item_path)
+            is_processed_cache = self._processed_items_cache.get(norm_path, False)
+        
+        is_processed = (is_processed_data or is_processed_cache) and not is_force_process
+        
+        # If item is processed and skip is enabled, always show "Skipped" status
+        # regardless of validity (since it will be skipped anyway)
+        if is_processed and self._is_skip_processed_enabled():
+            item.setToolTip(0, texts.BATCH_PAIR_STATUS_SKIPPED_LABEL.format(id_text=id_text))
             return
 
         if message:
@@ -581,11 +1424,40 @@ class BatchTreeView(QTreeWidget):
         """
         green_qcolor = self._parse_rgba_to_qcolor(COLORS["GREEN_BACKGROUND_HOVER"])
         red_qcolor = self._parse_rgba_to_qcolor(COLORS["RED_BACKGROUND_HOVER"])
+        processed_qcolor = self._parse_rgba_to_qcolor(COLORS["PROCESSED_BACKGROUND"])
         default_qcolor = QColor(Qt.GlobalColor.transparent)
 
         if not item.parent():  # Top-level item
             item.setData(0, self.VALID_STATE_ROLE, "valid" if is_valid else "invalid")
-            item.setBackground(0, green_qcolor if is_valid else red_qcolor)
+            
+            # Check if item is processed (Smart Deduplication)
+            # Check both item data and cache
+            is_processed_data = item.data(0, self.PROCESSED_STATE_ROLE)
+            is_force_process = item.data(0, self.FORCE_PROCESS_ROLE)
+            
+            # Also check cache
+            item_path = item.data(0, Qt.ItemDataRole.UserRole)
+            is_processed_cache = False
+            if item_path:
+                norm_path = os.path.normpath(item_path)
+                is_processed_cache = self._processed_items_cache.get(norm_path, False)
+            
+            is_processed = (is_processed_data or is_processed_cache) and not is_force_process
+            
+            # Update the item's processed state data if cache says it's processed
+            if is_processed_cache and not is_processed_data and not is_force_process:
+                item.setData(0, self.PROCESSED_STATE_ROLE, True)
+            
+            if is_processed and self._is_skip_processed_enabled():
+                # Processed items get grey background
+                item.setBackground(0, processed_qcolor)
+                item.setToolTip(0, str(texts.ITEM_ALREADY_PROCESSED))
+            else:
+                # Normal valid/invalid styling
+                item.setBackground(0, green_qcolor if is_valid else red_qcolor)
+                # Clear processed tooltip if not processed
+                if not is_processed:
+                    pass  # Let validation set the tooltip
         else:  # Child or deeper descendant
             item.setBackground(0, default_qcolor)
             item.setData(0, self.VALID_STATE_ROLE, None)  # Clear state for non-parents
@@ -781,6 +1653,78 @@ class BatchTreeView(QTreeWidget):
             menu.addAction(texts.REMOVE, lambda: self.remove_item(item_at_pos))
             menu.addAction(texts.CHANGE, lambda: self.change_file_for_item(item_at_pos))
 
+        
+        # Smart Deduplication - Force process / Skip process / Add to database options
+        if self._is_skip_processed_enabled():
+            # Check if any selected items are processed (greyed out) or not processed
+            # Also track which items are actually in the database vs just marked as skipped
+            processed_items = []  # Items visually marked as processed/skipped
+            not_processed_items = []  # Items not visually marked as processed
+            items_in_database = []  # Items actually in the processed database
+            items_not_in_database = []  # Items not in the processed database
+            all_top_level_items = []
+            items_to_check = selected_items if selected_items else ([item_at_pos] if item_at_pos else [])
+            
+            for item in items_to_check:
+                if item and not item.parent():  # Top-level items only
+                    item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                    
+                    # Only process video files for database operations
+                    # Skip subtitle parent items (when subtitle is the reference)
+                    if not item_path or not is_video_file(item_path):
+                        continue
+                    
+                    all_top_level_items.append(item)
+                    
+                    # Check visual state (for skip/force options)
+                    is_visually_processed = item.data(0, self.PROCESSED_STATE_ROLE)
+                    
+                    # Check database status (via cache) for add/remove options
+                    norm_path = os.path.normpath(item_path)
+                    is_in_database = self._processed_items_cache.get(norm_path, False)
+                    
+                    if is_visually_processed:
+                        processed_items.append(item)
+                    else:
+                        not_processed_items.append(item)
+                    
+                    # For database operations, check actual database status
+                    if is_in_database:
+                        items_in_database.append(item)
+                    else:
+                        items_not_in_database.append(item)
+            
+            if processed_items or not_processed_items:
+                menu.addSeparator()
+                
+            if processed_items:
+                action_force_process = menu.addAction(texts.FORCE_PROCESS_SELECTED_VIDEOS)
+                action_force_process.triggered.connect(
+                    lambda checked=False, items=processed_items: self.force_process_items(items)
+                )
+            
+            if not_processed_items:
+                action_skip_process = menu.addAction(texts.SKIP_PROCESS_SELECTED_VIDEOS)
+                action_skip_process.triggered.connect(
+                    lambda checked=False, items=not_processed_items: self.skip_process_items(items)
+                )
+            
+            # Add to database option - only for items NOT already in database
+            # Don't show database options while scanning - cache might not be complete
+            if not self._is_scanning:
+                if items_not_in_database:
+                    action_add_to_db = menu.addAction(texts.ADD_VIDEOS_TO_PROCESSED_DATABASE)
+                    action_add_to_db.triggered.connect(
+                        lambda checked=False, items=items_not_in_database: self.add_items_to_processed_database(items)
+                    )
+                
+                # Remove from database option - only for items actually in database
+                if items_in_database:
+                    action_remove_from_db = menu.addAction(texts.REMOVE_VIDEOS_FROM_PROCESSED_DATABASE)
+                    action_remove_from_db.triggered.connect(
+                        lambda checked=False, items=items_in_database: self.remove_items_from_processed_database(items)
+                    )
+
         menu.addSeparator()
         action_clear_all = menu.addAction(texts.CLEAR_ALL)
         action_clear_all.triggered.connect(self.clear_all_items)
@@ -796,7 +1740,7 @@ class BatchTreeView(QTreeWidget):
         action_redo = menu.addAction(f"{texts.REDO} (Ctrl+Y)")
         action_redo.triggered.connect(self.redo)
         action_redo.setEnabled(self.can_redo())
-        
+
         if (
             not selected_items and not item_at_pos
         ):  # Disable remove/change if not on item and no selection
@@ -839,6 +1783,11 @@ class BatchTreeView(QTreeWidget):
         return self.icon_provider.icon(QFileInfo(file_path))
 
     def add_files_or_folders(self, paths, drop_target_item=None):
+        """Add files or folders to the batch tree.
+        
+        Returns:
+            True if files were added successfully, False if no supported files found
+        """
         logger.info(f"Adding files/folders: {len(paths)} items")
         # Save state for undo before making changes
         self._save_state_for_undo()
@@ -850,7 +1799,7 @@ class BatchTreeView(QTreeWidget):
                     texts.INVALID_PAIR_TITLE,
                     texts.CANNOT_PAIR_FILE_WITH_ITSELF,
                 )
-                return
+                return False
             exts = [os.path.splitext(path)[1].lower() for path in paths]
             # Check if we have one video and one subtitle file
             if exts[0] in VIDEO_EXTENSIONS and exts[1] in SUBTITLE_EXTENSIONS:
@@ -860,13 +1809,13 @@ class BatchTreeView(QTreeWidget):
                         texts.BATCH_VALIDATE_DUPLICATE_PAIR,
                         texts.BATCH_VALIDATE_DUPLICATE_PAIR,
                     )
-                    return
+                    return False
                 reference_path, sub_path = paths[0], paths[1]
                 self.add_explicit_pair(reference_path, sub_path)
                 logger.info(
                     f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}"
                 )
-                return
+                return True
             elif exts[1] in VIDEO_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[1], paths[0]):
                     QMessageBox.warning(
@@ -874,13 +1823,13 @@ class BatchTreeView(QTreeWidget):
                         texts.BATCH_VALIDATE_DUPLICATE_PAIR,
                         texts.BATCH_VALIDATE_DUPLICATE_PAIR,
                     )
-                    return
+                    return False
                 reference_path, sub_path = paths[1], paths[0]
                 self.add_explicit_pair(reference_path, sub_path)
                 logger.info(
                     f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}"
                 )
-                return
+                return True
 
         # Standard processing for all other cases
         files_to_process = []
@@ -904,7 +1853,7 @@ class BatchTreeView(QTreeWidget):
                 texts.NO_MEDIA_FILES_FOUND_TITLE,
                 texts.NO_MEDIA_FILES_FOUND_MESSAGE,
             )
-            return
+            return False
 
         if files_to_process:
             logger.info(f"Processing {len(files_to_process)} files for pairing")
@@ -916,6 +1865,8 @@ class BatchTreeView(QTreeWidget):
                     texts.DUPLICATES_SKIPPED_TITLE,
                     texts.DUPLICATES_SKIPPED_MESSAGE.format(count=skipped),
                 )
+            return True
+        return False
 
     def _create_tree_item(self, file_path):
         """Helper to create a new tree item for a file."""
@@ -1017,6 +1968,9 @@ class BatchTreeView(QTreeWidget):
             # Add to tree
             for item in reversed(newly_created_items):
                 self.insertTopLevelItem(0, item)
+            
+            # Queue all references for Smart Deduplication scan
+            self._queue_files_for_scan(references)
 
         # Show message about skipped items
         if skipped:
@@ -1052,6 +2006,9 @@ class BatchTreeView(QTreeWidget):
             0, parent_item
         )  # Insert the configured parent item at the top
         # UI update (including sort) will be scheduled by model signals
+        
+        # Queue for Smart Deduplication scan
+        self._queue_files_for_scan([video_ref_path])
 
     def add_parent_with_children(self, reference_path, subtitle_paths):
         """Add a parent (video/reference subtitle) with multiple subtitle children.
@@ -1447,6 +2404,8 @@ class BatchTreeView(QTreeWidget):
             # Save state for undo before making changes
             self._save_state_for_undo()
             self.clear()
+            # Reset library loaded flag when tree is cleared
+            self._library_loaded = False
 
     def open_item_folder(self, item):
         """Open the folder containing the file for the given item."""
@@ -1470,10 +2429,15 @@ class BatchTreeView(QTreeWidget):
         Supports one-to-many relationships: each child subtitle under a valid
         parent creates a separate pair with the same reference/video.
         
+        Skips items that are marked as processed (unless force-processed)
+        when the "skip previously processed items" setting is enabled.
+        
         Returns:
             List of tuples (reference_path, subtitle_path)
         """
         pairs = []
+        skip_processed = self._is_skip_processed_enabled()
+        
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             if (
@@ -1484,6 +2448,21 @@ class BatchTreeView(QTreeWidget):
                 reference_path = item.data(0, Qt.ItemDataRole.UserRole)
                 if not reference_path:
                     continue
+                
+                # Check if item should be skipped (processed but not force-processed)
+                if skip_processed:
+                    is_processed = item.data(0, self.PROCESSED_STATE_ROLE)
+                    is_force_process = item.data(0, self.FORCE_PROCESS_ROLE)
+                    
+                    # Also check cache for immediate updates
+                    if not is_processed and reference_path:
+                        norm_path = os.path.normpath(reference_path)
+                        is_processed = self._processed_items_cache.get(norm_path, False)
+                    
+                    if is_processed and not is_force_process:
+                        # Skip this item - it was already processed
+                        continue
+                
                 # Collect all child subtitles as separate pairs
                 for j in range(item.childCount()):
                     sub_item = item.child(j)
@@ -1543,6 +2522,8 @@ class BatchTreeView(QTreeWidget):
             'file_path': item.data(0, Qt.ItemDataRole.UserRole),
             'item_id': item.data(0, self.ITEM_ID_ROLE),
             'text': item.text(0),
+            'force_process': item.data(0, self.FORCE_PROCESS_ROLE) or False,
+            'manually_skipped': item.data(0, self.PROCESSED_STATE_ROLE) or False,
             'children': []
         }
         
@@ -1574,8 +2555,38 @@ class BatchTreeView(QTreeWidget):
             # Trigger UI update
             self._schedule_ui_update()
             
+            # Re-apply processed states from cache after restore
+            self._reapply_processed_states_from_cache()
+            
         finally:
             self._is_restoring_state = False
+    
+    def _reapply_processed_states_from_cache(self):
+        """Re-apply processed states and styles to items after undo/redo."""
+        if not self._is_skip_processed_enabled():
+            return
+        
+        for i in range(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item:
+                # Check if force process is set (takes priority)
+                if item.data(0, self.FORCE_PROCESS_ROLE):
+                    item.setData(0, self.PROCESSED_STATE_ROLE, False)
+                    continue
+                
+                # Check if manually skipped (from undo state)
+                if item.data(0, self.PROCESSED_STATE_ROLE):
+                    self._apply_processed_style(item, True)
+                    continue
+                
+                # Otherwise check cache for processed status
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path:
+                    norm_path = os.path.normpath(item_path)
+                    is_processed = self._processed_items_cache.get(norm_path, False)
+                    if is_processed:
+                        item.setData(0, self.PROCESSED_STATE_ROLE, True)
+                        self._apply_processed_style(item, True)
     
     def _deserialize_item(self, item_data):
         """Deserialize a single tree item and its children from saved data."""
@@ -1587,6 +2598,12 @@ class BatchTreeView(QTreeWidget):
         item.setData(0, Qt.ItemDataRole.UserRole, file_path)
         item.setData(0, self.ITEM_ID_ROLE, item_data.get('item_id'))
         item.setIcon(0, self.icon_provider.icon(QFileInfo(file_path)))
+        
+        # Restore force_process and manually_skipped states
+        if item_data.get('force_process', False):
+            item.setData(0, self.FORCE_PROCESS_ROLE, True)
+        if item_data.get('manually_skipped', False):
+            item.setData(0, self.PROCESSED_STATE_ROLE, True)
         
         # Restore children
         for child_data in item_data.get('children', []):
@@ -1659,26 +2676,147 @@ def create_batch_interface(self):
         self.btn_batch_remove_selected.clicked.connect(
             self.batch_tree_view.remove_selected_items
         )
-        self.btn_batch_change_selected = QPushButton(
-            texts.CHANGE_SELECTED, self.batch_buttons_widget
+        
+        # Sync tracking dropdown button (replaces Change selected button)
+        self.btn_sync_tracking = QPushButton(
+            texts.SYNC_TRACKING, self.batch_buttons_widget
         )
-        self.btn_batch_change_selected.clicked.connect(
-            lambda: self.batch_tree_view.change_file_for_item(
-                self.batch_tree_view.currentItem()
-            )
+        self.btn_sync_tracking.clicked.connect(
+            lambda: self.show_sync_tracking_menu(self.btn_sync_tracking)
+        )
+        # Update button color based on sync tracking status
+        _update_sync_tracking_button_style(self)
+        
+        self.btn_batch_refresh = QPushButton(
+            texts.REFRESH, self.batch_buttons_widget
+        )
+        self.btn_batch_refresh.setToolTip(texts.REFRESH_PROCESSED_STATUS_TOOLTIP)
+        self.btn_batch_refresh.clicked.connect(
+            self.batch_tree_view.refresh_processed_status
         )
 
         batch_buttons_layout.addWidget(self.btn_batch_add_files)
         batch_buttons_layout.addWidget(self.btn_batch_remove_selected)
-        batch_buttons_layout.addWidget(self.btn_batch_change_selected)
+        batch_buttons_layout.addWidget(self.btn_sync_tracking)
+        batch_buttons_layout.addWidget(self.btn_batch_refresh)
 
 
-def show_batch_add_menu(self, source_widget=None, position=None):
+def show_sync_tracking_menu(self, source_widget=None, position=None):
+    """Show the sync tracking menu with library and processed video options.
+    
+    Args:
+        source_widget: The widget that triggered the menu (optional)
+        position: The global position where to show the menu (optional)
+    """
+    menu = QMenu(self)
+    
+    # Processed videos section - use dynamic text based on current state (moved to top)
+    is_enabled = self.config.get("skip_previously_processed_videos", DEFAULT_OPTIONS["skip_previously_processed_videos"])
+    skip_text = str(texts.SYNC_TRACKING_ENABLED) if is_enabled else str(texts.SYNC_TRACKING_DISABLED)
+    action_skip_processed = menu.addAction(skip_text)
+    action_skip_processed.setCheckable(True)
+    action_skip_processed.setChecked(is_enabled)
+    
+    action_clear_database = menu.addAction(texts.CLEAR_PROCESSED_ITEMS_DATABASE)
+    
+    menu.addSeparator()
+    
+    # Backup/Import section
+    action_backup_database = menu.addAction(texts.BACKUP_PROCESSED_DATABASE)
+    action_import_database = menu.addAction(texts.IMPORT_PROCESSED_DATABASE)
+    
+    menu.addSeparator()
+    
+    # Library section
+    action_manage_library = menu.addAction(texts.MANAGE_LIBRARY_FOLDERS)
+    # Use Reload library if library has been loaded, otherwise Load library
+    load_library_text = texts.RELOAD_LIBRARY if self.batch_tree_view._library_loaded else texts.LOAD_LIBRARY
+    action_load_library = menu.addAction(load_library_text)
+    
+    # Connect actions
+    action_manage_library.triggered.connect(lambda: self.open_library_manager())
+    action_load_library.triggered.connect(lambda: self.smart_load_library())
+    action_skip_processed.triggered.connect(
+        lambda checked: self._on_skip_processed_changed(checked)
+    )
+    action_clear_database.triggered.connect(
+        lambda: self._clear_processed_items_database()
+    )
+    action_backup_database.triggered.connect(
+        lambda: self._backup_processed_database()
+    )
+    action_import_database.triggered.connect(
+        lambda: self._import_processed_database()
+    )
+    
+    # Show menu at the specified position
+    if position:
+        menu.popup(position)
+    elif source_widget:
+        menu.popup(source_widget.mapToGlobal(source_widget.rect().bottomLeft()))
+    else:
+        menu.popup(QCursor.pos())
+    
+    return menu
+
+
+def _update_sync_tracking_button_style(self):
+    """Update the sync tracking button text color based on enabled/disabled state."""
+    is_enabled = self.config.get("skip_previously_processed_videos", DEFAULT_OPTIONS["skip_previously_processed_videos"])
+    if is_enabled:
+        self.btn_sync_tracking.setStyleSheet(f"color: {COLORS['GREEN']};")
+    else:
+        self.btn_sync_tracking.setStyleSheet("")  # Reset to default
+
+
+def smart_load_library(self):
+    """Smart load library - open manager if empty, otherwise scan for new items in library folders."""
+    from gui_load_library import get_library_folders_manager, LibraryManagerDialog
+    
+    manager = get_library_folders_manager()
+    folders = manager.get_all_folders()
+    
+    if not folders:
+        # No folders in library, open the manager dialog
+        self.open_library_manager()
+    else:
+        # Scan library folders for new items and add them
+        valid_folders = [f for f in folders if os.path.isdir(f)]
+        
+        if not valid_folders:
+            # All folders are invalid, show manager
+            QMessageBox.warning(
+                self,
+                texts.LIBRARY_MANAGER_TITLE,
+                texts.NO_VALID_LIBRARY_FOLDERS
+            )
+            self.open_library_manager()
+            return
+        
+        # Scan for new items and add them to batch tree
+        self.batch_tree_view.scan_library_for_new_items(valid_folders)
+
+
+def open_library_manager(self):
+    """Open the Library Manager dialog."""
+    from gui_load_library import LibraryManagerDialog
+    
+    dialog = LibraryManagerDialog(self)
+    if dialog.exec():
+        # User clicked "Load library" - load valid folders
+        valid_folders = dialog.get_valid_folders()
+        if valid_folders:
+            self.batch_tree_view.add_files_or_folders(valid_folders)
+            logger.info(f"Loaded {len(valid_folders)} library folders from manager")
+
+
+def show_batch_add_menu(self, source_widget=None, position=None, include_sync_tracking=False):
     """Show the batch add menu with various file addition options.
 
     Args:
         source_widget: The widget that triggered the menu (optional)
         position: The global position where to show the menu (optional)
+        include_sync_tracking: Whether to include the Sync tracking submenu (for InputBox clicks)
     """
     menu = QMenu(self)
     action_add_pair = menu.addAction(texts.ADD_PAIR)
@@ -1701,6 +2839,51 @@ def show_batch_add_menu(self, source_widget=None, position=None):
     action_auto_pairing.triggered.connect(lambda: self.open_auto_pairing_dialog())
     # Connect the "pair multiple subtitles with single source" option
     action_pair_multiple_subs.triggered.connect(lambda: self.open_pair_multiple_subs_dialog())
+
+    # Add Sync tracking submenu if requested (for InputBox clicks)
+    if include_sync_tracking:
+        menu.addSeparator()
+        is_enabled = self.config.get("skip_previously_processed_videos", DEFAULT_OPTIONS["skip_previously_processed_videos"])
+        status_text = str(texts.ENABLED) if is_enabled else str(texts.DISABLED)
+        sync_tracking_menu = menu.addMenu(f"{texts.SYNC_TRACKING} ({status_text})")
+        
+        # Processed videos section - use dynamic text based on current state (at top)
+        skip_text = str(texts.SYNC_TRACKING_ENABLED) if is_enabled else str(texts.SYNC_TRACKING_DISABLED)
+        action_skip_processed = sync_tracking_menu.addAction(skip_text)
+        action_skip_processed.setCheckable(True)
+        action_skip_processed.setChecked(is_enabled)
+        
+        action_clear_database = sync_tracking_menu.addAction(texts.CLEAR_PROCESSED_ITEMS_DATABASE)
+        
+        sync_tracking_menu.addSeparator()
+        
+        # Backup/Import section
+        action_backup_database = sync_tracking_menu.addAction(texts.BACKUP_PROCESSED_DATABASE)
+        action_import_database = sync_tracking_menu.addAction(texts.IMPORT_PROCESSED_DATABASE)
+        
+        sync_tracking_menu.addSeparator()
+        
+        # Library section
+        action_manage_library = sync_tracking_menu.addAction(texts.MANAGE_LIBRARY_FOLDERS)
+        # Use Reload library if library has been loaded, otherwise Load library
+        load_library_text = texts.RELOAD_LIBRARY if self.batch_tree_view._library_loaded else texts.LOAD_LIBRARY
+        action_load_library = sync_tracking_menu.addAction(load_library_text)
+        
+        # Connect sync tracking actions
+        action_manage_library.triggered.connect(lambda: self.open_library_manager())
+        action_load_library.triggered.connect(lambda: self.smart_load_library())
+        action_skip_processed.triggered.connect(
+            lambda checked: self._on_skip_processed_changed(checked)
+        )
+        action_clear_database.triggered.connect(
+            lambda: self._clear_processed_items_database()
+        )
+        action_backup_database.triggered.connect(
+            lambda: self._backup_processed_database()
+        )
+        action_import_database.triggered.connect(
+            lambda: self._import_processed_database()
+        )
 
     # Show menu at the specified position, or at a position relevant to the source widget
     if position:

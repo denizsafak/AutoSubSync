@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMessageBox,
     QFileIconProvider,
+    QDialog,
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer
 from PyQt6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QAction, QActionGroup
@@ -102,6 +103,15 @@ class InputBox(QLabel):
         self.goto_folder_btn.hide()
         self.goto_folder_btn.setStyleSheet("font-size: 12px; padding: 2px 10px;")
 
+        # Add "Load library" button for batch mode (top-left position)
+        if input_type == "batch":
+            self.load_library_btn = QPushButton(texts.LOAD_LIBRARY, self)
+            self.load_library_btn.setFixedHeight(28)
+            self.load_library_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.load_library_btn.setStyleSheet("font-size: 12px; padding: 2px 10px;")
+            self.load_library_btn.clicked.connect(self._on_load_library_clicked)
+            self.load_library_btn.show()
+
         # Add total shifted label for overwrite mode (only for manual tab input boxes)
         if input_type == "subtitle":  # Only for manual tab subtitle input
             self.total_shifted_label = QLabel("", self)
@@ -158,10 +168,12 @@ class InputBox(QLabel):
                 main_window = self.window()
                 if isinstance(main_window, autosubsyncapp):
                     # Pass self (InputBox) to position menu correctly and the event position
+                    # Include sync tracking submenu for InputBox clicks
                     menu = show_batch_add_menu(
                         main_window,
                         source_widget=self,
                         position=event.globalPosition().toPoint(),
+                        include_sync_tracking=True,
                     )
                     # Connect to menu close event to fix hover state
                     if menu:
@@ -428,6 +440,17 @@ class InputBox(QLabel):
             self.total_shifted_label.move(
                 10, self.height() - self.total_shifted_label.height() - 10
             )
+        # Position load_library_btn at top-right for batch input
+        if hasattr(self, "load_library_btn"):
+            self.load_library_btn.move(
+                self.width() - self.load_library_btn.width() - 10, 10
+            )
+
+    def _on_load_library_clicked(self):
+        """Handle load library button click."""
+        main_window = self.window()
+        if isinstance(main_window, autosubsyncapp):
+            main_window.smart_load_library()
 
     def open_file_folder(self):
         if self.file_path and os.path.exists(self.file_path):
@@ -714,6 +737,9 @@ class autosubsyncapp(QWidget):
             self.encoding_same_action.setChecked(True)
             update_config(self, "output_subtitle_encoding", "same_as_input")
 
+        # Add Sync Tracking submenu (for Batch Mode)
+        self._create_sync_tracking_menu()
+
         self.backup_subtitles_action = QAction(
             texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING, self
         )
@@ -967,3 +993,185 @@ class autosubsyncapp(QWidget):
         self.settings_menu.popup(
             self.settings_btn.mapToGlobal(self.settings_btn.rect().bottomLeft())
         )
+
+    def _create_sync_tracking_menu(self):
+        """Create the Sync Tracking submenu in the settings menu."""
+        # Create the submenu with dynamic title
+        self.sync_tracking_menu = self.settings_menu.addMenu(texts.SYNC_TRACKING)
+        self._update_sync_tracking_menu_title()
+        
+        # Toggle action (Enabled/Disabled)
+        self.sync_tracking_toggle_action = QAction(self)
+        self.sync_tracking_toggle_action.setCheckable(True)
+        self._update_sync_tracking_toggle_text()
+        self.sync_tracking_toggle_action.triggered.connect(self._on_skip_processed_changed)
+        self.sync_tracking_menu.addAction(self.sync_tracking_toggle_action)
+        
+        # Clear database action
+        self.sync_tracking_clear_action = QAction(texts.CLEAR_PROCESSED_ITEMS_DATABASE, self)
+        self.sync_tracking_clear_action.triggered.connect(self._clear_processed_items_database)
+        self.sync_tracking_menu.addAction(self.sync_tracking_clear_action)
+        
+        self.sync_tracking_menu.addSeparator()
+        
+        # Backup database action
+        self.sync_tracking_backup_action = QAction(texts.BACKUP_PROCESSED_DATABASE, self)
+        self.sync_tracking_backup_action.triggered.connect(self._backup_processed_database)
+        self.sync_tracking_menu.addAction(self.sync_tracking_backup_action)
+        
+        # Import database action
+        self.sync_tracking_import_action = QAction(texts.IMPORT_PROCESSED_DATABASE, self)
+        self.sync_tracking_import_action.triggered.connect(self._import_processed_database)
+        self.sync_tracking_menu.addAction(self.sync_tracking_import_action)
+        
+        self.sync_tracking_menu.addSeparator()
+        
+        # Manage library folders action
+        self.sync_tracking_manage_library_action = QAction(texts.MANAGE_LIBRARY_FOLDERS, self)
+        self.sync_tracking_manage_library_action.triggered.connect(self._open_library_manager)
+        self.sync_tracking_menu.addAction(self.sync_tracking_manage_library_action)
+
+    def _update_sync_tracking_menu_title(self):
+        """Update the sync tracking submenu title based on enabled/disabled state."""
+        is_enabled = self.config.get(
+            "skip_previously_processed_videos",
+            DEFAULT_OPTIONS["skip_previously_processed_videos"]
+        )
+        if is_enabled:
+            title = f"{texts.SYNC_TRACKING} ({texts.ENABLED})"
+        else:
+            title = f"{texts.SYNC_TRACKING} ({texts.DISABLED})"
+        self.sync_tracking_menu.setTitle(title)
+
+    def _update_sync_tracking_toggle_text(self):
+        """Update the sync tracking toggle action text and checked state."""
+        is_enabled = self.config.get(
+            "skip_previously_processed_videos",
+            DEFAULT_OPTIONS["skip_previously_processed_videos"]
+        )
+        self.sync_tracking_toggle_action.setChecked(is_enabled)
+        if is_enabled:
+            self.sync_tracking_toggle_action.setText(texts.SYNC_TRACKING_ENABLED)
+        else:
+            self.sync_tracking_toggle_action.setText(texts.SYNC_TRACKING_DISABLED)
+
+    def _on_skip_processed_changed(self, checked):
+        """Handle skip previously processed items setting change."""
+        update_config(self, "skip_previously_processed_videos", checked)
+        # Update the settings menu submenu title and toggle text
+        self._update_sync_tracking_menu_title()
+        self._update_sync_tracking_toggle_text()
+        # Update sync tracking button style
+        if hasattr(self, 'btn_sync_tracking'):
+            from gui_batch_mode import _update_sync_tracking_button_style
+            _update_sync_tracking_button_style(self)
+        # Trigger re-scan of batch items if batch mode is enabled
+        if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+            self.batch_tree_view.rescan_processed_items()
+
+    def _open_library_manager(self):
+        """Open the library manager dialog."""
+        from gui_load_library import LibraryManagerDialog
+        dialog = LibraryManagerDialog(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # Load library folders into batch mode if accepted
+            if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+                from gui_batch_mode import smart_load_library
+                smart_load_library(self)
+
+    def _clear_processed_items_database(self):
+        """Clear the processed items database after confirmation."""
+        from processed_items_manager import get_processed_items_manager
+        
+        manager = get_processed_items_manager()
+        count = manager.get_processed_count()
+        
+        reply = QMessageBox.question(
+            self,
+            texts.CLEAR_PROCESSED_ITEMS_DATABASE,
+            texts.CLEAR_DATABASE_CONFIRM,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            if manager.clear_all():
+                QMessageBox.information(
+                    self,
+                    texts.CLEAR_PROCESSED_ITEMS_DATABASE,
+                    str(texts.DATABASE_CLEARED_SUCCESS).format(count=count)
+                )
+                # Re-scan batch items to update visual state
+                if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+                    self.batch_tree_view.rescan_processed_items()
+
+    def _backup_processed_database(self):
+        """Backup the processed items database to a user-selected location."""
+        from processed_items_manager import get_processed_items_manager
+        import shutil
+        
+        manager = get_processed_items_manager()
+        db_path = manager.get_db_path()
+        
+        if not os.path.exists(db_path):
+            QMessageBox.warning(
+                self,
+                texts.BACKUP_PROCESSED_DATABASE,
+                texts.DATABASE_NOT_FOUND
+            )
+            return
+        
+        # Open save dialog
+        save_path, _ = QFileDialog.getSaveFileName(
+            self,
+            texts.BACKUP_PROCESSED_DATABASE,
+            "processed_items_backup.db",
+            "Database Files (*.db)"
+        )
+        
+        if save_path:
+            try:
+                shutil.copy2(db_path, save_path)
+                QMessageBox.information(
+                    self,
+                    texts.BACKUP_PROCESSED_DATABASE,
+                    str(texts.DATABASE_BACKUP_SUCCESS).format(path=save_path)
+                )
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    texts.ERROR,
+                    str(texts.DATABASE_BACKUP_FAILED).format(error=str(e))
+                )
+
+    def _import_processed_database(self):
+        """Import items from another processed items database."""
+        from processed_items_manager import get_processed_items_manager
+        
+        # Open file dialog to select database
+        import_path, _ = QFileDialog.getOpenFileName(
+            self,
+            texts.IMPORT_PROCESSED_DATABASE,
+            "",
+            "Database Files (*.db)"
+        )
+        
+        if import_path:
+            manager = get_processed_items_manager()
+            imported, skipped = manager.import_from_database(import_path)
+            
+            if imported >= 0:
+                QMessageBox.information(
+                    self,
+                    texts.IMPORT_PROCESSED_DATABASE,
+                    str(texts.DATABASE_IMPORT_SUCCESS).format(imported=imported, skipped=skipped)
+                )
+                # Re-scan batch items to update visual state
+                if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+                    self.batch_tree_view.rescan_processed_items()
+            else:
+                QMessageBox.warning(
+                    self,
+                    texts.IMPORT_PROCESSED_DATABASE,
+                    texts.DATABASE_IMPORT_FAILED
+                )

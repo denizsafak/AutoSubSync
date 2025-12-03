@@ -74,6 +74,31 @@ def update_progress(app, percent, idx=None, total=None):
         app.log_window.update_progress(percent, idx, total)
 
 
+def _mark_item_as_processed(app, reference_path):
+    """Mark a reference file as processed in the Smart Deduplication database."""
+    try:
+        # Check if skip feature is enabled
+        if not app.config.get("skip_previously_processed_videos", True):
+            return
+        
+        # Only mark video files (not subtitle references)
+        ref_ext = os.path.splitext(reference_path)[1].lower()
+        if ref_ext in SUBTITLE_EXTENSIONS:
+            return
+        
+        from processed_items_manager import get_processed_items_manager
+        manager = get_processed_items_manager()
+        if manager.mark_as_processed(reference_path):
+            # Log the addition to the database in blue
+            append_log(app, str(texts.SYNC_TRACKING_ADDED_TO_DATABASE), color=COLORS["BLUE"])
+            # Update the batch tree view cache if available
+            if hasattr(app, 'batch_tree_view') and app.batch_tree_view:
+                norm_path = os.path.normpath(reference_path)
+                app.batch_tree_view._processed_items_cache[norm_path] = True
+    except Exception as e:
+        logger.warning(f"Failed to mark item as processed: {e}")
+
+
 def handle_completion(app, ok, out, in_path):
     if ok and (not out or not os.path.exists(out)):
         ok = False
@@ -907,13 +932,17 @@ def start_sync_process(app):
                     original_idx + 1,
                     total_items,
                 )
-                app.log_window.handle_batch_completion(ok, out, process_next_item)
+                # Pass sync tracking callback to be called after success message but before saved to
+                post_success_cb = (lambda: _mark_item_as_processed(app, original_ref_path)) if ok else None
+                app.log_window.handle_batch_completion(ok, out, process_next_item, post_success_cb)
 
             def single_completion_handler(ok, out):
                 ok = handle_completion(app, ok, out, original_sub_path)
-                app.log_window.handle_sync_completion(ok, out)
                 if ok:
                     cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
+                # Pass sync tracking callback to be called after success message but before saved to
+                post_success_cb = (lambda: _mark_item_as_processed(app, original_ref_path)) if ok else None
+                app.log_window.handle_sync_completion(ok, out, post_success_cb)
 
             if app.batch_mode_enabled and len(items) > 1:
                 proc.signals.finished.connect(batch_completion_handler)

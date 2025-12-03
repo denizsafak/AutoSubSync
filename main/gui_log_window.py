@@ -296,12 +296,13 @@ class LogWindow(QWidget):
         else:
             self.progress_bar.setFormat("%p%")
 
-    def handle_sync_completion(self, success, output):
+    def handle_sync_completion(self, success, output, post_success_callback=None):
         """Handle completion of a synchronization process
 
         Args:
             success: Whether the synchronization was successful
             output: Path to the output file if successful, None otherwise
+            post_success_callback: Optional callback to run after success message but before saved to message
         """
         # Get the main application instance
         app = self.window()
@@ -313,6 +314,9 @@ class LogWindow(QWidget):
                 color=COLORS["GREEN"],
                 bold=True,
             )
+            # Call the post-success callback (e.g., sync tracking message)
+            if post_success_callback:
+                post_success_callback()
             self.append_message(
                 texts.SAVED_TO_LABEL.format(output=output), color=COLORS["GREY"]
             )
@@ -366,13 +370,14 @@ class LogWindow(QWidget):
         # Force scroll to bottom after buttons are shown
         self._scroll_to_bottom()
 
-    def handle_batch_completion(self, success, output, callback):
+    def handle_batch_completion(self, success, output, callback, post_success_callback=None):
         """Handle completion of a single item in batch processing
 
         Args:
             success: Whether the synchronization was successful
             output: Path to the output file if successful, None otherwise
             callback: Function to call to process the next item
+            post_success_callback: Optional callback to run after success message but before saved to message
         """
         if success:
             self.append_message(
@@ -380,6 +385,9 @@ class LogWindow(QWidget):
                 color=COLORS["GREEN"],
                 bold=True,
             )
+            # Call the post-success callback (e.g., sync tracking message)
+            if post_success_callback:
+                post_success_callback()
 
             self.append_message(
                 texts.SAVED_TO_LABEL.format(output=output),
