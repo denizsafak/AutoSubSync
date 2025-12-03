@@ -25,7 +25,6 @@ from PyQt6.QtGui import QCursor, QColor, QShortcut, QKeySequence
 import os
 import re
 import logging
-import threading
 import texts
 from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS, DEFAULT_OPTIONS
 from utils import update_config, open_filedialog, open_folder, load_config
@@ -833,25 +832,32 @@ class BatchTreeView(QTreeWidget):
             from processed_items_manager import get_processed_items_manager
             manager = get_processed_items_manager()
             
-            # Sort items: invalid first (0), valid not-processed (1), valid processed/skipped (2)
+            # Sort items: invalid not-skipped (0), valid not-skipped (1), invalid skipped (2), valid skipped (3)
             def get_sort_key(item):
                 is_valid = self._get_provisional_validity(item) == "valid"
-                # Check if item is processed (will be skipped)
+                # Check if item is processed (will be skipped) - check for all video files
                 item_path = item.data(0, Qt.ItemDataRole.UserRole)
                 is_processed = False
-                if item_path and is_valid and is_video_file(item_path):
+                if item_path and is_video_file(item_path):
                     # Check database directly for accurate status
                     is_processed = manager.is_processed(item_path)
                     # Also update cache
                     norm_path = os.path.normpath(item_path)
                     self._processed_items_cache[norm_path] = is_processed
                 
-                if not is_valid:
-                    return (0, os.path.basename(item_path or "").lower())  # Invalid first
-                elif is_processed:
-                    return (2, os.path.basename(item_path or "").lower())  # Processed/skipped last
-                else:
-                    return (1, os.path.basename(item_path or "").lower())  # Valid not-processed in middle
+                # Sorting priority:
+                # 0: Invalid not-skipped (need attention first)
+                # 1: Valid not-skipped (ready to process)
+                # 2: Invalid skipped 
+                # 3: Valid skipped (last)
+                if not is_valid and not is_processed:
+                    return (0, os.path.basename(item_path or "").lower())
+                elif is_valid and not is_processed:
+                    return (1, os.path.basename(item_path or "").lower())
+                elif not is_valid and is_processed:
+                    return (2, os.path.basename(item_path or "").lower())
+                else:  # is_valid and is_processed
+                    return (3, os.path.basename(item_path or "").lower())
             
             newly_created_items.sort(key=get_sort_key)
             
@@ -1957,19 +1963,54 @@ class BatchTreeView(QTreeWidget):
 
         # Add all newly created items to the tree
         if newly_created_items:
-            # Sort by validity and name
-            newly_created_items.sort(
-                key=lambda item: (
-                    0 if self._get_provisional_validity(item) == "invalid" else 1,
-                    os.path.basename(item.data(0, Qt.ItemDataRole.UserRole)).lower(),
-                )
-            )
+            # Check processed status directly from database for sorting
+            # (same logic as scan_library_for_new_items for consistency)
+            from processed_items_manager import get_processed_items_manager
+            manager = get_processed_items_manager()
+            
+            # Sort items: invalid not-skipped (0), valid not-skipped (1), invalid skipped (2), valid skipped (3)
+            def get_sort_key(item):
+                is_valid = self._get_provisional_validity(item) == "valid"
+                # Check if item is processed (will be skipped) - check for all video files
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                is_processed = False
+                if item_path and is_video_file(item_path):
+                    # Check database directly for accurate status
+                    is_processed = manager.is_processed(item_path)
+                    # Also update cache
+                    norm_path = os.path.normpath(item_path)
+                    self._processed_items_cache[norm_path] = is_processed
+                
+                # Sorting priority:
+                # 0: Invalid not-skipped (need attention first)
+                # 1: Valid not-skipped (ready to process)
+                # 2: Invalid skipped 
+                # 3: Valid skipped (last)
+                if not is_valid and not is_processed:
+                    return (0, os.path.basename(item_path or "").lower())
+                elif is_valid and not is_processed:
+                    return (1, os.path.basename(item_path or "").lower())
+                elif not is_valid and is_processed:
+                    return (2, os.path.basename(item_path or "").lower())
+                else:  # is_valid and is_processed
+                    return (3, os.path.basename(item_path or "").lower())
+            
+            newly_created_items.sort(key=get_sort_key)
 
-            # Add to tree
+            # Add to tree (in reverse order to maintain sort when inserting at beginning)
+            # Also apply processed visual state immediately based on cache
             for item in reversed(newly_created_items):
                 self.insertTopLevelItem(0, item)
+                # Apply processed visual state if applicable
+                item_path = item.data(0, Qt.ItemDataRole.UserRole)
+                if item_path:
+                    norm_path = os.path.normpath(item_path)
+                    is_processed = self._processed_items_cache.get(norm_path, False)
+                    if is_processed:
+                        item.setData(0, self.PROCESSED_STATE_ROLE, True)
+                        self._apply_processed_style(item, True)
             
-            # Queue all references for Smart Deduplication scan
+            # Queue all references for Smart Deduplication scan (for async verification)
             self._queue_files_for_scan(references)
 
         # Show message about skipped items

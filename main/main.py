@@ -4,7 +4,7 @@ import platform
 import logging
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import qInstallMessageHandler, QtMsgType, Qt
+from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
 
 # Add the directory to Python path
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
