@@ -27,11 +27,11 @@ AutoSubSync is a user-friendly tool that automatically synchronizes your subtitl
 > chmod +x AutoSubSync-linux-amd64.AppImage
 > ```
 
-> #### Arch Linux
-> You can also download AutoSubSync from AUR in **Arch Linux** using the following command:
-> ``` 
-> yay -S autosubsync-bin 
-> ```
+#### Arch Linux
+You can also download AutoSubSync from AUR in **Arch Linux** using the following command:
+``` 
+yay -S autosubsync-bin
+```
 > Thanks to [@Rainoutt](https://github.com/Rainoutt) for the [AUR](https://aur.archlinux.org/packages/autosubsync-bin) package.
 
 ### macOS

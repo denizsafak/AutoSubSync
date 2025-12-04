@@ -144,7 +144,7 @@ jobs:
           body: |
             ${{ env.changelog }}
 
-            > MacOS users please read [instructions](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#macos).
+            > MacOS users please read the [instructions](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#macos).
             
             >Included:
             >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}
