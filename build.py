@@ -400,11 +400,16 @@ def build_appimage():
     appdir = create_appimage_structure(version)
     
     # Build the AppImage
-    arch = platform.machine().lower()
-    if arch == "x86_64":
-        arch = "x86_64"
-    elif arch == "aarch64":
-        arch = "aarch64"
+    machine_arch = platform.machine().lower()
+    if machine_arch == "x86_64":
+        arch = "amd64"
+        appimagetool_arch = "x86_64"
+    elif machine_arch == "aarch64":
+        arch = "arm64"
+        appimagetool_arch = "aarch64"
+    else:
+        arch = machine_arch
+        appimagetool_arch = machine_arch
     
     appimage_name = f"AutoSubSync-v{version}-linux-{arch}.AppImage"
     appimage_path = os.path.join(script_dir, appimage_name)
@@ -415,9 +420,9 @@ def build_appimage():
     
     print(f"Creating AppImage: {appimage_name}")
     
-    # Set ARCH environment variable for appimagetool
+    # Set ARCH environment variable for appimagetool (requires x86_64/aarch64 format)
     env = os.environ.copy()
-    env["ARCH"] = arch
+    env["ARCH"] = appimagetool_arch
     
     try:
         completed_process = subprocess.run(
@@ -449,6 +454,39 @@ def build_appimage():
 # macOS .app Bundle Packaging
 # =============================================================================
 
+def sign_macos_app(app_path):
+    """Ad-hoc sign the macOS app bundle to prevent Gatekeeper issues."""
+    print("Signing macOS application bundle (ad-hoc)...")
+    
+    # First, clear any existing quarantine attributes
+    try:
+        subprocess.run(["xattr", "-cr", app_path], check=False)
+        print("Cleared extended attributes.")
+    except Exception as e:
+        print(f"Warning: Could not clear xattr: {e}")
+    
+    # Ad-hoc sign the app bundle with deep signing and force
+    # This signs all nested code (frameworks, helpers, etc.)
+    try:
+        result = subprocess.run(
+            ["codesign", "--force", "--deep", "--sign", "-", app_path],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            print("App bundle signed successfully (ad-hoc).")
+            return True
+        else:
+            print(f"Warning: Code signing failed: {result.stderr}")
+            return False
+    except FileNotFoundError:
+        print("Warning: codesign not found. App may trigger Gatekeeper warnings.")
+        return False
+    except Exception as e:
+        print(f"Warning: Code signing error: {e}")
+        return False
+
+
 def package_macos_app():
     """Package macOS .app bundle into a DMG or ZIP."""
     with open("main/VERSION", "r") as f:
@@ -461,6 +499,9 @@ def package_macos_app():
     if not os.path.exists(app_path):
         print(f"Error: Application bundle not found at {app_path}")
         return None
+    
+    # Sign the app bundle before packaging
+    sign_macos_app(app_path)
     
     arch = platform.machine().lower()
     if arch == "x86_64":
