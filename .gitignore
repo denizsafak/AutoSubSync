@@ -33,3 +33,4 @@ main/resources/ffsubsync-bin/
 main/resources/versions.json
 test_subtitles/
 PROMPTS.md
+build_tools/

@@ -8,9 +8,24 @@ import importlib.util
 import json
 import re
 import ast
+import shutil
+import urllib.request
+import stat
+
+# =============================================================================
+# Constants and Configuration
+# =============================================================================
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
+
+CURRENT_PLATFORM = platform.system()
+IS_WINDOWS = CURRENT_PLATFORM == "Windows"
+IS_MACOS = CURRENT_PLATFORM == "Darwin"
+IS_LINUX = CURRENT_PLATFORM == "Linux"
+
+# AppImage tool URL for Linux
+APPIMAGETOOL_URL = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
 
 # Add main directory to Python path to import constants and utils
 sys.path.insert(0, os.path.join(script_dir, "main"))
@@ -67,7 +82,7 @@ def create_virtualenv():
 
 def install_requirements():
     print("Installing requirements...")
-    if platform.system() == "Windows":
+    if IS_WINDOWS:
         pip_executable = "venv\\Scripts\\pip"
     else:
         pip_executable = "venv/bin/pip"
@@ -82,7 +97,7 @@ def install_requirements():
 
 
 def remove_webrtcvad_hook():
-    if platform.system() == "Windows":
+    if IS_WINDOWS:
         hook_path = os.path.join(
             "venv",
             "Lib",
@@ -103,11 +118,11 @@ def remove_webrtcvad_hook():
 
 def ensure_ffmpeg():
     apps = ["ffmpeg", "ffprobe"]
-    exe = ".exe" if platform.system() == "Windows" else ""
+    exe = ".exe" if IS_WINDOWS else ""
     ffmpeg_dir = "main/resources/ffmpeg-bin"
     if not all(os.path.exists(os.path.join(ffmpeg_dir, app + exe)) for app in apps):
         print("FFmpeg executables not found, running ffmpeg_download.py...")
-        if platform.system() == "Windows":
+        if IS_WINDOWS:
             python_executable = "venv\\Scripts\\python"
         else:
             python_executable = "venv/bin/python"
@@ -126,7 +141,7 @@ def ensure_ffmpeg():
 
 def get_version_info(module_name):
     """Return a version information of package using the venv Python."""
-    if platform.system() == "Windows":
+    if IS_WINDOWS:
         python_executable = os.path.join("venv", "Scripts", "python.exe")
     else:
         python_executable = os.path.join("venv", "bin", "python")
@@ -224,7 +239,7 @@ def get_sync_tools_versions():
 
 
 def check_versions():
-    if platform.system() == "Windows":
+    if IS_WINDOWS:
         versions = {
             "AutoSubSync": get_autosubsync_version(),
             "ffmpeg": get_ffmpeg_version(),
@@ -244,7 +259,7 @@ def check_versions():
 
 def build_with_pyinstaller():
     print("Building with PyInstaller...")
-    if platform.system() == "Windows":
+    if IS_WINDOWS:
         pyinstaller_executable = "venv\\Scripts\\pyinstaller"
     else:
         pyinstaller_executable = "venv/bin/pyinstaller"
@@ -258,51 +273,294 @@ def build_with_pyinstaller():
     print("Build completed.")
 
 
-def create_archive():
-    print("Creating archive...")
+# =============================================================================
+# Linux AppImage Packaging
+# =============================================================================
+
+def download_appimagetool():
+    """Download appimagetool if not present."""
+    tools_dir = os.path.join(script_dir, "build_tools")
+    os.makedirs(tools_dir, exist_ok=True)
+    appimagetool_path = os.path.join(tools_dir, "appimagetool")
+    
+    if os.path.exists(appimagetool_path):
+        print("appimagetool already exists.")
+        return appimagetool_path
+    
+    print("Downloading appimagetool...")
+    try:
+        urllib.request.urlretrieve(APPIMAGETOOL_URL, appimagetool_path)
+        # Make executable
+        st = os.stat(appimagetool_path)
+        os.chmod(appimagetool_path, st.st_mode | stat.S_IEXEC)
+        print("appimagetool downloaded successfully.")
+        return appimagetool_path
+    except Exception as e:
+        print(f"Error downloading appimagetool: {e}")
+        return None
+
+
+def create_appimage_structure(version):
+    """Create the AppDir structure required for AppImage."""
     with open("main/VERSION", "r") as f:
         version = f.read().strip()
+    
+    folder_name = f"AutoSubSync-v{version}"
+    appdir = os.path.join(script_dir, "dist", "AutoSubSync.AppDir")
+    
+    # Clean up existing AppDir
+    if os.path.exists(appdir):
+        shutil.rmtree(appdir)
+    
+    os.makedirs(appdir, exist_ok=True)
+    
+    # Copy the built application directly to AppDir (flat structure for PyInstaller apps)
+    pyinstaller_output = os.path.join(script_dir, "dist", folder_name)
+    if os.path.exists(pyinstaller_output):
+        for item in os.listdir(pyinstaller_output):
+            src = os.path.join(pyinstaller_output, item)
+            dst = os.path.join(appdir, item)
+            if os.path.isdir(src):
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)
+    
+    # Create AppRun script - simple launcher that runs the executable from AppDir
+    apprun_content = '''#!/bin/bash
+# AppRun script for AutoSubSync AppImage
+SELF=$(readlink -f "$0")
+HERE=${SELF%/*}
 
-    dist_dir = "dist"
-    platform_name = platform.system().lower()
+# Set library path to find bundled libraries
+export LD_LIBRARY_PATH="${HERE}:${LD_LIBRARY_PATH}"
+
+# Execute the main application
+exec "${HERE}/AutoSubSync" "$@"
+'''
+    apprun_path = os.path.join(appdir, "AppRun")
+    with open(apprun_path, "w") as f:
+        f.write(apprun_content)
+    st = os.stat(apprun_path)
+    os.chmod(apprun_path, st.st_mode | stat.S_IEXEC)
+    
+    # Create .desktop file (required by AppImage specification)
+    # Note: Version field in .desktop refers to Desktop Entry Spec version (1.0), not app version
+    # App version can be included in Comment or X-AppImage-Version
+    desktop_content = f'''[Desktop Entry]
+Version=1.0
+Name=AutoSubSync
+GenericName=Automatic Subtitle Synchronizer
+Exec=AutoSubSync %f
+Icon=autosubsync
+Type=Application
+Categories=AudioVideo;Video;
+Comment=Automatic subtitle synchronization tool.
+Terminal=false
+StartupWMClass=AutoSubSync
+X-AppImage-Version={version}
+'''
+    desktop_path = os.path.join(appdir, "AutoSubSync.desktop")
+    with open(desktop_path, "w") as f:
+        f.write(desktop_content)
+    
+    # Copy PNG icon for AppImage (AppImage REQUIRES a PNG icon at the root of AppDir)
+    icon_png_src = os.path.join(script_dir, "main", "assets", "icon.png")
+    icon_dst = os.path.join(appdir, "autosubsync.png")
+    
+    if os.path.exists(icon_png_src):
+        shutil.copy2(icon_png_src, icon_dst)
+        print("PNG icon copied to AppDir.")
+        
+        # Create .DirIcon symlink (used by some file managers for folder icons)
+        diricon_path = os.path.join(appdir, ".DirIcon")
+        if os.path.exists(diricon_path) or os.path.islink(diricon_path):
+            os.remove(diricon_path)
+        os.symlink("autosubsync.png", diricon_path)
+    else:
+        print("ERROR: icon.png not found in main/assets/")
+        print("       AppImage will work but won't display an icon.")
+    
+    return appdir
+
+
+def build_appimage():
+    """Build AppImage for Linux."""
+    with open("main/VERSION", "r") as f:
+        version = f.read().strip()
+    
+    print("Building AppImage for Linux...")
+    
+    # Download appimagetool if needed
+    appimagetool = download_appimagetool()
+    if not appimagetool:
+        print("Error: Could not obtain appimagetool. Falling back to tar.gz archive.")
+        return None
+    
+    # Create AppDir structure
+    appdir = create_appimage_structure(version)
+    
+    # Build the AppImage
+    arch = platform.machine().lower()
+    if arch == "x86_64":
+        arch = "x86_64"
+    elif arch == "aarch64":
+        arch = "aarch64"
+    
+    appimage_name = f"AutoSubSync-v{version}-linux-{arch}.AppImage"
+    appimage_path = os.path.join(script_dir, appimage_name)
+    
+    # Remove existing AppImage if present
+    if os.path.exists(appimage_path):
+        os.remove(appimage_path)
+    
+    print(f"Creating AppImage: {appimage_name}")
+    
+    # Set ARCH environment variable for appimagetool
+    env = os.environ.copy()
+    env["ARCH"] = arch
+    
+    try:
+        completed_process = subprocess.run(
+            [appimagetool, "--appimage-extract-and-run", appdir, appimage_path],
+            text=True,
+            env=env,
+            capture_output=True,
+        )
+        
+        if completed_process.returncode != 0:
+            print(f"appimagetool stderr: {completed_process.stderr}")
+            print("Error creating AppImage. Falling back to tar.gz archive.")
+            return None
+        
+        print(f"AppImage created successfully: {appimage_name}")
+        print(f"Full path: {appimage_path}")
+        
+        # Clean up AppDir
+        shutil.rmtree(appdir, ignore_errors=True)
+        
+        return appimage_path
+        
+    except Exception as e:
+        print(f"Error running appimagetool: {e}")
+        return None
+
+
+# =============================================================================
+# macOS .app Bundle Packaging
+# =============================================================================
+
+def package_macos_app():
+    """Package macOS .app bundle into a DMG or ZIP."""
+    with open("main/VERSION", "r") as f:
+        version = f.read().strip()
+    
+    print("Packaging macOS application bundle...")
+    
+    app_path = os.path.join(script_dir, "dist", "AutoSubSync.app")
+    
+    if not os.path.exists(app_path):
+        print(f"Error: Application bundle not found at {app_path}")
+        return None
+    
     arch = platform.machine().lower()
     if arch == "x86_64":
         arch = "amd64"
-    if platform_name == "linux":
-        tar_name = (
-            "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".tar.gz"
-        )
-        with tarfile.open(tar_name, "w:gz") as tar:
-            for root, _, files in os.walk(dist_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    arcname = os.path.relpath(file_path, dist_dir)
-                    tar.add(file_path, arcname=arcname)
-        print("Tar.gz archive created: " + tar_name)
-        print("Full path: " + os.path.abspath(tar_name))
-    elif platform_name == "darwin":
-        platform_name = "macos"
-        zip_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".zip"
-        with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for root, _, files in os.walk(dist_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    arcname = os.path.join(
-                        "AutoSubSync-v" + version, os.path.relpath(file_path, dist_dir)
-                    )
-                    zipf.write(file_path, arcname)
-        print("Zip archive created: " + zip_name)
-        print("Full path: " + os.path.abspath(zip_name))
+    elif arch == "arm64":
+        arch = "arm64"
+    
+    # Create a ZIP archive of the .app bundle
+    zip_name = f"AutoSubSync-v{version}-macos-{arch}.zip"
+    zip_path = os.path.join(script_dir, zip_name)
+    
+    print(f"Creating ZIP archive: {zip_name}")
+    
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(app_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, os.path.join(script_dir, "dist"))
+                zipf.write(file_path, arcname)
+    
+    print(f"ZIP archive created: {zip_name}")
+    print(f"Full path: {zip_path}")
+    
+    return zip_path
+
+
+# =============================================================================
+# Windows Packaging
+# =============================================================================
+
+def package_windows():
+    """Package Windows build into a ZIP archive."""
+    with open("main/VERSION", "r") as f:
+        version = f.read().strip()
+    
+    print("Packaging Windows application...")
+    
+    dist_dir = "dist"
+    arch = platform.machine().lower()
+    if arch == "amd64" or arch == "x86_64":
+        arch = "amd64"
+    
+    zip_name = f"AutoSubSync-v{version}-windows-{arch}.zip"
+    
+    with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(dist_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, dist_dir)
+                zipf.write(file_path, arcname)
+    
+    print(f"ZIP archive created: {zip_name}")
+    print(f"Full path: {os.path.abspath(zip_name)}")
+    
+    return zip_name
+
+
+# =============================================================================
+# Archive Creation (Platform-Specific)
+# =============================================================================
+
+def create_archive():
+    """Create platform-specific archive/package."""
+    print("Creating platform-specific package...")
+    
+    with open("main/VERSION", "r") as f:
+        version = f.read().strip()
+    
+    if IS_LINUX:
+        # Try to create AppImage, fall back to tar.gz
+        result = build_appimage()
+        if result is None:
+            print("Falling back to tar.gz archive...")
+            create_linux_tarball(version)
+    elif IS_MACOS:
+        # Package .app bundle
+        package_macos_app()
     else:
-        zip_name = "AutoSubSync-v" + version + "-" + platform_name + "-" + arch + ".zip"
-        with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for root, _, files in os.walk(dist_dir):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    arcname = os.path.relpath(file_path, dist_dir)
-                    zipf.write(file_path, arcname)
-        print("Zip archive created: " + zip_name)
-        print("Full path: " + os.path.abspath(zip_name))
+        # Windows
+        package_windows()
+
+
+def create_linux_tarball(version):
+    """Create a tar.gz archive for Linux (fallback if AppImage fails)."""
+    dist_dir = "dist"
+    arch = platform.machine().lower()
+    if arch == "x86_64":
+        arch = "amd64"
+    
+    tar_name = f"AutoSubSync-v{version}-linux-{arch}.tar.gz"
+    
+    with tarfile.open(tar_name, "w:gz") as tar:
+        for root, _, files in os.walk(dist_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, dist_dir)
+                tar.add(file_path, arcname=arcname)
+    
+    print(f"Tar.gz archive created: {tar_name}")
+    print(f"Full path: {os.path.abspath(tar_name)}")
 
 
 if __name__ == "__main__":
