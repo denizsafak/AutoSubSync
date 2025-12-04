@@ -11,7 +11,7 @@ AutoSubSync is a user-friendly tool that automatically synchronizes your subtitl
 <img title="AutoSubSync Automatic Tab" src='images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='images/AutoSubSync4.png'>
 
 > # [Download the Latest Release](https://github.com/denizsafak/AutoSubSync/releases/latest)
-> You can download the latest executable version of AutoSubSync for `Windows`, `Linux`, and `MacOS` from this link, or you can also download AutoSubSync from AUR in Arch Linux using the following command:
+> You can download the latest executable version of AutoSubSync for `Windows`, `Linux`, and `macOS` from this link, or you can also download AutoSubSync from AUR in Arch Linux using the following command:
 > ``` 
 >yay -S autosubsync-bin 
 >```
