@@ -31,6 +31,22 @@ APPIMAGETOOL_URL = "https://github.com/AppImage/AppImageKit/releases/download/co
 sys.path.insert(0, os.path.join(script_dir, "main"))
 
 
+def get_arch():
+    """Get normalized architecture name for file naming.
+    
+    Returns:
+        tuple: (arch, native_arch) where arch is the normalized name (amd64/arm64)
+               and native_arch is the platform's native name (x86_64/aarch64)
+    """
+    native_arch = platform.machine().lower()
+    if native_arch in ("x86_64", "amd64"):
+        return "amd64", "x86_64"
+    elif native_arch in ("aarch64", "arm64"):
+        return "arm64", "aarch64"
+    else:
+        return native_arch, native_arch
+
+
 def check_modules():
     required_modules = ["pip", "venv"]
     for module in required_modules:
@@ -355,11 +371,8 @@ def download_appimagetool():
         return None
 
 
-def create_appimage_structure():
+def create_appimage_structure(version):
     """Create the AppDir structure required for AppImage."""
-    with open("main/VERSION", "r") as f:
-        version = f.read().strip()
-    
     folder_name = f"AutoSubSync-v{version}"
     appdir = os.path.join(script_dir, "dist", "AutoSubSync.AppDir")
     
@@ -455,16 +468,7 @@ def build_appimage():
     appdir = create_appimage_structure(version)
     
     # Build the AppImage
-    machine_arch = platform.machine().lower()
-    if machine_arch == "x86_64":
-        arch = "amd64"
-        appimagetool_arch = "x86_64"
-    elif machine_arch == "aarch64":
-        arch = "arm64"
-        appimagetool_arch = "aarch64"
-    else:
-        arch = machine_arch
-        appimagetool_arch = machine_arch
+    arch, appimagetool_arch = get_arch()
     
     appimage_name = f"AutoSubSync-v{version}-linux-{arch}.AppImage"
     appimage_path = os.path.join(script_dir, appimage_name)
@@ -558,11 +562,7 @@ def package_macos_app():
     # Sign the app bundle before packaging
     sign_macos_app(app_path)
     
-    arch = platform.machine().lower()
-    if arch == "x86_64":
-        arch = "amd64"
-    elif arch == "arm64":
-        arch = "arm64"
+    arch, _ = get_arch()
     
     # Create a ZIP archive of the .app bundle using ditto
     # ditto preserves macOS-specific attributes, permissions, and code signatures
@@ -607,9 +607,7 @@ def package_windows():
     print("Packaging Windows application...")
     
     dist_dir = "dist"
-    arch = platform.machine().lower()
-    if arch == "amd64" or arch == "x86_64":
-        arch = "amd64"
+    arch, _ = get_arch()
     
     zip_name = f"AutoSubSync-v{version}-windows-{arch}.zip"
     
@@ -654,9 +652,7 @@ def create_archive():
 def create_linux_tarball(version):
     """Create a tar.gz archive for Linux (fallback if AppImage fails)."""
     dist_dir = "dist"
-    arch = platform.machine().lower()
-    if arch == "x86_64":
-        arch = "amd64"
+    arch, _ = get_arch()
     
     tar_name = f"AutoSubSync-v{version}-linux-{arch}.tar.gz"
     
