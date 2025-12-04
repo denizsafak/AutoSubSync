@@ -48,7 +48,6 @@ jobs:
           name: build-artifacts-${{ matrix.file_name }}
           path: |
             AutoSubSync-v*.zip
-            AutoSubSync-v*.tar.gz
             AutoSubSync-v*.AppImage
 
   build-linux-ubuntu:
