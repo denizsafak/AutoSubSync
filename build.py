@@ -283,8 +283,8 @@ def fix_macos_dylib_versions():
                     # Check for LC_BUILD_VERSION or LC_VERSION_MIN_MACOSX
                     if "LC_BUILD_VERSION" not in result.stdout and "LC_VERSION_MIN_MACOSX" not in result.stdout:
                         problematic_dylibs.append(dylib_path)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"  Warning: Error checking {dylib_path}: {e}")
     
     if not problematic_dylibs:
         print("No problematic dylibs found.")
