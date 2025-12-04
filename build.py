@@ -257,6 +257,61 @@ def check_versions():
         print("Skipping version check for non-Windows platform.")
 
 
+def fix_macos_dylib_versions():
+    """Fix macOS dylibs that lack proper SDK version info to prevent PyInstaller warnings."""
+    if not IS_MACOS:
+        return
+    
+    print("Checking for problematic macOS dylibs...")
+    
+    # Find dylibs in the virtual environment that may lack version info
+    venv_site_packages = os.path.join(script_dir, "venv", "lib")
+    
+    # Find all dylib files
+    problematic_dylibs = []
+    for root, dirs, files in os.walk(venv_site_packages):
+        for file in files:
+            if file.endswith(".dylib"):
+                dylib_path = os.path.join(root, file)
+                # Check if the dylib has version info
+                try:
+                    result = subprocess.run(
+                        ["otool", "-l", dylib_path],
+                        capture_output=True,
+                        text=True
+                    )
+                    # Check for LC_BUILD_VERSION or LC_VERSION_MIN_MACOSX
+                    if "LC_BUILD_VERSION" not in result.stdout and "LC_VERSION_MIN_MACOSX" not in result.stdout:
+                        problematic_dylibs.append(dylib_path)
+                except Exception:
+                    pass
+    
+    if not problematic_dylibs:
+        print("No problematic dylibs found.")
+        return
+    
+    print(f"Found {len(problematic_dylibs)} dylib(s) without version info. Attempting to fix...")
+    
+    for dylib_path in problematic_dylibs:
+        try:
+            # Use vtool to add version info (available on macOS 11+)
+            # This adds LC_BUILD_VERSION with macOS 10.13 as minimum
+            result = subprocess.run(
+                ["vtool", "-set-build-version", "macos", "10.13", "10.13", "-replace", "-output", dylib_path, dylib_path],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                print(f"  Fixed: {os.path.basename(dylib_path)}")
+            else:
+                print(f"  Warning: Could not fix {os.path.basename(dylib_path)}: {result.stderr}")
+        except FileNotFoundError:
+            # vtool not available, try alternative approach
+            print(f"  Warning: vtool not available, skipping {os.path.basename(dylib_path)}")
+        except Exception as e:
+            print(f"  Warning: Error fixing {os.path.basename(dylib_path)}: {e}")
+
+
 def build_with_pyinstaller():
     print("Building with PyInstaller...")
     if IS_WINDOWS:
@@ -488,7 +543,7 @@ def sign_macos_app(app_path):
 
 
 def package_macos_app():
-    """Package macOS .app bundle into a DMG or ZIP."""
+    """Package macOS .app bundle into a ZIP using ditto to preserve permissions and signatures."""
     with open("main/VERSION", "r") as f:
         version = f.read().strip()
     
@@ -509,18 +564,30 @@ def package_macos_app():
     elif arch == "arm64":
         arch = "arm64"
     
-    # Create a ZIP archive of the .app bundle
+    # Create a ZIP archive of the .app bundle using ditto
+    # ditto preserves macOS-specific attributes, permissions, and code signatures
     zip_name = f"AutoSubSync-v{version}-macos-{arch}.zip"
     zip_path = os.path.join(script_dir, zip_name)
     
+    # Remove existing zip if present
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+    
     print(f"Creating ZIP archive: {zip_name}")
     
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(app_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, os.path.join(script_dir, "dist"))
-                zipf.write(file_path, arcname)
+    # Use ditto to create the ZIP - this preserves permissions, symlinks, and signatures
+    try:
+        result = subprocess.run(
+            ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app_path, zip_path],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print(f"Error creating ZIP with ditto: {result.stderr}")
+            return None
+    except FileNotFoundError:
+        print("Error: ditto command not found. This should only run on macOS.")
+        return None
     
     print(f"ZIP archive created: {zip_name}")
     print(f"Full path: {zip_path}")
@@ -611,5 +678,6 @@ if __name__ == "__main__":
     remove_webrtcvad_hook()
     ensure_ffmpeg()
     check_versions()
+    fix_macos_dylib_versions()
     build_with_pyinstaller()
     create_archive()
