@@ -18,23 +18,6 @@ AutoSubSync is a user-friendly tool that automatically synchronizes your subtitl
 2. Extract the ZIP file.
 3. Double-click `AutoSubSync.exe` to run.
 
-### macOS
-1. Download the appropriate ZIP for your Mac:
-   - Apple Silicon (M1/M2/M3): [AutoSubSync-macos-arm64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-macos-arm64.zip)
-   - Intel: [AutoSubSync-macos-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-macos-amd64.zip)
-2. Extract the ZIP file.
-3. Double-click `AutoSubSync` to run.
-
->If you see **"cannot be opened because the developer cannot be verified"** warning:
->  - Go to **System Settings > Privacy & Security**.
->  - Scroll down and click **Open Anyway**.
->  - If it does not work, download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it on your computer using build.py.
-
-> Run this command in your terminal to make **alass** work:
-> ```
-> brew install alass
-> ```
-
 ### Linux
 1. Download the latest [AutoSubSync-linux-amd64.AppImage](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-linux-amd64.AppImage).
 2. Double-click `AutoSubSync-linux-amd64.AppImage` to run.
@@ -44,12 +27,31 @@ AutoSubSync is a user-friendly tool that automatically synchronizes your subtitl
 > chmod +x AutoSubSync-linux-amd64.AppImage
 > ```
 
-#### Arch Linux
-> You can download AutoSubSync from AUR in **Arch Linux** using the following command:
+> #### Arch Linux
+> You can also download AutoSubSync from AUR in **Arch Linux** using the following command:
 > ``` 
 > yay -S autosubsync-bin 
 > ```
 > Thanks to [@Rainoutt](https://github.com/Rainoutt) for the [AUR](https://aur.archlinux.org/packages/autosubsync-bin) package.
+
+### macOS
+1. Download the appropriate ZIP for your Mac:
+   - Apple Silicon (M1/M2/M3): [AutoSubSync-macos-arm64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-macos-arm64.zip)
+   - Intel: [AutoSubSync-macos-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-macos-amd64.zip)
+2. Extract the ZIP file.
+3. Double-click `AutoSubSync` to run.
+
+> [!NOTE]
+> If you see **"cannot be opened because the developer cannot be verified"** warning:
+>  - Go to **System Settings > Privacy & Security**.
+>  - Scroll down and click **Open Anyway**.
+>  - If it does not work, download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it on your computer using build.py.
+
+> [!IMPORTANT]
+> You need to run this command in your terminal to make **alass** work in macOS:
+> ```
+> brew install alass
+> ```
 
 ---
 
