@@ -34,4 +34,3 @@ jobs:
           name: build-artifacts-macos_amd64
           path: |
             AutoSubSync-v*.zip
-            AutoSubSync-v*.tar.gz
