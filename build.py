@@ -355,7 +355,7 @@ def download_appimagetool():
         return None
 
 
-def create_appimage_structure(version):
+def create_appimage_structure():
     """Create the AppDir structure required for AppImage."""
     with open("main/VERSION", "r") as f:
         version = f.read().strip()
