@@ -34,5 +34,5 @@ jobs:
         with:
           name: build-artifacts-linux_amd64
           path: |
-            AutoSubSync-v*.AppImage
-            AutoSubSync-v*.tar.gz
+            AutoSubSync-linux-*.AppImage
+            AutoSubSync-linux-*.tar.gz

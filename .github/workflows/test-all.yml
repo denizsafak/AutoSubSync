@@ -47,8 +47,8 @@ jobs:
         with:
           name: build-artifacts-${{ matrix.file_name }}
           path: |
-            AutoSubSync-v*.zip
-            AutoSubSync-v*.AppImage
+            AutoSubSync-*.zip
+            AutoSubSync-*.AppImage
 
   build-linux-ubuntu:
     runs-on: ubuntu-latest
@@ -76,5 +76,5 @@ jobs:
         with:
           name: build-artifacts-linux_amd64
           path: |
-            AutoSubSync-v*.AppImage
-            AutoSubSync-v*.tar.gz
+            AutoSubSync-linux-*.AppImage
+            AutoSubSync-linux-*.tar.gz

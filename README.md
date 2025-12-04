@@ -10,18 +10,72 @@ AutoSubSync is a user-friendly tool that automatically synchronizes your subtitl
 
 <img title="AutoSubSync Automatic Tab" src='images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='images/AutoSubSync4.png'>
 
-> # [Download the Latest Release](https://github.com/denizsafak/AutoSubSync/releases/latest)
-> You can download the latest executable version of AutoSubSync for `Windows`, `Linux`, and `macOS` from this link, or you can also download AutoSubSync from AUR in Arch Linux using the following command:
+
+## `How to install?`
+
+### Windows
+1. Download the latest [AutoSubSync-windows-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-windows-amd64.zip).
+2. Extract the ZIP file.
+3. Double-click `AutoSubSync.exe` to run.
+
+### macOS
+1. Download the appropriate ZIP for your Mac:
+   - Apple Silicon (M1/M2/M3): [AutoSubSync-macos-arm64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-macos-arm64.zip)
+   - Intel: [AutoSubSync-macos-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-macos-amd64.zip)
+2. Extract the ZIP file.
+3. Double-click `AutoSubSync` to run.
+
+>If you see **"cannot be opened because the developer cannot be verified"** warning:
+>  - Go to **System Settings > Privacy & Security**.
+>  - Scroll down and click **Open Anyway**.
+>  - If it does not work, download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it on your computer using build.py.
+
+> Run this command in your terminal to make **alass** work:
+> ```
+> brew install alass
+> ```
+
+### Linux
+1. Download the latest [AutoSubSync-linux-amd64.AppImage](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-linux-amd64.AppImage).
+2. Double-click `AutoSubSync-linux-amd64.AppImage` to run.
+
+> If you see any permission issues, you may need to make the AppImage executable:
+> ```
+> chmod +x AutoSubSync-linux-amd64.AppImage
+> ```
+
+#### Arch Linux
+> You can download AutoSubSync from AUR in **Arch Linux** using the following command:
 > ``` 
->yay -S autosubsync-bin 
->```
+> yay -S autosubsync-bin 
+> ```
 > Thanks to [@Rainoutt](https://github.com/Rainoutt) for the [AUR](https://aur.archlinux.org/packages/autosubsync-bin) package.
 
-## `How to Run?`
-- Extract the zip.
-- Double click "AutoSubSync".
+---
 
-> MacOS users please read [this](#for-macososx-users).
+## `How to use?`
+
+### Automatic Synchronization
+
+1. Drag a video file into the `Video/Reference Subtitle` field
+2. Drag a subtitle file into the `Subtitle` field
+3. Select a sync tool (ffsubsync, autosubsync, or alass)
+4. Click `Start`
+
+### Batch Mode
+
+1. Enable Batch Mode
+2. Drag files or folders into the batch area
+3. Use Auto-Pairing if needed
+4. Click `Start`
+
+### Manual Adjustment
+
+1. Go to the Manual tab
+2. Load a subtitle file
+3. Enter the time shift in milliseconds
+4. Select output location
+5. Click `Start`
 
 ## `Features`
 
@@ -191,32 +245,6 @@ Change the language from `Settings` → `Language`. The interface will update af
 
 ---
 
-## `Usage`
-
-### Automatic Synchronization
-
-1. Drag a video file into the `Video/Reference Subtitle` field
-2. Drag a subtitle file into the `Subtitle` field
-3. Select a sync tool (ffsubsync, autosubsync, or alass)
-4. Click `Start`
-
-### Batch Mode
-
-1. Enable Batch Mode
-2. Drag files or folders into the batch area
-3. Use Auto-Pairing if needed
-4. Click `Start`
-
-### Manual Adjustment
-
-1. Open the Manual tab
-2. Load a subtitle file
-3. Enter the time shift in milliseconds
-4. Select output location
-5. Click `Start`
-
----
-
 ## `Settings`
 
 Access settings via the gear icon in the **top right** corner.
@@ -248,11 +276,6 @@ Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync 
 
 ## `For developers and contributors`
 If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding.
-
-## `For MacOS/OSX users:`
-- You need to give permissions in "System Settings > Security & Privacy" to run the app.<br />
-- If does not work, download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it on your computer using build.py.
-- Use `brew install alass` command to make alass work.
 
 ## `Credits`
 Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. Automatic subtitle synchronization is possible because of these tools. This is just a GUI application that makes the process a bit easier.

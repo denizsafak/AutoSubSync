@@ -1,4 +1,4 @@
-name: Test macOS AMD Build
+name: Test All Builds
 
 on:
   workflow_dispatch:
@@ -7,8 +7,22 @@ env:
   DIST_DIR: /tmp/builds
 
 jobs:
-  build-macos-amd:
-    runs-on: macos-13
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            build: win-x64
+            file_name: win_amd64
+          - os: macos-latest
+            build: osx-arm64
+            file_name: macos_arm64
+          - os: macos-13
+            build: macos-amd64
+            file_name: macos_amd64
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Check out the repository
@@ -31,7 +45,36 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-macos_amd64
+          name: build-artifacts-${{ matrix.file_name }}
           path: |
-            AutoSubSync-v*.zip
-            AutoSubSync-v*.tar.gz
+            AutoSubSync-*.zip
+            AutoSubSync-*.AppImage
+
+  build-linux-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build using build.py with Python 3.12
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            --env DEBIAN_FRONTEND=noninteractive \
+            --env TZ=Etc/UTC \
+            --privileged \
+            --entrypoint bash \
+            python:3.12.8-slim \
+            -c "apt-get update && \
+                apt-get install -y tzdata file fuse libfuse2 tk-dev libglib2.0-0 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xkb1 libxrender1 libsm6 libxext6 libx11-xcb1 libdbus-1-3 libxcb-sync1 libxcb-glx0 libgdk-pixbuf2.0-0 libgtk-3-0 libpango-1.0-0 libcairo2 libatk1.0-0 libpangocairo-1.0-0 libcairo-gobject2 && \
+                echo 'GLIBC Version:' && \
+                ldd --version | head -n 1 && \
+                pip install --upgrade pip setuptools wheel requests pyinstaller && \
+                python build.py"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-linux_amd64
+          path: |
+            AutoSubSync-linux-*.AppImage
+            AutoSubSync-linux-*.tar.gz

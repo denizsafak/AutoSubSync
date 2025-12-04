@@ -470,7 +470,7 @@ def build_appimage():
     # Build the AppImage
     arch, appimagetool_arch = get_arch()
     
-    appimage_name = f"AutoSubSync-v{version}-linux-{arch}.AppImage"
+    appimage_name = f"AutoSubSync-linux-{arch}.AppImage"
     appimage_path = os.path.join(script_dir, appimage_name)
     
     # Remove existing AppImage if present
@@ -566,7 +566,7 @@ def package_macos_app():
     
     # Create a ZIP archive of the .app bundle using ditto
     # ditto preserves macOS-specific attributes, permissions, and code signatures
-    zip_name = f"AutoSubSync-v{version}-macos-{arch}.zip"
+    zip_name = f"AutoSubSync-macos-{arch}.zip"
     zip_path = os.path.join(script_dir, zip_name)
     
     # Remove existing zip if present
@@ -609,7 +609,7 @@ def package_windows():
     dist_dir = "dist"
     arch, _ = get_arch()
     
-    zip_name = f"AutoSubSync-v{version}-windows-{arch}.zip"
+    zip_name = f"AutoSubSync-windows-{arch}.zip"
     
     with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(dist_dir):
@@ -654,7 +654,7 @@ def create_linux_tarball(version):
     dist_dir = "dist"
     arch, _ = get_arch()
     
-    tar_name = f"AutoSubSync-v{version}-linux-{arch}.tar.gz"
+    tar_name = f"AutoSubSync-linux-{arch}.tar.gz"
     
     with tarfile.open(tar_name, "w:gz") as tar:
         for root, _, files in os.walk(dist_dir):
