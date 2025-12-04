@@ -65,7 +65,7 @@ if IS_WINDOWS:
 else:
     version_info = version
 
-folder_name = f'AutoSubSync-v{version}'
+folder_name = 'AutoSubSync'
 
 # =============================================================================
 # Icon Paths (Platform-Specific)

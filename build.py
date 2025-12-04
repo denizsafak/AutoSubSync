@@ -601,12 +601,10 @@ def package_macos_app():
 
 def package_windows():
     """Package Windows build into a ZIP archive."""
-    with open("main/VERSION", "r") as f:
-        version = f.read().strip()
-    
     print("Packaging Windows application...")
     
-    dist_dir = "dist"
+    # The build output is in dist/AutoSubSync/
+    dist_dir = os.path.join("dist", "AutoSubSync")
     arch, _ = get_arch()
     
     zip_name = f"AutoSubSync-windows-{arch}.zip"
@@ -615,6 +613,7 @@ def package_windows():
         for root, _, files in os.walk(dist_dir):
             for file in files:
                 file_path = os.path.join(root, file)
+                # Files go directly into ZIP root, no subfolder
                 arcname = os.path.relpath(file_path, dist_dir)
                 zipf.write(file_path, arcname)
     
