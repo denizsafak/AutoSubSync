@@ -55,7 +55,7 @@ yay -S autosubsync-bin
 > ```
 
 ### PyPI (All Platforms)
-You can install AutoSubSync using either pip or uv (a fast Python package manager) on any platform with Python 3.10+:
+You can install AutoSubSync using either pip or uv (a fast Python package manager) on any platform with Python 3.10 - 3.13:
 
 
 ```bash
