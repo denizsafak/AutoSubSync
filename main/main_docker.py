@@ -39,16 +39,11 @@ from gui_multiple_subs import (
     attach_functions_to_autosubsyncapp as attach_multiple_subs_functions,
 )
 from utils import get_resource_path
-from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
+from constants import PROGRAM_NAME, VERSION, FFMPEG_DIR
 
-# Set environment variables for ffmpeg and ffprobe
-os.environ["PATH"] = os.pathsep.join(
-    [
-        os.path.dirname(FFMPEG_EXECUTABLE),
-        os.path.dirname(FFPROBE_EXECUTABLE),
-        os.environ.get("PATH", ""),
-    ]
-)
+# Add bundled ffmpeg to PATH if available
+if FFMPEG_DIR:
+    os.environ["PATH"] = os.pathsep.join([FFMPEG_DIR, os.environ.get("PATH", "")])
 
 # Setup root logger with basic configuration
 try:

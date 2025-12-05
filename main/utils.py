@@ -10,7 +10,18 @@ import signal
 import time
 import shutil
 import texts
-import cchardet, charset_normalizer, chardet
+try:
+    import cchardet
+except:
+    cchardet = None
+try:
+    import chardet
+except:
+    chardet = None
+try:
+    import charset_normalizer
+except:
+    charset_normalizer = None
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
@@ -493,6 +504,30 @@ def clear_config_cache():
     logger.debug("Config cache cleared")
 
 
+def restart_application():
+    """Restart the application, handling AppImage, frozen executables, and scripts."""
+    appimage = os.environ.get("APPIMAGE")
+    
+    if appimage:
+        # Running as AppImage - clear mount-related env vars for clean restart
+        env = os.environ.copy()
+        for var in ('APPDIR', 'ARGV0', 'OWD', 'APPIMAGE_SILENT_INSTALL'):
+            env.pop(var, None)
+        subprocess.Popen(
+            [appimage] + sys.argv[1:],
+            start_new_session=True, env=env,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+    elif getattr(sys, "frozen", False):
+        # Frozen executable (Windows/macOS)
+        subprocess.Popen([sys.executable] + sys.argv[1:], start_new_session=True)
+    else:
+        # Python script
+        subprocess.Popen([sys.executable] + sys.argv, start_new_session=True)
+    
+    QApplication.quit()
+
+
 def get_version():
     """Return the current version of the application."""
     try:
@@ -695,14 +730,10 @@ def reset_to_defaults(parent):
     if reply == QMessageBox.StandardButton.Yes:
         config_path = get_user_config_path()
         try:
-            # Remove the config file if it exists
             if os.path.exists(config_path):
                 os.remove(config_path)
                 logger.info("Config file removed for reset to defaults.")
-
-            # Restart the application
-            QProcess.startDetached(sys.executable, sys.argv)
-            QApplication.quit()
+            restart_application()
         except Exception as e:
             logger.error(f"Failed to reset settings: {e}")
             QMessageBox.critical(

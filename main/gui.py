@@ -929,21 +929,7 @@ class autosubsyncapp(QWidget):
             # Update the config
             self.config["language"] = language_code
             save_config(self.config)
-
-            # Restart the application
-            import sys
-            import subprocess
-
-            # Get the current executable or script
-            if hasattr(sys, "frozen"):
-                # Running as compiled executable
-                subprocess.Popen([sys.executable] + sys.argv[1:])
-            else:
-                # Running as Python script
-                subprocess.Popen([sys.executable] + sys.argv)
-
-            # Close the current application
-            QApplication.quit()
+            restart_application()
         else:
             # Revert the selection to the current language
             self.language_actions[current_language].setChecked(True)

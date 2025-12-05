@@ -2,12 +2,28 @@ import os
 import sys
 import platform
 import logging
+import multiprocessing
+
+# Fix multiprocessing for installed packages:
+# - On Linux: use 'fork' to avoid re-importing the 'main' module (which conflicts with our package name)
+# - On Windows/macOS: 'fork' is unavailable or unsafe, so we rely on freeze_support() 
+#   and running from PyInstaller builds (which handle this correctly)
+if not getattr(sys, 'frozen', False):
+    if platform.system() == "Linux":
+        try:
+            multiprocessing.set_start_method('fork', force=True)
+        except RuntimeError:
+            pass  # Already set
+    else:
+        # For Windows/macOS pip installs, ensure freeze_support is called early
+        multiprocessing.freeze_support()
+
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import qInstallMessageHandler, QtMsgType
 
 # Add the directory to Python path
-# sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from gui import autosubsyncapp
 from gui_automatic_tab import (
@@ -22,26 +38,17 @@ from gui_multiple_subs import (
     attach_functions_to_autosubsyncapp as attach_multiple_subs_functions,
 )
 from utils import get_resource_path
-from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
+from constants import PROGRAM_NAME, VERSION, FFMPEG_DIR
 
-# Set environment variables for ffmpeg and ffprobe
-# Also add Homebrew paths for macOS (required for .app bundles which don't inherit shell PATH)
-path_components = [
-    os.path.dirname(FFMPEG_EXECUTABLE),
-    os.path.dirname(FFPROBE_EXECUTABLE),
-]
+# Build PATH with bundled tools and platform-specific directories
+_path_additions = [p for p in [
+    FFMPEG_DIR,
+    "/opt/homebrew/bin" if platform.system() == "Darwin" else None,  # Apple Silicon
+    "/usr/local/bin" if platform.system() == "Darwin" else None,      # Intel Mac
+] if p and os.path.isdir(p)]
 
-# Add Homebrew paths on macOS (needed for alass-cli and other external tools)
-if platform.system() == "Darwin":
-    # Apple Silicon Macs
-    if os.path.isdir("/opt/homebrew/bin"):
-        path_components.append("/opt/homebrew/bin")
-    # Intel Macs
-    if os.path.isdir("/usr/local/bin"):
-        path_components.append("/usr/local/bin")
-
-path_components.append(os.environ.get("PATH", ""))
-os.environ["PATH"] = os.pathsep.join(path_components)
+if _path_additions:
+    os.environ["PATH"] = os.pathsep.join(_path_additions + [os.environ.get("PATH", "")])
 
 # Setup root logger with basic configuration
 try:
@@ -135,7 +142,5 @@ def main():
 
 
 if __name__ == "__main__":
-    import multiprocessing
-
     multiprocessing.freeze_support()  # Fix for PyInstaller on Windows
     main()

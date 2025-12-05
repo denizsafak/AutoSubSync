@@ -4,9 +4,8 @@ import subprocess
 import platform
 import zipfile
 import tarfile
-import importlib.util
+import importlib
 import json
-import re
 import ast
 import shutil
 import urllib.request
@@ -97,19 +96,21 @@ def create_virtualenv():
 
 
 def install_requirements():
-    print("Installing requirements...")
+    print("Installing requirements from pyproject.toml...")
     if IS_WINDOWS:
         pip_executable = "venv\\Scripts\\pip"
     else:
         pip_executable = "venv/bin/pip"
+    # Install package in editable mode with dev dependencies from pyproject.toml
     completed_process = subprocess.run(
-        [pip_executable, "install", "-r", "main/requirements.txt", "--upgrade"],
+        [pip_executable, "install", "-e", ".[dev]", "--upgrade"],
         text=True,
     )
     if completed_process.returncode != 0:
         print("Error installing requirements.")
         sys.exit(completed_process.returncode)
     print("Requirements installed.")
+
 
 
 def remove_webrtcvad_hook():

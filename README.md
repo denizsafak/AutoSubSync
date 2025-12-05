@@ -1,14 +1,15 @@
-# AutoSubSync: Automatic / Manual Subtitle Synchronization Tool <img title="AutoSubSync Icon" src='images/AutoSubSync.ico' align="right" style="padding-left: 10px; padding-top:5px;">
+# AutoSubSync: Automatic / Manual Subtitle Synchronization Tool <img title="AutoSubSync Icon" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync.ico' align="right" style="padding-left: 10px; padding-top:5px;">
 
 [![Build Status](https://github.com/denizsafak/AutoSubSync/actions/workflows/app.yml/badge.svg)](https://github.com/denizsafak/AutoSubSync/actions)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 [![GitHub Release](https://img.shields.io/github/v/release/denizsafak/AutoSubSync)](https://github.com/denizsafak/AutoSubSync/releases/latest)
+[![PyPI version](https://img.shields.io/pypi/v/assync)](https://pypi.org/project/assync/)
 [![Operating Systems](https://img.shields.io/badge/os-windows%20%7C%20linux%20%7C%20macos%20-blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/denizsafak/AutoSubSync/total?color=blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 
 AutoSubSync is a user-friendly tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync) and [alass](https://github.com/kaegi/alass). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
 
-<img title="AutoSubSync Automatic Tab" src='images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='images/AutoSubSync4.png'>
+<img title="AutoSubSync Automatic Tab" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync4.png'>
 
 
 ## `How to install?`
@@ -52,6 +53,22 @@ yay -S autosubsync-bin
 > ```
 > brew install alass
 > ```
+
+### PyPI (All Platforms)
+You can also install AutoSubSync using pip on any platform with Python 3.10+:
+```bash
+pip install assync
+```
+
+> **Optional:** For Silero VAD support in ffsubsync, install with torch (Python 3.14 and below only):
+> ```bash
+> pip install assync[torch]
+> ```
+
+Then run:
+```bash
+assync
+```
 
 ---
 
@@ -168,7 +185,7 @@ You can add new folders, remove individual folders, or clear the entire list.
 
 > You can locate your library database file `(library_folders.db)` from `Open config file directory` in the `Settings` menu.
 
-<img title="Library Manager" src='images/Library-Manager.png'>
+<img title="Library Manager" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/Library-Manager.png'>
 
 ---
 
@@ -185,7 +202,7 @@ This feature is particularly useful when you have a folder of video files and a 
 
 Location: Enable **Batch Mode**, then click input box to open the batch add menu, and select `Auto-Pairing with Season/Episode`.
 
-<img title="Auto-Pairing" src='images/Auto-Pairing.png'>
+<img title="Auto-Pairing" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/Auto-Pairing.png'>
 
 ---
 
@@ -197,7 +214,7 @@ For example, if you have a video file and subtitle files in English, Spanish, an
 
 Location: Enable **Batch Mode**, then click input box to open the batch add menu, and select `Pair multiple subtitles with single source`.
 
-<img title="Multiple Subtitles Pairing" src='images/Multiple-Subtitles.png'>
+<img title="Multiple Subtitles Pairing" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/Multiple-Subtitles.png'>
 
 ---
 
@@ -277,8 +294,20 @@ Access settings via the gear icon in the **top right** corner.
 Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync in a Docker container. This makes it easier to deploy and run AutoSubSync in different environments without worrying about dependencies.
 > ### [Go to Docker Guide](DOCKER.md)
 
-## `For developers and contributors`
-If you'd like to modify the code and contribute to development, you can download the [source code](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip) and build it using build.py. Ensure Python is installed on your computer before proceeding.
+## `Contributing`
+I welcome contributions! If you have ideas for new features, improvements, or bug fixes, please fork the repository and submit a pull request.
+
+### For developers and contributors
+If you'd like to modify the code and contribute to development, you can [download the repository](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip), extract it and run the following commands to install the package:
+```bash
+# Go to the directory where you extracted the repository and run:
+pip install -e ".[dev]"   # Installs the package in editable mode with dev dependencies
+assync                    # Opens the GUI
+assync-cli                # Alternative CLI command
+python build.py           # Builds standalone executables (AppImage/Windows/macOS)
+python build_pypi.py      # Builds PyPI package to dist/pypi folder
+```
+Requires Python 3.10 or higher. Feel free to explore the code and make any changes you like.
 
 ## `Credits`
 Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. Automatic subtitle synchronization is possible because of these tools. This is just a GUI application that makes the process a bit easier.

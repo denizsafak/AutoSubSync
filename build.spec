@@ -6,6 +6,7 @@ import platform
 from PyQt6.QtCore import QLibraryInfo
 import glob
 import site
+from PyInstaller.utils.hooks import collect_submodules
 
 # =============================================================================
 # Platform Detection and Configuration
@@ -18,6 +19,12 @@ IS_LINUX = CURRENT_PLATFORM == 'Linux'
 
 # Add current directory to Python path
 sys.path.insert(0, os.getcwd())
+
+# Collect all modules from the main package
+# Include both 'main.module' and 'module' variants since code uses sys.path.insert
+main_modules = collect_submodules('main')
+main_modules_without_prefix = [m.replace('main.', '') for m in main_modules if m.startswith('main.')]
+all_main_modules = main_modules + main_modules_without_prefix
 
 # =============================================================================
 # Qt Plugin Configuration
@@ -86,7 +93,7 @@ def get_icon_path():
 
 a = Analysis(
     ['main/main.py'],
-    pathex=[],
+    pathex=[os.path.join(os.getcwd(), 'main')],
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
         (alass_bin, 'resources/alass-bin'),
@@ -94,7 +101,10 @@ a = Analysis(
     #    (ffsubsync_bin, 'resources/ffsubsync-bin'),
     ],
     datas=datas,
-    hiddenimports=['ffsubsync', 'call_ffsubsync', 'autosubsync', 'call_autosubsync'],
+    hiddenimports=all_main_modules + [
+        'ffsubsync',
+        'autosubsync',
+    ],
     #hookspath=['main/resources/hooks'],
     hooksconfig={},
     runtime_hooks=[],
