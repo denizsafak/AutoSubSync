@@ -69,6 +69,8 @@ attach_multiple_subs_functions(autosubsyncapp)
 def qt_message_handler(mode, context, message):
     if "Wayland does not support QWindow::requestActivate()" in message:
         return  # Suppress this specific message
+    if "Could not register app ID" in message and "autosubsyncapp" in message:
+        return  # Suppress the portal registration error for autosubsyncapp
     if mode == QtMsgType.QtWarningMsg:
         print(f"Qt Warning: {message}")
     elif mode == QtMsgType.QtCriticalMsg:
