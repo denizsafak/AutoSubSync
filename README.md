@@ -258,6 +258,7 @@ Access settings via the gear icon in the **top right** corner.
 | **Change output subtitle encoding** | Force the output subtitle to use a specific encoding such as `UTF-8`, `UTF-16`, `ISO-8859-1`, or keep the same encoding as the input file. |
 | **Sync tracking** | Access sync tracking options: toggle tracking on/off, manage the processed items database, backup/import database, and manage library folders. |
 | **Backup subtitles before overwriting** | When enabled, creates a backup copy of the original subtitle file before replacing it with the synchronized version. |
+| **Auto-rename files if needed** | When enabled (and `alass` is selected), AutoSubSync will automatically rename any file or folder path components that contain `[` or `]` (replacing them with `(` and `)`) to fix an error where `alass` cannot work with paths containing these characters. When disabled, AutoSubSync will display a 30-second prompt asking whether to rename the affected paths; if the prompt times out, the rename will be skipped. |
 | **Keep extracted subtitles** | When synchronizing against embedded video subtitles, keep the extracted subtitle files instead of deleting them after processing. |
 | **Keep converted subtitles** | When subtitle format conversion is required, keep the converted file instead of deleting it after processing. |
 | **Add "tool_" prefix to subtitles** | Add the name of the sync tool (e.g., `ffsubsync_`, `alass_`) to the beginning of the output subtitle filename. |

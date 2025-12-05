@@ -785,6 +785,19 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.keep_converted_subtitles_action)
 
+        self.auto_rename_bracket_paths_action = QAction(texts.ALASS_RENAME_ALWAYS, self)
+        self.auto_rename_bracket_paths_action.setCheckable(True)
+        self.auto_rename_bracket_paths_action.setChecked(
+            self.config.get(
+                "auto_rename_bracket_paths",
+                DEFAULT_OPTIONS["auto_rename_bracket_paths"],
+            )
+        )
+        self.auto_rename_bracket_paths_action.triggered.connect(
+            lambda checked: update_config(self, "auto_rename_bracket_paths", checked)
+        )
+        self.settings_menu.addAction(self.auto_rename_bracket_paths_action)
+
         self.add_tool_prefix_action = QAction(texts.ADD_TOOL_PREFIX_TO_SUBTITLES, self)
         self.add_tool_prefix_action.setCheckable(True)
         self.add_tool_prefix_action.setChecked(

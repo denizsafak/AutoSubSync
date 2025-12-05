@@ -141,6 +141,7 @@ DEFAULT_OPTIONS = {
     "keep_log_records": True,
     "theme": "system",
     "skip_previously_processed_videos": True,
+    "auto_rename_bracket_paths": False,
 }
 
 # ffmpeg and ffprobe paths
