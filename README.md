@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/denizsafak/AutoSubSync/actions/workflows/app.yml/badge.svg)](https://github.com/denizsafak/AutoSubSync/actions)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 [![GitHub Release](https://img.shields.io/github/v/release/denizsafak/AutoSubSync)](https://github.com/denizsafak/AutoSubSync/releases/latest)
-[![PyPI version](https://img.shields.io/pypi/v/assync)](https://pypi.org/project/assync/)
+[![PyPI version](https://img.shields.io/pypi/v/assy)](https://pypi.org/project/assy/)
 [![Operating Systems](https://img.shields.io/badge/os-windows%20%7C%20linux%20%7C%20macos%20-blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/denizsafak/AutoSubSync/total?color=blue)](https://github.com/denizsafak/AutoSubSync/releases/latest)
 
@@ -57,17 +57,17 @@ yay -S autosubsync-bin
 ### PyPI (All Platforms)
 You can also install AutoSubSync using pip on any platform with Python 3.10+:
 ```bash
-pip install assync
+pip install assy
 ```
 
 > **Optional:** For Silero VAD support in ffsubsync, install with torch (Python 3.14 and below only):
 > ```bash
-> pip install assync[torch]
+> pip install assy[torch]
 > ```
 
 Then run:
 ```bash
-assync
+assy
 ```
 
 ---
@@ -301,9 +301,9 @@ I welcome contributions! If you have ideas for new features, improvements, or bu
 If you'd like to modify the code and contribute to development, you can [download the repository](https://github.com/denizsafak/AutoSubSync/archive/refs/heads/main.zip), extract it and run the following commands to install the package:
 ```bash
 # Go to the directory where you extracted the repository and run:
-pip install -e ".[dev]"   # Installs the package in editable mode with dev dependencies
-assync                    # Opens the GUI
-assync-cli                # Alternative CLI command
+pip install -e .[dev]     # Installs the package in editable mode with dev dependencies
+assy                    # Opens the GUI
+assy-cli                # Alternative CLI command
 python build.py           # Builds standalone executables (AppImage/Windows/macOS)
 python build_pypi.py      # Builds PyPI package to dist/pypi folder
 ```

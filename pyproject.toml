@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "assync"
+name = "assy"
 description = "Automatic subtitle synchronization tool."
 authors = [
     { name="Deniz Şafak", email="denizsafak98@gmail.com" }
@@ -71,10 +71,10 @@ Repository = "https://github.com/denizsafak/AutoSubSync"
 Issues = "https://github.com/denizsafak/AutoSubSync/issues"
 
 [project.gui-scripts]
-assync = "main.main:main"
+assy = "main.main:main"
 
 [project.scripts]
-assync-cli = "main.main:main"
+assy-cli = "main.main:main"
 
 [tool.hatch.build.targets.sdist]
 exclude = [
