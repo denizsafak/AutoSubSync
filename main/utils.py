@@ -10,7 +10,19 @@ import signal
 import time
 import shutil
 import texts
-import cchardet, charset_normalizer, chardet
+
+try:
+    import cchardet
+except:
+    cchardet = None
+try:
+    import chardet
+except:
+    chardet = None
+try:
+    import charset_normalizer
+except:
+    charset_normalizer = None
 from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
 from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
 from PyQt6.QtGui import QDesktopServices
@@ -493,6 +505,32 @@ def clear_config_cache():
     logger.debug("Config cache cleared")
 
 
+def restart_application():
+    """Restart the application, handling AppImage, frozen executables, and scripts."""
+    appimage = os.environ.get("APPIMAGE")
+
+    if appimage:
+        # Running as AppImage - clear mount-related env vars for clean restart
+        env = os.environ.copy()
+        for var in ("APPDIR", "ARGV0", "OWD", "APPIMAGE_SILENT_INSTALL"):
+            env.pop(var, None)
+        subprocess.Popen(
+            [appimage] + sys.argv[1:],
+            start_new_session=True,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    elif getattr(sys, "frozen", False):
+        # Frozen executable (Windows/macOS)
+        subprocess.Popen([sys.executable] + sys.argv[1:], start_new_session=True)
+    else:
+        # Python script
+        subprocess.Popen([sys.executable] + sys.argv, start_new_session=True)
+
+    QApplication.quit()
+
+
 def get_version():
     """Return the current version of the application."""
     try:
@@ -695,14 +733,10 @@ def reset_to_defaults(parent):
     if reply == QMessageBox.StandardButton.Yes:
         config_path = get_user_config_path()
         try:
-            # Remove the config file if it exists
             if os.path.exists(config_path):
                 os.remove(config_path)
                 logger.info("Config file removed for reset to defaults.")
-
-            # Restart the application
-            QProcess.startDetached(sys.executable, sys.argv)
-            QApplication.quit()
+            restart_application()
         except Exception as e:
             logger.error(f"Failed to reset settings: {e}")
             QMessageBox.critical(
@@ -785,6 +819,7 @@ def safe_open_url(url):
     import sys
     import platform
     import subprocess
+
     if platform.system() == "Linux" and getattr(sys, "frozen", False):
         # Use xdg-open with a clean environment
         env = os.environ.copy()
@@ -1115,7 +1150,10 @@ def check_for_updates_startup(parent):
         try:
             logger.info("Checking for updates...")
             import certifi
-            response = requests.get(GITHUB_VERSION_URL, timeout=5, verify=certifi.where())
+
+            response = requests.get(
+                GITHUB_VERSION_URL, timeout=5, verify=certifi.where()
+            )
             response.raise_for_status()
             remote = response.text.strip()
             try:
@@ -1200,3 +1238,115 @@ def handle_save_location_dropdown(
         update_folder_label(label, folder)
     else:
         update_folder_label(label)
+
+
+# FFmpeg initialization for pip installs
+class FFmpegDownloadSignals(QObject):
+    """Signals for FFmpeg download progress."""
+
+    finished = pyqtSignal(bool, str)  # success, error_message
+
+
+def initialize_static_ffmpeg(parent=None, callback=None):
+    """
+    Initialize static_ffmpeg if needed (for pip installs).
+    Shows a loading dialog while downloading.
+
+    Args:
+        parent: Parent widget for the dialog
+        callback: Optional callback function to call when done (receives success bool)
+
+    Returns:
+        bool: True if successful or not needed, False if failed
+    """
+    from constants import NEEDS_STATIC_FFMPEG
+
+    if not NEEDS_STATIC_FFMPEG:
+        if callback:
+            callback(True)
+        return True
+
+    # Need to download - show dialog
+    from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
+    from PyQt6.QtCore import Qt, QThread
+
+    class DownloadThread(QThread):
+        """Thread to download ffmpeg without blocking UI."""
+
+        def __init__(self, signals):
+            super().__init__()
+            self.signals = signals
+
+        def run(self):
+            try:
+                import static_ffmpeg
+                from static_ffmpeg import run
+
+                # This actually downloads the binaries if not present
+                run.get_or_fetch_platform_executables_else_raise()
+                # Then add them to PATH
+                static_ffmpeg.add_paths()
+                self.signals.finished.emit(True, "")
+            except ImportError as e:
+                self.signals.finished.emit(
+                    False, f"static_ffmpeg not installed: {str(e)}"
+                )
+            except Exception as e:
+                self.signals.finished.emit(False, str(e))
+
+    # Create and show the dialog
+    dialog = QDialog(parent)
+    dialog.setWindowTitle(texts.DOWNLOADING_FFMPEG)
+    dialog.setWindowFlags(
+        dialog.windowFlags()
+        & ~Qt.WindowType.WindowContextHelpButtonHint
+        & ~Qt.WindowType.WindowCloseButtonHint
+    )
+    dialog.setModal(True)
+    dialog.setFixedSize(400, 120)
+
+    layout = QVBoxLayout(dialog)
+    layout.setContentsMargins(20, 20, 20, 20)
+    layout.setSpacing(15)
+
+    label = QLabel(texts.DOWNLOADING_FFMPEG_FIRST_RUN)
+    label.setWordWrap(True)
+    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(label)
+
+    progress = QProgressBar()
+    progress.setRange(0, 0)  # Indeterminate progress
+    progress.setTextVisible(False)
+    layout.addWidget(progress)
+
+    # Setup signals and thread
+    signals = FFmpegDownloadSignals()
+    thread = DownloadThread(signals)
+
+    def on_finished(success, error_msg):
+        dialog.accept()
+        if success:
+            logger.info("FFmpeg downloaded and paths added successfully")
+        else:
+            logger.error(f"FFmpeg download failed: {error_msg}")
+            QMessageBox.warning(
+                parent,
+                texts.DOWNLOADING_FFMPEG,
+                texts.FFMPEG_DOWNLOAD_FAILED.format(error=error_msg),
+            )
+        if callback:
+            callback(success)
+
+    signals.finished.connect(on_finished)
+    thread.finished.connect(thread.deleteLater)
+
+    # Start download in background
+    thread.start()
+
+    # Show dialog (blocks until download completes)
+    dialog.exec()
+
+    # Wait for thread to finish
+    thread.wait()
+
+    return True

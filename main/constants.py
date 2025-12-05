@@ -1,4 +1,6 @@
+import os
 import platform
+import sys
 from utils import get_version, get_resource_path, get_version_info
 
 
@@ -141,15 +143,40 @@ DEFAULT_OPTIONS = {
     "keep_log_records": True,
     "theme": "system",
     "skip_previously_processed_videos": True,
+    "auto_rename_bracket_paths": False,
 }
 
 # ffmpeg and ffprobe paths
 _exe_suffix = ".exe" if platform.system() == "Windows" else ""
-FFMPEG_EXECUTABLE = get_resource_path(
-    "autosubsyncapp.resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}"
-)
-FFPROBE_EXECUTABLE = get_resource_path(
-    "autosubsyncapp.resources.ffmpeg-bin", f"ffprobe{_exe_suffix}"
+_ffmpeg_res = get_resource_path("resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}")
+_ffprobe_res = get_resource_path("resources.ffmpeg-bin", f"ffprobe{_exe_suffix}")
+
+# Check if bundled executables exist
+if (
+    _ffmpeg_res
+    and _ffprobe_res
+    and os.path.isfile(_ffmpeg_res)
+    and os.path.isfile(_ffprobe_res)
+):
+    FFMPEG_EXECUTABLE = os.path.normpath(_ffmpeg_res)
+    FFPROBE_EXECUTABLE = os.path.normpath(_ffprobe_res)
+    FFMPEG_DIR = os.path.dirname(FFMPEG_EXECUTABLE)
+else:
+    # For pip installs (not in frozen builds), defer static_ffmpeg initialization
+    # until after GUI loads to show download progress
+    FFMPEG_EXECUTABLE = "ffmpeg"
+    FFPROBE_EXECUTABLE = "ffprobe"
+    FFMPEG_DIR = None
+
+# Flag to indicate if static_ffmpeg needs to be initialized
+NEEDS_STATIC_FFMPEG = (
+    not getattr(sys, "frozen", False)
+    and not (
+        _ffmpeg_res
+        and _ffprobe_res
+        and os.path.isfile(_ffmpeg_res)
+        and os.path.isfile(_ffprobe_res)
+    )
 )
 
 # Synchronization tools
@@ -1227,7 +1254,12 @@ VIDEO_EXTENSIONS = [
     ".hevc",
 ]
 
-EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt", "mov_text": "srt"}
+EXTRACTABLE_SUBTITLE_EXTENSIONS = {
+    "subrip": "srt",
+    "ass": "ass",
+    "webvtt": "vtt",
+    "mov_text": "srt",
+}
 
 # Convert translation dictionaries to TranslationDict objects
 translation_dicts = ["PROGRAM_TAGLINE", "PROGRAM_DESCRIPTION"]

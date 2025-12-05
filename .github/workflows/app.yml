@@ -81,6 +81,7 @@ jobs:
           path: |
             *.zip
             *.tar.gz
+            *.AppImage
 
   build-linux-ubuntu:
     runs-on: ubuntu-latest
@@ -94,10 +95,11 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             --env DEBIAN_FRONTEND=noninteractive \
             --env TZ=Etc/UTC \
+            --privileged \
             --entrypoint bash \
             python:3.12.8-slim \
             -c "apt-get update && \
-                apt-get install -y tzdata tk-dev libglib2.0-0 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xkb1 libxrender1 libsm6 libxext6 libx11-xcb1 libdbus-1-3 libxcb-sync1 libxcb-glx0 libgdk-pixbuf2.0-0 libgtk-3-0 libpango-1.0-0 libcairo2 libatk1.0-0 libpangocairo-1.0-0 libcairo-gobject2 && \
+                apt-get install -y tzdata file fuse libfuse2 tk-dev libglib2.0-0 libxkbcommon-x11-0 libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xfixes0 libxcb-xkb1 libxrender1 libsm6 libxext6 libx11-xcb1 libdbus-1-3 libxcb-sync1 libxcb-glx0 libgdk-pixbuf2.0-0 libgtk-3-0 libpango-1.0-0 libcairo2 libatk1.0-0 libpangocairo-1.0-0 libcairo-gobject2 && \
                 echo 'GLIBC Version:' && \
                 ldd --version | head -n 1 && \
                 pip install --upgrade pip setuptools wheel requests pyinstaller && \
@@ -108,7 +110,7 @@ jobs:
         with:
           name: build-artifacts-linux_amd64
           path: |
-            *.zip
+            *.AppImage
             *.tar.gz
 
   release:
@@ -142,7 +144,7 @@ jobs:
           body: |
             ${{ env.changelog }}
 
-            > MacOS users please read [this](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#for-macososx-users).
+            > MacOS users please read the [instructions](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#macos).
             
             >Included:
             >[ffmpeg](https://github.com/FFmpeg/FFmpeg): ${{ needs.build.outputs.ffmpeg_version }}

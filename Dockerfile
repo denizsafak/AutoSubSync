@@ -64,9 +64,10 @@ RUN useradd -ms /bin/bash autosubsync
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY main/requirements.txt .
-RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel
+# Copy pyproject.toml and install Python dependencies
+COPY pyproject.toml .
+COPY main/VERSION ./main/
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel hatchling
 
 # Try to install PyQt6 using pre-built wheels or system packages
 # First try installing PyQt6 with specific flags to use system Qt
@@ -75,7 +76,7 @@ RUN python -m pip install --no-cache-dir PyQt6 || \
     python -m pip install --no-cache-dir PySide6 || \
     echo "Both PyQt6 and PySide6 installation failed"
 
-# Install other Python packages
+# Install Python packages from pyproject.toml dependencies
 RUN python -m pip install --no-cache-dir \
     rich \
     faust-cchardet \

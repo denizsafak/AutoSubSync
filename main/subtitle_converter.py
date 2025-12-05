@@ -23,9 +23,10 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
     encoding = detect_encoding(input_file)
 
     try:
-        with open(input_file, "r", encoding=encoding, errors="replace") as sub, open(
-            output_file, "w", encoding="utf-8"
-        ) as srt:
+        with (
+            open(input_file, "r", encoding=encoding, errors="replace") as sub,
+            open(output_file, "w", encoding="utf-8") as srt,
+        ):
             srt_counter = 1
 
             while True:
@@ -103,9 +104,10 @@ def convert_ass_to_srt(input_file: str, output_file: str) -> None:
     encoding = detect_encoding(input_file)
 
     try:
-        with open(input_file, "r", encoding=encoding, errors="replace") as ass, open(
-            output_file, "w", encoding="utf-8"
-        ) as srt:
+        with (
+            open(input_file, "r", encoding=encoding, errors="replace") as ass,
+            open(output_file, "w", encoding="utf-8") as srt,
+        ):
             srt_counter = 1
             buffer = ""
             collecting = False
@@ -278,9 +280,10 @@ def convert_vtt_to_srt(input_file: str, output_file: str) -> None:
         with open(input_file, "rb") as vtt_file:
             vtt_data = vtt_file.read()
             encoding = detect_encoding(input_file)
-        with open(input_file, "r", encoding=encoding, errors="replace") as vtt, open(
-            output_file, "w", encoding="utf-8"
-        ) as srt:
+        with (
+            open(input_file, "r", encoding=encoding, errors="replace") as vtt,
+            open(output_file, "w", encoding="utf-8") as srt,
+        ):
             srt_counter = 1
             allowed_tags = ["b", "i", "u", "font"]
             tag_pattern = re.compile(r"</?(?!" + "|".join(allowed_tags) + r")\w+[^>]*>")
@@ -319,9 +322,10 @@ def convert_sbv_to_srt(input_file: str, output_file: str) -> None:
     """
     try:
         encoding = detect_encoding(input_file)
-        with open(input_file, "r", encoding=encoding, errors="replace") as sbv, open(
-            output_file, "w", encoding="utf-8"
-        ) as srt:
+        with (
+            open(input_file, "r", encoding=encoding, errors="replace") as sbv,
+            open(output_file, "w", encoding="utf-8") as srt,
+        ):
             srt_counter = 1
             allowed_tags = ["b", "i", "u", "font"]
             tag_pattern = re.compile(r"</?(?!" + "|".join(allowed_tags) + r")\w+[^>]*>")

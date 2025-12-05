@@ -1,3 +1,4 @@
+- **PyPI package now available!** You can install AutoSubSync directly with `pip install assy` and run with `assy` or `assy-cli`. This provides an easier installation method for users who prefer pip.
 - Added **Sync tracking** system for Batch Mode. This system keeps track of all videos that have been successfully synced, so when you add a large library of videos to the batch list, the app automatically identifies and skips the ones you've already processed before. This is especially useful when working with large media collections where you periodically add new content and want to avoid re-syncing existing files. Feature requested by [@M10pnl](https://github.com/M10pnl) in [#54](https://github.com/denizsafak/AutoSubSync/issues/54).
   - **Designed for video files only**; reference or output subtitle files are not tracked.
   - Videos are identified by their content using a unique fingerprint (hash), **not by filename or path**. This means you can rename, move, or reorganize your files and the system will still recognize them as already processed.
@@ -28,5 +29,8 @@
   - Database file location: `library_folders.db` in the config directory (accessible via `Settings` → `Open config file directory`).
 - Batch Input system now supports **adding multiple subtitle files to a single Video/Reference** parent item. Each subtitle file is automatically interpreted as its own individual processing task, all linked to the same parent video/reference file, feature mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
 - Added **Undo/Redo** support to the Batch Input, including `Ctrl+Z` and `Ctrl+Y` shortcuts and new right-click menu options, allowing users to easily revert or reapply actions while managing items.
+- Added new option **Auto-rename files if needed**: When enabled (and `alass` is selected), AutoSubSync will automatically rename any file or folder path components that contain `[` or `]` (replacing them with `(` and `)`) to fix an error where `alass` cannot work with paths containing these characters. When disabled, AutoSubSync will display a 30-second prompt asking whether to rename the affected paths; if the prompt times out, the rename will be skipped. Possibly fixes the issue mentioned by [@SilfraTheDragon](https://github.com/SilfraTheDragon) in [#63](https://github.com/denizsafak/AutoSubSync/issues/63).
 - Upgraded [ffsubsync](https://github.com/smacke/ffsubsync) from `0.4.30` to `0.4.31`.
+- **Linux:** Now distributed as AppImage for easier installation and portability.
+- **macOS:** Now distributed as a native .app bundle with improved code signing.
 - Improvements in documentation, translations, and code.

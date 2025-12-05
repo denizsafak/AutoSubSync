@@ -1,0 +1,36 @@
+name: Test Windows Build
+
+on:
+  workflow_dispatch:
+
+env:
+  DIST_DIR: /tmp/builds
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12.8
+          cache: "pip"
+
+      - name: Install required modules globally
+        run: |
+          pip install requests
+
+      - name: Run build script
+        run: |
+          python build.py
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-windows_amd64
+          path: |
+            AutoSubSync-windows-*.zip

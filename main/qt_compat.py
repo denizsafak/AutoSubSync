@@ -11,6 +11,7 @@ try:
     from PyQt6.QtWidgets import *
     from PyQt6.QtCore import *
     from PyQt6.QtGui import *
+
     QT_LIB = "PyQt6"
     print("Qt compatibility: Using PyQt6")
 
@@ -25,6 +26,7 @@ except ImportError:
         from PySide6.QtWidgets import *
         from PySide6.QtCore import *
         from PySide6.QtGui import *
+
         QT_LIB = "PySide6"
         print("Qt compatibility: Using PySide6")
 
@@ -38,4 +40,4 @@ except ImportError:
         sys.exit(1)
 
 # Export the library name for reference
-__all__ = ['QT_LIB', 'exec_'] + [name for name in dir() if not name.startswith('_')]
+__all__ = ["QT_LIB", "exec_"] + [name for name in dir() if not name.startswith("_")]

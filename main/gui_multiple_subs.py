@@ -119,7 +119,9 @@ class MultipleSubsDialog(QDialog):
             input_type="video_or_subtitle",
         )
         # Click to open single file selector directly (no menu)
-        self.ref_input.mousePressEvent = lambda e: self._select_reference_file("file-open")
+        self.ref_input.mousePressEvent = lambda e: self._select_reference_file(
+            "file-open"
+        )
         ref_layout.addWidget(self.ref_input)
 
         splitter.addWidget(ref_panel)
@@ -209,7 +211,9 @@ class MultipleSubsDialog(QDialog):
             )
             if not folder:
                 return
-            files = _collect_files_from_paths([folder], VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
+            files = _collect_files_from_paths(
+                [folder], VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS
+            )
             if not files:
                 QMessageBox.warning(
                     self,
@@ -262,7 +266,9 @@ class MultipleSubsDialog(QDialog):
 
     def _handle_subtitles_drop(self, event):
         if event.mimeData().hasUrls():
-            paths = [u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()]
+            paths = [
+                u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()
+            ]
             files = _collect_files_from_paths(paths, SUBTITLE_EXTENSIONS)
             if files:
                 self._add_subtitles(files)
@@ -328,9 +334,7 @@ class MultipleSubsDialog(QDialog):
         if skipped_ext or skipped_dups or skipped_same_as_ref:
             parts = []
             if skipped_ext:
-                parts.append(
-                    texts.SOME_FILES_SKIPPED_MESSAGE.format(count=skipped_ext)
-                )
+                parts.append(texts.SOME_FILES_SKIPPED_MESSAGE.format(count=skipped_ext))
             if skipped_dups:
                 parts.append(
                     texts.SKIPPED_FILES_ALREADY_IN_THIS_LIST.format(count=skipped_dups)
@@ -377,7 +381,9 @@ class MultipleSubsDialog(QDialog):
         menu.addAction(texts.ADD_FOLDER, self._add_subtitle_folder)
         menu.addSeparator()
         has_sel = bool(self.sub_list.selectedItems())
-        act_remove = menu.addAction(texts.REMOVE_SELECTED, self._remove_selected_subtitles)
+        act_remove = menu.addAction(
+            texts.REMOVE_SELECTED, self._remove_selected_subtitles
+        )
         act_remove.setEnabled(has_sel)
         menu.addAction(texts.CLEAR_ALL, self._clear_subtitles)
 
@@ -434,14 +440,18 @@ class MultipleSubsDialog(QDialog):
             return
 
         if not self.subtitle_files:
-            QMessageBox.warning(self, texts.NO_MEDIA_FILES_FOUND_TITLE, texts.NO_MEDIA_FILES_FOUND_MESSAGE)
+            QMessageBox.warning(
+                self,
+                texts.NO_MEDIA_FILES_FOUND_TITLE,
+                texts.NO_MEDIA_FILES_FOUND_MESSAGE,
+            )
             return
 
         view = self.parent_window.batch_tree_view
-        
+
         # Check if the reference already exists as a parent in the batch
         existing_parent = view.find_parent_by_path(ref)
-        
+
         if existing_parent:
             # Add subtitles as children to the existing parent
             added, skipped_same, skipped_dups = view.add_children_to_parent(
@@ -476,13 +486,17 @@ class MultipleSubsDialog(QDialog):
                         parts.append(msg)
                     QMessageBox.information(self, texts.NO_NEW_PAIRS, "\n".join(parts))
             else:
-                QMessageBox.information(self, texts.NO_NEW_PAIRS, texts.ALL_PAIRS_ALREADY_EXIST_IN_BATCH)
+                QMessageBox.information(
+                    self, texts.NO_NEW_PAIRS, texts.ALL_PAIRS_ALREADY_EXIST_IN_BATCH
+                )
         else:
             # Inform if some were skipped even though some pairs were added
             if skipped_dups or skipped_same:
                 parts = []
                 if skipped_dups:
-                    parts.append(texts.DUPLICATES_SKIPPED_MESSAGE.format(count=skipped_dups))
+                    parts.append(
+                        texts.DUPLICATES_SKIPPED_MESSAGE.format(count=skipped_dups)
+                    )
                 if skipped_same:
                     # If multiple identical-to-reference were skipped, add a count hint
                     msg = texts.CANNOT_PAIR_FILE_WITH_ITSELF
@@ -505,7 +519,11 @@ class MultipleSubsDialog(QDialog):
         removed = 0
         # Remove any matching entries from the in-memory list and the UI widget
         root = self.sub_list.invisibleRootItem()
-        to_remove_indices = [i for i, p in enumerate(self.subtitle_files) if os.path.normpath(p) == norm_ref]
+        to_remove_indices = [
+            i
+            for i, p in enumerate(self.subtitle_files)
+            if os.path.normpath(p) == norm_ref
+        ]
         if to_remove_indices:
             # Remove from end to start to keep indices valid
             for idx in reversed(to_remove_indices):

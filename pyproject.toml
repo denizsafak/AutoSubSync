@@ -1,0 +1,114 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "assy"
+description = "Automatic subtitle synchronization tool."
+authors = [
+    { name="Deniz Şafak", email="denizsafak98@gmail.com" }
+]
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.10,<3.14"
+keywords = [
+    "subtitle",
+    "synchronization",
+    "video",
+    "ffsubsync",
+    "autosubsync",
+    "alass",
+    "subtitle-sync",
+    "media",
+    "timing",
+    "alignment"
+]
+dependencies = [
+    "PyQt6",
+    "rich",
+    "faust-cchardet; python_version < '3.13'",
+    "charset-normalizer",
+    "chardet",
+    "requests",
+    "psutil",
+    "platformdirs",
+    "ffsubsync",
+    "autosubsync",
+    "static-ffmpeg",
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Text Processing",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Environment :: X11 Applications :: Qt",
+]
+
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pyinstaller",
+    "build",
+]
+torch = [
+    "torch; python_version <= '3.14'",
+    "torchaudio; python_version <= '3.14'",
+]
+
+[project.urls]
+Homepage = "https://github.com/denizsafak/AutoSubSync"
+Documentation = "https://github.com/denizsafak/AutoSubSync"
+Repository = "https://github.com/denizsafak/AutoSubSync"
+Issues = "https://github.com/denizsafak/AutoSubSync/issues"
+
+[project.gui-scripts]
+assy = "main.main:main"
+
+[project.scripts]
+assy-cli = "main.main:main"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.github",
+    "/build",
+    "/dist",
+    "/venv",
+    "/build_tools",
+    "/test_subtitles",
+    "/docker",
+    "/images",
+    "/.old",
+    "/.vscode",
+    "Dockerfile",
+    "docker-compose.yml",
+    "DOCKER.md",
+    "run-docker.bat",
+    "run-docker.sh",
+    "build.py",
+    "build_pypi.py",
+    "build.spec",
+    "PROMPTS.md",
+    "main/resources/ffmpeg_download.py",
+    "*.AppImage",
+    "*.zip",
+    "*.tar.gz",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["main"]
+exclude = [
+    "main/resources/ffmpeg-bin",
+    "main/resources/ffmpeg_download.py"
+]
+
+[tool.hatch.version]
+path = "main/VERSION"
+pattern = "^(?P<version>.+)$"

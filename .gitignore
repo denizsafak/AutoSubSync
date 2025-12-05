@@ -23,6 +23,7 @@ venv/
 .vscode/
 
 # AutoSubSync
+*AppImage*
 *config.json
 build/
 dist/
@@ -33,3 +34,4 @@ main/resources/ffsubsync-bin/
 main/resources/versions.json
 test_subtitles/
 PROMPTS.md
+build_tools/
