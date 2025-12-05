@@ -373,7 +373,6 @@ def download_appimagetool():
 
 def create_appimage_structure(version):
     """Create the AppDir structure required for AppImage."""
-    folder_name = f"AutoSubSync-v{version}"
     appdir = os.path.join(script_dir, "dist", "AutoSubSync.AppDir")
     
     # Clean up existing AppDir
@@ -383,7 +382,8 @@ def create_appimage_structure(version):
     os.makedirs(appdir, exist_ok=True)
     
     # Copy the built application directly to AppDir (flat structure for PyInstaller apps)
-    pyinstaller_output = os.path.join(script_dir, "dist", folder_name)
+    # PyInstaller outputs to dist/AutoSubSync/
+    pyinstaller_output = os.path.join(script_dir, "dist", "AutoSubSync")
     if os.path.exists(pyinstaller_output):
         for item in os.listdir(pyinstaller_output):
             src = os.path.join(pyinstaller_output, item)
@@ -392,6 +392,9 @@ def create_appimage_structure(version):
                 shutil.copytree(src, dst)
             else:
                 shutil.copy2(src, dst)
+    else:
+        print(f"ERROR: PyInstaller output not found at {pyinstaller_output}")
+        return None
     
     # Create AppRun script - simple launcher that runs the executable from AppDir
     apprun_content = '''#!/bin/bash
@@ -466,6 +469,9 @@ def build_appimage():
     
     # Create AppDir structure
     appdir = create_appimage_structure(version)
+    if appdir is None:
+        print("Error: Failed to create AppDir structure. Falling back to tar.gz archive.")
+        return None
     
     # Build the AppImage
     arch, appimagetool_arch = get_arch()
@@ -650,7 +656,8 @@ def create_archive():
 
 def create_linux_tarball(version):
     """Create a tar.gz archive for Linux (fallback if AppImage fails)."""
-    dist_dir = "dist"
+    # The build output is in dist/AutoSubSync/
+    dist_dir = os.path.join("dist", "AutoSubSync")
     arch, _ = get_arch()
     
     tar_name = f"AutoSubSync-linux-{arch}.tar.gz"
@@ -659,6 +666,7 @@ def create_linux_tarball(version):
         for root, _, files in os.walk(dist_dir):
             for file in files:
                 file_path = os.path.join(root, file)
+                # Files go directly into tar root, no subfolder
                 arcname = os.path.relpath(file_path, dist_dir)
                 tar.add(file_path, arcname=arcname)
     
