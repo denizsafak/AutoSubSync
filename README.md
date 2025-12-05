@@ -90,6 +90,22 @@ uv pip install --system assy[torch]
 assy
 ```
 
+#### If your system Python is not compatible (e.g., macOS with older Python):
+
+If your system Python version is below 3.10 or above 3.13, you can use `uv` to automatically download a compatible Python version and run assy:
+
+```bash
+# One-liner to run assy with a compatible Python (downloads Python 3.12 if needed)
+uvx --python 3.12 assy
+
+# Or create a virtual environment with a specific Python version
+uv venv --python 3.12
+uv pip install assy
+uv run assy
+```
+
+> `uvx` is included with `uv`. Install uv from [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
+
 ---
 
 ## `How to use?`
