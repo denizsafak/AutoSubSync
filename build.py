@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.join(script_dir, "main"))
 
 def get_arch():
     """Get normalized architecture name for file naming.
-    
+
     Returns:
         tuple: (arch, native_arch) where arch is the normalized name (amd64/arm64)
                and native_arch is the platform's native name (x86_64/aarch64)
@@ -60,9 +60,7 @@ def check_modules():
                     "Debian: sudo apt-get install python3-pip python3-venv\n"
                 )
                 sys.stderr.write("Arch Linux: sudo pacman -S python python-pip\n")
-                sys.stderr.write(
-                    "Fedora: sudo dnf install python3-pip python3-venv\n"
-                )
+                sys.stderr.write("Fedora: sudo dnf install python3-pip python3-venv\n")
                 sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
             elif module == "venv":
@@ -73,9 +71,7 @@ def check_modules():
                     "Debian: sudo apt-get install python3-pip python3-venv\n"
                 )
                 sys.stderr.write("Arch Linux: sudo pacman -S python python-pip\n")
-                sys.stderr.write(
-                    "Fedora: sudo dnf install python3-pip python3-venv\n"
-                )
+                sys.stderr.write("Fedora: sudo dnf install python3-pip python3-venv\n")
                 sys.stderr.write("macOS: brew install python3\n")
                 sys.exit(1)
     print("All required modules are installed.")
@@ -110,7 +106,6 @@ def install_requirements():
         print("Error installing requirements.")
         sys.exit(completed_process.returncode)
     print("Requirements installed.")
-
 
 
 def remove_webrtcvad_hook():
@@ -164,8 +159,13 @@ def get_version_info(module_name):
         python_executable = os.path.join("venv", "bin", "python")
     try:
         result = subprocess.run(
-            [python_executable, "-c", f"import importlib.metadata; print(importlib.metadata.version('{module_name}'))"],
-            capture_output=True, text=True
+            [
+                python_executable,
+                "-c",
+                f"import importlib.metadata; print(importlib.metadata.version('{module_name}'))",
+            ],
+            capture_output=True,
+            text=True,
         )
         if result.returncode == 0:
             return result.stdout.strip()
@@ -215,7 +215,9 @@ def get_sync_tools_names_from_constants():
                     if isinstance(node.value, ast.Dict):
                         tool_names = []
                         for key in node.value.keys:
-                            if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                            if isinstance(key, ast.Constant) and isinstance(
+                                key.value, str
+                            ):
                                 tool_names.append(key.value)
                         return tool_names
     return []
@@ -228,11 +230,19 @@ def get_sync_tools_versions():
         tree = ast.parse(f.read(), filename=constants_path)
     sync_tools = {}
     for node in ast.walk(tree):
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "SYNC_TOOLS" for t in node.targets
-        ) and isinstance(node.value, ast.Dict):
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(t, ast.Name) and t.id == "SYNC_TOOLS" for t in node.targets
+            )
+            and isinstance(node.value, ast.Dict)
+        ):
             for key, value in zip(node.value.keys, node.value.values):
-                if isinstance(key, ast.Constant) and isinstance(key.value, str) and isinstance(value, ast.Dict):
+                if (
+                    isinstance(key, ast.Constant)
+                    and isinstance(key.value, str)
+                    and isinstance(value, ast.Dict)
+                ):
                     tool_name = key.value
                     tool_type = tool_version = github_url = None
                     for k, v in zip(value.keys, value.values):
@@ -244,7 +254,11 @@ def get_sync_tools_versions():
                             elif k.value == "github" and isinstance(v, ast.Constant):
                                 github_url = v.value
                     sync_tools[tool_name] = {
-                        "version": tool_version if tool_type == "executable" and tool_version else get_version_info(tool_name)
+                        "version": (
+                            tool_version
+                            if tool_type == "executable" and tool_version
+                            else get_version_info(tool_name)
+                        )
                     }
                     if github_url:
                         sync_tools[tool_name]["github"] = github_url
@@ -278,12 +292,12 @@ def fix_macos_dylib_versions():
     """Fix macOS dylibs that lack proper SDK version info to prevent PyInstaller warnings."""
     if not IS_MACOS:
         return
-    
+
     print("Checking for problematic macOS dylibs...")
-    
+
     # Find dylibs in the virtual environment that may lack version info
     venv_site_packages = os.path.join(script_dir, "venv", "lib")
-    
+
     # Find all dylib files
     problematic_dylibs = []
     for root, dirs, files in os.walk(venv_site_packages):
@@ -293,38 +307,55 @@ def fix_macos_dylib_versions():
                 # Check if the dylib has version info
                 try:
                     result = subprocess.run(
-                        ["otool", "-l", dylib_path],
-                        capture_output=True,
-                        text=True
+                        ["otool", "-l", dylib_path], capture_output=True, text=True
                     )
                     # Check for LC_BUILD_VERSION or LC_VERSION_MIN_MACOSX
-                    if "LC_BUILD_VERSION" not in result.stdout and "LC_VERSION_MIN_MACOSX" not in result.stdout:
+                    if (
+                        "LC_BUILD_VERSION" not in result.stdout
+                        and "LC_VERSION_MIN_MACOSX" not in result.stdout
+                    ):
                         problematic_dylibs.append(dylib_path)
                 except Exception as e:
                     print(f"  Warning: Error checking {dylib_path}: {e}")
-    
+
     if not problematic_dylibs:
         print("No problematic dylibs found.")
         return
-    
-    print(f"Found {len(problematic_dylibs)} dylib(s) without version info. Attempting to fix...")
-    
+
+    print(
+        f"Found {len(problematic_dylibs)} dylib(s) without version info. Attempting to fix..."
+    )
+
     for dylib_path in problematic_dylibs:
         try:
             # Use vtool to add version info (available on macOS 11+)
             # This adds LC_BUILD_VERSION with macOS 10.13 as minimum
             result = subprocess.run(
-                ["vtool", "-set-build-version", "macos", "10.13", "10.13", "-replace", "-output", dylib_path, dylib_path],
+                [
+                    "vtool",
+                    "-set-build-version",
+                    "macos",
+                    "10.13",
+                    "10.13",
+                    "-replace",
+                    "-output",
+                    dylib_path,
+                    dylib_path,
+                ],
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode == 0:
                 print(f"  Fixed: {os.path.basename(dylib_path)}")
             else:
-                print(f"  Warning: Could not fix {os.path.basename(dylib_path)}: {result.stderr}")
+                print(
+                    f"  Warning: Could not fix {os.path.basename(dylib_path)}: {result.stderr}"
+                )
         except FileNotFoundError:
             # vtool not available, try alternative approach
-            print(f"  Warning: vtool not available, skipping {os.path.basename(dylib_path)}")
+            print(
+                f"  Warning: vtool not available, skipping {os.path.basename(dylib_path)}"
+            )
         except Exception as e:
             print(f"  Warning: Error fixing {os.path.basename(dylib_path)}: {e}")
 
@@ -349,16 +380,17 @@ def build_with_pyinstaller():
 # Linux AppImage Packaging
 # =============================================================================
 
+
 def download_appimagetool():
     """Download appimagetool if not present."""
     tools_dir = os.path.join(script_dir, "build_tools")
     os.makedirs(tools_dir, exist_ok=True)
     appimagetool_path = os.path.join(tools_dir, "appimagetool")
-    
+
     if os.path.exists(appimagetool_path):
         print("appimagetool already exists.")
         return appimagetool_path
-    
+
     print("Downloading appimagetool...")
     try:
         urllib.request.urlretrieve(APPIMAGETOOL_URL, appimagetool_path)
@@ -375,13 +407,13 @@ def download_appimagetool():
 def create_appimage_structure(version):
     """Create the AppDir structure required for AppImage."""
     appdir = os.path.join(script_dir, "dist", "AutoSubSync.AppDir")
-    
+
     # Clean up existing AppDir
     if os.path.exists(appdir):
         shutil.rmtree(appdir)
-    
+
     os.makedirs(appdir, exist_ok=True)
-    
+
     # Copy the built application directly to AppDir (flat structure for PyInstaller apps)
     # PyInstaller outputs to dist/AutoSubSync/
     pyinstaller_output = os.path.join(script_dir, "dist", "AutoSubSync")
@@ -396,9 +428,9 @@ def create_appimage_structure(version):
     else:
         print(f"ERROR: PyInstaller output not found at {pyinstaller_output}")
         return None
-    
+
     # Create AppRun script - simple launcher that runs the executable from AppDir
-    apprun_content = '''#!/bin/bash
+    apprun_content = """#!/bin/bash
 # AppRun script for AutoSubSync AppImage
 SELF=$(readlink -f "$0")
 HERE=${SELF%/*}
@@ -408,17 +440,17 @@ export LD_LIBRARY_PATH="${HERE}:${LD_LIBRARY_PATH}"
 
 # Execute the main application
 exec "${HERE}/AutoSubSync" "$@"
-'''
+"""
     apprun_path = os.path.join(appdir, "AppRun")
     with open(apprun_path, "w") as f:
         f.write(apprun_content)
     st = os.stat(apprun_path)
     os.chmod(apprun_path, st.st_mode | stat.S_IEXEC)
-    
+
     # Create .desktop file (required by AppImage specification)
     # Note: Version field in .desktop refers to Desktop Entry Spec version (1.0), not app version
     # App version can be included in Comment or X-AppImage-Version
-    desktop_content = f'''[Desktop Entry]
+    desktop_content = f"""[Desktop Entry]
 Version=1.0
 Name=AutoSubSync
 GenericName=Automatic Subtitle Synchronizer
@@ -430,19 +462,19 @@ Comment=Automatic subtitle synchronization tool.
 Terminal=false
 StartupWMClass=AutoSubSync
 X-AppImage-Version={version}
-'''
+"""
     desktop_path = os.path.join(appdir, "AutoSubSync.desktop")
     with open(desktop_path, "w") as f:
         f.write(desktop_content)
-    
+
     # Copy PNG icon for AppImage (AppImage REQUIRES a PNG icon at the root of AppDir)
     icon_png_src = os.path.join(script_dir, "main", "assets", "icon.png")
     icon_dst = os.path.join(appdir, "autosubsync.png")
-    
+
     if os.path.exists(icon_png_src):
         shutil.copy2(icon_png_src, icon_dst)
         print("PNG icon copied to AppDir.")
-        
+
         # Create .DirIcon symlink (used by some file managers for folder icons)
         diricon_path = os.path.join(appdir, ".DirIcon")
         if os.path.exists(diricon_path) or os.path.islink(diricon_path):
@@ -451,7 +483,7 @@ X-AppImage-Version={version}
     else:
         print("ERROR: icon.png not found in main/assets/")
         print("       AppImage will work but won't display an icon.")
-    
+
     return appdir
 
 
@@ -459,37 +491,39 @@ def build_appimage():
     """Build AppImage for Linux."""
     with open("main/VERSION", "r") as f:
         version = f.read().strip()
-    
+
     print("Building AppImage for Linux...")
-    
+
     # Download appimagetool if needed
     appimagetool = download_appimagetool()
     if not appimagetool:
         print("Error: Could not obtain appimagetool. Falling back to tar.gz archive.")
         return None
-    
+
     # Create AppDir structure
     appdir = create_appimage_structure(version)
     if appdir is None:
-        print("Error: Failed to create AppDir structure. Falling back to tar.gz archive.")
+        print(
+            "Error: Failed to create AppDir structure. Falling back to tar.gz archive."
+        )
         return None
-    
+
     # Build the AppImage
     arch, appimagetool_arch = get_arch()
-    
+
     appimage_name = f"AutoSubSync-linux-{arch}.AppImage"
     appimage_path = os.path.join(script_dir, appimage_name)
-    
+
     # Remove existing AppImage if present
     if os.path.exists(appimage_path):
         os.remove(appimage_path)
-    
+
     print(f"Creating AppImage: {appimage_name}")
-    
+
     # Set ARCH environment variable for appimagetool (requires x86_64/aarch64 format)
     env = os.environ.copy()
     env["ARCH"] = appimagetool_arch
-    
+
     try:
         completed_process = subprocess.run(
             [appimagetool, "--appimage-extract-and-run", appdir, appimage_path],
@@ -497,20 +531,20 @@ def build_appimage():
             env=env,
             capture_output=True,
         )
-        
+
         if completed_process.returncode != 0:
             print(f"appimagetool stderr: {completed_process.stderr}")
             print("Error creating AppImage. Falling back to tar.gz archive.")
             return None
-        
+
         print(f"AppImage created successfully: {appimage_name}")
         print(f"Full path: {appimage_path}")
-        
+
         # Clean up AppDir
         shutil.rmtree(appdir, ignore_errors=True)
-        
+
         return appimage_path
-        
+
     except Exception as e:
         print(f"Error running appimagetool: {e}")
         return None
@@ -520,24 +554,25 @@ def build_appimage():
 # macOS .app Bundle Packaging
 # =============================================================================
 
+
 def sign_macos_app(app_path):
     """Ad-hoc sign the macOS app bundle to prevent Gatekeeper issues."""
     print("Signing macOS application bundle (ad-hoc)...")
-    
+
     # First, clear any existing quarantine attributes
     try:
         subprocess.run(["xattr", "-cr", app_path], check=False)
         print("Cleared extended attributes.")
     except Exception as e:
         print(f"Warning: Could not clear xattr: {e}")
-    
+
     # Ad-hoc sign the app bundle with deep signing and force
     # This signs all nested code (frameworks, helpers, etc.)
     try:
         result = subprocess.run(
             ["codesign", "--force", "--deep", "--sign", "-", app_path],
             capture_output=True,
-            text=True
+            text=True,
         )
         if result.returncode == 0:
             print("App bundle signed successfully (ad-hoc).")
@@ -557,37 +592,45 @@ def package_macos_app():
     """Package macOS .app bundle into a ZIP using ditto to preserve permissions and signatures."""
     with open("main/VERSION", "r") as f:
         version = f.read().strip()
-    
+
     print("Packaging macOS application bundle...")
-    
+
     app_path = os.path.join(script_dir, "dist", "AutoSubSync.app")
-    
+
     if not os.path.exists(app_path):
         print(f"Error: Application bundle not found at {app_path}")
         return None
-    
+
     # Sign the app bundle before packaging
     sign_macos_app(app_path)
-    
+
     arch, _ = get_arch()
-    
+
     # Create a ZIP archive of the .app bundle using ditto
     # ditto preserves macOS-specific attributes, permissions, and code signatures
     zip_name = f"AutoSubSync-macos-{arch}.zip"
     zip_path = os.path.join(script_dir, zip_name)
-    
+
     # Remove existing zip if present
     if os.path.exists(zip_path):
         os.remove(zip_path)
-    
+
     print(f"Creating ZIP archive: {zip_name}")
-    
+
     # Use ditto to create the ZIP - this preserves permissions, symlinks, and signatures
     try:
         result = subprocess.run(
-            ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app_path, zip_path],
+            [
+                "ditto",
+                "-c",
+                "-k",
+                "--sequesterRsrc",
+                "--keepParent",
+                app_path,
+                zip_path,
+            ],
             capture_output=True,
-            text=True
+            text=True,
         )
         if result.returncode != 0:
             print(f"Error creating ZIP with ditto: {result.stderr}")
@@ -595,10 +638,10 @@ def package_macos_app():
     except FileNotFoundError:
         print("Error: ditto command not found. This should only run on macOS.")
         return None
-    
+
     print(f"ZIP archive created: {zip_name}")
     print(f"Full path: {zip_path}")
-    
+
     return zip_path
 
 
@@ -606,16 +649,17 @@ def package_macos_app():
 # Windows Packaging
 # =============================================================================
 
+
 def package_windows():
     """Package Windows build into a ZIP archive."""
     print("Packaging Windows application...")
-    
+
     # The build output is in dist/AutoSubSync/
     dist_dir = os.path.join("dist", "AutoSubSync")
     arch, _ = get_arch()
-    
+
     zip_name = f"AutoSubSync-windows-{arch}.zip"
-    
+
     with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, _, files in os.walk(dist_dir):
             for file in files:
@@ -623,10 +667,10 @@ def package_windows():
                 # Files go directly into ZIP root, no subfolder
                 arcname = os.path.relpath(file_path, dist_dir)
                 zipf.write(file_path, arcname)
-    
+
     print(f"ZIP archive created: {zip_name}")
     print(f"Full path: {os.path.abspath(zip_name)}")
-    
+
     return zip_name
 
 
@@ -634,13 +678,14 @@ def package_windows():
 # Archive Creation (Platform-Specific)
 # =============================================================================
 
+
 def create_archive():
     """Create platform-specific archive/package."""
     print("Creating platform-specific package...")
-    
+
     with open("main/VERSION", "r") as f:
         version = f.read().strip()
-    
+
     if IS_LINUX:
         # Try to create AppImage, fall back to tar.gz
         result = build_appimage()
@@ -660,9 +705,9 @@ def create_linux_tarball(version):
     # The build output is in dist/AutoSubSync/
     dist_dir = os.path.join("dist", "AutoSubSync")
     arch, _ = get_arch()
-    
+
     tar_name = f"AutoSubSync-linux-{arch}.tar.gz"
-    
+
     with tarfile.open(tar_name, "w:gz") as tar:
         for root, _, files in os.walk(dist_dir):
             for file in files:
@@ -670,7 +715,7 @@ def create_linux_tarball(version):
                 # Files go directly into tar root, no subfolder
                 arcname = os.path.relpath(file_path, dist_dir)
                 tar.add(file_path, arcname=arcname)
-    
+
     print(f"Tar.gz archive created: {tar_name}")
     print(f"Full path: {os.path.abspath(tar_name)}")
 

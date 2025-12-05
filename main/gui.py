@@ -998,43 +998,61 @@ class autosubsyncapp(QWidget):
         # Create the submenu with dynamic title
         self.sync_tracking_menu = self.settings_menu.addMenu(texts.SYNC_TRACKING)
         self._update_sync_tracking_menu_title()
-        
+
         # Toggle action (Enabled/Disabled)
         self.sync_tracking_toggle_action = QAction(self)
         self.sync_tracking_toggle_action.setCheckable(True)
         self._update_sync_tracking_toggle_text()
-        self.sync_tracking_toggle_action.triggered.connect(self._on_skip_processed_changed)
+        self.sync_tracking_toggle_action.triggered.connect(
+            self._on_skip_processed_changed
+        )
         self.sync_tracking_menu.addAction(self.sync_tracking_toggle_action)
-        
+
         # Clear database action
-        self.sync_tracking_clear_action = QAction(texts.CLEAR_PROCESSED_ITEMS_DATABASE, self)
-        self.sync_tracking_clear_action.triggered.connect(self._clear_processed_items_database)
+        self.sync_tracking_clear_action = QAction(
+            texts.CLEAR_PROCESSED_ITEMS_DATABASE, self
+        )
+        self.sync_tracking_clear_action.triggered.connect(
+            self._clear_processed_items_database
+        )
         self.sync_tracking_menu.addAction(self.sync_tracking_clear_action)
-        
+
         self.sync_tracking_menu.addSeparator()
-        
+
         # Backup database action
-        self.sync_tracking_backup_action = QAction(texts.BACKUP_PROCESSED_DATABASE, self)
-        self.sync_tracking_backup_action.triggered.connect(self._backup_processed_database)
+        self.sync_tracking_backup_action = QAction(
+            texts.BACKUP_PROCESSED_DATABASE, self
+        )
+        self.sync_tracking_backup_action.triggered.connect(
+            self._backup_processed_database
+        )
         self.sync_tracking_menu.addAction(self.sync_tracking_backup_action)
-        
+
         # Import database action
-        self.sync_tracking_import_action = QAction(texts.IMPORT_PROCESSED_DATABASE, self)
-        self.sync_tracking_import_action.triggered.connect(self._import_processed_database)
+        self.sync_tracking_import_action = QAction(
+            texts.IMPORT_PROCESSED_DATABASE, self
+        )
+        self.sync_tracking_import_action.triggered.connect(
+            self._import_processed_database
+        )
         self.sync_tracking_menu.addAction(self.sync_tracking_import_action)
-        
+
         self.sync_tracking_menu.addSeparator()
-        
+
         # Manage library folders action
-        self.sync_tracking_manage_library_action = QAction(texts.MANAGE_LIBRARY_FOLDERS, self)
-        self.sync_tracking_manage_library_action.triggered.connect(self._open_library_manager)
+        self.sync_tracking_manage_library_action = QAction(
+            texts.MANAGE_LIBRARY_FOLDERS, self
+        )
+        self.sync_tracking_manage_library_action.triggered.connect(
+            self._open_library_manager
+        )
         self.sync_tracking_menu.addAction(self.sync_tracking_manage_library_action)
 
     def _update_sync_tracking_menu_title(self):
         """Update the sync tracking submenu title based on enabled/disabled state."""
         is_enabled = self.config.get(
             "skip_previously_processed_videos",
-            DEFAULT_OPTIONS["skip_previously_processed_videos"]
+            DEFAULT_OPTIONS["skip_previously_processed_videos"],
         )
         if is_enabled:
             title = f"{texts.SYNC_TRACKING} ({texts.ENABLED})"
@@ -1046,7 +1064,7 @@ class autosubsyncapp(QWidget):
         """Update the sync tracking toggle action text and checked state."""
         is_enabled = self.config.get(
             "skip_previously_processed_videos",
-            DEFAULT_OPTIONS["skip_previously_processed_videos"]
+            DEFAULT_OPTIONS["skip_previously_processed_videos"],
         )
         self.sync_tracking_toggle_action.setChecked(is_enabled)
         if is_enabled:
@@ -1061,116 +1079,114 @@ class autosubsyncapp(QWidget):
         self._update_sync_tracking_menu_title()
         self._update_sync_tracking_toggle_text()
         # Update sync tracking button style
-        if hasattr(self, 'btn_sync_tracking'):
+        if hasattr(self, "btn_sync_tracking"):
             from gui_batch_mode import _update_sync_tracking_button_style
+
             _update_sync_tracking_button_style(self)
         # Trigger re-scan of batch items if batch mode is enabled
-        if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+        if hasattr(self, "batch_tree_view") and self.batch_mode_enabled:
             self.batch_tree_view.rescan_processed_items()
 
     def _open_library_manager(self):
         """Open the library manager dialog."""
         from gui_load_library import LibraryManagerDialog
+
         dialog = LibraryManagerDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # Load library folders into batch mode if accepted
-            if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+            if hasattr(self, "batch_tree_view") and self.batch_mode_enabled:
                 from gui_batch_mode import smart_load_library
+
                 smart_load_library(self)
 
     def _clear_processed_items_database(self):
         """Clear the processed items database after confirmation."""
         from processed_items_manager import get_processed_items_manager
-        
+
         manager = get_processed_items_manager()
         count = manager.get_processed_count()
-        
+
         reply = QMessageBox.question(
             self,
             texts.CLEAR_PROCESSED_ITEMS_DATABASE,
             texts.CLEAR_DATABASE_CONFIRM,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             if manager.clear_all():
                 QMessageBox.information(
                     self,
                     texts.CLEAR_PROCESSED_ITEMS_DATABASE,
-                    str(texts.DATABASE_CLEARED_SUCCESS).format(count=count)
+                    str(texts.DATABASE_CLEARED_SUCCESS).format(count=count),
                 )
                 # Re-scan batch items to update visual state
-                if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+                if hasattr(self, "batch_tree_view") and self.batch_mode_enabled:
                     self.batch_tree_view.rescan_processed_items()
 
     def _backup_processed_database(self):
         """Backup the processed items database to a user-selected location."""
         from processed_items_manager import get_processed_items_manager
         import shutil
-        
+
         manager = get_processed_items_manager()
         db_path = manager.get_db_path()
-        
+
         if not os.path.exists(db_path):
             QMessageBox.warning(
-                self,
-                texts.BACKUP_PROCESSED_DATABASE,
-                texts.DATABASE_NOT_FOUND
+                self, texts.BACKUP_PROCESSED_DATABASE, texts.DATABASE_NOT_FOUND
             )
             return
-        
+
         # Open save dialog
         save_path, _ = QFileDialog.getSaveFileName(
             self,
             texts.BACKUP_PROCESSED_DATABASE,
             "processed_items_backup.db",
-            "Database Files (*.db)"
+            "Database Files (*.db)",
         )
-        
+
         if save_path:
             try:
                 shutil.copy2(db_path, save_path)
                 QMessageBox.information(
                     self,
                     texts.BACKUP_PROCESSED_DATABASE,
-                    str(texts.DATABASE_BACKUP_SUCCESS).format(path=save_path)
+                    str(texts.DATABASE_BACKUP_SUCCESS).format(path=save_path),
                 )
             except Exception as e:
                 QMessageBox.critical(
                     self,
                     texts.ERROR,
-                    str(texts.DATABASE_BACKUP_FAILED).format(error=str(e))
+                    str(texts.DATABASE_BACKUP_FAILED).format(error=str(e)),
                 )
 
     def _import_processed_database(self):
         """Import items from another processed items database."""
         from processed_items_manager import get_processed_items_manager
-        
+
         # Open file dialog to select database
         import_path, _ = QFileDialog.getOpenFileName(
-            self,
-            texts.IMPORT_PROCESSED_DATABASE,
-            "",
-            "Database Files (*.db)"
+            self, texts.IMPORT_PROCESSED_DATABASE, "", "Database Files (*.db)"
         )
-        
+
         if import_path:
             manager = get_processed_items_manager()
             imported, skipped = manager.import_from_database(import_path)
-            
+
             if imported >= 0:
                 QMessageBox.information(
                     self,
                     texts.IMPORT_PROCESSED_DATABASE,
-                    str(texts.DATABASE_IMPORT_SUCCESS).format(imported=imported, skipped=skipped)
+                    str(texts.DATABASE_IMPORT_SUCCESS).format(
+                        imported=imported, skipped=skipped
+                    ),
                 )
                 # Re-scan batch items to update visual state
-                if hasattr(self, 'batch_tree_view') and self.batch_mode_enabled:
+                if hasattr(self, "batch_tree_view") and self.batch_mode_enabled:
                     self.batch_tree_view.rescan_processed_items()
             else:
                 QMessageBox.warning(
-                    self,
-                    texts.IMPORT_PROCESSED_DATABASE,
-                    texts.DATABASE_IMPORT_FAILED
+                    self, texts.IMPORT_PROCESSED_DATABASE, texts.DATABASE_IMPORT_FAILED
                 )

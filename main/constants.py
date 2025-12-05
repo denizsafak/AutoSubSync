@@ -152,15 +152,21 @@ _ffmpeg_res = get_resource_path("resources.ffmpeg-bin", f"ffmpeg{_exe_suffix}")
 _ffprobe_res = get_resource_path("resources.ffmpeg-bin", f"ffprobe{_exe_suffix}")
 
 # Check if bundled executables exist
-if _ffmpeg_res and _ffprobe_res and os.path.isfile(_ffmpeg_res) and os.path.isfile(_ffprobe_res):
+if (
+    _ffmpeg_res
+    and _ffprobe_res
+    and os.path.isfile(_ffmpeg_res)
+    and os.path.isfile(_ffprobe_res)
+):
     FFMPEG_EXECUTABLE = os.path.normpath(_ffmpeg_res)
     FFPROBE_EXECUTABLE = os.path.normpath(_ffprobe_res)
     FFMPEG_DIR = os.path.dirname(FFMPEG_EXECUTABLE)
 else:
     # Use static-ffmpeg for pip installs (not in frozen builds)
-    if not getattr(sys, 'frozen', False):
+    if not getattr(sys, "frozen", False):
         try:
             import static_ffmpeg
+
             static_ffmpeg.add_paths()
         except (ImportError, Exception):
             pass
@@ -1243,7 +1249,12 @@ VIDEO_EXTENSIONS = [
     ".hevc",
 ]
 
-EXTRACTABLE_SUBTITLE_EXTENSIONS = {"subrip": "srt", "ass": "ass", "webvtt": "vtt", "mov_text": "srt"}
+EXTRACTABLE_SUBTITLE_EXTENSIONS = {
+    "subrip": "srt",
+    "ass": "ass",
+    "webvtt": "vtt",
+    "mov_text": "srt",
+}
 
 # Convert translation dictionaries to TranslationDict objects
 translation_dicts = ["PROGRAM_TAGLINE", "PROGRAM_DESCRIPTION"]

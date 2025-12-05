@@ -104,7 +104,9 @@ def _rename_path_components(path):
                 next_path = safe_path
             elif next_path.exists() and not safe_path.exists():
                 os.rename(next_path, safe_path)
-                logger.info(f"Renamed '{next_path}' to '{safe_path}' for ALASS compatibility")
+                logger.info(
+                    f"Renamed '{next_path}' to '{safe_path}' for ALASS compatibility"
+                )
                 next_path = safe_path
             elif not next_path.exists() and not safe_path.exists():
                 next_path = safe_path
@@ -116,23 +118,23 @@ def _rename_path_components(path):
 
 def _update_ui_paths_after_rename(app, old_ref, new_ref, old_sub, new_sub):
     """Update UI elements (input boxes and batch tree) after paths are renamed.
-    
+
     This also updates any other files that were affected by folder renames.
     For example, if a folder [Anime] was renamed to (Anime), all files
     within that folder will have their paths updated in the UI.
     """
     from PyQt6.QtCore import Qt
-    
+
     def get_renamed_path(old_path):
         """Calculate what the new path would be after bracket-to-parenthesis rename."""
         if not old_path:
             return old_path
         return old_path.replace("[", "(").replace("]", ")")
-    
+
     def needs_update(old_path):
         """Check if a path contains brackets and would be affected by rename."""
         return bool(old_path and ("[" in old_path or "]" in old_path))
-    
+
     # Update normal mode input boxes
     if not app.batch_mode_enabled:
         if hasattr(app, "video_ref_input") and app.video_ref_input.file_path:
@@ -141,19 +143,24 @@ def _update_ui_paths_after_rename(app, old_ref, new_ref, old_sub, new_sub):
                 new_path = get_renamed_path(current_path)
                 if os.path.exists(new_path):
                     app.video_ref_input.set_file(new_path)
-                    logger.info(f"Updated video_ref_input path from '{current_path}' to '{new_path}'")
+                    logger.info(
+                        f"Updated video_ref_input path from '{current_path}' to '{new_path}'"
+                    )
         if hasattr(app, "subtitle_input") and app.subtitle_input.file_path:
             current_path = app.subtitle_input.file_path
             if needs_update(current_path):
                 new_path = get_renamed_path(current_path)
                 if os.path.exists(new_path):
                     app.subtitle_input.set_file(new_path)
-                    logger.info(f"Updated subtitle_input path from '{current_path}' to '{new_path}'")
-    
+                    logger.info(
+                        f"Updated subtitle_input path from '{current_path}' to '{new_path}'"
+                    )
+
     # Update batch tree view items - update ALL items that might be affected
     if hasattr(app, "batch_tree_view") and app.batch_tree_view:
         from PyQt6.QtWidgets import QFileIconProvider
         from PyQt6.QtCore import QFileInfo
+
         tree = app.batch_tree_view
         icon_provider = QFileIconProvider()
         paths_updated = False
@@ -170,7 +177,9 @@ def _update_ui_paths_after_rename(app, old_ref, new_ref, old_sub, new_sub):
                     item.setData(0, Qt.ItemDataRole.UserRole, new_path)
                     item.setText(0, os.path.basename(new_path))
                     item.setIcon(0, icon_provider.icon(QFileInfo(new_path)))
-                    logger.info(f"Updated batch tree reference path from '{item_path}' to '{new_path}'")
+                    logger.info(
+                        f"Updated batch tree reference path from '{item_path}' to '{new_path}'"
+                    )
                     paths_updated = True
             # Check children (subtitle files)
             for j in range(item.childCount()):
@@ -184,7 +193,9 @@ def _update_ui_paths_after_rename(app, old_ref, new_ref, old_sub, new_sub):
                         child.setData(0, Qt.ItemDataRole.UserRole, new_path)
                         child.setText(0, os.path.basename(new_path))
                         child.setIcon(0, icon_provider.icon(QFileInfo(new_path)))
-                        logger.info(f"Updated batch tree subtitle path from '{child_path}' to '{new_path}'")
+                        logger.info(
+                            f"Updated batch tree subtitle path from '{child_path}' to '{new_path}'"
+                        )
                         paths_updated = True
         # Trigger UI update to rebuild pair cache if any paths were updated
         if paths_updated:
@@ -258,7 +269,9 @@ def _ensure_alass_safe_paths(app, reference_path, subtitle_path):
         if ref_renamed or sub_renamed:
             append_log(app, texts.ALASS_RENAME_COMPLETED, COLORS["BLUE"])
             # Update UI elements with renamed paths
-            _update_ui_paths_after_rename(app, original_ref, new_ref, original_sub, new_sub)
+            _update_ui_paths_after_rename(
+                app, original_ref, new_ref, original_sub, new_sub
+            )
         return True, new_ref, new_sub
     except Exception as e:
         logger.error(f"Failed to rename paths for ALASS: {e}")
@@ -271,19 +284,22 @@ def _mark_item_as_processed(app, reference_path):
         # Check if skip feature is enabled
         if not app.config.get("skip_previously_processed_videos", True):
             return
-        
+
         # Only mark video files (not subtitle references)
         ref_ext = os.path.splitext(reference_path)[1].lower()
         if ref_ext in SUBTITLE_EXTENSIONS:
             return
-        
+
         from processed_items_manager import get_processed_items_manager
+
         manager = get_processed_items_manager()
         if manager.mark_as_processed(reference_path):
             # Log the addition to the database in blue
-            append_log(app, str(texts.SYNC_TRACKING_ADDED_TO_DATABASE), color=COLORS["BLUE"])
+            append_log(
+                app, str(texts.SYNC_TRACKING_ADDED_TO_DATABASE), color=COLORS["BLUE"]
+            )
             # Update the batch tree view cache if available
-            if hasattr(app, 'batch_tree_view') and app.batch_tree_view:
+            if hasattr(app, "batch_tree_view") and app.batch_tree_view:
                 norm_path = os.path.normpath(reference_path)
                 app.batch_tree_view._processed_items_cache[norm_path] = True
     except Exception as e:
@@ -499,7 +515,9 @@ class SyncProcess:
             use_temp_output = False
             temp_output_path = None
             try:
-                if current_tool == "autosubsync" and os.path.abspath(output) == os.path.abspath(subtitle):
+                if current_tool == "autosubsync" and os.path.abspath(
+                    output
+                ) == os.path.abspath(subtitle):
                     base, ext = os.path.splitext(output)
                     temp_output_path = f"{base}.autosubsync-tmp{ext}"
                     counter = 2
@@ -509,7 +527,8 @@ class SyncProcess:
                     effective_output = temp_output_path
                     use_temp_output = True
                     logger.info(
-                        "Autosubsync overwrite avoided: using temp output '%s'", effective_output
+                        "Autosubsync overwrite avoided: using temp output '%s'",
+                        effective_output,
                     )
             except Exception as e:
                 logger.warning(f"Failed to prepare temp output for autosubsync: {e}")
@@ -565,7 +584,9 @@ class SyncProcess:
                     )
                     self.signals.finished.emit(False, None)
                     return
-                cmd = self._build_cmd(current_tool, exe, reference, subtitle, effective_output)
+                cmd = self._build_cmd(
+                    current_tool, exe, reference, subtitle, effective_output
+                )
                 with self._process_lock:
                     if self.should_cancel:
                         return
@@ -613,22 +634,35 @@ class SyncProcess:
             if rc == 0 and use_temp_output and not self.should_cancel:
                 try:
                     if not os.path.exists(temp_output_path):
-                        self.signals.error.emit("Autosubsync did not produce an output file.")
+                        self.signals.error.emit(
+                            "Autosubsync did not produce an output file."
+                        )
                         rc = 1
                     else:
-                        logger.info("Replacing original output '%s' with temp '%s'", output, temp_output_path)
+                        logger.info(
+                            "Replacing original output '%s' with temp '%s'",
+                            output,
+                            temp_output_path,
+                        )
                         os.replace(temp_output_path, output)
                         logger.info("Replacement successful")
                 except Exception as e:
                     self.signals.error.emit(f"Failed to replace original subtitle: {e}")
                     logger.error("Replacement failed: %s", e)
                     rc = 1
-            if (rc != 0 or self.should_cancel) and use_temp_output and temp_output_path and os.path.exists(temp_output_path):
+            if (
+                (rc != 0 or self.should_cancel)
+                and use_temp_output
+                and temp_output_path
+                and os.path.exists(temp_output_path)
+            ):
                 try:
                     os.remove(temp_output_path)
                     logger.info("Removed temp output '%s'", temp_output_path)
                 except Exception:
-                    logger.warning("Failed to remove temp output '%s'", temp_output_path)
+                    logger.warning(
+                        "Failed to remove temp output '%s'", temp_output_path
+                    )
             # --- END POST-PROCESS ---
 
             if rc != 0 and not self.should_cancel:
@@ -903,16 +937,20 @@ def start_sync_process(app):
             it = items[current_item_idx]
             original_idx = current_item_idx
             original_ref_path, original_sub_path = (
-                os.path.normpath(it["reference_path"])
-                if it.get("reference_path")
-                else it.get("reference_path"),
-                os.path.normpath(it["subtitle_path"])
-                if it.get("subtitle_path")
-                else it.get("subtitle_path"),
+                (
+                    os.path.normpath(it["reference_path"])
+                    if it.get("reference_path")
+                    else it.get("reference_path")
+                ),
+                (
+                    os.path.normpath(it["subtitle_path"])
+                    if it.get("subtitle_path")
+                    else it.get("subtitle_path")
+                ),
             )
             if tool == "alass":
-                ok_paths, original_ref_path, original_sub_path = _ensure_alass_safe_paths(
-                    app, original_ref_path, original_sub_path
+                ok_paths, original_ref_path, original_sub_path = (
+                    _ensure_alass_safe_paths(app, original_ref_path, original_sub_path)
                 )
                 if not ok_paths:
                     if app.batch_mode_enabled and total_items > 1:
@@ -1148,15 +1186,25 @@ def start_sync_process(app):
                     total_items,
                 )
                 # Pass sync tracking callback to be called after success message but before saved to
-                post_success_cb = (lambda: _mark_item_as_processed(app, original_ref_path)) if ok else None
-                app.log_window.handle_batch_completion(ok, out, process_next_item, post_success_cb)
+                post_success_cb = (
+                    (lambda: _mark_item_as_processed(app, original_ref_path))
+                    if ok
+                    else None
+                )
+                app.log_window.handle_batch_completion(
+                    ok, out, process_next_item, post_success_cb
+                )
 
             def single_completion_handler(ok, out):
                 ok = handle_completion(app, ok, out, original_sub_path)
                 if ok:
                     cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
                 # Pass sync tracking callback to be called after success message but before saved to
-                post_success_cb = (lambda: _mark_item_as_processed(app, original_ref_path)) if ok else None
+                post_success_cb = (
+                    (lambda: _mark_item_as_processed(app, original_ref_path))
+                    if ok
+                    else None
+                )
                 app.log_window.handle_sync_completion(ok, out, post_success_cb)
 
             if app.batch_mode_enabled and len(items) > 1:

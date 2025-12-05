@@ -2507,7 +2507,7 @@ AUTO_PAIRING_SEASON_EPISODE = {
     "ur_PK": "سیزن/ایپی سوڈ کے ساتھ خودکار جوڑا بنانا",
 }
 
-PAIR_MULTIPLE_SUBTITLES_WITH_SINGLE_SOURCE  = {
+PAIR_MULTIPLE_SUBTITLES_WITH_SINGLE_SOURCE = {
     "en_US": "Pair multiple subtitles with single source",
     "es_ES": "Emparejar múltiples subtítulos con una sola fuente",
     "tr_TR": "Birden fazla altyazıyı tek bir kaynağa eşleştir",

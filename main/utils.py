@@ -10,6 +10,7 @@ import signal
 import time
 import shutil
 import texts
+
 try:
     import cchardet
 except:
@@ -507,16 +508,18 @@ def clear_config_cache():
 def restart_application():
     """Restart the application, handling AppImage, frozen executables, and scripts."""
     appimage = os.environ.get("APPIMAGE")
-    
+
     if appimage:
         # Running as AppImage - clear mount-related env vars for clean restart
         env = os.environ.copy()
-        for var in ('APPDIR', 'ARGV0', 'OWD', 'APPIMAGE_SILENT_INSTALL'):
+        for var in ("APPDIR", "ARGV0", "OWD", "APPIMAGE_SILENT_INSTALL"):
             env.pop(var, None)
         subprocess.Popen(
             [appimage] + sys.argv[1:],
-            start_new_session=True, env=env,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            start_new_session=True,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
     elif getattr(sys, "frozen", False):
         # Frozen executable (Windows/macOS)
@@ -524,7 +527,7 @@ def restart_application():
     else:
         # Python script
         subprocess.Popen([sys.executable] + sys.argv, start_new_session=True)
-    
+
     QApplication.quit()
 
 
@@ -816,6 +819,7 @@ def safe_open_url(url):
     import sys
     import platform
     import subprocess
+
     if platform.system() == "Linux" and getattr(sys, "frozen", False):
         # Use xdg-open with a clean environment
         env = os.environ.copy()
@@ -1146,7 +1150,10 @@ def check_for_updates_startup(parent):
         try:
             logger.info("Checking for updates...")
             import certifi
-            response = requests.get(GITHUB_VERSION_URL, timeout=5, verify=certifi.where())
+
+            response = requests.get(
+                GITHUB_VERSION_URL, timeout=5, verify=certifi.where()
+            )
             response.raise_for_status()
             remote = response.text.strip()
             try:

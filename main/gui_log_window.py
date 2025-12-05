@@ -154,6 +154,7 @@ class LogWindow(QWidget):
             self.append_message(
                 texts.UNKNOWN_SYNC_TOOL_NO_OPTIONS, color=COLORS["ORANGE"]
             )
+
         # Translate boolean values for display
         def bool_display(val):
             if val is True:
@@ -161,6 +162,7 @@ class LogWindow(QWidget):
             elif val is False:
                 return texts.DISABLED
             return str(val)
+
         self.append_message(f"{texts.BACKUP_SUBTITLES_BEFORE_OVERWRITING}: ", end="")
         self.append_message(
             bool_display(get("backup_subtitles_before_overwriting")),
@@ -190,11 +192,15 @@ class LogWindow(QWidget):
 
         self.append_message(f"{texts.KEEP_EXTRACTED_SUBTITLES}: ", end="")
         self.append_message(
-            bool_display(get("keep_extracted_subtitles")), bold=True, color=COLORS["GREEN"]
+            bool_display(get("keep_extracted_subtitles")),
+            bold=True,
+            color=COLORS["GREEN"],
         )
         self.append_message(f"{texts.KEEP_CONVERTED_SUBTITLES}: ", end="")
         self.append_message(
-            bool_display(get("keep_converted_subtitles")), bold=True, color=COLORS["GREEN"]
+            bool_display(get("keep_converted_subtitles")),
+            bold=True,
+            color=COLORS["GREEN"],
         )
 
         loc = get("automatic_save_location")
@@ -370,7 +376,9 @@ class LogWindow(QWidget):
         # Force scroll to bottom after buttons are shown
         self._scroll_to_bottom()
 
-    def handle_batch_completion(self, success, output, callback, post_success_callback=None):
+    def handle_batch_completion(
+        self, success, output, callback, post_success_callback=None
+    ):
         """Handle completion of a single item in batch processing
 
         Args:

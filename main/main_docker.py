@@ -6,6 +6,7 @@ try:
     from PyQt6.QtWidgets import QApplication
     from PyQt6.QtGui import QIcon
     from PyQt6.QtCore import qInstallMessageHandler, QtMsgType, Qt
+
     QT_LIB = "PyQt6"
     print("Using PyQt6")
 except ImportError:
@@ -13,6 +14,7 @@ except ImportError:
         from PySide6.QtWidgets import QApplication
         from PySide6.QtGui import QIcon
         from PySide6.QtCore import qInstallMessageHandler, QtMsgType, Qt
+
         QT_LIB = "PySide6"
         print("Using PySide6")
     except ImportError:
