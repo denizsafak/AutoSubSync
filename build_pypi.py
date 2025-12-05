@@ -4,6 +4,7 @@
 import subprocess
 import sys
 import os
+import shutil
 import tempfile
 
 
@@ -15,9 +16,24 @@ def main():
     print("=" * 40)
     print(f"📁 Script directory: {script_dir}")
     print(f"📦 Output directory: {output_dir}")
+    
+    # Check if build module is installed, install if not
+    # Temporarily remove script_dir from sys.path to avoid importing local build.py
+    import sys
+    original_path = sys.path[:]
+    try:
+        sys.path = [p for p in sys.path if os.path.abspath(p) != script_dir]
+        import build
+    except ImportError:
+        print("📦 Installing build module...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "build"], check=True)
+    finally:
+        sys.path = original_path
 
     # Create output directory
-    print(f"📂 Creating output directory: {output_dir}")
+    print(f"📂 Preparing output directory: {output_dir}")
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
 
     print("🏗️  Building PyPI package...")

@@ -55,17 +55,37 @@ yay -S autosubsync-bin
 > ```
 
 ### PyPI (All Platforms)
-You can also install AutoSubSync using pip on any platform with Python 3.10+:
+You can install AutoSubSync using either pip or uv (a fast Python package manager) on any platform with Python 3.10+:
+
+
 ```bash
 pip install assy
 ```
 
-> **Optional:** For Silero VAD support in ffsubsync, install with torch (Python 3.14 and below only):
-> ```bash
-> pip install assy[torch]
-> ```
+<details>
+<summary><strong>With uv (click to expand)</strong></summary>
 
-Then run:
+```bash
+uv pip install assy
+```
+
+</details>
+
+#### For Silero VAD support in ffsubsync, install with torch (Python < 3.14):
+
+```bash
+pip install assy[torch]
+```
+<details>
+<summary><strong>With uv (click to expand)</strong></summary>
+
+```bash
+uv pip install assy[torch]
+```
+
+</details>
+
+#### Then run:
 ```bash
 assy
 ```

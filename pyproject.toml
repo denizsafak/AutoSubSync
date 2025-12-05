@@ -10,7 +10,7 @@ authors = [
 ]
 readme = "README.md"
 license = "GPL-3.0-or-later"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 keywords = [
     "subtitle",
     "synchronization",
@@ -47,7 +47,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Environment :: X11 Applications :: Qt",
 ]
