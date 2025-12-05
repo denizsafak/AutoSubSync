@@ -29,4 +29,6 @@
 - Batch Input system now supports **adding multiple subtitle files to a single Video/Reference** parent item. Each subtitle file is automatically interpreted as its own individual processing task, all linked to the same parent video/reference file, feature mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
 - Added **Undo/Redo** support to the Batch Input, including `Ctrl+Z` and `Ctrl+Y` shortcuts and new right-click menu options, allowing users to easily revert or reapply actions while managing items.
 - Upgraded [ffsubsync](https://github.com/smacke/ffsubsync) from `0.4.30` to `0.4.31`.
+- **Linux:** Now distributed as AppImage for easier installation and portability.
+- **macOS:** Now distributed as a native .app bundle with improved code signing.
 - Improvements in documentation, translations, and code.

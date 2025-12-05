@@ -25,13 +25,23 @@ from utils import get_resource_path
 from constants import PROGRAM_NAME, VERSION, FFMPEG_EXECUTABLE, FFPROBE_EXECUTABLE
 
 # Set environment variables for ffmpeg and ffprobe
-os.environ["PATH"] = os.pathsep.join(
-    [
-        os.path.dirname(FFMPEG_EXECUTABLE),
-        os.path.dirname(FFPROBE_EXECUTABLE),
-        os.environ.get("PATH", ""),
-    ]
-)
+# Also add Homebrew paths for macOS (required for .app bundles which don't inherit shell PATH)
+path_components = [
+    os.path.dirname(FFMPEG_EXECUTABLE),
+    os.path.dirname(FFPROBE_EXECUTABLE),
+]
+
+# Add Homebrew paths on macOS (needed for alass-cli and other external tools)
+if platform.system() == "Darwin":
+    # Apple Silicon Macs
+    if os.path.isdir("/opt/homebrew/bin"):
+        path_components.append("/opt/homebrew/bin")
+    # Intel Macs
+    if os.path.isdir("/usr/local/bin"):
+        path_components.append("/usr/local/bin")
+
+path_components.append(os.environ.get("PATH", ""))
+os.environ["PATH"] = os.pathsep.join(path_components)
 
 # Setup root logger with basic configuration
 try:
