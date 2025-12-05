@@ -507,8 +507,21 @@ class autosubsyncapp(QWidget):
             "check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]
         ):
             QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
+        # Flag to track if ffmpeg has been initialized
+        self._ffmpeg_initialized = False
         self.initUI()
         logger.info("Main window initialized")
+
+    def showEvent(self, event):
+        """Handle show event to initialize ffmpeg after GUI is visible."""
+        super().showEvent(event)
+        # Only initialize ffmpeg once, after the first show
+        if not self._ffmpeg_initialized:
+            self._ffmpeg_initialized = True
+            # Use a short timer to ensure the window is fully rendered
+            from utils import initialize_static_ffmpeg
+
+            QTimer.singleShot(100, lambda: initialize_static_ffmpeg(self))
 
     def apply_theme(self, theme):
         from PyQt6.QtGui import QPalette, QColor

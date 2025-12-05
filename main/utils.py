@@ -1238,3 +1238,115 @@ def handle_save_location_dropdown(
         update_folder_label(label, folder)
     else:
         update_folder_label(label)
+
+
+# FFmpeg initialization for pip installs
+class FFmpegDownloadSignals(QObject):
+    """Signals for FFmpeg download progress."""
+
+    finished = pyqtSignal(bool, str)  # success, error_message
+
+
+def initialize_static_ffmpeg(parent=None, callback=None):
+    """
+    Initialize static_ffmpeg if needed (for pip installs).
+    Shows a loading dialog while downloading.
+
+    Args:
+        parent: Parent widget for the dialog
+        callback: Optional callback function to call when done (receives success bool)
+
+    Returns:
+        bool: True if successful or not needed, False if failed
+    """
+    from constants import NEEDS_STATIC_FFMPEG
+
+    if not NEEDS_STATIC_FFMPEG:
+        if callback:
+            callback(True)
+        return True
+
+    # Need to download - show dialog
+    from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
+    from PyQt6.QtCore import Qt, QThread
+
+    class DownloadThread(QThread):
+        """Thread to download ffmpeg without blocking UI."""
+
+        def __init__(self, signals):
+            super().__init__()
+            self.signals = signals
+
+        def run(self):
+            try:
+                import static_ffmpeg
+                from static_ffmpeg import run
+
+                # This actually downloads the binaries if not present
+                run.get_or_fetch_platform_executables_else_raise()
+                # Then add them to PATH
+                static_ffmpeg.add_paths()
+                self.signals.finished.emit(True, "")
+            except ImportError as e:
+                self.signals.finished.emit(
+                    False, f"static_ffmpeg not installed: {str(e)}"
+                )
+            except Exception as e:
+                self.signals.finished.emit(False, str(e))
+
+    # Create and show the dialog
+    dialog = QDialog(parent)
+    dialog.setWindowTitle(texts.DOWNLOADING_FFMPEG)
+    dialog.setWindowFlags(
+        dialog.windowFlags()
+        & ~Qt.WindowType.WindowContextHelpButtonHint
+        & ~Qt.WindowType.WindowCloseButtonHint
+    )
+    dialog.setModal(True)
+    dialog.setFixedSize(400, 120)
+
+    layout = QVBoxLayout(dialog)
+    layout.setContentsMargins(20, 20, 20, 20)
+    layout.setSpacing(15)
+
+    label = QLabel(texts.DOWNLOADING_FFMPEG_FIRST_RUN)
+    label.setWordWrap(True)
+    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(label)
+
+    progress = QProgressBar()
+    progress.setRange(0, 0)  # Indeterminate progress
+    progress.setTextVisible(False)
+    layout.addWidget(progress)
+
+    # Setup signals and thread
+    signals = FFmpegDownloadSignals()
+    thread = DownloadThread(signals)
+
+    def on_finished(success, error_msg):
+        dialog.accept()
+        if success:
+            logger.info("FFmpeg downloaded and paths added successfully")
+        else:
+            logger.error(f"FFmpeg download failed: {error_msg}")
+            QMessageBox.warning(
+                parent,
+                texts.DOWNLOADING_FFMPEG,
+                texts.FFMPEG_DOWNLOAD_FAILED.format(error=error_msg),
+            )
+        if callback:
+            callback(success)
+
+    signals.finished.connect(on_finished)
+    thread.finished.connect(thread.deleteLater)
+
+    # Start download in background
+    thread.start()
+
+    # Show dialog (blocks until download completes)
+    dialog.exec()
+
+    # Wait for thread to finish
+    thread.wait()
+
+    return True

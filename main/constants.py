@@ -162,17 +162,22 @@ if (
     FFPROBE_EXECUTABLE = os.path.normpath(_ffprobe_res)
     FFMPEG_DIR = os.path.dirname(FFMPEG_EXECUTABLE)
 else:
-    # Use static-ffmpeg for pip installs (not in frozen builds)
-    if not getattr(sys, "frozen", False):
-        try:
-            import static_ffmpeg
-
-            static_ffmpeg.add_paths()
-        except (ImportError, Exception):
-            pass
+    # For pip installs (not in frozen builds), defer static_ffmpeg initialization
+    # until after GUI loads to show download progress
     FFMPEG_EXECUTABLE = "ffmpeg"
     FFPROBE_EXECUTABLE = "ffprobe"
     FFMPEG_DIR = None
+
+# Flag to indicate if static_ffmpeg needs to be initialized
+NEEDS_STATIC_FFMPEG = (
+    not getattr(sys, "frozen", False)
+    and not (
+        _ffmpeg_res
+        and _ffprobe_res
+        and os.path.isfile(_ffmpeg_res)
+        and os.path.isfile(_ffprobe_res)
+    )
+)
 
 # Synchronization tools
 SYNC_TOOLS = {

@@ -66,7 +66,7 @@ pip install assy
 <summary><strong>With uv (click to expand)</strong></summary>
 
 ```bash
-uv pip install assy
+uv pip install --system assy
 ```
 
 </details>
@@ -80,7 +80,7 @@ pip install assy[torch]
 <summary><strong>With uv (click to expand)</strong></summary>
 
 ```bash
-uv pip install assy[torch]
+uv pip install --system assy[torch]
 ```
 
 </details>
