@@ -108,7 +108,6 @@ uv run assy
 
 > You can install uv from [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
 
----
 
 ### Docker
 Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync in a Docker container. This makes it easier to deploy and run AutoSubSync in different environments without worrying about dependencies.
