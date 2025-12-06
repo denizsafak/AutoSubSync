@@ -1,3 +1,8 @@
+v6.3 only includes the following changes on top of v6.2:
+- Added new language: zh_TW (Traditional Chinese, Taiwan) contributed by [@ceshizhuanyong895](https://github.com/ceshizhuanyong895) in [#68](https://github.com/denizsafak/AutoSubSync/pull/68).
+- Fixed an issue where the application would not restart correctly, due to incorrect handling of entry points in the `restart_application` function. Improved error logging to provide clearer information if a restart fails in the future.
+
+Keeping the v6.2 changelog here for reference:
 - **PyPI package now available!** You can install AutoSubSync directly with `pip install assy` and run with `assy` or `assy-cli`. This provides an easier installation method for users who prefer pip.
 - Added **Sync tracking** system for Batch Mode. This system keeps track of all videos that have been successfully synced, so when you add a large library of videos to the batch list, the app automatically identifies and skips the ones you've already processed before. This is especially useful when working with large media collections where you periodically add new content and want to avoid re-syncing existing files. Feature requested by [@M10pnl](https://github.com/M10pnl) in [#54](https://github.com/denizsafak/AutoSubSync/issues/54).
   - **Designed for video files only**; reference or output subtitle files are not tracked.
