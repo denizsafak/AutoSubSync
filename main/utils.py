@@ -1298,12 +1298,45 @@ def initialize_static_ffmpeg(parent=None, callback=None):
     Returns:
         bool: True if successful or not needed, False if failed
     """
-    from constants import NEEDS_STATIC_FFMPEG
+    from constants import NEEDS_STATIC_FFMPEG, FFMPEG_EXECUTABLE
 
     if not NEEDS_STATIC_FFMPEG:
+        logger.info(f"Using bundled FFmpeg: {FFMPEG_EXECUTABLE}")
         if callback:
             callback(True)
         return True
+
+    # Check if static_ffmpeg executables are already cached
+    try:
+        import static_ffmpeg
+        from static_ffmpeg import run
+
+        # Check if executables already exist (without downloading)
+        platform_dir = run.get_platform_dir()
+        if platform.system() == "Windows":
+            ffmpeg_path = os.path.join(platform_dir, "ffmpeg.exe")
+            ffprobe_path = os.path.join(platform_dir, "ffprobe.exe")
+        else:
+            ffmpeg_path = os.path.join(platform_dir, "ffmpeg")
+            ffprobe_path = os.path.join(platform_dir, "ffprobe")
+
+        # Verify the files actually exist on disk
+        if os.path.isfile(ffmpeg_path) and os.path.isfile(ffprobe_path):
+            # Executables are already present - just add to PATH
+            static_ffmpeg.add_paths()
+            logger.info(f"Using static_ffmpeg (module): {ffmpeg_path}")
+            if callback:
+                callback(True)
+            return True
+        # Otherwise fall through to download
+    except ImportError as e:
+        logger.error(f"static_ffmpeg not installed: {e}")
+        if callback:
+            callback(False)
+        return False
+    except Exception as e:
+        # Other error, try downloading anyway
+        logger.debug(f"Error checking for module ffmpeg: {e}")
 
     # Need to download - show dialog
     from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
@@ -1321,11 +1354,37 @@ def initialize_static_ffmpeg(parent=None, callback=None):
                 import static_ffmpeg
                 from static_ffmpeg import run
 
-                # This actually downloads the binaries if not present
-                run.get_or_fetch_platform_executables_else_raise()
+                # Get the platform directory and expected paths
+                platform_dir = run.get_platform_dir()
+                if platform.system() == "Windows":
+                    ffmpeg_path = os.path.join(platform_dir, "ffmpeg.exe")
+                    ffprobe_path = os.path.join(platform_dir, "ffprobe.exe")
+                else:
+                    ffmpeg_path = os.path.join(platform_dir, "ffmpeg")
+                    ffprobe_path = os.path.join(platform_dir, "ffprobe")
+
+                # If executables don't exist, remove the installed.crumb marker
+                # to force static_ffmpeg to re-download
+                if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
+                    crumb_file = os.path.join(platform_dir, "installed.crumb")
+                    if os.path.exists(crumb_file):
+                        try:
+                            os.remove(crumb_file)
+                            logger.info("Removed installed.crumb to force re-download")
+                        except OSError as e:
+                            logger.warning(f"Could not remove installed.crumb: {e}")
+
+                # This downloads the binaries if not present
+                ffmpeg_path, ffprobe_path = run.get_or_fetch_platform_executables_else_raise()
+                
+                # Verify the files actually exist after download
+                if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
+                    self.signals.finished.emit(False, "FFmpeg download failed - files not found after download")
+                    return
+                    
                 # Then add them to PATH
                 static_ffmpeg.add_paths()
-                self.signals.finished.emit(True, "")
+                self.signals.finished.emit(True, ffmpeg_path)
             except ImportError as e:
                 self.signals.finished.emit(
                     False, f"static_ffmpeg not installed: {str(e)}"
@@ -1365,7 +1424,7 @@ def initialize_static_ffmpeg(parent=None, callback=None):
     def on_finished(success, error_msg):
         dialog.accept()
         if success:
-            logger.info("FFmpeg downloaded and paths added successfully")
+            logger.info(f"Using static_ffmpeg (downloaded): {error_msg}")
         else:
             logger.error(f"FFmpeg download failed: {error_msg}")
             QMessageBox.warning(
@@ -1377,7 +1436,6 @@ def initialize_static_ffmpeg(parent=None, callback=None):
             callback(success)
 
     signals.finished.connect(on_finished)
-    thread.finished.connect(thread.deleteLater)
 
     # Start download in background
     thread.start()
@@ -1385,7 +1443,8 @@ def initialize_static_ffmpeg(parent=None, callback=None):
     # Show dialog (blocks until download completes)
     dialog.exec()
 
-    # Wait for thread to finish
-    thread.wait()
+    # Wait for thread to finish if it's still running
+    if thread.isRunning():
+        thread.wait()
 
     return True
