@@ -511,12 +511,39 @@ def restart_application():
 
     try:
         if appimage:
-            # Running as AppImage - clear mount-related env vars for clean restart
+            # Running as AppImage
+            logger.info(f"Restarting AppImage: {appimage}")
+            logger.info(f"AppImage exists: {os.path.exists(appimage)}")
+            logger.info(f"AppImage is executable: {os.access(appimage, os.X_OK)}")
+            
+            # Verify the AppImage file exists and is executable
+            if not os.path.exists(appimage):
+                logger.error(f"AppImage file not found: {appimage}")
+                return
+            
+            if not os.access(appimage, os.X_OK):
+                logger.warning(f"AppImage not executable, attempting to set execute permission")
+                try:
+                    import stat
+                    os.chmod(appimage, os.stat(appimage).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                except Exception as e:
+                    logger.error(f"Failed to set execute permission: {e}")
+            
+            # Clear mount-related env vars for clean restart
             env = os.environ.copy()
             for var in ("APPDIR", "ARGV0", "OWD", "APPIMAGE_SILENT_INSTALL"):
                 env.pop(var, None)
+            
+            # Also restore LD_LIBRARY_PATH if modified by AppImage
+            if "LD_LIBRARY_PATH_ORIG" in env:
+                env["LD_LIBRARY_PATH"] = env["LD_LIBRARY_PATH_ORIG"]
+            elif "LD_LIBRARY_PATH" in env:
+                del env["LD_LIBRARY_PATH"]
+            
+            cmd = [appimage] + sys.argv[1:]
+            logger.info(f"Restart command: {cmd}")
             subprocess.Popen(
-                [appimage] + sys.argv[1:],
+                cmd,
                 start_new_session=True,
                 env=env,
                 stdout=subprocess.DEVNULL,
