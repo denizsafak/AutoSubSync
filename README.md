@@ -55,6 +55,8 @@ yay -S autosubsync-bin
 > ```
 
 ### PyPI (All Platforms)
+[![PyPi Python Versions](https://img.shields.io/pypi/pyversions/assy)](https://pypi.org/project/assy/)
+
 You can install AutoSubSync using either pip or uv (a fast Python package manager) on any platform with Python 3.10 - 3.13:
 
 
@@ -105,6 +107,12 @@ uv run assy
 ```
 
 > You can install uv from [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
+
+---
+
+### Docker
+Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync in a Docker container. This makes it easier to deploy and run AutoSubSync in different environments without worrying about dependencies.
+> #### [Go to Docker Guide](DOCKER.md)
 
 ---
 
@@ -325,10 +333,6 @@ Access settings via the gear icon in the **top right** corner.
 | **About** | Display application version, credits, and links to the project repository. |
 
 ---
-
-## `Docker Guide`
-Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync in a Docker container. This makes it easier to deploy and run AutoSubSync in different environments without worrying about dependencies.
-> ### [Go to Docker Guide](DOCKER.md)
 
 ## `Contributing`
 I welcome contributions! If you have ideas for new features, improvements, or bug fixes, please fork the repository and submit a pull request.
