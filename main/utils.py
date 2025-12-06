@@ -506,27 +506,66 @@ def clear_config_cache():
 
 
 def restart_application():
-    """Restart the application, handling AppImage, frozen executables, and scripts."""
+    """Restart the application, handling AppImage, frozen executables, and pip installs."""
     appimage = os.environ.get("APPIMAGE")
 
-    if appimage:
-        # Running as AppImage - clear mount-related env vars for clean restart
-        env = os.environ.copy()
-        for var in ("APPDIR", "ARGV0", "OWD", "APPIMAGE_SILENT_INSTALL"):
-            env.pop(var, None)
-        subprocess.Popen(
-            [appimage] + sys.argv[1:],
-            start_new_session=True,
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    elif getattr(sys, "frozen", False):
-        # Frozen executable (Windows/macOS)
-        subprocess.Popen([sys.executable] + sys.argv[1:], start_new_session=True)
-    else:
-        # Python script
-        subprocess.Popen([sys.executable] + sys.argv, start_new_session=True)
+    try:
+        if appimage:
+            # Running as AppImage - clear mount-related env vars for clean restart
+            env = os.environ.copy()
+            for var in ("APPDIR", "ARGV0", "OWD", "APPIMAGE_SILENT_INSTALL"):
+                env.pop(var, None)
+            subprocess.Popen(
+                [appimage] + sys.argv[1:],
+                start_new_session=True,
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        elif getattr(sys, "frozen", False):
+            # Frozen executable (PyInstaller on Windows/macOS/Linux)
+            # sys.executable is the frozen executable itself
+            subprocess.Popen(
+                [sys.executable] + sys.argv[1:],
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:
+            # Python script or pip-installed entry point
+            # sys.argv[0] contains the script/entry point path
+            argv0 = sys.argv[0]
+
+            if argv0.endswith(".py"):
+                # Running as a Python script directly
+                cmd = [sys.executable] + sys.argv
+            else:
+                # Pip-installed entry point
+                # On Windows, pip creates .exe wrapper files in Scripts folder
+                # sys.argv[0] may not have .exe extension, so we need to find the actual executable
+                if platform.system() == "Windows":
+                    # Try to find the .exe file
+                    if os.path.exists(argv0 + ".exe"):
+                        cmd = [argv0 + ".exe"] + sys.argv[1:]
+                    elif os.path.exists(argv0):
+                        cmd = sys.argv
+                    else:
+                        # Fallback: use python -m to run the module
+                        cmd = [sys.executable, "-m", "main.main"] + sys.argv[1:]
+                else:
+                    # On Unix, entry points are executable scripts
+                    cmd = sys.argv
+
+            logger.info(f"Restart command: {cmd}")
+            subprocess.Popen(
+                cmd,
+                start_new_session=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+    except Exception as e:
+        logger.error(f"Failed to restart application: {e}")
+        return
 
     QApplication.quit()
 

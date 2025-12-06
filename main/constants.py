@@ -59,6 +59,7 @@ LANGUAGES = {
     "Українська": "uk_UA",
     "Русский": "ru_RU",
     "中国人": "zh_CN",
+    "繁體中文": "zh_TW",
     "日本語": "ja_JP",
     "한국어": "ko_KR",
     "हिन्दी": "hi_IN",
@@ -66,7 +67,6 @@ LANGUAGES = {
     "اردو": "ur_PK",
     "العربية": "ar_SA",
     "فارسی": "fa_IR",
-    "繁體中文": "zh_TW",
 }
 
 # Program Information
