@@ -68,7 +68,7 @@ pip install assy
 <summary><strong>With uv (click to expand)</strong></summary>
 
 ```bash
-uv pip install --system assy
+uv tool install assy
 ```
 
 </details>
@@ -82,7 +82,7 @@ pip install assy[torch]
 <summary><strong>With uv (click to expand)</strong></summary>
 
 ```bash
-uv pip install --system assy[torch]
+uv tool install assy[torch]
 ```
 
 </details>
@@ -92,19 +92,22 @@ uv pip install --system assy[torch]
 assy
 ```
 
+
 #### If your system Python is not compatible (e.g., macOS with older Python):
 
-If your system Python version is below 3.10 or above 3.13, you can use `uv` to automatically download a compatible Python version and run AutoSubSync:
+If your system Python version is below 3.10 or above 3.13, the recommended solution is to use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) to install and run AutoSubSync with a compatible Python version automatically.
+
+**First, install `uv` by following the instructions at [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).**
+
+Then, simply run:
 
 ```bash
-# One-liner to run AutoSubSync with a compatible Python (downloads Python 3.12 if needed)
-uvx --python 3.12 assy
-
-# Or create a virtual environment with a specific Python version
-uv venv --python 3.12
-uv pip install assy
-uv run assy
+uv tool install assy
+# Then run with:
+assy
 ```
+
+This will ensure you have a compatible Python version and the latest AutoSubSync installed, regardless of your system Python.
 
 > You can install uv from [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
 
@@ -353,5 +356,54 @@ Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosub
 
 > [!IMPORTANT]
 > The automatic sync feature is not always perfect. I recommend you to check the subtitles after syncing.
+
+## `How to uninstall?`
+
+Before uninstalling, you may want to cleanup your settings and logs. Open AutoSubSync and go to:
+
+- `Settings` → `Open config file directory` to locate your configuration files and databases. **(You may want to back up these files if you plan to reinstall AutoSubSync later.)**
+- `Settings` → `Open logs directory` to delete log files.
+
+Then, follow the appropriate method below based on how you installed AutoSubSync:
+
+<details>
+<summary><strong>If installed with pip</strong></summary>
+
+```bash
+pip uninstall assy
+```
+</details>
+
+<details>
+<summary><strong>If installed with uv</strong></summary>
+
+```bash
+uv tool uninstall assy
+```
+</details>
+
+<details>
+<summary><strong>If installed from AUR (yay)</strong></summary>
+
+```bash
+yay -R autosubsync-bin
+```
+</details>
+
+<details>
+<summary><strong>If using AppImage or standalone binary</strong></summary>
+
+- **Linux:** Delete the `AppImage` file from your system.
+- **macOS:** Delete the `.app` file from your Applications or wherever you placed it.
+- **Windows:** Delete the folder that contains the extracted files (including the `.exe`).
+</details>
+
+<details>
+<summary><strong>If you created a virtual environment</strong></summary>
+
+Simply remove the virtual environment directory you created for AutoSubSync.
+</details>
+
+---
 
 > Tags: automatic subtitle synchronization, autosubsync, automatic sub sync, subtitle synchronization, resync subtitles, re-sync subtitles, subtitle shifter, subtitle adjuster, subtitle tools, subtitle utilities, synchronize subtitles, adjust subtitle timing, subtitle management, Python subtitle tool, subtitle manipulation, subtitle synchronization script, subtitle sync fixing, subtitle sync fix, fix subtitle sync.
