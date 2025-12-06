@@ -66,6 +66,7 @@ LANGUAGES = {
     "اردو": "ur_PK",
     "العربية": "ar_SA",
     "فارسی": "fa_IR",
+    "繁體中文": "zh_TW",
 }
 
 # Program Information
@@ -94,6 +95,7 @@ PROGRAM_TAGLINE = {
     "ms_MY": "Penyegerak Sarikata",
     "th_TH": "ตัวซิงค์คำบรรยาย",
     "ur_PK": "سب ٹائٹل سنکرونائزر",
+    "zh_TW": "字幕同步工具",
 }
 
 PROGRAM_DESCRIPTION = {
@@ -119,6 +121,7 @@ PROGRAM_DESCRIPTION = {
     "ms_MY": "AutoSubSync adalah alat Python yang mesra pengguna yang membantu anda menyegerakkan fail sarikata dengan mudah. Ia menyokong pelbagai format sarikata dan membolehkan anda menyegerakkan sarikata dengan mudah dengan mengalihkan masa sarikata secara automatik atau manual dengan offset milisaat.",
     "th_TH": "AutoSubSync เป็นเครื่องมือ Python ที่ใช้งานง่ายที่ช่วยให้คุณซิงค์ไฟล์คำบรรยายได้อย่างง่ายดาย รองรับรูปแบบคำบรรยายต่างๆ และช่วยให้คุณซิงค์คำบรรยายได้อย่างง่ายดายโดยการปรับเวลาคำบรรยายโดยอัตโนมัติหรือด้วยตนเองด้วยการชดเชยมิลลิวินาที",
     "ur_PK": "AutoSubSync ایک صارف دوست Python ٹول ہے جو آپ کو سب ٹائٹل فائلوں کو آسانی سے سنکرونائز کرنے میں مدد کرتا ہے۔ یہ مختلف سب ٹائٹل فارمیٹس کو سپورٹ کرتا ہے اور سب ٹائٹل ٹائمنگ کو خودکار یا دستی طور پر ملی سیکنڈ آفسیٹ کے ساتھ منتقل کرکے سب ٹائٹلز کو آسانی سے سنکرونائز کرنے کی اجازت دیتا ہے۔",
+    "zh_TW": "AutoSubSync 是一款使用者友善的 Python 工具，可協助您輕鬆同步字幕檔案。它支援多種字幕格式，並允許您透過自動或手動調整毫秒偏移量，輕鬆同步字幕。",
 }
 
 GITHUB_URL = "https://github.com/denizsafak/AutoSubSync"
@@ -206,6 +209,7 @@ SYNC_TOOLS = {
             "ms_MY": "Segerakkan sarikata dengan video secara automatik",
             "th_TH": "ซิงค์คำบรรยายกับวิดีโอโดยอัตโนมัติ",
             "ur_PK": "سب ٹائٹلز کو ویڈیو کے ساتھ خودکار طور پر سنکرونائز کریں",
+            "zh_TW": "自動將字幕與影片同步",
         },
         "github": "https://github.com/smacke/ffsubsync",
         "documentation": "https://ffsubsync.readthedocs.io/",
@@ -240,6 +244,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Jangan betulkan kadar bingkai",
                     "th_TH": "ไม่ต้องแก้ไขอัตราเฟรม",
                     "ur_PK": "فریم ریٹ کو ٹھیک نہ کریں",
+                    "zh_TW": "不修復幀率",
                 },
                 "tooltip": {
                     "en_US": "If specified, ffsubsync will not attempt to correct a framerate mismatch between reference and subtitles.\nThis can be useful when you know that the video and subtitle framerates are same, only the subtitles are out of sync.",
@@ -264,6 +269,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Jika dinyatakan, ffsubsync tidak akan cuba membetulkan ketidakpadanan kadar bingkai antara rujukan dan sarikata.\nIni boleh berguna apabila anda tahu bahawa kadar bingkai video dan sarikata adalah sama, hanya sarikata yang tidak segerak.",
                     "th_TH": "หากระบุ ffsubsync จะไม่พยายามแก้ไขความไม่ตรงกันของอัตราเฟรมระหว่างอ้างอิงและคำบรรยาย\nสิ่งนี้อาจมีประโยชน์เมื่อคุณรู้ว่าอัตราเฟรมของวิดีโอและคำบรรยายเหมือนกัน เพียงแค่คำบรรยายไม่ตรงกัน",
                     "ur_PK": "اگر مخصوص کیا جائے تو، ffsubsync ریفرنس اور سب ٹائٹلز کے درمیان فریم ریٹ کی عدم مطابقت کو ٹھیک کرنے کی کوشش نہیں کرے گا۔\nیہ اس وقت مفید ہو سکتا ہے جب آپ جانتے ہیں کہ ویڈیو اور سب ٹائٹل فریم ریٹ یکساں ہیں، صرف سب ٹائٹلز سنک سے باہر ہیں۔",
+                    "zh_TW": "如果指定此選項，ffsubsync 將不會嘗試修正參考檔與字幕之間的幀率不符。\n當您知道影片和字幕的幀率相同，僅是字幕不同步時，這會很有用。",
                 },
                 "argument": "--no-fix-framerate",
                 "default": False,
@@ -293,6 +299,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Gunakan carian bahagian emas",
                     "th_TH": "ใช้การค้นหาส่วนทอง",
                     "ur_PK": "گولڈن سیکشن سرچ استعمال کریں",
+                    "zh_TW": "使用黃金分割搜尋",
                 },
                 "tooltip": {
                     "en_US": "Use golden-section search to find the optimal ratio between video and subtitle framerates (by default, only a few common ratios are evaluated)",
@@ -317,6 +324,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Gunakan carian bahagian emas untuk mencari nisbah optimum antara kadar bingkai video dan sarikata (secara lalai, hanya beberapa nisbah biasa yang dinilai)",
                     "th_TH": "ใช้การค้นหาส่วนทองเพื่อหาอัตราส่วนที่เหมาะสมที่สุดระหว่างอัตราเฟรมของวิดีโอและคำบรรยาย (โดยค่าเริ่มต้น จะประเมินเพียงอัตราส่วนทั่วไปไม่กี่อัน)",
                     "ur_PK": "ویڈیو اور سب ٹائٹل فریم ریٹس کے درمیان بہترین تناسب تلاش کرنے کے لیے گولڈن سیکشن سرچ استعمال کریں (ڈیفالٹ کے ذریعے، صرف کچھ عام تناسب کا جائزہ لیا جاتا ہے)",
+                    "zh_TW": "使用黃金分割搜尋來尋找影片和字幕幀率之間的最佳比例（預設情況下，僅評估幾個常見比例）",
                 },
                 "argument": "--gss",
                 "default": False,
@@ -346,6 +354,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Pengesan aktiviti suara",
                     "th_TH": "เครื่องตรวจจับกิจกรรมเสียง",
                     "ur_PK": "آواز کی سرگرمی کا پتہ لگانے والا",
+                    "zh_TW": "語音活動偵測器",
                 },
                 "tooltip": {
                     "en_US": "Which voice activity detector (VAD) to use for speech extraction (if using video / audio as a reference, default=subs_then_webrtc).\nAuditok can sometimes work better in the case of low-quality audio than WebRTC.",
@@ -370,6 +379,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Pengesan aktiviti suara (VAD) yang manakah untuk digunakan bagi pengekstrakan pertuturan (jika menggunakan video/audio sebagai rujukan, lalai=subs_then_webrtc).\nAuditok kadangkala boleh berfungsi lebih baik dalam kes audio berkualiti rendah berbanding WebRTC.",
                     "th_TH": "เครื่องตรวจจับกิจกรรมเสียง (VAD) ไหนที่จะใช้สำหรับการแยกเสียงพูด (หากใช้วิดีโอ/เสียงเป็นอ้างอิง ค่าเริ่มต้น=subs_then_webrtc)\nAuditok บางครั้งอาจทำงานได้ดีกว่าในกรณีของเสียงคุณภาพต่ำกว่า WebRTC",
                     "ur_PK": "تقریر نکالنے کے لیے کون سا آواز کی سرگرمی کا پتہ لگانے والا (VAD) استعمال کرنا ہے (اگر ویڈیو/آڈیو کو ریفرنس کے طور پر استعمال کر رہے ہیں، ڈیفالٹ=subs_then_webrtc)۔\nAuditok کبھی کبھی کم معیار کی آڈیو کے معاملے میں WebRTC سے بہتر کام کر سکتا ہے۔",
+                    "zh_TW": "用於語音提取的語音活動偵測器 (VAD)（如果使用影片/音訊作為參考，預設=subs_then_webrtc）。\n在低音質的情況下，Auditok 有時比 WebRTC 效果更好。",
                 },
                 "argument": "--vad",
                 "default": "default",
@@ -406,6 +416,7 @@ SYNC_TOOLS = {
                         "ms_MY": "Lalai",
                         "th_TH": "ค่าเริ่มต้น",
                         "ur_PK": "ڈیفالٹ",
+                        "zh_TW": "預設",
                     },
                     "subs_then_webrtc": {
                         "en_US": "Subs then WebRTC",
@@ -430,6 +441,7 @@ SYNC_TOOLS = {
                         "ms_MY": "Sarikata kemudian WebRTC",
                         "th_TH": "คำบรรยายแล้ว WebRTC",
                         "ur_PK": "سب ٹائٹل پھر WebRTC",
+                        "zh_TW": "字幕然後 WebRTC",
                     },
                     "subs_then_auditok": {
                         "en_US": "Subs then Auditok",
@@ -454,6 +466,7 @@ SYNC_TOOLS = {
                         "ms_MY": "Sarikata kemudian Auditok",
                         "th_TH": "คำบรรยายแล้ว Auditok",
                         "ur_PK": "سب ٹائٹل پھر Auditok",
+                        "zh_TW": "字幕然後 Auditok",
                     },
                     "subs_then_silero": {
                         "en_US": "Subs then Silero",
@@ -478,6 +491,7 @@ SYNC_TOOLS = {
                         "ms_MY": "Sarikata kemudian Silero",
                         "th_TH": "คำบรรยายแล้ว Silero",
                         "ur_PK": "سب ٹائٹل پھر Silero",
+                        "zh_TW": "字幕然後 Silero",
                     },
                     "webrtc": "WebRTC",
                     "auditok": "Auditok",
@@ -511,6 +525,7 @@ SYNC_TOOLS = {
             "ms_MY": "Segerak sarikata automatik yang tidak bergantung pada bahasa",
             "th_TH": "การซิงค์คำบรรยายอัตโนมัติที่ไม่ขึ้นกับภาษา",
             "ur_PK": "خودکار زبان سے آزاد سب ٹائٹل سنکرونائزیشن",
+            "zh_TW": "自動語言無關字幕同步",
         },
         "github": "https://github.com/kaegi/alass",
         "documentation": "https://github.com/kaegi/alass/blob/master/documentation/slides.pdf",
@@ -553,6 +568,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Guna sarikata terbenam dalam video",
                     "th_TH": "ใช้คำบรรยายที่ฝังในวิดีโอ",
                     "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز استعمال کریں",
+                    "zh_TW": "使用影片中的內嵌字幕",
                 },
                 "tooltip": {
                     "en_US": "Extract the embedded subtitles in the video and perform synchronization with these subtitles.",
@@ -577,6 +593,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Ekstrak sarikata terbenam dalam video dan lakukan penyegerakan dengan sarikata tersebut.",
                     "th_TH": "แยกคำบรรยายที่ฝังในวิดีโอและซิงค์กับคำบรรยายนั้น",
                     "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز نکالیں اور ان کے ساتھ سنکرونائز کریں۔",
+                    "zh_TW": "提取影片中的內嵌字幕並與這些字幕進行同步。",
                 },
                 "default": True,
             },
@@ -605,6 +622,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Lumpuhkan tekaan FPS",
                     "th_TH": "ปิดการคาดเดาอัตราเฟรม",
                     "ur_PK": "FPS اندازہ غیر فعال کریں",
+                    "zh_TW": "停用 FPS 猜測",
                 },
                 "tooltip": {
                     "en_US": "Disables guessing and correcting of framerate differences between reference file and input file.",
@@ -629,6 +647,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Melumpuhkan tekaan dan pembetulan perbezaan kadar bingkai antara fail rujukan dan fail input.",
                     "th_TH": "ปิดการคาดเดาและการแก้ไขความแตกต่างของอัตราเฟรมระหว่างไฟล์อ้างอิงและไฟล์อินพุต",
                     "ur_PK": "حوالہ فائل اور ان پٹ فائل کے درمیان فریم ریٹ کے فرق کا اندازہ لگانا اور درست کرنا غیر فعال کرتا ہے۔",
+                    "zh_TW": "停用參考檔和輸入檔之間幀率差異的猜測和修正。",
                 },
                 "argument": "--disable-fps-guessing",
                 "default": False,
@@ -658,6 +677,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Lumpuhkan pengoptimuman kelajuan",
                     "th_TH": "ปิดการเพิ่มประสิทธิภาพความเร็ว",
                     "ur_PK": "رفتار کی بہتری غیر فعال کریں",
+                    "zh_TW": "停用速度最佳化",
                 },
                 "tooltip": {
                     "en_US": "Disable speed optimization for better accuracy. This will increase the processing time.",
@@ -682,6 +702,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Lumpuhkan pengoptimuman kelajuan untuk ketepatan yang lebih baik. Ini akan meningkatkan masa pemprosesan.",
                     "th_TH": "ปิดการเพิ่มประสิทธิภาพความเร็วเพื่อความแม่นยำที่ดีขึ้น ซึ่งจะเพิ่มเวลาการประมวลผล",
                     "ur_PK": "بہتر درستگی کے لیے رفتار کی بہتری کو غیر فعال کریں۔ یہ پروسیسنگ کا وقت بڑھا دے گا۔",
+                    "zh_TW": "停用速度最佳化以獲得更好的準確性。這將增加處理時間。",
                 },
                 "argument": "--speed-optimization=0",
                 "default": False,
@@ -711,6 +732,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Penalti pemisahan",
                     "th_TH": "บทลงโทษการแบ่ง",
                     "ur_PK": "تقسیم کی سزا",
+                    "zh_TW": "分割懲罰",
                 },
                 "argument": "--split-penalty",
                 "tooltip": {
@@ -736,6 +758,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Penalti untuk memisahkan sarikata semasa penjajaran\n(Lalai: 7, Disyorkan: 5-20, Tiada pemisahan: -1)",
                     "th_TH": "บทลงโทษสำหรับการแบ่งคำบรรยายระหว่างการปรับแนว\n(ค่าเริ่มต้น: 7, แนะนำ: 5-20, ไม่แบ่ง: -1)",
                     "ur_PK": "ہم آہنگی کے دوران سب ٹائٹلز کو تقسیم کرنے کی سزا\n(ڈیفالٹ: 7، تجویز کردہ: 5-20، کوئی تقسیم نہیں: -1)",
+                    "zh_TW": "對齊期間分割字幕的懲罰\n（預設：7，建議：5-20，不分割：-1）",
                 },
                 "no_split_argument": "--no-split",
                 "range": [-1, 100],
@@ -768,6 +791,7 @@ SYNC_TOOLS = {
             "ms_MY": "Segerakkan sarikata dengan audio secara automatik menggunakan pembelajaran mesin",
             "th_TH": "ซิงค์คำบรรยายกับเสียงโดยอัตโนมัติโดยใช้การเรียนรู้ของเครื่อง",
             "ur_PK": "مشین لرننگ کا استعمال کرتے ہوئے خودکار طور پر آڈیو کے ساتھ سب ٹائٹلز کو سنکرونائز کریں",
+            "zh_TW": "使用機器學習自動將字幕與音訊同步",
         },
         "github": "https://github.com/oseiskar/autosubsync",
         "documentation": "https://github.com/oseiskar/autosubsync?tab=readme-ov-file#usage",
@@ -806,6 +830,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Guna sarikata terbenam dalam video",
                     "th_TH": "ใช้คำบรรยายที่ฝังในวิดีโอ",
                     "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز استعمال کریں",
+                    "zh_TW": "使用影片中的內嵌字幕",
                 },
                 "tooltip": {
                     "en_US": "Extract the embedded subtitles in the video and perform synchronization with these subtitles.",
@@ -830,6 +855,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Ekstrak sarikata terbenam dalam video dan lakukan penyegerakan dengan sarikata tersebut.",
                     "th_TH": "แยกคำบรรยายที่ฝังในวิดีโอและซิงค์กับคำบรรยายนั้น",
                     "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز نکالیں اور ان کے ساتھ سنکرونائز کریں۔",
+                    "zh_TW": "提取影片中的內嵌字幕並與這些字幕進行同步。",
                 },
                 "default": True,
             },
@@ -862,6 +888,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Anjakan maksimum (saat)",
                     "th_TH": "การเลื่อนสูงสุด (วินาที)",
                     "ur_PK": "زیادہ سے زیادہ شفٹ (سیکنڈز)",
+                    "zh_TW": "最大偏移（秒）",
                 },
                 "tooltip": {
                     "en_US": "Maximum subtitle shift in seconds (default 20)",
@@ -886,6 +913,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Anjakan maksimum sarikata dalam saat (lalai 20)",
                     "th_TH": "การเลื่อนคำบรรยายสูงสุดเป็นวินาที (ค่าเริ่มต้น 20)",
                     "ur_PK": "سیکنڈز میں زیادہ سے زیادہ سب ٹائٹل شفٹ (ڈیفالٹ 20)",
+                    "zh_TW": "字幕最大偏移秒數（預設 20）",
                 },
                 "argument": "--max_shift_secs",
                 "range": [1, 120],
@@ -916,6 +944,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Keselarian",
                     "th_TH": "การประมวลผลแบบขนาน",
                     "ur_PK": "متوازی پن",
+                    "zh_TW": "平行處理",
                 },
                 "tooltip": {
                     "en_US": "Number of parallel worker processes (default 3)",
@@ -940,6 +969,7 @@ SYNC_TOOLS = {
                     "ms_MY": "Bilangan proses pekerja selari (lalai 3)",
                     "th_TH": "จำนวนกระบวนการทำงานแบบขนาน (ค่าเริ่มต้น 3)",
                     "ur_PK": "متوازی ورکر پروسیسز کی تعداد (ڈیفالٹ 3)",
+                    "zh_TW": "平行工作程序的數量（預設 3）",
                 },
                 "argument": "--parallelism",
                 "range": [1, 16],
@@ -973,6 +1003,7 @@ AUTOMATIC_SAVE_MAP = {
         "ms_MY": "Simpan bersebelahan dengan sarikata input",
         "th_TH": "บันทึกถัดจากคำบรรยายนำเข้า",
         "ur_PK": "ان پٹ سب ٹائٹل کے ساتھ محفوظ کریں",
+        "zh_TW": "儲存在輸入字幕旁邊",
     },
     "overwrite_input_subtitle": {
         "en_US": "Overwrite input subtitle",
@@ -997,6 +1028,7 @@ AUTOMATIC_SAVE_MAP = {
         "ms_MY": "Tulis ganti sarikata input",
         "th_TH": "เขียนทับคำบรรยายนำเข้า",
         "ur_PK": "ان پٹ سب ٹائٹل پر لکھیں",
+        "zh_TW": "覆寫輸入字幕",
     },
     "save_next_to_video": {
         "en_US": "Save next to video",
@@ -1021,6 +1053,7 @@ AUTOMATIC_SAVE_MAP = {
         "ms_MY": "Simpan bersebelahan dengan video",
         "th_TH": "บันทึกถัดจากวิดีโอ",
         "ur_PK": "ویڈیو کے ساتھ محفوظ کریں",
+        "zh_TW": "儲存在影片旁邊",
     },
     "save_next_to_video_with_same_filename": {
         "en_US": "Save next to video with same filename",
@@ -1045,6 +1078,7 @@ AUTOMATIC_SAVE_MAP = {
         "ms_MY": "Simpan bersebelahan dengan video dengan nama fail yang sama",
         "th_TH": "บันทึกถัดจากวิดีโอด้วยชื่อไฟล์เดียวกัน",
         "ur_PK": "ویڈیو کے ساتھ ایک ہی فائل نام کے ساتھ محفوظ کریں",
+        "zh_TW": "使用相同檔名儲存在影片旁邊",
     },
     "save_to_desktop": {
         "en_US": "Save to desktop",
@@ -1069,6 +1103,7 @@ AUTOMATIC_SAVE_MAP = {
         "ms_MY": "Simpan ke desktop",
         "th_TH": "บันทึกไปที่เดสก์ท็อป",
         "ur_PK": "ڈیسک ٹاپ پر محفوظ کریں",
+        "zh_TW": "儲存到桌面",
     },
     "select_destination_folder": {
         "en_US": "Select destination folder",
@@ -1093,6 +1128,7 @@ AUTOMATIC_SAVE_MAP = {
         "ms_MY": "Pilih folder destinasi",
         "th_TH": "เลือกโฟลเดอร์ปลายทาง",
         "ur_PK": "منزل فولڈر منتخب کریں",
+        "zh_TW": "選擇目標資料夾",
     },
 }
 
@@ -1120,6 +1156,7 @@ MANUAL_SAVE_MAP = {
         "ms_MY": "Simpan bersebelahan dengan sarikata input",
         "th_TH": "บันทึกถัดจากคำบรรยายนำเข้า",
         "ur_PK": "ان پٹ سب ٹائٹل کے ساتھ محفوظ کریں",
+        "zh_TW": "儲存在輸入字幕旁邊",
     },
     "overwrite_input_subtitle": {
         "en_US": "Overwrite input subtitle",
@@ -1144,6 +1181,7 @@ MANUAL_SAVE_MAP = {
         "ms_MY": "Tulis ganti sarikata input",
         "th_TH": "เขียนทับคำบรรยายนำเข้า",
         "ur_PK": "ان پٹ سب ٹائٹل پر لکھیں",
+        "zh_TW": "覆寫輸入字幕",
     },
     "save_to_desktop": {
         "en_US": "Save to desktop",
@@ -1168,6 +1206,7 @@ MANUAL_SAVE_MAP = {
         "ms_MY": "Simpan ke desktop",
         "th_TH": "บันทึกไปที่เดสก์ท็อป",
         "ur_PK": "ڈیسک ٹاپ پر محفوظ کریں",
+        "zh_TW": "儲存到桌面",
     },
     "select_destination_folder": {
         "en_US": "Select destination folder",
@@ -1192,6 +1231,7 @@ MANUAL_SAVE_MAP = {
         "ms_MY": "Pilih folder destinasi",
         "th_TH": "เลือกโฟลเดอร์ปลายทาง",
         "ur_PK": "منزل فولڈر منتخب کریں",
+        "zh_TW": "選擇目標資料夾",
     },
 }
 
