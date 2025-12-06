@@ -300,9 +300,9 @@ This eliminates the need to navigate through file browser dialogs for most opera
 
 ### Interface Languages
 
-The application interface is available in 22 languages:
+The application interface is available in 23 languages:
 
-`English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Tiếng Việt`, `Bahasa Indonesia`, `Bahasa Melayu`, `ไทย`, `Українська`, `Русский`, `中文`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`, `فارسی`, `اردو`
+`English`, `Español`, `Deutsch`, `Français`, `Italiano`, `Polski`, `Português`, `Türkçe`, `Tiếng Việt`, `Bahasa Indonesia`, `Bahasa Melayu`, `ไทย`, `Українська`, `Русский`, `中文`, `繁體中文`, `日本語`, `한국어`, `हिन्दी`, `বাংলা`, `العربية`, `فارسی`, `اردو`
 
 Change the language from `Settings` → `Language`. The interface will update after restarting the application.
 
