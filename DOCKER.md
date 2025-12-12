@@ -1,6 +1,6 @@
 # AutoSubSync Docker Container
 
-This Docker container packages AutoSubSync with all its dependencies, including a GUI accessible via web browser using PySide6.
+This Docker container packages AutoSubSync with all its dependencies, including a GUI accessible via web browser using PyQt6.
 
 ## Quick Start
 
@@ -42,8 +42,8 @@ run-docker.bat
 
 ## What's Included
 
-- ✅ AutoSubSync GUI with PySide6 (converted from PyQt6)
-- ✅ FFmpeg for media processing
+- ✅ AutoSubSync GUI with PyQt6
+- ✅ FFmpeg for media processing (included in assy)
 - ✅ All synchronization tools (ffsubsync, autosubsync, alass)
 - ✅ Web-based VNC interface (noVNC)
 - ✅ Fluxbox window manager
@@ -82,13 +82,12 @@ The container uses volume mounts to share files between your host system and the
 ## Features
 
 - ✅ Full AutoSubSync GUI accessible via web browser
-- ✅ PySide6 Qt framework (automatically converted from PyQt6)
+- ✅ PyQt6 Qt framework
 - ✅ All synchronization tools included (ffsubsync, autosubsync, alass)
 - ✅ FFmpeg included for media processing
 - ✅ No need to install dependencies on your host system
 - ✅ Cross-platform (works on Windows, macOS, Linux)
 - ✅ Persistent file access via volume mounts
-- ✅ Automatic PyQt6 to PySide6 conversion during build
 
 ## Technical Details
 
@@ -101,13 +100,9 @@ The container runs multiple services managed by supervisor:
 - **noVNC**: Web-based VNC client (websockify + web interface)
 - **AutoSubSync**: The main application
 
-### PyQt6 to PySide6 Conversion
+### PyQt6 Support
 
-The container automatically converts PyQt6 imports to PySide6 during the build process:
-- Handles import statement conversion
-- Updates signal/slot syntax
-- Manages Qt resource paths
-- Safely handles None values in path operations
+The container uses PyQt6 directly from the assy package, which includes all necessary Qt dependencies for GUI operation in the Docker environment.
 
 ## Ports
 
@@ -205,17 +200,13 @@ docker exec autosubsync tail -f /var/log/supervisor/supervisord.log
 The Dockerfile includes all necessary dependencies:
 - Python 3.11 slim base image
 - System packages (Qt6, X11, VNC tools)
-- Python packages (PySide6, ffsubsync, autosubsync, etc.)
-- Automatic PyQt6 to PySide6 conversion script
+- Python packages from assy (PyQt6, ffsubsync, autosubsync, alass, static-ffmpeg, etc.)
 - Supervisor for service management
-- All required binaries (alass, ffmpeg)
 
 Build process:
 1. Installs system dependencies
-2. Installs Python packages (tries PyQt6, falls back to PySide6)
-3. Copies application code
-4. Runs conversion script to ensure PySide6 compatibility
-5. Sets up services and permissions
+2. Installs assy from PyPI (includes all dependencies and tools)
+3. Sets up services and permissions
 
 ## System Requirements
 
@@ -234,7 +225,7 @@ Build process:
 ## Compatibility
 
 - **Base Image**: Python 3.11 on Debian Bookworm
-- **Qt Framework**: PySide6 (converted from PyQt6)
+- **Qt Framework**: PyQt6
 - **Supported Platforms**: x86_64 Linux containers
 - **Host Systems**: Windows, macOS, Linux (with Docker)
 
@@ -255,6 +246,5 @@ This Docker setup creates several files:
 - `docker-compose.yml` - Service orchestration
 - `docker/supervisord.conf` - Service management configuration
 - `docker/start.sh` - Container startup script
-- `docker/convert_qt.py` - PyQt6 to PySide6 conversion script
 - `run-docker.sh` / `run-docker.bat` - Convenience run scripts
 - `.dockerignore` - Build context exclusions
