@@ -112,11 +112,24 @@ This will ensure you have a compatible Python version and the latest AutoSubSync
 > You can install uv from [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 
-### Docker
-Thanks to [@IlmariKu](https://github.com/IlmariKu), you can now run AutoSubSync in a Docker container. This makes it easier to deploy and run AutoSubSync in different environments without worrying about dependencies.
-> #### [Go to Docker Guide](DOCKER.md)
+### Docker Guide
+Thanks to [@IlmariKu](https://github.com/IlmariKu) in PR [#61](https://github.com/denizsafak/AutoSubSync/pull/61), you can run AutoSubSync in a Docker container. This makes it easier to deploy and run AutoSubSync in different environments without worrying about dependencies.
 
----
+```bash
+# Navigate to the AutoSubSync directory
+cd AutoSubSync
+
+# Create input and output directories
+mkdir -p input output desktop
+
+# Build and run the container
+docker-compose up --build -d
+```
+To access the GUI, open your web browser and go to: [http://localhost:6080](http://localhost:6080)
+
+> [!TIP]
+> For detailed instructions, go the Docker guide:
+> ### **[Go to Docker Guide](DOCKER.md)**
 
 ## `How to use?`
 
