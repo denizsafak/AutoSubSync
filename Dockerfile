@@ -50,7 +50,7 @@ RUN git clone https://github.com/novnc/noVNC.git /opt/novnc \
 
 # --- INTERNAL CLONE STEP ---
 # Instead of COPY, we pull the repo to get the config files
-RUN git clone https://github.com/denizsafak/AutoSubSync /tmp/autosubsync-source && \
+RUN git clone https://github.com/denizsafak/AutoSubSync.git /tmp/autosubsync-source && \
     mkdir -p /etc/supervisor/conf.d/ && \
     cp /tmp/autosubsync-source/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf && \
     cp /tmp/autosubsync-source/docker/start.sh /start.sh && \
