@@ -15,3 +15,15 @@ services:
       - DISPLAY=:0
       - QT_QPA_PLATFORM=xcb
     restart: unless-stopped
+
+  # Headless CLI image for autonomous pipelines.
+  # Build:  docker compose build assy-cli
+  # Usage:  docker compose run --rm assy-cli sync /data/video.mkv /data/sub.srt
+  assy-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.cli
+    image: autosubsync-cli
+    volumes:
+      - $PWD:/data
+    profiles: ["cli"]   # only spun up when explicitly invoked

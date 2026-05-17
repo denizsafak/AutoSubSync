@@ -70,70 +70,7 @@ def get_basename(file_path):
     return os.path.basename(file_path) if file_path else ""
 
 
-def effective_basename(file_path):
-    """Extract effective basename from file path, handling language tags.
-
-    Removes potential language tags that are often 2-4 characters and
-    preceded by a separator character like '_', '.', or '-'.
-
-    Args:
-        file_path: Path to a file
-
-    Returns:
-        Base filename without extension or language tags
-    """
-    base = os.path.splitext(os.path.basename(file_path))[0]
-    for tag_length in [4, 3, 2]:
-        if len(base) > tag_length and base[-(tag_length + 1)] in ["_", ".", "-"]:
-            return base[: -(tag_length + 1)]
-    return base
-
-
-def calculate_file_similarity(reference_name, sub_name):
-    """Calculate similarity score between reference and subtitle filenames.
-
-    This function uses multiple methods to determine the similarity:
-    1. Uses effective_basename to remove language tags
-    2. Calculates common prefix length
-    3. Uses a string similarity ratio
-
-    Args:
-        reference_name: Basename of a reference file
-        sub_name: Basename of a subtitle file
-
-    Returns:
-        Similarity score (higher is more similar)
-    """
-    # Clean and prepare names
-    reference_base = effective_basename(reference_name).lower().strip(".-_ [](){}")
-    sub_base = effective_basename(sub_name).lower().strip(".-_ [](){}")
-
-    # Calculate common prefix length
-    common_len = 0
-    for i in range(min(len(reference_base), len(sub_base))):
-        if reference_base[i] == sub_base[i]:
-            common_len += 1
-        else:
-            break
-
-    # Calculate similarity score - weight by:
-    # 1. Common prefix length (heavily weighted)
-    # 2. Length difference (penalty for very different lengths)
-    # 3. Bonus for exact match after processing
-
-    similarity = common_len * 10  # Base score from common prefix
-
-    # Penalty for length difference
-    length_diff = abs(len(reference_base) - len(sub_base))
-    similarity -= min(
-        length_diff * 2, similarity // 2
-    )  # Don't let penalty exceed half the score
-
-    # Exact match bonus
-    if reference_base == sub_base:
-        similarity += 50
-
-    return max(0, similarity)  # Ensure non-negative score
+from pairing import effective_basename, calculate_file_similarity, pair_paths  # noqa: E402,F401
 
 
 def create_tree_widget_item(file_path, parent=None, icon_provider=None, item_id=None):
@@ -1953,41 +1890,7 @@ class BatchTreeView(QTreeWidget):
 
     def _pair_references_with_subtitles(self, references, subs):
         """Match references with their corresponding subtitles."""
-        paired_references = set()
-        paired_subs = set()
-        reference_sub_pairs = []
-
-        # First pass: exact basename matching
-        for reference in references:
-            reference_base = effective_basename(reference).lower().strip(".-_ [](){}")
-            for sub in subs:
-                if sub in paired_subs:
-                    continue
-                sub_base = effective_basename(sub).lower().strip(".-_ [](){}")
-                if reference_base == sub_base:
-                    reference_sub_pairs.append((reference, sub))
-                    paired_references.add(reference)
-                    paired_subs.add(sub)
-                    break
-
-        # Second pass: similarity-based matching
-        for reference in references:
-            if reference in paired_references:
-                continue
-            best_match = None
-            best_score = 0
-            for sub in subs:
-                if sub in paired_subs:
-                    continue
-                similarity = calculate_file_similarity(reference, sub)
-                if similarity > best_score:
-                    best_score = similarity
-                    best_match = sub
-            if best_match and best_score >= 30:
-                reference_sub_pairs.append((reference, best_match))
-                paired_references.add(reference)
-                paired_subs.add(best_match)
-        return reference_sub_pairs, paired_references, paired_subs
+        return pair_paths(references, subs)
 
     def add_paired_files(self, file_paths, drop_target_item=None):
         newly_created_items = []

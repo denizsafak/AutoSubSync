@@ -157,6 +157,59 @@ To access the GUI, open your web browser and go to: [http://localhost:6080](http
 4. Select output location
 5. Click `Start`
 
+### Command-line interface (`assy-cli`)
+
+For autonomous pipelines, CI/CD, scheduled jobs, and Docker, AutoSubSync ships a
+fully-featured CLI that never starts a Qt event loop or requires a display.
+
+```bash
+# Auto-sync one subtitle (machine-readable output)
+assy-cli sync video.mkv subs.srt -o synced.srt --json
+# {"ok": true, "input": "subs.srt", "output": "synced.srt", "tool": "ffsubsync", ...}
+
+# Shift a subtitle by 1.5 seconds
+assy-cli shift subs.srt 1500 -o shifted.srt
+
+# Batch sync a folder of pairs and continue past failures
+assy-cli batch --folder ./episodes --continue-on-error --json
+
+# Two-folder pairing with explicit output dir
+assy-cli batch --video-dir ./videos --subtitle-dir ./subs -o ./out --json
+
+# Pick a sync engine per call
+assy-cli sync video.mkv subs.srt -t alass
+
+# Inspect or persist user config
+assy-cli config path
+assy-cli config get sync_tool
+assy-cli config set sync_tool alass
+```
+
+| Subcommand | Purpose |
+|---|---|
+| `sync` | Auto-sync one subtitle to a video or reference subtitle |
+| `shift` | Shift subtitle timing by milliseconds |
+| `batch` | Process many pairs from `--folder`, `--video-dir`+`--subtitle-dir`, or repeated `--pair` |
+| `config` | `get` / `set` / `unset` / `list` / `path` for the user config JSON |
+| `version` | Print version |
+
+**Exit codes:** `0` success · `1` at least one sync failed · `2` usage or config error · `130` SIGINT.
+
+**JSON mode** (`--json`) writes structured results to stdout (one object per sync; for `batch`, NDJSON plus a final `{"summary": ...}` line) while human-readable logs go to stderr. Pipe straight into `jq`:
+
+```bash
+assy-cli sync video.mkv subs.srt --json | jq -r '.output'
+```
+
+**Run from Docker** with no display:
+
+```bash
+docker build -f Dockerfile.cli -t autosubsync-cli .
+docker run --rm -v "$PWD:/data" autosubsync-cli sync /data/video.mkv /data/subs.srt -o /data/out.srt
+```
+
+Or via compose: `docker compose --profile cli run --rm assy-cli sync /data/video.mkv /data/subs.srt`.
+
 ## `Features`
 
 ### Automatic Synchronization

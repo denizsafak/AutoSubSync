@@ -1,0 +1,39 @@
+# Slim, headless image for autonomous pipeline use of AutoSubSync.
+# Contains only what the CLI needs - no X11, VNC, or Qt display deps.
+# main/cli.py is engineered to not load PyQt6 QtWidgets/QtGui at runtime,
+# so the slim image works even though PyQt6 is still a transitive install dep.
+
+# --- Builder stage: compile native deps (webrtcvad etc.) ---
+FROM python:3.11-slim-bookworm AS builder
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY main ./main
+RUN python -m pip install --prefix=/install .
+
+# --- Runtime stage: just glibc + libstdc++ + the installed wheels ---
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        libstdc++6 \
+        libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /install /usr/local
+
+WORKDIR /data
+VOLUME ["/data"]
+
+ENTRYPOINT ["assy-cli"]
+CMD ["--help"]
