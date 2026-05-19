@@ -6,8 +6,7 @@ from multiprocessing import freeze_support
 from utils import get_resource_path
 import compat  # Shim for pkg_resources (removed in Python 3.14+)
 
-# Monkey-patch subprocess.Popen
- to always use CREATE_NO_WINDOW on Windows
+# Monkey-patch subprocess.Popen to always use CREATE_NO_WINDOW on Windows
 import subprocess
 
 if platform.system() == "Windows":
