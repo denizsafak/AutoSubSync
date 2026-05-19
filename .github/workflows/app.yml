@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, macos-13]
+        os: [windows-latest, macos-latest, macos-15-intel]
         include:
           - os: windows-latest
             build: win-x64
@@ -19,7 +19,7 @@ jobs:
           - os: macos-latest
             build: osx-arm64
             file_name: macos_arm64
-          - os: macos-13
+          - os: macos-15-intel
             build: macos-amd64
             file_name: macos_amd64
 
