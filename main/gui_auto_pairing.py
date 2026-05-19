@@ -842,7 +842,11 @@ class AutoPairingDialog(QDialog):
         batch_view = self.parent_window.batch_tree_view
         pairs_added = 0
 
-        for ref, sub in self.paired_items.items():
+        # Sort pairs alphabetically by filename to ensure correct sequential addition
+        sorted_pairs = sorted(self.paired_items.items(), key=lambda item: os.path.basename(item[0]))
+
+        # Reverse the order so the first item ends up at the top
+        for ref, sub in reversed(sorted_pairs):
             if not batch_view.is_duplicate_pair(ref, sub):
                 batch_view.add_explicit_pair(ref, sub)
                 pairs_added += 1
