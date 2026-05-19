@@ -73,7 +73,7 @@ Issues = "https://github.com/denizsafak/AutoSubSync/issues"
 assy = "main.main:main"
 
 [project.scripts]
-assy-cli = "main.main:main"
+assy-cli = "main.cli:main"
 
 [tool.hatch.build.targets.sdist]
 exclude = [

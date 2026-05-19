@@ -1,13 +1,8 @@
-import sys
 import os
 import re
 import logging
 import threading
 import time
-import platform
-import platformdirs
-import importlib
-import multiprocessing
 from pathlib import Path
 import texts
 from PyQt6.QtCore import pyqtSignal, QObject, QTimer
@@ -21,15 +16,14 @@ from PyQt6.QtWidgets import (
 )
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
 from utils import (
-    create_process,
-    create_backup,
-    default_encoding,
-    detect_encoding,
-    find_closest_encoding,
     match_subtitle_encoding,
     update_config,
 )
-from alass_encodings import enc_list
+import sync_core
+from sync_core import (
+    module_worker,
+    shorten_progress_bar,
+)
 from subtitle_converter import convert_to_srt
 from subtitle_extractor import extract_subtitles
 
@@ -326,89 +320,30 @@ class SyncSignals(QObject):
     error = pyqtSignal(str)
 
 
-def shorten_progress_bar(line):
-    start = line.find("[")
-    end = line.find("]", start)
-    if start != -1 and end != -1:
-        percent = float(line[line.find(" ", end) + 1 : line.find("%", end)])
-        width, filled = 25, int(25 * percent / 100)
-        new_bar = (
-            "[" + "=" * (filled - 1) + ">" + "-" * (width - filled) + "]"
-            if filled < width
-            else "[" + "=" * width + "]"
-        )
-        return line[:start] + new_bar + line[end + 1 :]
-    return line
-
-
-def module_worker(module_name, args, conn, idx, total):
-    try:
-        module = importlib.import_module(module_name)
-
-        class PipeStream:
-            def __init__(self, conn):
-                self.conn = conn
-                self._buffer = ""
-                self._last_was_cr = False
-
-            def write(self, s):
-                self._buffer += s
-                while True:
-                    i = min(
-                        [
-                            x
-                            for x in (self._buffer.find("\r"), self._buffer.find("\n"))
-                            if x != -1
-                        ],
-                        default=-1,
-                    )
-                    if i == -1:
-                        break
-                    ch = self._buffer[i]
-                    part, self._buffer = self._buffer[:i], self._buffer[i + 1 :]
-                    self.conn.send(("progress", part, ch == "\r" or self._last_was_cr))
-                    self._last_was_cr = ch == "\r"
-
-            def flush(self):
-                if self._buffer:
-                    self.conn.send(("progress", self._buffer, self._last_was_cr))
-                    self._buffer = ""
-                    self._last_was_cr = False
-
-        log_stream = PipeStream(conn)
-        root_logger = logging.getLogger()
-        old_handlers = root_logger.handlers[:]
-        handler = logging.StreamHandler(log_stream)
-        handler.setFormatter(logging.Formatter("%(levelname)-6s %(message)s"))
-        root_logger.handlers = [handler]
-        old_stdout, old_stderr = sys.stdout, sys.stderr
-        sys.stdout = sys.stderr = log_stream
-        try:
-            rc = module.cli_entry(args) if hasattr(module, "cli_entry") else 1
-        except SystemExit as e:
-            rc = e.code if hasattr(e, "code") else 1
-        except Exception as e:
-            conn.send(("error", f"Module execution failed: {e}"))
-            rc = 1
-        finally:
-            log_stream.flush()
-            root_logger.handlers = old_handlers
-            sys.stdout, sys.stderr = old_stdout, old_stderr
-        conn.send(("finished", rc))
-    except Exception as e:
-        conn.send(("error", f"Failed to import module '{module_name}': {e}"))
-        conn.send(("finished", 1))
-
-
 class SyncProcess:
+    """Qt adapter around sync_core.run_sync().
+
+    Preserves the original signal-based public API used by the GUI: run_sync()
+    spawns a worker thread, emits progress/error/finished signals, and supports
+    cancel() from the UI thread.
+    """
+
     def __init__(self, app):
         self.app = app
         self.signals = SyncSignals()
-        self.process = None  # For subprocess.Popen or multiprocessing.Process
         self.should_cancel = False
         self._process_lock = threading.Lock()
-        self._module_proc = None  # For module-based multiprocessing
-        self._module_proc_pipe = None
+        self._process_holder = {}  # populated by sync_core: {"process": Popen, "module_proc": Process}
+
+    # Back-compat aliases for any external readers (no external consumers found,
+    # but kept to avoid surprising attribute access on the legacy class shape).
+    @property
+    def process(self):
+        return self._process_holder.get("process")
+
+    @property
+    def _module_proc(self):
+        return self._process_holder.get("module_proc")
 
     def cancel(self):
         self.should_cancel = True
@@ -416,23 +351,19 @@ class SyncProcess:
         def _cancel():
             try:
                 with self._process_lock:
-                    # Terminate external process
-                    if (
-                        self.process
-                        and hasattr(self.process, "poll")
-                        and self.process.poll() is None
-                    ):
+                    proc = self._process_holder.get("process")
+                    if proc and hasattr(proc, "poll") and proc.poll() is None:
                         from utils import terminate_process_safely
 
-                        terminate_process_safely(self.process)
+                        terminate_process_safely(proc)
                         for _ in range(10):
-                            if self.process.poll() is not None:
+                            if proc.poll() is not None:
                                 break
                             time.sleep(0.1)
-                    # Terminate module process
-                    if self._module_proc and self._module_proc.is_alive():
-                        self._module_proc.terminate()
-                        self._module_proc.join(timeout=1)
+                    mproc = self._process_holder.get("module_proc")
+                    if mproc and mproc.is_alive():
+                        mproc.terminate()
+                        mproc.join(timeout=1)
             except Exception as e:
                 logger.error(f"Error canceling process: {e}")
 
@@ -451,308 +382,27 @@ class SyncProcess:
         ).start()
 
     def _run(self, reference, subtitle, tool, output):
-        try:
-            if not os.path.exists(reference) and not os.path.exists(subtitle):
-                self.signals.error.emit(texts.SKIPPING_BOTH_FILES_DO_NOT_EXIST)
-                self.signals.finished.emit(False, None)
-                return
-            elif not os.path.exists(reference):
-                self.signals.error.emit(texts.SKIPPING_REFERENCE_FILE_DOES_NOT_EXIST)
-                self.signals.finished.emit(False, None)
-                return
-            elif not os.path.exists(subtitle):
-                self.signals.error.emit(texts.SKIPPING_SUBTITLE_FILE_DOES_NOT_EXIST)
-                self.signals.finished.emit(False, None)
-                return
-            if tool not in SYNC_TOOLS:
-                self.signals.error.emit(texts.UNKNOWN_SYNC_TOOL.format(tool=tool))
-                return
-            tool_info, tool_type = SYNC_TOOLS[tool], SYNC_TOOLS[tool].get(
-                "type", "executable"
-            )
-            # Use local variables for tool fallback logic
-            current_tool = tool
-            current_tool_info = tool_info
-            current_tool_type = tool_type
-            supports_sub_ref = current_tool_info.get(
-                "supports_subtitle_as_reference", True
-            )
-            ref_ext = os.path.splitext(reference)[1].lower()
-            is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
-            if not supports_sub_ref and not is_video_ref:
-                default_tool = DEFAULT_OPTIONS["sync_tool"]
-                append_log(
-                    self.app,
-                    texts.TOOL_DOES_NOT_SUPPORT_SUBTITLE_REFERENCE.format(
-                        tool=current_tool, fallback=default_tool
-                    ),
-                    COLORS["ORANGE"],
-                )
-                logger.info(
-                    f"{current_tool} does not support subtitle files as reference. Falling back to {default_tool}."
-                )
-                current_tool = default_tool
-                current_tool_info = SYNC_TOOLS[current_tool]
-                current_tool_type = current_tool_info.get("type", "executable")
-            rc = None
-            # --- BACKUP LOGIC (moved here, before running sync for all tool types) ---
-            if not output:
-                output = determine_output_path(self.app, reference, subtitle)
-            config = self.app.config
-            backup_enabled = config.get(
-                "backup_subtitles_before_overwriting",
-                DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
-            )
-            if backup_enabled and os.path.exists(output):
-                try:
-                    create_backup(output)
-                except Exception as e:
-                    logger.error(f"Failed to create backup: {e}")
-            # --- END BACKUP LOGIC ---
-
-            # --- AUTOSUBSYNC TEMP-OUTPUT TO AVOID OVERWRITE ---
-            effective_output = output
-            use_temp_output = False
-            temp_output_path = None
-            try:
-                if current_tool == "autosubsync" and os.path.abspath(
-                    output
-                ) == os.path.abspath(subtitle):
-                    base, ext = os.path.splitext(output)
-                    temp_output_path = f"{base}.autosubsync-tmp{ext}"
-                    counter = 2
-                    while os.path.exists(temp_output_path):
-                        temp_output_path = f"{base}.autosubsync-tmp-{counter}{ext}"
-                        counter += 1
-                    effective_output = temp_output_path
-                    use_temp_output = True
-                    logger.info(
-                        "Autosubsync overwrite avoided: using temp output '%s'",
-                        effective_output,
-                    )
-            except Exception as e:
-                logger.warning(f"Failed to prepare temp output for autosubsync: {e}")
-            # --- END AUTOSUBSYNC TEMP-OUTPUT ---
-
-            if current_tool_type == "module":
-                module_name = current_tool_info.get("module")
-                idx, total = getattr(self.app, "_current_batch_idx", None), getattr(
-                    self.app, "_current_batch_total", None
-                )
-                cmd_args = self._build_cmd(
-                    current_tool, None, reference, subtitle, effective_output
-                )[1:]
-                # Print and log what is executing
-                exec_msg = f"Executing: {module_name} {' '.join(cmd_args)}"
-                logger.info(exec_msg)
-                parent_conn, child_conn = multiprocessing.Pipe()
-                # Use top-level module_worker for Windows compatibility
-                proc = multiprocessing.Process(
-                    target=module_worker,
-                    args=(module_name, cmd_args, child_conn, idx, total),
-                )
-                self._module_proc = proc
-                self._module_proc_pipe = parent_conn
-                proc.start()
-                while True:
-                    if self.should_cancel:
-                        break
-                    if parent_conn.poll(0.1):
-                        msg = parent_conn.recv()
-                        if msg[0] == "progress":
-                            cleaned_msg, percent = self._process_output(msg[1])
-                            self.signals.progress.emit(cleaned_msg, msg[2])
-                            if percent is not None:
-                                self.signals.progress_percent.emit(percent)
-                        elif msg[0] == "error":
-                            self.signals.error.emit(msg[1])
-                        elif msg[0] == "finished":
-                            rc = msg[1]
-                            break
-                proc.join(timeout=1)
-            else:
-                exe_info = current_tool_info["executable"]
-                current_os = platform.system()
-                exe = (
-                    exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
-                )
-                if not exe:
-                    self.signals.error.emit(
-                        texts.NO_EXECUTABLE_FOUND.format(
-                            tool=current_tool, os=current_os
-                        )
-                    )
-                    self.signals.finished.emit(False, None)
-                    return
-                cmd = self._build_cmd(
-                    current_tool, exe, reference, subtitle, effective_output
-                )
-                with self._process_lock:
-                    if self.should_cancel:
-                        return
-                    self.process = create_process(cmd)
-                buffer = b""
-                last_was_cr = False
-                while True:
-                    if self.should_cancel:
-                        break
-                    chunk = self.process.stdout.read(128)
-                    if not chunk:
-                        break
-                    buffer += chunk
-                    while True:
-                        cr_pos, lf_pos = buffer.find(b"\r"), buffer.find(b"\n")
-                        if cr_pos == -1 and lf_pos == -1:
-                            break
-                        if cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
-                            part, buffer = buffer[:cr_pos], buffer[cr_pos + 1 :]
-                            is_overwrite = True
-                            last_was_cr = True
-                        elif lf_pos != -1:
-                            part, buffer = buffer[:lf_pos], buffer[lf_pos + 1 :]
-                            is_overwrite = last_was_cr
-                            last_was_cr = False
-                        else:
-                            break
-                        cleaned_msg, percent = self._process_output(
-                            part.decode(default_encoding, errors="replace")
-                        )
-                        if cleaned_msg or not part:
-                            self.signals.progress.emit(cleaned_msg, is_overwrite)
-                        if percent is not None:
-                            self.signals.progress_percent.emit(percent)
-                if buffer and not self.should_cancel:
-                    cleaned_msg, percent = self._process_output(
-                        buffer.decode(default_encoding, errors="replace").rstrip("\r\n")
-                    )
-                    if cleaned_msg:
-                        self.signals.progress.emit(cleaned_msg, last_was_cr)
-                    if percent is not None:
-                        self.signals.progress_percent.emit(percent)
-                rc = self.process.wait() if not self.should_cancel else 1
-            # --- POST-PROCESS FOR AUTOSUBSYNC TEMP-OUTPUT ---
-            if rc == 0 and use_temp_output and not self.should_cancel:
-                try:
-                    if not os.path.exists(temp_output_path):
-                        self.signals.error.emit(
-                            "Autosubsync did not produce an output file."
-                        )
-                        rc = 1
-                    else:
-                        logger.info(
-                            "Replacing original output '%s' with temp '%s'",
-                            output,
-                            temp_output_path,
-                        )
-                        os.replace(temp_output_path, output)
-                        logger.info("Replacement successful")
-                except Exception as e:
-                    self.signals.error.emit(f"Failed to replace original subtitle: {e}")
-                    logger.error("Replacement failed: %s", e)
-                    rc = 1
-            if (
-                (rc != 0 or self.should_cancel)
-                and use_temp_output
-                and temp_output_path
-                and os.path.exists(temp_output_path)
-            ):
-                try:
-                    os.remove(temp_output_path)
-                    logger.info("Removed temp output '%s'", temp_output_path)
-                except Exception:
-                    logger.warning(
-                        "Failed to remove temp output '%s'", temp_output_path
-                    )
-            # --- END POST-PROCESS ---
-
-            if rc != 0 and not self.should_cancel:
-                self.signals.error.emit(
-                    texts.TOOL_FAILED_WITH_CODE.format(tool=tool, code=rc)
-                )
-                self.signals.finished.emit(False, None)
-            elif self.should_cancel:
-                self.signals.finished.emit(False, None)
-            else:
-                self.signals.finished.emit(True, output)
-        except Exception as e:
-            if not self.should_cancel:
-                error_msg = texts.ERROR_PREFIX + " " + str(e)
-                if tool == "alass" and "could not convert string to float" in str(e):
-                    if any(c in reference or c in subtitle for c in ["[", "]"]):
-                        error_msg += "\n\n" + texts.ALASS_BRACKETS_ERROR
-                self.signals.error.emit(error_msg)
-                self.signals.finished.emit(False, None)
-            else:
-                self.signals.finished.emit(False, None)
-
-    def _process_output(self, message):
-        if not message:
-            return "", None
-        percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", message)
-        percent = float(percent_match.group(1)) if percent_match else None
-        sync_tool = self.app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
-        lines = message.split("\n")
-        if sync_tool == "alass":
-            result = [
-                (
-                    shorten_progress_bar(line)
-                    if "[" in line and "]" in line
-                    else line.rstrip()
-                )
-                for line in lines
-            ]
-        else:
-            result = [line.rstrip() for line in lines]
-        return "\n".join(result), percent
-
-    def _build_cmd(self, tool, exe, reference, subtitle, output):
-        cmd_structure = SYNC_TOOLS[tool].get("cmd_structure")
-        cmd = [exe] + [
-            part.format(reference=reference, subtitle=subtitle, output=output)
-            for part in cmd_structure
-        ]
-        if tool == "alass":
-            try:
-                subtitle_encoding = detect_encoding(subtitle)
-                new_subtitle_encoding = (
-                    subtitle_encoding
-                    if subtitle_encoding in enc_list
-                    else find_closest_encoding(subtitle_encoding)
-                )
-                cmd.extend(["--encoding-inc", new_subtitle_encoding])
-            except Exception as e:
-                logger.warning(f"Failed to detect subtitle encoding: {e}")
-            ref_ext = os.path.splitext(reference)[1].lower()
-            if ref_ext in SUBTITLE_EXTENSIONS:
-                try:
-                    ref_encoding = detect_encoding(reference)
-                    new_ref_encoding = (
-                        ref_encoding
-                        if ref_encoding in enc_list
-                        else find_closest_encoding(ref_encoding)
-                    )
-                    cmd.extend(["--encoding-ref", new_ref_encoding])
-                except Exception as e:
-                    logger.warning(f"Failed to detect reference encoding: {e}")
-        return self._append_opts(cmd, tool)
-
-    def _append_opts(self, cmd, tool):
-        config = self.app.config
-        info = SYNC_TOOLS.get(tool, {})
-        for name, opt in info.get("options", {}).items():
-            arg, default = opt.get("argument"), opt.get("default")
-            val = config.get(f"{tool}_{name}", default)
-            if arg and val != default:
-                if name == "split_penalty" and val == -1:
-                    no_splits_arg = opt.get("no_split_argument")
-                    if no_splits_arg:
-                        cmd.append(no_splits_arg)
-                elif isinstance(default, bool):
-                    cmd.append(arg)
-                else:
-                    cmd.extend([arg, str(val)])
-        extra = config.get(f"{tool}_arguments", "").strip().split()
-        return cmd + extra if extra else cmd
+        cb = sync_core.SyncCallbacks(
+            on_log=lambda msg, color: append_log(
+                self.app, msg, COLORS.get(color.upper()) if color else None
+            ),
+            on_progress=lambda percent: self.signals.progress_percent.emit(percent),
+            on_subprocess_line=lambda line, is_overwrite: self.signals.progress.emit(
+                line, is_overwrite
+            ),
+            on_error=lambda msg: self.signals.error.emit(msg),
+            is_cancelled=lambda: self.should_cancel,
+        )
+        result = sync_core.run_sync(
+            reference,
+            subtitle,
+            tool=tool,
+            output=output,
+            config=self.app.config,
+            callbacks=cb,
+            process_holder=self._process_holder,
+        )
+        self.signals.finished.emit(result.ok, result.output_path)
 
 
 class LogWindowStream:
@@ -1221,74 +871,19 @@ def start_sync_process(app):
 
 
 def get_tool_with_fallback(app, ref_path):
-    t = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
-    info = SYNC_TOOLS[t]
-    t_type = info.get("type", "executable")
-    supports_sub_ref = info.get("supports_subtitle_as_reference", True)
-    ref_ext = os.path.splitext(ref_path)[1].lower()
-    is_video = ref_ext not in SUBTITLE_EXTENSIONS
-    if not supports_sub_ref and not is_video:
-        fallback = DEFAULT_OPTIONS["sync_tool"]
-        append_log(
-            app,
-            texts.TOOL_DOES_NOT_SUPPORT_SUBTITLE_REFERENCE.format(
-                tool=t, fallback=fallback
-            ),
-            COLORS["ORANGE"],
-        )
-        logger.info(
-            f"{t} does not support subtitle files as reference. Falling back to {fallback}."
-        )
-        t = fallback
-        info = SYNC_TOOLS[t]
-        t_type = info.get("type", "executable")
-    return t, info, t_type
+    """GUI-facing wrapper that routes the orange fallback log through append_log."""
+    cb = sync_core.SyncCallbacks(
+        on_log=lambda msg, color: append_log(
+            app, msg, COLORS.get(color.upper()) if color else None
+        ),
+    )
+    return sync_core.get_tool_with_fallback(ref_path, config=app.config, callbacks=cb)
 
 
 def determine_output_path(app, reference, subtitle, subtitle_was_converted=False):
-    config = app.config
-    save_loc = config.get(
-        "automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"]
+    return sync_core.determine_output_path(
+        reference,
+        subtitle,
+        config=app.config,
+        subtitle_was_converted=subtitle_was_converted,
     )
-    add_prefix = config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"])
-    sub_dir, sub_file = os.path.dirname(subtitle), os.path.basename(subtitle)
-    sub_name, sub_ext = os.path.splitext(sub_file)
-    ref_dir, vid_file = os.path.dirname(reference), os.path.basename(reference)
-    ref_name, _ = os.path.splitext(vid_file)
-    tool = config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
-    prefix = f"{tool}_" if add_prefix else ""
-    if subtitle_was_converted:
-        sub_ext = ".srt"
-    if save_loc == "save_next_to_input_subtitle":
-        out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
-    elif save_loc == "overwrite_input_subtitle":
-        out_dir, out_name = sub_dir, (
-            sub_file if not subtitle_was_converted else f"{sub_name}{sub_ext}"
-        )
-    elif save_loc == "save_next_to_video":
-        out_dir, out_name = ref_dir, f"{prefix}{sub_name}{sub_ext}"
-    elif save_loc == "save_next_to_video_with_same_filename":
-        out_dir, out_name = ref_dir, f"{ref_name}{sub_ext}"
-    elif save_loc == "save_to_desktop":
-        out_dir, out_name = (
-            platformdirs.user_desktop_path(),
-            f"{prefix}{sub_name}{sub_ext}",
-        )
-    elif save_loc == "select_destination_folder":
-        folder = config.get("automatic_save_folder", "")
-        out_dir = folder if folder and os.path.isdir(folder) else sub_dir
-        out_name = f"{prefix}{sub_name}{sub_ext}"
-    else:
-        out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
-    output_path = os.path.join(out_dir, out_name)
-    if save_loc not in (
-        "save_next_to_video_with_same_filename",
-        "overwrite_input_subtitle",
-    ):
-        base, ext = os.path.splitext(out_name)
-        counter = 2
-        while os.path.exists(output_path):
-            out_name = f"{base}_{counter}{ext}"
-            output_path = os.path.join(out_dir, out_name)
-            counter += 1
-    return output_path

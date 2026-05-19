@@ -23,9 +23,7 @@ try:
     import charset_normalizer
 except:
     charset_normalizer = None
-from PyQt6.QtWidgets import QApplication, QMessageBox, QFileDialog
-from PyQt6.QtCore import QUrl, QProcess, pyqtSignal, QObject
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtCore import pyqtSignal, QObject
 import requests
 import webbrowser
 
@@ -507,6 +505,8 @@ def clear_config_cache():
 
 def restart_application():
     """Restart the application, handling AppImage, frozen executables, and pip installs."""
+    from PyQt6.QtWidgets import QApplication
+
     appimage = os.environ.get("APPIMAGE")
 
     try:
@@ -677,6 +677,10 @@ def open_folder(path, parent=None):
     Returns:
         bool: True if successful, False otherwise
     """
+    from PyQt6.QtWidgets import QMessageBox
+    from PyQt6.QtCore import QUrl
+    from PyQt6.QtGui import QDesktopServices
+
     if not path:
         return False
 
@@ -733,6 +737,8 @@ def open_filedialog(
     Returns:
         Selected file path(s) or None if canceled
     """
+    from PyQt6.QtWidgets import QFileDialog
+
     config_dir = (
         parent_instance.config.get("last_used_dir", "")
         if hasattr(parent_instance, "config")
@@ -787,6 +793,8 @@ def toggle_remember_changes(obj, checked):
 
 
 def reset_to_defaults(parent):
+    from PyQt6.QtWidgets import QMessageBox
+
     # Show confirmation dialog
     reply = QMessageBox.question(
         parent,
@@ -812,6 +820,8 @@ def reset_to_defaults(parent):
 
 def open_config_directory(parent=None):
     """Open the config directory in the system file manager"""
+    from PyQt6.QtWidgets import QMessageBox
+
     try:
         config_path = get_user_config_path()
         config_dir = os.path.dirname(config_path)
@@ -831,6 +841,8 @@ def open_logs_directory(parent=None):
 
 def clear_logs_directory(parent=None):
     """Delete logs directory after user confirmation."""
+    from PyQt6.QtWidgets import QMessageBox
+
     try:
         logs_dir = get_logs_directory()
 
@@ -978,6 +990,7 @@ def show_tool_info_dialog(parent):
     )
     from PyQt6.QtCore import Qt, QUrl
     from PyQt6.QtGui import QIcon, QDesktopServices
+    from PyQt6.QtWidgets import QApplication
     from constants import SYNC_TOOLS, COLORS
     from utils import get_resource_path, safe_open_url
     import platform
@@ -1148,6 +1161,7 @@ def get_locale():
 
 
 def _show_update_message(parent, remote_version, local_version):
+    from PyQt6.QtWidgets import QMessageBox
     from constants import GITHUB_LATEST_RELEASE_URL, PROGRAM_NAME
     from utils import safe_open_url
 
@@ -1174,6 +1188,7 @@ def _show_update_message(parent, remote_version, local_version):
 
 
 def _show_up_to_date(parent, version):
+    from PyQt6.QtWidgets import QMessageBox
     from constants import PROGRAM_NAME
 
     QMessageBox.information(
@@ -1184,6 +1199,8 @@ def _show_up_to_date(parent, version):
 
 
 def _show_check_failed(parent, error_message):
+    from PyQt6.QtWidgets import QMessageBox
+
     QMessageBox.warning(
         parent,
         texts.UPDATE_CHECK_FAILED_TITLE,
@@ -1325,6 +1342,7 @@ def initialize_static_ffmpeg(parent=None, callback=None):
     Returns:
         bool: True if successful or not needed, False if failed
     """
+    from PyQt6.QtWidgets import QMessageBox
     from constants import NEEDS_STATIC_FFMPEG, FFMPEG_EXECUTABLE
 
     if not NEEDS_STATIC_FFMPEG:
