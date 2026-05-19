@@ -3,6 +3,7 @@ import sys
 import platform
 import logging
 import multiprocessing
+import compat  # Shim for pkg_resources (removed in Python 3.14+)
 
 # Fix multiprocessing for installed packages:
 # - On Linux: use 'fork' to avoid re-importing the 'main' module (which conflicts with our package name)
