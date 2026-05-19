@@ -14,6 +14,19 @@ except ImportError:
     # Create a dummy pkg_resources module to satisfy legacy dependencies
     pkg_resources_shim = types.ModuleType("pkg_resources")
 
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+    except ImportError:
+        from importlib_metadata import PackageNotFoundError, version  # type: ignore
+
+    class DistributionNotFound(Exception):
+        pass
+
+    class _Distribution:
+        def __init__(self, name, dist_version):
+            self.project_name = name
+            self.version = dist_version
+
     def resource_filename(package_or_requirement, resource_name):
         """
         Implementation of resource_filename for legacy libraries (like autosubsync).
@@ -26,5 +39,17 @@ except ImportError:
             pass
         return resource_name
 
+    def get_distribution(name):
+        try:
+            return _Distribution(name, version(name))
+        except PackageNotFoundError as e:
+            raise DistributionNotFound(name) from e
+
+    def require(name):
+        return [get_distribution(name)]
+
     pkg_resources_shim.resource_filename = resource_filename
+    pkg_resources_shim.get_distribution = get_distribution
+    pkg_resources_shim.require = require
+    pkg_resources_shim.DistributionNotFound = DistributionNotFound
     sys.modules["pkg_resources"] = pkg_resources_shim
