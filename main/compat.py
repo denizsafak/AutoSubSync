@@ -1,5 +1,6 @@
 import sys
 import types
+import warnings
 from pathlib import Path
 
 """
@@ -9,7 +10,11 @@ Handles shims for deprecated or removed features in newer Python versions.
 
 # Shim for pkg_resources (removed in Python 3.14+)
 try:
-    import pkg_resources
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
+        warnings.filterwarnings("ignore", message=".*pkg_resources is deprecated as an API.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        import pkg_resources
 except ImportError:
     # Create a dummy pkg_resources module to satisfy legacy dependencies
     pkg_resources_shim = types.ModuleType("pkg_resources")
