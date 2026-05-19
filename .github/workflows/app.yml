@@ -136,6 +136,25 @@ jobs:
           echo "$changelog" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      - name: Get previous release tag and compare link
+        id: compare-link
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          prev_tag=$(gh release list --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+          current_tag="v${{ needs.build.outputs.version }}"
+          
+          if [ -n "$prev_tag" ] && [ "$prev_tag" != "null" ] && [ "$prev_tag" != "$current_tag" ]; then
+            compare_url="https://github.com/${{ github.repository }}/compare/${prev_tag}...${current_tag}"
+            compare_text="**Full Changelog**: [${prev_tag}...${current_tag}](${compare_url})"
+          else
+            compare_text=""
+          fi
+          
+          echo "compare_text<<EOF" >> $GITHUB_ENV
+          echo "$compare_text" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -143,6 +162,15 @@ jobs:
           name: "AutoSubSync v${{ needs.build.outputs.version }}"
           body: |
             ${{ env.changelog }}
+
+            ${{ env.compare_text }}
+
+            ### Downloads
+            * **Windows (x64):** [AutoSubSync-windows-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-windows-amd64.zip)
+            * **macOS (Apple Silicon - M1/M2/M3):** [AutoSubSync-macos-arm64.zip](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-macos-arm64.zip)
+            * **macOS (Intel):** [AutoSubSync-macos-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-macos-amd64.zip)
+            * **Linux (AppImage):** [AutoSubSync-linux-amd64.AppImage](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-linux-amd64.AppImage)
+            * **Linux (Tarball):** [AutoSubSync-linux-amd64.tar.gz](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-linux-amd64.tar.gz)
 
             > MacOS users please read the [instructions](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#macos).
             

@@ -497,14 +497,14 @@ def build_appimage():
     # Download appimagetool if needed
     appimagetool = download_appimagetool()
     if not appimagetool:
-        print("Error: Could not obtain appimagetool. Falling back to tar.gz archive.")
+        print("Error: Could not obtain appimagetool.")
         return None
 
     # Create AppDir structure
     appdir = create_appimage_structure(version)
     if appdir is None:
         print(
-            "Error: Failed to create AppDir structure. Falling back to tar.gz archive."
+            "Error: Failed to create AppDir structure."
         )
         return None
 
@@ -534,7 +534,7 @@ def build_appimage():
 
         if completed_process.returncode != 0:
             print(f"appimagetool stderr: {completed_process.stderr}")
-            print("Error creating AppImage. Falling back to tar.gz archive.")
+            print("Error creating AppImage.")
             return None
 
         print(f"AppImage created successfully: {appimage_name}")
@@ -687,11 +687,9 @@ def create_archive():
         version = f.read().strip()
 
     if IS_LINUX:
-        # Try to create AppImage, fall back to tar.gz
-        result = build_appimage()
-        if result is None:
-            print("Falling back to tar.gz archive...")
-            create_linux_tarball(version)
+        # Create both AppImage and tar.gz archive for Linux
+        build_appimage()
+        create_linux_tarball(version)
     elif IS_MACOS:
         # Package .app bundle
         package_macos_app()
@@ -701,7 +699,7 @@ def create_archive():
 
 
 def create_linux_tarball(version):
-    """Create a tar.gz archive for Linux (fallback if AppImage fails)."""
+    """Create a tar.gz archive for Linux."""
     # The build output is in dist/AutoSubSync/
     dist_dir = os.path.join("dist", "AutoSubSync")
     arch, _ = get_arch()
