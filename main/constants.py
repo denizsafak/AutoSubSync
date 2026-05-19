@@ -138,6 +138,7 @@ DEFAULT_OPTIONS = {
     "check_updates_startup": True,
     "batch_mode": False,
     "add_tool_prefix": False,
+    "custom_suffix": "",
     "backup_subtitles_before_overwriting": True,
     "keep_extracted_subtitles": False,
     "keep_converted_subtitles": False,

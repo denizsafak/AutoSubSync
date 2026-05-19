@@ -179,6 +179,9 @@ assy-cli batch --video-dir ./videos --subtitle-dir ./subs -o ./out --json
 # Pick a sync engine per call
 assy-cli sync video.mkv subs.srt -t alass
 
+# Add a custom suffix to the output filename
+assy-cli sync video.mkv subs.srt --suffix "_custom"
+
 # Inspect or persist user config
 assy-cli config path
 assy-cli config get sync_tool
@@ -393,6 +396,7 @@ Access settings via the gear icon in the **top right** corner.
 | **Keep extracted subtitles** | When synchronizing against embedded video subtitles, keep the extracted subtitle files instead of deleting them after processing. |
 | **Keep converted subtitles** | When subtitle format conversion is required, keep the converted file instead of deleting it after processing. |
 | **Add "tool_" prefix to subtitles** | Add the name of the sync tool (e.g., `ffsubsync_`, `alass_`) to the beginning of the output subtitle filename. |
+| **Add custom suffix for subtitles** | Add a custom suffix to the end of the output subtitle filename (ignored in "Overwrite input subtitle" mode). |
 | **Open config file directory** | Open the folder where configuration files and databases (`processed_items.db`, `library_folders.db`) are stored. |
 | **Open logs directory** | Open the folder where application log files are stored for troubleshooting. |
 | **Keep log records** | When enabled, saves detailed logs of synchronization operations for debugging purposes. |

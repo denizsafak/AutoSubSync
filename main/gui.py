@@ -821,6 +821,11 @@ class autosubsyncapp(QWidget):
         )
         self.settings_menu.addAction(self.add_tool_prefix_action)
 
+        self.add_custom_suffix_action = QAction(texts.ADD_CUSTOM_SUFFIX_FOR_SUBTITLES, self)
+        self.update_custom_suffix_text()
+        self.add_custom_suffix_action.triggered.connect(self.set_custom_suffix)
+        self.settings_menu.addAction(self.add_custom_suffix_action)
+
         self.settings_menu.addSeparator()
 
         # Add 'Open config directory' option at the top
@@ -999,6 +1004,31 @@ class autosubsyncapp(QWidget):
             if self._handle_shift_input_events(obj, event):
                 return True
         return super().eventFilter(obj, event)
+
+    def set_custom_suffix(self):
+        from PyQt6.QtWidgets import QInputDialog
+        current_suffix = self.config.get("custom_suffix", DEFAULT_OPTIONS["custom_suffix"])
+        
+        text, ok = QInputDialog.getText(
+            self,
+            str(texts.ADD_CUSTOM_SUFFIX_FOR_SUBTITLES),
+            str(texts.ENTER_CUSTOM_SUFFIX),
+            text=current_suffix
+        )
+        if ok:
+            update_config(self, "custom_suffix", text)
+            self.update_custom_suffix_text()
+            # Also write directly to ensure it evaluates in update_config properly
+            self.config["custom_suffix"] = text
+
+    def update_custom_suffix_text(self):
+        val = self.config.get("custom_suffix", DEFAULT_OPTIONS["custom_suffix"])
+        base_text = str(texts.ADD_CUSTOM_SUFFIX_FOR_SUBTITLES)
+        if val:
+            enabled_text = str(texts.ENABLED)
+            self.add_custom_suffix_action.setText(f"{base_text} ({enabled_text})")
+        else:
+            self.add_custom_suffix_action.setText(base_text)
 
     def show_settings_menu(self):
         # Show the menu at the right position below the button

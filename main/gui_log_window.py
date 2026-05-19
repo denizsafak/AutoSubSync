@@ -118,7 +118,7 @@ class LogWindow(QWidget):
             return
         self.log_text.clear()
         cfg = app.config
-        get = lambda k: cfg.get(k, DEFAULT_OPTIONS.get(k))
+        get = lambda k, d=None: cfg.get(k, DEFAULT_OPTIONS.get(k) if d is None else d)
         sync_tool = get("sync_tool")
         self.append_message(texts.CONFIGURATION_LABEL, bold=True, color=COLORS["BLUE"])
         if app.batch_mode_enabled:
@@ -189,6 +189,13 @@ class LogWindow(QWidget):
         self.append_message(
             bool_display(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"]
         )
+
+        custom_suffix = get("custom_suffix", "")
+        if custom_suffix:
+            self.append_message(f"{texts.ADD_CUSTOM_SUFFIX_FOR_SUBTITLES}: ", end="")
+            self.append_message(
+                custom_suffix, bold=True, color=COLORS["GREEN"]
+            )
 
         self.append_message(f"{texts.KEEP_EXTRACTED_SUBTITLES}: ", end="")
         self.append_message(

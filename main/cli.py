@@ -161,6 +161,8 @@ def _apply_common_overrides(config: dict, args) -> None:
         config["add_tool_prefix"] = True
     elif getattr(args, "no_prefix", False):
         config["add_tool_prefix"] = False
+    if getattr(args, "suffix", None) is not None:
+        config["custom_suffix"] = args.suffix
 
 
 def _validate_save_mode(config: dict) -> Optional[str]:
@@ -649,6 +651,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not prefix the output filename with the tool name",
     )
+    s.add_argument(
+        "--suffix",
+        help="Add custom suffix to the output filename",
+        metavar="SUFFIX",
+    )
     s.add_argument("--json", action="store_true", help="Emit JSON result on stdout")
     s.set_defaults(handler=cmd_sync)
 
@@ -708,6 +715,7 @@ def build_parser() -> argparse.ArgumentParser:
     g = b.add_mutually_exclusive_group()
     g.add_argument("--prefix", action="store_true")
     g.add_argument("--no-prefix", action="store_true")
+    b.add_argument("--suffix", help="Add custom suffix to the output filename", metavar="SUFFIX")
     skip_g = b.add_mutually_exclusive_group()
     skip_g.add_argument(
         "--skip-processed",
