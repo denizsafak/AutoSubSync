@@ -1,46 +1,4 @@
-v6.4 (Planned):
-- **Python 3.14+ Compatibility:** Added a shim for `pkg_resources` to ensure compatibility with legacy dependencies (like `autosubsync`) that fail in recent Python versions where `setuptools` is not installed by default.
-- Updated `pyproject.toml` to allow installation on Python 3.14.
+- Added headless CLI for autonomous subtitle sync pipelines. Contributed by @Aidenir in PR [#86](https://github.com/denizsafak/AutoSubSync/pull/86):
+  >Introduces assy-cli with five subcommands (sync, shift, batch, config, version), JSON output mode, structured exit codes, and a slim Docker image - so AutoSubSync can run in CI/CD, scheduled jobs, and containers without a display or Qt event loop. The sync engine logic was extracted from SyncProcess into a new sync_core module that knows nothing about Qt; SyncProcess is now a thin adapter that wires Qt signals to sync_core callbacks. The pairing logic moved to a new pairing module the GUI re-imports. utils.py drops its top-level QtWidgets/QtGui imports so the CLI never loads Qt display libraries at runtime.
 
-v6.3 only includes the following changes on top of v6.2:
-- Added new language: zh_TW (Traditional Chinese, Taiwan) contributed by [@ceshizhuanyong895](https://github.com/ceshizhuanyong895) in [#68](https://github.com/denizsafak/AutoSubSync/pull/68).
-- Fixed an issue where the application would not restart correctly, due to incorrect handling of entry points in the `restart_application` function. Improved error logging to provide clearer information if a restart fails in the future.
-- Improvements in code and documentation.
-
-Keeping the v6.2 changelog here for reference:
-- **PyPI package now available!** You can install AutoSubSync directly with `pip install assy` and run with `assy` or `assy-cli`. This provides an easier installation method for users who prefer pip.
-- Added **Sync tracking** system for Batch Mode. This system keeps track of all videos that have been successfully synced, so when you add a large library of videos to the batch list, the app automatically identifies and skips the ones you've already processed before. This is especially useful when working with large media collections where you periodically add new content and want to avoid re-syncing existing files. Feature requested by [@M10pnl](https://github.com/M10pnl) in [#54](https://github.com/denizsafak/AutoSubSync/issues/54).
-  - **Designed for video files only**; reference or output subtitle files are not tracked.
-  - Videos are identified by their content using a unique fingerprint (hash), **not by filename or path**. This means you can rename, move, or reorganize your files and the system will still recognize them as already processed.
-  - When you add videos to the batch list, previously processed ones automatically appear greyed out with a `Status: Skipped` tooltip, making it easy to see at a glance which files will be skipped.
-  - **When sync tracking is disabled**: No videos will be automatically skipped, newly synced videos will not be added to the database, and sync-related options will not appear in Batch Mode.
-  - Access all sync tracking features via multiple locations:
-    - **Batch Mode:** `Sync tracking` button (shows green text when enabled) or right-click context menu
-    - **Settings Menu:** `Sync tracking` submenu (shows "Enabled" or "Disabled" status in title)
-  - **Sync tracking menu options:**
-    - `Sync tracking system: Enabled/Disabled` - Toggle the system on or off
-    - `Clear processed items database` - Reset the tracking database (**Please be careful with this action, as it cannot be undone if you have not backed up your database.**)
-    - `Backup processed items database` - Export your database for safekeeping
-    - `Import processed items database` - Import items from another database (merges without duplicates)
-    - `Manage library folders` - Open the Library Folders Manager
-    - `Load library` - Quickly load all saved library folders into Batch Mode (Batch Mode menu only)
-  - **Right-click context menu** provides manual control over individual items:
-    - `Force process selected video(s)` - Temporarily override the skip and process the video again
-    - `Skip processing selected video(s)` - Manually mark videos to be skipped without adding them to the database
-    - `Add selected video(s) to processed items database` - Mark videos as already processed without syncing them
-    - `Remove selected video(s) from processed items database` - Remove videos from the database so they can be processed again
-  - `Refresh` button re-checks all videos in the current list against the database.
-  - Database file location: `processed_items.db` in the config directory (accessible via `Settings` → `Open config file directory`).
-- Added **Library Manager** system for Batch Mode. The Library Manager allows you to save frequently used folders for quick access in Batch Mode. Add folders containing video files and their corresponding subtitle files. These folders will be remembered between sessions, so you don't have to re-add them each time. You can add, remove, or clear folders as needed. When 'Load library' is clicked, it will load all videos and subtitles that exist in the folders you added.
-  - Access via the `Sync tracking` menu → `Manage library folders` or directly in Batch Mode via the `Sync tracking` button
-  - Add, remove, and organize your library folders
-  - Folders that no longer exist are highlighted in red
-  - Click `Load library` to load all saved folders, or press OK in the manager to load and close
-  - Database file location: `library_folders.db` in the config directory (accessible via `Settings` → `Open config file directory`).
-- Batch Input system now supports **adding multiple subtitle files to a single Video/Reference** parent item. Each subtitle file is automatically interpreted as its own individual processing task, all linked to the same parent video/reference file, feature mentioned by [@StalOlympus](https://github.com/StalOlympus) in [#58](https://github.com/denizsafak/AutoSubSync/issues/58).
-- Added **Undo/Redo** support to the Batch Input, including `Ctrl+Z` and `Ctrl+Y` shortcuts and new right-click menu options, allowing users to easily revert or reapply actions while managing items.
-- Added new option **Auto-rename files if needed**: When enabled (and `alass` is selected), AutoSubSync will automatically rename any file or folder path components that contain `[` or `]` (replacing them with `(` and `)`) to fix an error where `alass` cannot work with paths containing these characters. When disabled, AutoSubSync will display a 30-second prompt asking whether to rename the affected paths; if the prompt times out, the rename will be skipped. Possibly fixes the issue mentioned by [@SilfraTheDragon](https://github.com/SilfraTheDragon) in [#63](https://github.com/denizsafak/AutoSubSync/issues/63).
-- Upgraded [ffsubsync](https://github.com/smacke/ffsubsync) from `0.4.30` to `0.4.31`.
-- **Linux:** Now distributed as AppImage for easier installation and portability.
-- **macOS:** Now distributed as a native .app bundle with improved code signing.
-- Improvements in documentation, translations, and code.
+- **Python 3.14+ Compatibility:** Added a shim for `pkg_resources` to ensure compatibility with legacy dependencies (like `autosubsync`) that fail in recent Python versions where `setuptools` is not installed by default, Updated `pyproject.toml` to allow installation on Python 3.14. Contributed by @MateusSantos14 in PR [#85](https://github.com/denizsafak/AutoSubSync/pull/85)
