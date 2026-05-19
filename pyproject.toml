@@ -76,6 +76,9 @@ assy = "main.main:main"
 assy-cli = "main.cli:main"
 
 [tool.hatch.build.targets.sdist]
+artifacts = [
+    "main/resources/alass-bin/alass-cli.exe",
+]
 exclude = [
     "/.github",
     "/build",
@@ -104,6 +107,9 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["main"]
+artifacts = [
+    "main/resources/alass-bin/alass-cli.exe",
+]
 exclude = [
     "main/resources/ffmpeg-bin",
     "main/resources/ffmpeg_download.py"
