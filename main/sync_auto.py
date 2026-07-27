@@ -269,11 +269,11 @@ def _ensure_alass_safe_paths(app, reference_path, subtitle_path):
         return True, ref, sub
     if not auto:
         accepted, remember, dont_ask_again = _ask_rename_for_alass(app)
-        if remember:
+        if remember or (dont_ask_again and accepted):
             update_config(app, "auto_rename_bracket_paths", True)
             if hasattr(app, "auto_rename_bracket_paths_action"):
                 app.auto_rename_bracket_paths_action.setChecked(True)
-        if dont_ask_again:
+        if dont_ask_again and not accepted:
             update_config(app, "disable_alass_rename_prompt", True)
         if not accepted:
             return True, ref, sub
