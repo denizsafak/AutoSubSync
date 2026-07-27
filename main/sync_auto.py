@@ -213,6 +213,13 @@ def _ask_rename_for_alass(app):
         )
     )
     layout.addWidget(remember_box)
+
+    dont_ask_again_box = QCheckBox(texts.ALASS_RENAME_DONT_ASK_AGAIN, dlg)
+    dont_ask_again_box.setChecked(
+        app.config.get("disable_alass_rename_prompt", False)
+    )
+    layout.addWidget(dont_ask_again_box)
+
     buttons = QDialogButtonBox(
         QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No,
         dlg,
@@ -237,7 +244,11 @@ def _ask_rename_for_alass(app):
     timer.start(1000)
     result = dlg.exec()
     timer.stop()
-    return result == QDialog.DialogCode.Accepted, remember_box.isChecked()
+    return (
+        result == QDialog.DialogCode.Accepted,
+        remember_box.isChecked(),
+        dont_ask_again_box.isChecked(),
+    )
 
 
 def _ensure_alass_safe_paths(app, reference_path, subtitle_path):
@@ -249,12 +260,21 @@ def _ensure_alass_safe_paths(app, reference_path, subtitle_path):
     auto = app.config.get(
         "auto_rename_bracket_paths", DEFAULT_OPTIONS["auto_rename_bracket_paths"]
     )
+    disable_prompt = app.config.get(
+        "disable_alass_rename_prompt",
+        DEFAULT_OPTIONS["disable_alass_rename_prompt"],
+    )
+    if disable_prompt:
+        logger.info("ALASS rename prompt disabled, skipping rename prompt")
+        return True, ref, sub
     if not auto:
-        accepted, remember = _ask_rename_for_alass(app)
+        accepted, remember, dont_ask_again = _ask_rename_for_alass(app)
         if remember:
             update_config(app, "auto_rename_bracket_paths", True)
             if hasattr(app, "auto_rename_bracket_paths_action"):
                 app.auto_rename_bracket_paths_action.setChecked(True)
+        if dont_ask_again:
+            update_config(app, "disable_alass_rename_prompt", True)
         if not accepted:
             return True, ref, sub
     try:

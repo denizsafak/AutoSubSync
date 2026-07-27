@@ -148,6 +148,7 @@ DEFAULT_OPTIONS = {
     "theme": "system",
     "skip_previously_processed_videos": True,
     "auto_rename_bracket_paths": False,
+    "disable_alass_rename_prompt": False,
 }
 
 # ffmpeg and ffprobe paths
