@@ -25,7 +25,10 @@ from sync_core import (
     shorten_progress_bar,
 )
 from subtitle_converter import convert_to_srt
-from subtitle_extractor import extract_subtitles
+from subtitle_extractor import (
+    cleanup_extracted_subtitles,
+    prepare_sync_reference,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -661,96 +664,39 @@ def start_sync_process(app):
                 subtitle_path != original_sub_path and subtitle_path is not None
             )
 
-            # Then check for embedded subtitles in video if applicable
-            ref_ext = os.path.splitext(original_ref_path)[1].lower()
-            is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
-            check_video_subs = is_video_ref and app.config.get(
-                f"{tool}_check_video_for_subtitles",
-                SYNC_TOOLS[tool]
-                .get("options", {})
-                .get("check_video_for_subtitles", {})
-                .get("default", False),
-            )
-            extracted_subtitle_path, extracted_folder_to_clean = None, None
-            if check_video_subs:
-                append_log(
-                    app, texts.CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES, COLORS["GREY"]
-                )
-                extraction_result, extraction_done, log_lock = (
-                    [None, None, []],
-                    threading.Event(),
-                    threading.Lock(),
-                )
+            # Prepare the reference through the shared GUI/CLI extraction workflow.
+            extraction_result, extraction_done = [None], threading.Event()
 
+            if subtitle_path:
                 def run_extraction():
                     try:
-                        result = extract_subtitles(
-                            original_ref_path, subtitle_path, output_dir
+                        extraction_result[0] = prepare_sync_reference(
+                            original_ref_path,
+                            subtitle_path,
+                            output_dir,
+                            tool=tool,
+                            config=app.config,
                         )
-                        extraction_result[0], extraction_result[1] = (
-                            result[0],
-                            result[1],
-                        )
-                        with log_lock:
-                            extraction_result[2].extend(result[2])
                     except Exception as e:
                         logger.exception(f"Extraction failed: {e}")
-                        with log_lock:
-                            extraction_result[2].append(
-                                texts.EXTRACTION_FAILED_PREFIX + str(e)
-                            )
                     finally:
                         extraction_done.set()
 
                 threading.Thread(target=run_extraction, daemon=True).start()
-                last_log_count = 0
                 while not extraction_done.is_set():
-                    with log_lock:
-                        while last_log_count < len(extraction_result[2]):
-                            append_log(
-                                app,
-                                f"{extraction_result[2][last_log_count]}",
-                                COLORS["GREY"],
-                            )
-                            last_log_count += 1
                     QApplication.processEvents()
                     time.sleep(0.05)
-                with log_lock:
-                    for i in range(last_log_count, len(extraction_result[2])):
-                        append_log(app, f"{extraction_result[2][i]}", COLORS["GREY"])
-                extracted_subtitle_path, extraction_score = (
-                    extraction_result[0],
-                    extraction_result[1],
-                )
-                if extracted_subtitle_path:
-                    filename = os.path.basename(extracted_subtitle_path)
-                    append_log(
-                        app,
-                        texts.EXTRACTION_SELECTED_WITH_TIMESTAMP.format(
-                            filename=filename, score=extraction_score
-                        ),
-                        COLORS["BLUE"],
-                    )
-                    if not app.config.get(
-                        "keep_extracted_subtitles",
-                        DEFAULT_OPTIONS["keep_extracted_subtitles"],
-                    ):
-                        extracted_folder_to_clean = os.path.dirname(
-                            extracted_subtitle_path
-                        )
-                else:
-                    append_log(
-                        app, texts.EXTRACTION_NO_COMPATIBLE_SUBTITLES, COLORS["ORANGE"]
-                    )
+                for message in extraction_result[0].messages:
+                    append_log(app, f"{message}", COLORS["GREY"])
 
+            extraction = extraction_result[0]
             reference_to_process = (
-                extracted_subtitle_path
-                if extracted_subtitle_path
-                else original_ref_path
+                extraction.effective_reference if extraction else original_ref_path
             )
             reference_path = convert_if_needed(reference_to_process)
             current_item_idx += 1
             if not reference_path or not subtitle_path:
+                cleanup_extracted_subtitles(extraction)
                 if app.batch_mode_enabled and total_items > 1:
                     batch_fail_count += 1
                     failed_pairs.append(
@@ -818,17 +764,19 @@ def start_sync_process(app):
                 if hasattr(app, "_batch_state") and app._batch_state.get(
                     "should_cancel", False
                 ):
-                    cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
+                    cleanup_files(converted_files_to_clean)
+                    cleanup_extracted_subtitles(extraction)
                     return
                 ok = handle_completion(app, ok, out, original_sub_path)
                 if ok:
                     batch_success_count += 1
-                    cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
                 else:
                     batch_fail_count += 1
                     failed_pairs.append(
                         (original_idx, original_ref_path, original_sub_path)
                     )
+                cleanup_files(converted_files_to_clean)
+                cleanup_extracted_subtitles(extraction)
                 update_progress(
                     app,
                     int((original_idx + 1) * 100 / total_items),
@@ -847,8 +795,8 @@ def start_sync_process(app):
 
             def single_completion_handler(ok, out):
                 ok = handle_completion(app, ok, out, original_sub_path)
-                if ok:
-                    cleanup_files(converted_files_to_clean, extracted_folder_to_clean)
+                cleanup_files(converted_files_to_clean)
+                cleanup_extracted_subtitles(extraction)
                 # Pass sync tracking callback to be called after success message but before saved to
                 post_success_cb = (
                     (lambda: _mark_item_as_processed(app, original_ref_path))
