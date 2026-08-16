@@ -242,8 +242,26 @@ def _emit_json(obj) -> None:
     sys.stdout.flush()
 
 
+def _prepare_reference(reference, subtitle, output_path, tool, config, args):
+    from subtitle_extractor import prepare_sync_reference
+
+    output_dir = os.path.dirname(os.path.abspath(output_path))
+    prepared = prepare_sync_reference(
+        reference,
+        subtitle,
+        output_dir,
+        tool=tool,
+        config=config,
+        override=getattr(args, "embedded_subtitles", None),
+    )
+    for message in prepared.messages:
+        log.info("%s", message)
+    return prepared
+
+
 def cmd_sync(args) -> int:
-    from sync_core import run_sync
+    from subtitle_extractor import cleanup_extracted_subtitles
+    from sync_core import determine_output_path, run_sync
 
     config = _effective_config(args)
     _apply_common_overrides(config, args)
@@ -262,14 +280,23 @@ def cmd_sync(args) -> int:
     _ensure_ffmpeg()
     tool = config.get("sync_tool", "ffsubsync")
     callbacks = _build_callbacks(args.json)
-    result = run_sync(
-        args.video,
-        args.subtitle,
-        tool=tool,
-        output=args.output,
-        config=config,
-        callbacks=callbacks,
+    output_path = args.output or determine_output_path(
+        args.video, args.subtitle, config=config
     )
+    prepared = _prepare_reference(
+        args.video, args.subtitle, output_path, tool, config, args
+    )
+    try:
+        result = run_sync(
+            prepared.effective_reference,
+            args.subtitle,
+            tool=tool,
+            output=output_path,
+            config=config,
+            callbacks=callbacks,
+        )
+    finally:
+        cleanup_extracted_subtitles(prepared)
     if result.ok and result.output_path:
         _apply_output_encoding(args.subtitle, result.output_path, config)
 
@@ -330,7 +357,8 @@ def cmd_shift(args) -> int:
 
 
 def cmd_batch(args) -> int:
-    from sync_core import run_sync
+    from subtitle_extractor import cleanup_extracted_subtitles
+    from sync_core import determine_output_path, run_sync
     from pairing import pair_paths, pair_folder, pair_folders
     from constants import SUBTITLE_EXTENSIONS
 
@@ -424,14 +452,21 @@ def cmd_batch(args) -> int:
         callbacks = _build_callbacks(args.json, prefix=f"[{idx}/{total}] ")
         log.info("[%d/%d] %s + %s", idx, total, video, subtitle)
         tool = config.get("sync_tool", "ffsubsync")
-        result = run_sync(
-            video,
-            subtitle,
-            tool=tool,
-            output=None,
-            config=config,
-            callbacks=callbacks,
+        output_path = determine_output_path(video, subtitle, config=config)
+        prepared = _prepare_reference(
+            video, subtitle, output_path, tool, config, args
         )
+        try:
+            result = run_sync(
+                prepared.effective_reference,
+                subtitle,
+                tool=tool,
+                output=output_path,
+                config=config,
+                callbacks=callbacks,
+            )
+        finally:
+            cleanup_extracted_subtitles(prepared)
         if result.ok and result.output_path:
             _apply_output_encoding(subtitle, result.output_path, config)
             if mark and processed_mgr is not None:
@@ -597,6 +632,24 @@ def cmd_version(args) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    def add_embedded_subtitle_flags(parser):
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--embedded-subtitles",
+            dest="embedded_subtitles",
+            action="store_const",
+            const=True,
+            default=None,
+            help="Use a matching embedded subtitle stream as the sync reference",
+        )
+        group.add_argument(
+            "--no-embedded-subtitles",
+            dest="embedded_subtitles",
+            action="store_const",
+            const=False,
+            help="Do not use embedded subtitle streams",
+        )
+
     p = argparse.ArgumentParser(
         prog="assy-cli",
         description=(
@@ -656,6 +709,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Add custom suffix to the output filename",
         metavar="SUFFIX",
     )
+    add_embedded_subtitle_flags(s)
     s.add_argument("--json", action="store_true", help="Emit JSON result on stdout")
     s.set_defaults(handler=cmd_sync)
 
@@ -716,6 +770,7 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--prefix", action="store_true")
     g.add_argument("--no-prefix", action="store_true")
     b.add_argument("--suffix", help="Add custom suffix to the output filename", metavar="SUFFIX")
+    add_embedded_subtitle_flags(b)
     skip_g = b.add_mutually_exclusive_group()
     skip_g.add_argument(
         "--skip-processed",

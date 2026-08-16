@@ -167,6 +167,9 @@ fully-featured CLI that never starts a Qt event loop or requires a display.
 assy-cli sync video.mkv subs.srt -o synced.srt --json
 # {"ok": true, "input": "subs.srt", "output": "synced.srt", "tool": "ffsubsync", ...}
 
+# Prefer a matching embedded subtitle stream as the sync reference
+assy-cli sync video.mkv subs.srt --embedded-subtitles
+
 # Shift a subtitle by 1.5 seconds
 assy-cli shift subs.srt 1500 -o shifted.srt
 
@@ -175,6 +178,9 @@ assy-cli batch --folder ./episodes --continue-on-error --json
 
 # Two-folder pairing with explicit output dir
 assy-cli batch --video-dir ./videos --subtitle-dir ./subs -o ./out --json
+
+# Enable embedded-subtitle references for every video in a batch
+assy-cli batch --folder ./episodes --embedded-subtitles
 
 # Pick a sync engine per call
 assy-cli sync video.mkv subs.srt -t alass
@@ -195,6 +201,11 @@ assy-cli config set sync_tool alass
 | `batch` | Process many pairs from `--folder`, `--video-dir`+`--subtitle-dir`, or repeated `--pair` |
 | `config` | `get` / `set` / `unset` / `list` / `path` for the user config JSON |
 | `version` | Print version |
+
+The `sync` and `batch` commands accept `--embedded-subtitles` and
+`--no-embedded-subtitles`. These flags override the selected tool's saved
+setting for that invocation. Without either flag, the saved setting and tool
+default are used.
 
 **Exit codes:** `0` success · `1` at least one sync failed · `2` usage or config error · `130` SIGINT.
 

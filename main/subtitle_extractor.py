@@ -1,11 +1,114 @@
 import os
+import shutil
+from dataclasses import dataclass, field
+from typing import Optional
+
 import texts
 from utils import create_process, detect_encoding
 from constants import (
+    DEFAULT_OPTIONS,
     FFMPEG_EXECUTABLE,
     FFPROBE_EXECUTABLE,
     EXTRACTABLE_SUBTITLE_EXTENSIONS,
+    SUBTITLE_EXTENSIONS,
+    SYNC_TOOLS,
 )
+
+
+@dataclass
+class SubtitleExtractionResult:
+    """Result of preparing a reference for subtitle synchronization."""
+
+    original_reference: str
+    effective_reference: str
+    enabled: bool = False
+    extracted_subtitle: Optional[str] = None
+    score: object = None
+    messages: list = field(default_factory=list)
+    cleanup_dir: Optional[str] = None
+
+
+def should_extract_subtitles(reference, tool, config, override=None):
+    """Return whether embedded-subtitle extraction applies to this sync."""
+    if os.path.splitext(reference)[1].lower() in SUBTITLE_EXTENSIONS:
+        return False
+
+    tool_info = SYNC_TOOLS.get(tool, {})
+    option = tool_info.get("options", {}).get("check_video_for_subtitles")
+    if not option:
+        return False
+    if override is not None:
+        return bool(override)
+    return bool(
+        config.get(
+            f"{tool}_check_video_for_subtitles",
+            option.get("default", False),
+        )
+    )
+
+
+def prepare_sync_reference(
+    reference,
+    subtitle,
+    output_dir,
+    *,
+    tool,
+    config,
+    override=None,
+):
+    """Prepare a video reference, optionally replacing it with an embedded subtitle.
+
+    Extraction failures are deliberately non-fatal: callers always receive the
+    original reference as a fallback.
+    """
+    enabled = should_extract_subtitles(reference, tool, config, override)
+    result = SubtitleExtractionResult(
+        original_reference=reference,
+        effective_reference=reference,
+        enabled=enabled,
+    )
+    if not enabled:
+        return result
+
+    result.messages.append(texts.CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES)
+    if not config.get(
+        "keep_extracted_subtitles",
+        DEFAULT_OPTIONS["keep_extracted_subtitles"],
+    ):
+        result.cleanup_dir = os.path.join(
+            output_dir, "extracted_subtitles_" + os.path.basename(reference)
+        )
+    try:
+        extracted, score, messages = extract_subtitles(reference, subtitle, output_dir)
+        result.messages.extend(messages)
+        result.score = score
+        if extracted:
+            result.extracted_subtitle = extracted
+            result.effective_reference = extracted
+            result.messages.append(
+                texts.EXTRACTION_SELECTED_WITH_TIMESTAMP.format(
+                    filename=os.path.basename(extracted), score=score
+                )
+            )
+        else:
+            result.messages.append(texts.EXTRACTION_NO_COMPATIBLE_SUBTITLES)
+    except Exception as exc:
+        result.messages.append(texts.EXTRACTION_FAILED_PREFIX + str(exc))
+    except BaseException:
+        cleanup_extracted_subtitles(result)
+        raise
+    return result
+
+
+def cleanup_extracted_subtitles(result):
+    """Remove temporary extraction output when the result requests cleanup."""
+    if not result or not result.cleanup_dir:
+        return
+    try:
+        if os.path.isdir(result.cleanup_dir):
+            shutil.rmtree(result.cleanup_dir)
+    finally:
+        result.cleanup_dir = None
 
 
 def parse_timestamps(subtitle_file):
