@@ -173,10 +173,13 @@ def determine_output_path(
     if save_loc == "save_next_to_input_subtitle":
         out_dir, out_name = sub_dir, f"{prefix}{sub_name}{suffix}{sub_ext}"
     elif save_loc == "overwrite_input_subtitle":
-        out_dir, out_name = (
-            sub_dir,
-            (sub_file if not subtitle_was_converted else f"{sub_name}{sub_ext}"),
-        )
+        if suffix:
+            out_dir, out_name = sub_dir, f"{sub_name}{suffix}{sub_ext}"
+        else:
+            out_dir, out_name = (
+                sub_dir,
+                (sub_file if not subtitle_was_converted else f"{sub_name}{sub_ext}"),
+            )
     elif save_loc == "save_next_to_video":
         out_dir, out_name = ref_dir, f"{prefix}{sub_name}{suffix}{sub_ext}"
     elif save_loc == "save_next_to_video_with_same_filename":
@@ -189,9 +192,9 @@ def determine_output_path(
     elif save_loc == "select_destination_folder":
         folder = config.get("automatic_save_folder", "")
         out_dir = folder if folder and os.path.isdir(folder) else sub_dir
-        out_name = f"{prefix}{sub_name}{suffix}{sub_ext}"
+        out_name = f"{prefix}{sub_name}{sub_ext}"
     else:
-        out_dir, out_name = sub_dir, f"{prefix}{sub_name}{suffix}{sub_ext}"
+        out_dir, out_name = sub_dir, f"{prefix}{sub_name}{sub_ext}"
     output_path = os.path.join(out_dir, out_name)
     if save_loc not in (
         "save_next_to_video_with_same_filename",

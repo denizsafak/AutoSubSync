@@ -118,7 +118,7 @@ class LogWindow(QWidget):
             return
         self.log_text.clear()
         cfg = app.config
-        get = lambda k, d=None: cfg.get(k, DEFAULT_OPTIONS.get(k) if d is None else d)
+        get = lambda k: cfg.get(k, DEFAULT_OPTIONS.get(k))
         sync_tool = get("sync_tool")
         self.append_message(texts.CONFIGURATION_LABEL, bold=True, color=COLORS["BLUE"])
         if app.batch_mode_enabled:
