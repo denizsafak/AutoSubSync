@@ -7,9 +7,12 @@
 
 class TranslationDict(str):
     def __new__(cls, translations):
-        from utils import get_locale
+        try:
+            from utils import get_locale
 
-        language = get_locale()
+            language = get_locale()
+        except Exception:
+            language = "en_US"
         current_text = translations.get(language, translations.get("en_US", ""))
         instance = str.__new__(cls, current_text)
         instance._translations = translations
@@ -19,21 +22,30 @@ class TranslationDict(str):
         return self._translations.get("en_US", "")
 
     def __str__(self):
-        from utils import get_locale
+        try:
+            from utils import get_locale
 
-        language = get_locale()
+            language = get_locale()
+        except Exception:
+            language = "en_US"
         return self._translations.get(language, self._translations.get("en_US", ""))
 
     def __repr__(self):
-        from utils import get_locale
+        try:
+            from utils import get_locale
 
-        language = get_locale()
+            language = get_locale()
+        except Exception:
+            language = "en_US"
         return self._translations.get(language, self._translations.get("en_US", ""))
 
     def format(self, *args, **kwargs):
-        from utils import get_locale
+        try:
+            from utils import get_locale
 
-        language = get_locale()
+            language = get_locale()
+        except Exception:
+            language = "en_US"
         return self._translations.get(
             language, self._translations.get("en_US", "")
         ).format(*args, **kwargs)
@@ -8146,6 +8158,162 @@ FFMPEG_DOWNLOAD_FAILED = {
     "ms_MY": "Muat turun FFmpeg gagal: {error}\nSesetengah ciri mungkin tidak berfungsi dengan betul.",
     "th_TH": "ดาวน์โหลด FFmpeg ล้มเหลว: {error}\nบางฟีเจอร์อาจไม่ทำงานอย่างถูกต้อง",
     "ur_PK": "FFmpeg ڈاؤن لوڈ ناکام: {error}\nکچھ خصوصیات ٹھیک سے کام نہیں کر سکتیں۔",
+}
+
+COULD_NOT_ACCESS_OR_WRITE_SUBTITLE = {
+    "en_US": "Could not access or write the subtitle file. It may be open in another application:\n{path}\n\n{error}",
+    "es_ES": "No se pudo acceder o escribir en el archivo de subtítulos. Puede estar abierto en otra aplicación:\n{path}\n\n{error}",
+    "tr_TR": "Altyazı dosyasına erişilemedi veya yazılamadı. Başka bir uygulamada açık olabilir:\n{path}\n\n{error}",
+    "zh_CN": "无法访问或写入字幕文件。它可能在另一个应用程序中打开：\n{path}\n\n{error}",
+    "zh_TW": "無法存取或寫入字幕檔案。它可能在另一個應用程式中開啟：\n{path}\n\n{error}",
+    "ru_RU": "Не удалось получить доступ или записать файл субтитров. Возможно, он открыт в другой программе:\n{path}\n\n{error}",
+    "pl_PL": "Nie można uzyskać dostępu ani zapisać pliku napisów. Może być otwarty w innej aplikacji:\n{path}\n\n{error}",
+    "uk_UA": "Не вдалося отримати доступ або записати файл субтитрів. Можливо, він відкритий в іншій програмі:\n{path}\n\n{error}",
+    "ja_JP": "字幕ファイルにアクセスまたは書き込みできませんでした。別のアプリケーションで開いている可能性があります:\n{path}\n\n{error}",
+    "ko_KR": "자막 파일에 액세스하거나 쓸 수 없습니다. 다른 응용 프로그램에서 열려 있을 수 있습니다:\n{path}\n\n{error}",
+    "hi_IN": "उपशीर्षक फ़ाइल तक नहीं पहुँचा जा सका या लिखा नहीं जा सका। यह किसी अन्य एप्लिकेशन में खुला हो सकता है:\n{path}\n\n{error}",
+    "bn_BD": "সাবটাইটেল ফাইল অ্যাক্সেস বা লেখা যায়নি। এটি অন্য অ্যাপ্লিকেশনে খোলা থাকতে পারে:\n{path}\n\n{error}",
+    "it_IT": "Impossibile accedere o scrivere il file dei sottotitoli. Potrebbe essere aperto in un'altra applicazione:\n{path}\n\n{error}",
+    "fr_FR": "Impossible d'accéder ou d'écrire le fichier de sous-titres. Il est peut-être ouvert dans une autre application :\n{path}\n\n{error}",
+    "de_DE": "Auf die Untertiteldatei konnte nicht zugegriffen oder geschrieben werden. Sie ist möglicherweise in einer anderen Anwendung geöffnet:\n{path}\n\n{error}",
+    "pt_PT": "Não foi possível aceder ou escrever no ficheiro de legendas. Pode estar aberto noutra aplicação:\n{path}\n\n{error}",
+    "ar_SA": "تعذر الوصول إلى ملف الترجمة أو الكتابة عليه. قد يكون مفتوحًا في تطبيق آخر:\n{path}\n\n{error}",
+    "vi_VN": "Không thể truy cập hoặc ghi tệp phụ đề. Tệp có thể đang mở trong ứng dụng khác:\n{path}\n\n{error}",
+    "fa_IR": "امکان دسترسی یا نوشتن روی فایل زیرنویس وجود ندارد. ممکن است در برنامه دیگری باز باشد:\n{path}\n\n{error}",
+    "id_ID": "Tidak dapat mengakses atau menulis file subtitle. Mungkin sedang dibuka di aplikasi lain:\n{path}\n\n{error}",
+    "ms_MY": "Tidak dapat mengakses atau menulis fail sarikata. Ia mungkin dibuka dalam aplikasi lain:\n{path}\n\n{error}",
+    "th_TH": "ไม่สามารถเข้าถึงหรือเขียนไฟล์คำบรรยายได้ อาจเปิดอยู่ในแอปพลิเคชันอื่น:\n{path}\n\n{error}",
+    "ur_PK": "سب ٹائٹل فائل تک رسائی یا لکھائی ممکن نہیں ہے۔ ہو سکتا ہے یہ کسی دوسری ایپلیکیشن میں کھلی ہو:\n{path}\n\n{error}",
+}
+
+COULD_NOT_ACCESS_REFERENCE_FILE = {
+    "en_US": "Could not access reference file. It may be open in another application or unreadable:\n{path}\n\n{error}",
+    "es_ES": "No se pudo acceder al archivo de referencia. Puede estar abierto en otra aplicación o no ser legible:\n{path}\n\n{error}",
+    "tr_TR": "Referans dosyasına erişilemedi. Başka bir uygulamada açık olabilir veya okunamıyor olabilir:\n{path}\n\n{error}",
+    "zh_CN": "无法访问参考文件。它可能在另一个应用程序中打开或不可读：\n{path}\n\n{error}",
+    "zh_TW": "無法存取參考檔案。它可能在另一個應用程式中開啟或無法讀取：\n{path}\n\n{error}",
+    "ru_RU": "Не удалось получить доступ к файлу-источнику. Возможно, он открыт в другой программе или недоступен для чтения:\n{path}\n\n{error}",
+    "pl_PL": "Nie można uzyskać dostępu do pliku referencyjnego. Może być otwarty w innej aplikacji lub nieczytelny:\n{path}\n\n{error}",
+    "uk_UA": "Не вдалося отримати доступ до файлу-еталону. Можливо, він відкритий в іншій програмі або непридатний для читання:\n{path}\n\n{error}",
+    "ja_JP": "参照ファイルにアクセスできませんでした。別のアプリケーションで開いているか、読み取れない可能性があります:\n{path}\n\n{error}",
+    "ko_KR": "참조 파일에 액세스할 수 없습니다. 다른 응용 프로그램에서 열려 있거나 읽을 수 없을 수 있습니다:\n{path}\n\n{error}",
+    "hi_IN": "संदर्भ फ़ाइल तक नहीं पहुँचा जा सका। यह किसी अन्य एप्लिकेशन में खुली हो सकती है या पढ़ने योग्य नहीं हो सकती है:\n{path}\n\n{error}",
+    "bn_BD": "রেফারেন্স ফাইল অ্যাক্সেস করা যায়নি। এটি অন্য অ্যাপ্লিকেশনে খোলা থাকতে পারে বা অপাঠ্য হতে পারে:\n{path}\n\n{error}",
+    "it_IT": "Impossibile accedere al file di riferimento. Potrebbe essere aperto in un'altra applicazione o illeggibile:\n{path}\n\n{error}",
+    "fr_FR": "Impossible d'accéder au fichier de référence. Il est peut-être ouvert dans une autre application ou illisible :\n{path}\n\n{error}",
+    "de_DE": "Auf die Referenzdatei konnte nicht zugegriffen werden. Sie ist möglicherweise in einer anderen Anwendung geöffnet oder unlesbar:\n{path}\n\n{error}",
+    "pt_PT": "Não foi possível aceder ao ficheiro de referência. Pode estar aberto noutra aplicação ou ilegível:\n{path}\n\n{error}",
+    "ar_SA": "تعذر الوصول إلى الملف المرجعي. قد يكون مفتوحًا في تطبيق آخر أو غير قابل للقراءة:\n{path}\n\n{error}",
+    "vi_VN": "Không thể truy cập tệp tham chiếu. Tệp có thể đang mở trong ứng dụng khác hoặc không thể đọc được:\n{path}\n\n{error}",
+    "fa_IR": "امکان دسترسی به فایل مرجع وجود ندارد. ممکن است در برنامه دیگری باز باشد یا قابل خواندن نباشد:\n{path}\n\n{error}",
+    "id_ID": "Tidak dapat mengakses file referensi. Mungkin sedang dibuka di aplikasi lain atau tidak dapat dibaca:\n{path}\n\n{error}",
+    "ms_MY": "Tidak dapat mengakses fail rujukan. Ia mungkin dibuka dalam aplikasi lain atau tidak boleh dibaca:\n{path}\n\n{error}",
+    "th_TH": "ไม่สามารถเข้าถึงไฟล์อ้างอิงได้ อาจเปิดอยู่ในแอปพลิเคชันอื่นหรือไม่สามารถอ่านได้:\n{path}\n\n{error}",
+    "ur_PK": "حوالہ فائل تک رسائی ممکن نہیں ہے۔ ہو سکتا ہے یہ کسی دوسری ایپلیکیشن میں کھلی ہو یا پڑھنے کے قابل نہ ہو:\n{path}\n\n{error}",
+}
+
+COULD_NOT_WRITE_OUTPUT_FILE = {
+    "en_US": "Could not write to output path. It may be locked or permission denied:\n{path}\n\n{error}",
+    "es_ES": "No se pudo escribir en la ruta de salida. Puede estar bloqueada o permiso denegado:\n{path}\n\n{error}",
+    "tr_TR": "Çıktı yoluna yazılamadı. Kilitli olabilir veya izin reddedildi:\n{path}\n\n{error}",
+    "zh_CN": "无法写入输出路径。它可能被锁定或权限被拒绝：\n{path}\n\n{error}",
+    "zh_TW": "無法寫入輸出路徑。它可能已被鎖定或權限遭拒：\n{path}\n\n{error}",
+    "ru_RU": "Не удалось записать по пути вывода. Возможно, он заблокирован или нет прав доступа:\n{path}\n\n{error}",
+    "pl_PL": "Nie można zapisać w ścieżce wyjściowej. Może być zablokowana lub brak uprawnień:\n{path}\n\n{error}",
+    "uk_UA": "Не вдалося записати у вихідний шлях. Можливо, він заблокований або немає прав доступу:\n{path}\n\n{error}",
+    "ja_JP": "出力パスに書き込めませんでした。ロックされているか、アクセス許可が拒否された可能性があります:\n{path}\n\n{error}",
+    "ko_KR": "출력 경로에 쓸 수 없습니다. 잠겨 있거나 권한이 거부되었을 수 있습니다:\n{path}\n\n{error}",
+    "hi_IN": "आउटपुट पथ पर नहीं लिखा जा सका। यह लॉक हो सकता है या अनुमति अस्वीकृत हो सकती है:\n{path}\n\n{error}",
+    "bn_BD": "আউটপুট পাথে লেখা যায়নি। এটি লক করা থাকতে পারে বা অনুমতি অস্বীকৃত হতে পারে:\n{path}\n\n{error}",
+    "it_IT": "Impossibile scrivere nel percorso di output. Potrebbe essere bloccato o autorizzazione negata:\n{path}\n\n{error}",
+    "fr_FR": "Impossible d'écrire dans le chemin de sortie. Il est peut-être verrouillé ou l'autorisation est refusée :\n{path}\n\n{error}",
+    "de_DE": "In den Ausgabepfad konnte nicht geschrieben werden. Er ist möglicherweise gesperrt oder die Berechtigung wurde verweigert:\n{path}\n\n{error}",
+    "pt_PT": "Não foi possível escrever no caminho de saída. Pode estar bloqueado ou permissão negada:\n{path}\n\n{error}",
+    "ar_SA": "تعذر الكتابة في مسار الإخراج. قد يكون مغلقًا أو تم رفض الإذن:\n{path}\n\n{error}",
+    "vi_VN": "Không thể ghi vào đường dẫn đầu ra. Đường dẫn có thể bị khóa hoặc bị từ chối quyền truy cập:\n{path}\n\n{error}",
+    "fa_IR": "امکان نوشتن در مسیر خروجی وجود ندارد. ممکن است قفل شده باشد یا دسترسی رد شده باشد:\n{path}\n\n{error}",
+    "id_ID": "Tidak dapat menulis ke jalur keluaran. Mungkin terkunci atau izin ditolak:\n{path}\n\n{error}",
+    "ms_MY": "Tidak dapat menulis ke laluan output. Ia mungkin dikunci atau kebenaran ditolak:\n{path}\n\n{error}",
+    "th_TH": "ไม่สามารถเขียนไปยังพาธเอาต์พุตได้ อาจถูกล็อคหรือถูกปฏิเสธการอนุญาต:\n{path}\n\n{error}",
+    "ur_PK": "آؤٹ پٹ پاتھ پر لکھا نہیں جا سکا۔ ہو سکتا ہے یہ مقفل ہو یا اجازت مسترد کر دی گئی ہو:\n{path}\n\n{error}",
+}
+
+FILE_ACCESS_ERROR_TITLE = {
+    "en_US": "File Access Error",
+    "es_ES": "Error de acceso a archivos",
+    "tr_TR": "Dosya Erişim Hatası",
+    "zh_CN": "文件访问错误",
+    "zh_TW": "檔案存取錯誤",
+    "ru_RU": "Ошибка доступа к файлу",
+    "pl_PL": "Błąd dostępu do pliku",
+    "uk_UA": "Помилка доступу до файлу",
+    "ja_JP": "ファイルアクセスエラー",
+    "ko_KR": "파일 액세스 오류",
+    "hi_IN": "फ़ाइल एक्सेस त्रुटि",
+    "bn_BD": "ফাইল অ্যাক্সেস ত্রুটি",
+    "it_IT": "Errore di accesso al file",
+    "fr_FR": "Erreur d'accès au fichier",
+    "de_DE": "Dateizugriffsfehler",
+    "pt_PT": "Erro de acesso ao ficheiro",
+    "ar_SA": "خطأ في الوصول إلى الملف",
+    "vi_VN": "Lỗi truy cập tệp",
+    "fa_IR": "خطای دسترسی به فایل",
+    "id_ID": "Kesalahan Akses File",
+    "ms_MY": "Ralat Akses Fail",
+    "th_TH": "ข้อผิดพลาดในการเข้าถึงไฟล์",
+    "ur_PK": "فائل تک رسائی کی خرابی",
+}
+
+COULD_NOT_RENAME_FOR_ALASS = {
+    "en_US": "Could not rename files for ALASS compatibility. The file may be in use by another application:\n{error}",
+    "es_ES": "No se pudieron renombrar los archivos para la compatibilidad con ALASS. El archivo puede estar en uso por otra aplicación:\n{error}",
+    "tr_TR": "ALASS uyumluluğu için dosyalar yeniden adlandırılamadı. Dosya başka bir uygulama tarafından kullanılıyor olabilir:\n{error}",
+    "zh_CN": "无法为 ALASS 兼容性重命名文件。该文件可能正被另一个应用程序使用：\n{error}",
+    "zh_TW": "無法為 ALASS 相容性重新命名檔案。該檔案可能正被另一個應用程式使用：\n{error}",
+    "ru_RU": "Не удалось переименовать файлы для совместимости с ALASS. Возможно, файл используется другой программой:\n{error}",
+    "pl_PL": "Nie można zmienić nazwy plików dla zgodności z ALASS. Plik może być używany przez inną aplikację:\n{error}",
+    "uk_UA": "Не вдалося перейменувати файли для сумісності з ALASS. Можливо, файл використовується іншою програмою:\n{error}",
+    "ja_JP": "ALASS 互換性のためにファイル名を変更できませんでした。ファイルが別のアプリケーションで使用されている可能性があります:\n{error}",
+    "ko_KR": "ALASS 호환성을 위해 파일 이름을 바꿀 수 없습니다. 다른 응용 프로그램에서 파일을 사용 중일 수 있습니다:\n{error}",
+    "hi_IN": "ALASS संगतता के लिए फ़ाइलों का नाम नहीं बदला जा सका। फ़ाइल किसी अन्य एप्लिकेशन द्वारा उपयोग में हो सकती है:\n{error}",
+    "bn_BD": "ALASS সামঞ্জস্যের জন্য ফাইলের নাম পরিবর্তন করা যায়নি। ফাইলটি অন্য কোনও অ্যাপ্লিকেশন দ্বারা ব্যবহৃত হতে পারে:\n{error}",
+    "it_IT": "Impossibile rinominare i file per la compatibilità con ALASS. Il file potrebbe essere in uso da un'altra applicazione:\n{error}",
+    "fr_FR": "Impossible de renommer les fichiers pour la compatibilité ALASS. Le fichier est peut-être utilisé par une autre application :\n{error}",
+    "de_DE": "Dateien konnten für ALASS-Kompatibilität nicht umbenannt werden. Die Datei wird möglicherweise von einer anderen Anwendung verwendet:\n{error}",
+    "pt_PT": "Não foi possível renomear os ficheiros para compatibilidade com ALASS. O ficheiro pode estar em uso por outra aplicação:\n{error}",
+    "ar_SA": "تعذر إعادة تسمية الملفات للتوافق مع ALASS. قد يكون الملف قيد الاستخدام بواسطة تطبيق آخر:\n{error}",
+    "vi_VN": "Không thể đổi tên tệp để tương thích với ALASS. Tệp có thể đang được sử dụng bởi một ứng dụng khác:\n{error}",
+    "fa_IR": "تغییر نام فایل‌ها برای سازگاری با ALASS امکان‌پذیر نبود. ممکن است فایل توسط برنامه دیگری در حال استفاده باشد:\n{error}",
+    "id_ID": "Tidak dapat mengganti nama file untuk kompatibilitas ALASS. File mungkin sedang digunakan oleh aplikasi lain:\n{error}",
+    "ms_MY": "Tidak dapat menamakan semula fail untuk keserasian ALASS. Fail mungkin sedang digunakan oleh aplikasi lain:\n{error}",
+    "th_TH": "ไม่สามารถเปลี่ยนชื่อไฟล์เพื่อให้เข้ากันได้กับ ALASS ไฟล์อาจถูกใช้งานโดยแอปพลิเคชันอื่น:\n{error}",
+    "ur_PK": "ALASS مطابقت کے لیے فائلوں کا نام تبدیل نہیں کیا جا سکا۔ ہو سکتا ہے فائل کسی دوسری ایپلیکیشن کے زیر استعمال ہو:\n{error}",
+}
+
+NO_FILE_PATH_PROVIDED = {
+    "en_US": "No file path provided.",
+    "es_ES": "No se proporcionó una ruta de archivo.",
+    "tr_TR": "Dosya yolu belirtilmedi.",
+    "zh_CN": "未提供文件路径。",
+    "zh_TW": "未提供檔案路徑。",
+    "ru_RU": "Путь к файлу не указан.",
+    "pl_PL": "Nie podano ścieżki do pliku.",
+    "uk_UA": "Шлях до файлу не вказано.",
+    "ja_JP": "ファイルパスが指定されていません。",
+    "ko_KR": "파일 경로가 제공되지 않았습니다.",
+    "hi_IN": "कोई फ़ाइल पथ प्रदान नहीं किया गया।",
+    "bn_BD": "কোনো ফাইল পাথ প্রদান করা হয়নি।",
+    "it_IT": "Nessun percorso file fornito.",
+    "fr_FR": "Aucun chemin de fichier fourni.",
+    "de_DE": "Kein Dateipfad angegeben.",
+    "pt_PT": "Nenhum caminho de ficheiro fornecido.",
+    "ar_SA": "لم يتم توفير مسار الملف.",
+    "vi_VN": "Không có đường dẫn tệp được cung cấp.",
+    "fa_IR": "مسیر فایل ارائه نشده است.",
+    "id_ID": "Tidak ada jalur file yang diberikan.",
+    "ms_MY": "Tiada laluan fail disediakan.",
+    "th_TH": "ไม่ได้ระบุพาธไฟล์",
+    "ur_PK": "کوئی فائل پاتھ فراہم نہیں کیا گیا۔",
 }
 
 for name, obj in list(globals().items()):

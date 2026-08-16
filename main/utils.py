@@ -1493,3 +1493,54 @@ def initialize_static_ffmpeg(parent=None, callback=None):
         thread.wait()
 
     return True
+
+
+def check_file_readable(file_path: str) -> tuple[bool, str]:
+    """Check if a file exists and can be opened for reading.
+
+    Returns:
+        tuple of (is_readable, error_message)
+    """
+    if not file_path:
+        return False, str(texts.NO_FILE_PATH_PROVIDED)
+    if not os.path.exists(file_path):
+        return False, f"{texts.FILE_DOES_NOT_EXIST} ({file_path})"
+    try:
+        with open(file_path, "rb") as f:
+            f.read(1)
+        return True, ""
+    except Exception as e:
+        return False, str(e)
+
+
+def check_file_writable(file_path: str) -> tuple[bool, str]:
+    """Check if a file can be opened for writing or created in its directory.
+
+    Returns:
+        tuple of (is_writable, error_message)
+    """
+    if not file_path:
+        return False, str(texts.NO_FILE_PATH_PROVIDED)
+    if os.path.exists(file_path):
+        try:
+            # Check if existing file is writable without truncating
+            with open(file_path, "a+b") as f:
+                pass
+            return True, ""
+        except Exception as e:
+            return False, str(e)
+    else:
+        parent_dir = os.path.dirname(os.path.abspath(file_path))
+        if not os.path.exists(parent_dir):
+            try:
+                os.makedirs(parent_dir, exist_ok=True)
+            except Exception as e:
+                return False, str(e)
+        try:
+            fd, tmp_file = tempfile.mkstemp(dir=parent_dir, prefix=".test_write_")
+            os.close(fd)
+            if os.path.exists(tmp_file):
+                os.remove(tmp_file)
+            return True, ""
+        except Exception as e:
+            return False, str(e)

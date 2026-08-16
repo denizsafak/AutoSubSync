@@ -242,10 +242,16 @@ def _emit_json(obj) -> None:
     sys.stdout.flush()
 
 
-def _prepare_reference(reference, subtitle, output_path, tool, config, args):
+def _prepare_reference(reference, subtitle, output_target, tool, config, args):
     from subtitle_extractor import prepare_sync_reference
 
-    output_dir = os.path.dirname(os.path.abspath(output_path))
+    if output_target and os.path.isdir(output_target):
+        output_dir = os.path.abspath(output_target)
+    elif output_target:
+        output_dir = os.path.dirname(os.path.abspath(output_target))
+    else:
+        output_dir = os.path.dirname(os.path.abspath(subtitle))
+
     prepared = prepare_sync_reference(
         reference,
         subtitle,
@@ -261,7 +267,7 @@ def _prepare_reference(reference, subtitle, output_path, tool, config, args):
 
 def cmd_sync(args) -> int:
     from subtitle_extractor import cleanup_extracted_subtitles
-    from sync_core import determine_output_path, run_sync
+    from sync_core import run_sync
 
     config = _effective_config(args)
     _apply_common_overrides(config, args)
@@ -280,9 +286,7 @@ def cmd_sync(args) -> int:
     _ensure_ffmpeg()
     tool = config.get("sync_tool", "ffsubsync")
     callbacks = _build_callbacks(args.json)
-    output_path = args.output or determine_output_path(
-        args.video, args.subtitle, config=config
-    )
+    output_path = args.output
     prepared = _prepare_reference(
         args.video, args.subtitle, output_path, tool, config, args
     )
@@ -452,16 +456,20 @@ def cmd_batch(args) -> int:
         callbacks = _build_callbacks(args.json, prefix=f"[{idx}/{total}] ")
         log.info("[%d/%d] %s + %s", idx, total, video, subtitle)
         tool = config.get("sync_tool", "ffsubsync")
-        output_path = determine_output_path(video, subtitle, config=config)
+        extract_dir = (
+            args.output_dir
+            if args.output_dir
+            else os.path.dirname(os.path.abspath(subtitle))
+        )
         prepared = _prepare_reference(
-            video, subtitle, output_path, tool, config, args
+            video, subtitle, extract_dir, tool, config, args
         )
         try:
             result = run_sync(
                 prepared.effective_reference,
                 subtitle,
                 tool=tool,
-                output=output_path,
+                output=None,
                 config=config,
                 callbacks=callbacks,
             )

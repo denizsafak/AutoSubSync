@@ -25,7 +25,10 @@ from utils import (
     default_encoding,
     detect_encoding,
     find_closest_encoding,
+    check_file_readable,
+    check_file_writable,
 )
+from subtitle_converter import convert_to_srt
 from alass_encodings import enc_list
 
 logger = logging.getLogger(__name__)
@@ -455,8 +458,8 @@ def run_sync(
 ) -> SyncResult:
     """Orchestrate a single subtitle sync. Pure logic, no Qt.
 
-    Performs path validation, tool fallback, output-path resolution, backup,
-    autosubsync overwrite-protection, tool execution, and post-replace of the
+    Performs path validation, tool fallback, format conversion, output-path resolution,
+    backup, autosubsync overwrite-protection, tool execution, and post-replace of the
     temp output file. Returns a SyncResult; errors/progress are also reported
     through callbacks as they happen.
     """
@@ -478,6 +481,23 @@ def run_sync(
         msg = str(texts.UNKNOWN_SYNC_TOOL).format(tool=tool)
         callbacks._error(msg)
         return SyncResult(False, None, tool, "unknown tool", None, _elapsed(start))
+
+    # Validate file readability
+    ref_readable, ref_err = check_file_readable(reference)
+    if not ref_readable:
+        err_msg = str(texts.COULD_NOT_ACCESS_REFERENCE_FILE).format(
+            path=reference, error=ref_err
+        )
+        callbacks._error(err_msg)
+        return SyncResult(False, None, tool, err_msg, None, _elapsed(start))
+
+    sub_readable, sub_err = check_file_readable(subtitle)
+    if not sub_readable:
+        err_msg = str(texts.COULD_NOT_ACCESS_OR_WRITE_SUBTITLE).format(
+            path=subtitle, error=sub_err
+        )
+        callbacks._error(err_msg)
+        return SyncResult(False, None, tool, err_msg, None, _elapsed(start))
 
     current_tool = tool
     current_tool_info = SYNC_TOOLS[tool]
@@ -501,8 +521,82 @@ def run_sync(
         current_tool_info = SYNC_TOOLS[current_tool]
         current_tool_type = current_tool_info.get("type", "executable")
 
+    supported_formats = current_tool_info.get("supported_formats", [])
+    converted_files_to_clean = []
+    effective_subtitle = subtitle
+    subtitle_was_converted = False
+
+    # Convert subtitle if not supported by the tool
+    sub_ext = os.path.splitext(subtitle)[1].lower()
+    if sub_ext in SUBTITLE_EXTENSIONS and sub_ext not in supported_formats:
+        temp_dir = (
+            os.path.dirname(os.path.abspath(output))
+            if output
+            else os.path.dirname(os.path.abspath(subtitle))
+        )
+        converted, msgs = convert_to_srt(subtitle, temp_dir)
+        for msg in msgs:
+            callbacks._log(msg, "grey")
+        if not converted:
+            err_msg = str(texts.CONVERSION_FAILED_FOR_FILE).format(
+                filename=os.path.basename(subtitle)
+            )
+            callbacks._error(err_msg)
+            return SyncResult(False, None, current_tool, err_msg, 1, _elapsed(start))
+        effective_subtitle = converted
+        subtitle_was_converted = True
+        if not config.get(
+            "keep_converted_subtitles",
+            DEFAULT_OPTIONS["keep_converted_subtitles"],
+        ):
+            converted_files_to_clean.append(converted)
+
+    # Convert reference if it is a subtitle and not supported by the tool
+    effective_reference = reference
+    if ref_ext in SUBTITLE_EXTENSIONS and ref_ext not in supported_formats:
+        temp_dir = (
+            os.path.dirname(os.path.abspath(output))
+            if output
+            else os.path.dirname(os.path.abspath(subtitle))
+        )
+        converted, msgs = convert_to_srt(reference, temp_dir)
+        for msg in msgs:
+            callbacks._log(msg, "grey")
+        if not converted:
+            err_msg = str(texts.CONVERSION_FAILED_FOR_FILE).format(
+                filename=os.path.basename(reference)
+            )
+            callbacks._error(err_msg)
+            return SyncResult(False, None, current_tool, err_msg, 1, _elapsed(start))
+        effective_reference = converted
+        if not config.get(
+            "keep_converted_subtitles",
+            DEFAULT_OPTIONS["keep_converted_subtitles"],
+        ):
+            converted_files_to_clean.append(converted)
+
     if not output:
-        output = determine_output_path(reference, subtitle, config=config)
+        output = determine_output_path(
+            reference,
+            subtitle,
+            config=config,
+            subtitle_was_converted=subtitle_was_converted,
+        )
+
+    # Validate output path writability
+    out_writable, out_err = check_file_writable(output)
+    if not out_writable:
+        err_msg = str(texts.COULD_NOT_WRITE_OUTPUT_FILE).format(
+            path=output, error=out_err
+        )
+        callbacks._error(err_msg)
+        for f in converted_files_to_clean:
+            try:
+                if os.path.exists(f):
+                    os.remove(f)
+            except Exception:
+                pass
+        return SyncResult(False, None, current_tool, err_msg, None, _elapsed(start))
 
     backup_enabled = config.get(
         "backup_subtitles_before_overwriting",
@@ -517,8 +611,9 @@ def run_sync(
     effective_output = output
     use_temp_output = False
     temp_output_path = None
-    if current_tool == "autosubsync" and os.path.abspath(output) == os.path.abspath(
-        subtitle
+    if current_tool == "autosubsync" and (
+        os.path.abspath(output) == os.path.abspath(effective_subtitle)
+        or os.path.abspath(output) == os.path.abspath(subtitle)
     ):
         base, ext = os.path.splitext(output)
         temp_output_path = f"{base}.autosubsync-tmp{ext}"
@@ -539,8 +634,8 @@ def run_sync(
             cmd_args = build_cmd(
                 current_tool,
                 None,
-                reference,
-                subtitle,
+                effective_reference,
+                effective_subtitle,
                 effective_output,
                 config=config,
             )
@@ -567,8 +662,8 @@ def run_sync(
             cmd = build_cmd(
                 current_tool,
                 exe,
-                reference,
-                subtitle,
+                effective_reference,
+                effective_subtitle,
                 effective_output,
                 config=config,
             )
@@ -582,6 +677,12 @@ def run_sync(
                 sync_tool=current_tool,
                 process_holder=process_holder,
             )
+
+        # Check output file existence and non-zero size
+        if rc == 0 and not callbacks._cancelled():
+            if not os.path.exists(effective_output) or os.path.getsize(effective_output) == 0:
+                callbacks._error("Sync tool produced an empty or missing output file.")
+                rc = 1
 
         if rc == 0 and use_temp_output and not callbacks._cancelled():
             try:
@@ -633,6 +734,14 @@ def run_sync(
                 error_msg += "\n\n" + str(texts.ALASS_BRACKETS_ERROR)
         callbacks._error(error_msg)
         return SyncResult(False, None, current_tool, error_msg, rc, _elapsed(start))
+    finally:
+        for f in converted_files_to_clean:
+            try:
+                if os.path.exists(f):
+                    os.remove(f)
+                    logger.info("Cleaned up converted subtitle: %s", f)
+            except Exception as e:
+                logger.warning("Failed to remove converted subtitle '%s': %s", f, e)
 
 
 def _elapsed(start: float) -> int:

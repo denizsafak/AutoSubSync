@@ -292,6 +292,11 @@ def _ensure_alass_safe_paths(app, reference_path, subtitle_path):
         return True, new_ref, new_sub
     except Exception as e:
         logger.error(f"Failed to rename paths for ALASS: {e}")
+        append_log(
+            app,
+            texts.COULD_NOT_RENAME_FOR_ALASS.format(error=str(e)),
+            COLORS["RED"],
+        )
         return False, ref, sub
 
 
@@ -639,7 +644,7 @@ def start_sync_process(app):
                         )
                         process_next_item()
                     else:
-                        app.restore_auto_sync_tab()
+                        app.log_window.handle_sync_completion(False, None)
                     return
             if app.batch_mode_enabled and len(items) > 1:
                 append_log(
@@ -730,10 +735,7 @@ def start_sync_process(app):
                     )
                     process_next_item()
                 else:
-                    append_log(
-                        app, texts.SYNC_CANCELLED_CONVERSION_FAILURE, COLORS["RED"]
-                    )
-                    app.restore_auto_sync_tab()
+                    app.log_window.handle_sync_completion(False, None)
                 return
             final_output_path = determine_output_path(
                 app, original_ref_path, original_sub_path, subtitle_was_converted
@@ -834,8 +836,11 @@ def start_sync_process(app):
         process_next_item()
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
+        append_log(app, f"{texts.ERROR_PREFIX} {e}", COLORS["RED"])
         if hasattr(app, "_batch_state"):
             del app._batch_state
+        if hasattr(app, "log_window") and hasattr(app.log_window, "handle_sync_completion"):
+            app.log_window.handle_sync_completion(False, None)
 
 
 def get_tool_with_fallback(app, ref_path):

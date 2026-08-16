@@ -190,7 +190,7 @@ class LogWindow(QWidget):
             bool_display(get("add_tool_prefix")), bold=True, color=COLORS["GREEN"]
         )
 
-        custom_suffix = get("custom_suffix", "")
+        custom_suffix = get("custom_suffix")
         if custom_suffix:
             self.append_message(f"{texts.ADD_CUSTOM_SUFFIX_FOR_SUBTITLES}: ", end="")
             self.append_message(
@@ -366,6 +366,11 @@ class LogWindow(QWidget):
             self._save_log_output_to_file(app, success=True, mode="normal")
         else:
             logger.error("Synchronization canceled/failed")
+            self.append_message(
+                "\n" + texts.SYNC_FAILED_CHECK_LOGS,
+                color=COLORS["RED"],
+                bold=True,
+            )
             # Save log output even for failures if enabled
             self._save_log_output_to_file(app, success=False, mode="normal")
 
@@ -411,6 +416,12 @@ class LogWindow(QWidget):
             )
         else:
             logger.error("Synchronization canceled/failed")
+            self.append_message(
+                "\n" + texts.SYNC_FAILED_CHECK_LOGS,
+                color=COLORS["RED"],
+                bold=True,
+                end="\n\n",
+            )
 
         # Force scroll to bottom only if at bottom
         scrollbar = self.log_text.verticalScrollBar()

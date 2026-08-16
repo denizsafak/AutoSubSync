@@ -157,10 +157,26 @@ def format_ass_time(time_str: str) -> str:
         Formatted time string in SRT format (HH:MM:SS,mmm)
     """
     t = time_str.split(":")
-    hours = int(t[0])
-    minutes = int(t[1])
-    seconds = float(t[2])
-    return f"{hours:02}:{minutes:02}:{int(seconds):02},{int((seconds - int(seconds)) * 1000):03}"
+    if len(t) < 3:
+        return time_str
+    try:
+        hours = int(t[0])
+        minutes = int(t[1])
+        seconds = float(t[2])
+        sec_int = int(seconds)
+        ms = round((seconds - sec_int) * 1000)
+        if ms >= 1000:
+            sec_int += 1
+            ms -= 1000
+        if sec_int >= 60:
+            minutes += sec_int // 60
+            sec_int %= 60
+        if minutes >= 60:
+            hours += minutes // 60
+            minutes %= 60
+        return f"{hours:02}:{minutes:02}:{sec_int:02},{ms:03}"
+    except (ValueError, TypeError):
+        return time_str
 
 
 def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:

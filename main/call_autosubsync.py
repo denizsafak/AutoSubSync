@@ -52,7 +52,20 @@ def cli_entry(args=None):
         args = ["--model_file", model_file_default] + args
     sys.argv = [_argv[0]] + args
     try:
-        out = args[3]
+        # Extract output file path from positional arguments
+        positional_args = []
+        i = 0
+        while i < len(args):
+            arg = args[i]
+            if arg in ("--model_file", "--max_shift_secs", "--parallelism", "--fixed_skew"):
+                i += 2
+            elif arg.startswith("-"):
+                i += 1
+            else:
+                positional_args.append(arg)
+                i += 1
+        out = positional_args[2] if len(positional_args) >= 3 else None
+
         code = 0
         orig_stdout_fd, t_out = _redirect_fd(1, sys.stdout)
         orig_stderr_fd, t_err = _redirect_fd(2, sys.stderr)
@@ -72,7 +85,12 @@ def cli_entry(args=None):
             t_out.join()
             t_err.join()
             sys.argv = _argv
-        return 0 if out and os.path.exists(out) else code
+
+        if code != 0:
+            return code
+        if not out or not os.path.exists(out) or os.path.getsize(out) == 0:
+            return 1
+        return 0
     finally:
         sys.argv = _argv
 

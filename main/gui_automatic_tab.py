@@ -33,7 +33,10 @@ from utils import (
     handle_save_location_dropdown,
     update_folder_label,
     show_tool_info_dialog,
+    check_file_readable,
+    check_file_writable,
 )
+from sync_core import determine_output_path
 
 # Import directly from gui_batch_mode for cleaner integration
 import gui_batch_mode
@@ -245,6 +248,9 @@ def validate_auto_sync_inputs(self):
         if not self.subtitle_input.file_path:
             self.subtitle_input.show_error(texts.PLEASE_SELECT_SUBTITLE_FILE)
             missing = True
+        if missing:
+            return False
+
         # Prevent using the same file for both inputs
         if (
             self.video_ref_input.file_path
@@ -257,25 +263,6 @@ def validate_auto_sync_inputs(self):
                 texts.INVALID_FILE_TITLE,
                 texts.CANNOT_USE_SAME_FILE_FOR_BOTH_INPUTS,
             )
-            return False
-        # Check if files exist
-        if self.video_ref_input.file_path and not os.path.exists(
-            self.video_ref_input.file_path
-        ):
-            QMessageBox.warning(
-                self,
-                texts.FILE_NOT_FOUND_TITLE,
-                texts.VIDEO_REFERENCE_FILE_DOES_NOT_EXIST,
-            )
-            return False
-        if self.subtitle_input.file_path and not os.path.exists(
-            self.subtitle_input.file_path
-        ):
-            QMessageBox.warning(
-                self, texts.FILE_NOT_FOUND_TITLE, texts.SUBTITLE_FILE_DOES_NOT_EXIST
-            )
-            return False
-        if missing:
             return False
 
         logger.info("Automatic sync input validation passed. Starting sync...")
