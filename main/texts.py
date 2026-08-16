@@ -4929,6 +4929,32 @@ ALASS_RENAME_ALWAYS = {
     "ur_PK": "ضرورت پڑنے پر فائلوں کے نام خودکار طور پر تبدیل کریں",
 }
 
+ALASS_RENAME_DONT_ASK_AGAIN = {
+    "en_US": "Don't ask again",
+    "es_ES": "No volver a preguntar",
+    "tr_TR": "Bir daha sorma",
+    "zh_CN": "不要再次询问",
+    "zh_TW": "不要再次詢問",
+    "ru_RU": "Больше не спрашивать",
+    "pl_PL": "Nie pytaj ponownie",
+    "uk_UA": "Більше не запитувати",
+    "ja_JP": "もう聞かない",
+    "ko_KR": "다시 묻지 않기",
+    "hi_IN": "फिर से न पूछें",
+    "bn_BD": "আবার জিজ্ঞেস করবেন না",
+    "it_IT": "Non chiedere più",
+    "fr_FR": "Ne plus demander",
+    "de_DE": "Nicht erneut fragen",
+    "pt_PT": "Não perguntar de novo",
+    "ar_SA": "لا تسأل مرة أخرى",
+    "vi_VN": "Đừng hỏi lại",
+    "fa_IR": "دیگه سوال نکن",
+    "id_ID": "Jangan tanya lagi",
+    "ms_MY": "Jangan tanya lagi",
+    "th_TH": "อย่า hỏiอีก",
+    "ur_PK": "دوبارہ نہ پوچھیں",
+}
+
 ALASS_RENAME_TIMER = {
     "en_US": "Skipping in {time} seconds...",
     "es_ES": "Omitiendo en {time} segundos...",
