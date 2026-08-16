@@ -48,6 +48,16 @@ RUN git clone https://github.com/novnc/noVNC.git /opt/novnc \
     && git clone https://github.com/novnc/websockify /opt/novnc/utils/websockify \
     && ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
+# --- INTERNAL CLONE STEP ---
+# Instead of COPY, we pull the repo to get the config files
+RUN git clone https://github.com/denizsafak/AutoSubSync.git /tmp/autosubsync-source && \
+    mkdir -p /etc/supervisor/conf.d/ && \
+    cp /tmp/autosubsync-source/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf && \
+    cp /tmp/autosubsync-source/docker/start.sh /start.sh && \
+    chmod +x /start.sh && \
+    rm -rf /tmp/autosubsync-source    
+
+
 # Create a non-root user
 RUN useradd -ms /bin/bash autosubsync
 
@@ -60,19 +70,11 @@ RUN python -m pip install --no-cache-dir assy websockify
 # Fix permissions for static_ffmpeg cache
 RUN chown -R autosubsync:autosubsync /usr/local/lib/python3.11/site-packages/static_ffmpeg || true
 
-# Test installation
-RUN python -c "import main; print('assy installed successfully')"
-
-# Set up VNC and web interface
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/start.sh /start.sh
-RUN chmod +x /start.sh
-
-# Create supervisor config directory
-RUN mkdir -p /etc/supervisor/conf.d/
-
 # Change ownership to autosubsync user
 RUN chown -R autosubsync:autosubsync /app /home/autosubsync
+
+# Test installation
+RUN python -c "import main; print('assy installed successfully')"
 
 # Expose VNC and web interface ports
 EXPOSE 5900 6080
