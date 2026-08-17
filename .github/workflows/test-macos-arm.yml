@@ -14,15 +14,19 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.12.8
-          cache: "pip"
 
       - name: Install required modules globally
         run: |
-          pip install requests
+          uv pip install --system requests
 
       - name: Run build script
         run: |
