@@ -5257,6 +5257,32 @@ CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES = {
     "ur_PK": "ویڈیو میں ایمبیڈڈ سب ٹائٹلز چیک کیے جا رہے ہیں...",
 }
 
+CHECKING_VIDEO_FOR_PGS_SUBTITLES = {
+    "en_US": "Checking for PGS subtitles...",
+    "es_ES": "Comprobando subtítulos PGS...",
+    "tr_TR": "PGS altyazıları kontrol ediliyor...",
+    "zh_CN": "正在检查 PGS 字幕...",
+    "zh_TW": "正在檢查 PGS 字幕...",
+    "ru_RU": "Проверка субтитров PGS...",
+    "pl_PL": "Sprawdzanie napisów PGS...",
+    "uk_UA": "Перевірка субтитрів PGS...",
+    "ja_JP": "PGS字幕を確認中...",
+    "ko_KR": "PGS 자막 확인 중...",
+    "hi_IN": "PGS सबटाइटल्स की जांच हो रही है...",
+    "bn_BD": "PGS সাবটাইটেল চেক করা হচ্ছে...",
+    "it_IT": "Controllo dei sottotitoli PGS...",
+    "fr_FR": "Vérification des sous-titres PGS...",
+    "de_DE": "Überprüfung auf PGS-Untertitel...",
+    "pt_PT": "A verificar legendas PGS...",
+    "ar_SA": "جارٍ التحقق من ترجمات PGS...",
+    "vi_VN": "Đang kiểm tra phụ đề PGS...",
+    "fa_IR": "در حال بررسی زیرنویس‌های PGS...",
+    "id_ID": "Memeriksa subtitle PGS...",
+    "ms_MY": "Memeriksa sari kata PGS...",
+    "th_TH": "กำลังตรวจสอบคำบรรยาย PGS...",
+    "ur_PK": "PGS سب ٹائٹلز چیک کیے جا رہے ہیں...",
+}
+
 EXTRACTION_FAILED_PREFIX = {
     "en_US": "Extraction failed: ",
     "es_ES": "Extracción fallida: ",

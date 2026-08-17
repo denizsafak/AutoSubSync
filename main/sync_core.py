@@ -108,7 +108,11 @@ def process_output(message: str, sync_tool: str):
     lines = message.split("\n")
     cleaned_lines = []
     for line in lines:
-        stripped = line.rstrip()
+        # Strip standard ANSI escape sequences (e.g. \x1b[A, \x1b[K, \x1b[2K)
+        line = re.sub(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
+        # Strip stray cursor movement / clear line sequences without ESC prefix (e.g. [A, [A[A, [K)
+        line = re.sub(r"(?:^|(?<=\s))(?:\[[0-9;]*[A-Za-z])+(?=\s|$)", "", line)
+        stripped = line.strip()
         if not stripped:
             continue
         # Suppress harmless container demuxer warnings from FFmpeg / libavformat
@@ -171,8 +175,16 @@ def determine_output_path(
     add_prefix = config.get("add_tool_prefix", DEFAULT_OPTIONS["add_tool_prefix"])
     sub_dir, sub_file = os.path.dirname(subtitle), os.path.basename(subtitle)
     sub_name, sub_ext = os.path.splitext(sub_file)
-    ref_dir, vid_file = os.path.dirname(reference), os.path.basename(reference)
-    ref_name, _ = os.path.splitext(vid_file)
+    from constants import is_remote_url
+
+    if is_remote_url(reference):
+        clean_url = reference.split("?")[0].rstrip("/")
+        url_basename = os.path.basename(clean_url)
+        ref_name = os.path.splitext(url_basename)[0] if url_basename else sub_name
+        ref_dir = sub_dir
+    else:
+        ref_dir, vid_file = os.path.dirname(reference), os.path.basename(reference)
+        ref_name, _ = os.path.splitext(vid_file)
     tool = config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
     prefix = f"{tool}_" if add_prefix else ""
     suffix = config.get("custom_suffix", DEFAULT_OPTIONS.get("custom_suffix", ""))
@@ -283,6 +295,18 @@ def _append_opts(cmd, tool: str, config: dict):
     for name, opt in info.get("options", {}).items():
         arg, default = opt.get("argument"), opt.get("default")
         val = config.get(f"{tool}_{name}", default)
+        if opt.get("type") == "dropdown":
+            allowed_values = opt.get("values", [])
+            if allowed_values and val not in allowed_values:
+                logger.warning(
+                    "Invalid value %r for %s_%s (expected one of %s). Falling back to default %r.",
+                    val,
+                    tool,
+                    name,
+                    allowed_values,
+                    default,
+                )
+                val = default
         if arg and val != default:
             if name == "split_penalty" and val == -1:
                 no_splits_arg = opt.get("no_split_argument")
@@ -513,12 +537,15 @@ def run_sync(
     callbacks = callbacks or SyncCallbacks()
     start = time.monotonic()
 
-    if not os.path.exists(reference) and not os.path.exists(subtitle):
+    from constants import is_remote_url
+
+    ref_is_url = is_remote_url(reference)
+    if not ref_is_url and not os.path.exists(reference) and not os.path.exists(subtitle):
         callbacks._error(str(texts.SKIPPING_BOTH_FILES_DO_NOT_EXIST))
         return SyncResult(
             False, None, tool, "both files missing", None, _elapsed(start)
         )
-    if not os.path.exists(reference):
+    if not ref_is_url and not os.path.exists(reference):
         callbacks._error(str(texts.SKIPPING_REFERENCE_FILE_DOES_NOT_EXIST))
         return SyncResult(False, None, tool, "reference missing", None, _elapsed(start))
     if not os.path.exists(subtitle):
@@ -550,7 +577,11 @@ def run_sync(
     current_tool_info = SYNC_TOOLS[tool]
     current_tool_type = current_tool_info.get("type", "executable")
     supports_sub_ref = current_tool_info.get("supports_subtitle_as_reference", True)
-    ref_ext = os.path.splitext(reference)[1].lower()
+    ref_ext = (
+        os.path.splitext(reference.split("?")[0])[1].lower()
+        if ref_is_url
+        else os.path.splitext(reference)[1].lower()
+    )
     is_video_ref = ref_ext not in SUBTITLE_EXTENSIONS
     if not supports_sub_ref and not is_video_ref:
         default_tool = DEFAULT_OPTIONS["sync_tool"]
@@ -622,11 +653,13 @@ def run_sync(
         ):
             converted_files_to_clean.append(converted)
 
+    effective_config = dict(config or DEFAULT_OPTIONS)
+
     if not output:
         output = determine_output_path(
             reference,
             subtitle,
-            config=config,
+            config=effective_config,
             subtitle_was_converted=subtitle_was_converted,
         )
 
@@ -645,7 +678,7 @@ def run_sync(
                 pass
         return SyncResult(False, None, current_tool, err_msg, None, _elapsed(start))
 
-    backup_enabled = config.get(
+    backup_enabled = effective_config.get(
         "backup_subtitles_before_overwriting",
         DEFAULT_OPTIONS["backup_subtitles_before_overwriting"],
     )
@@ -654,6 +687,26 @@ def run_sync(
             create_backup(output)
         except Exception as e:
             logger.error(f"Failed to create backup: {e}")
+
+    # If ffsubsync with PGS subtitles is enabled, verify the reference contains usable PGS timings
+    if current_tool == "ffsubsync" and effective_config.get("ffsubsync_use_pgs_subtitles", False):
+        callbacks._log(str(texts.CHECKING_VIDEO_FOR_PGS_SUBTITLES), "grey")
+        from utils import check_pgs_subtitles_usable
+        usable, reason = check_pgs_subtitles_usable(effective_reference)
+        if not usable:
+            callbacks._log(
+                f"PGS subtitles enabled, but reference has no usable PGS stream ({reason}). "
+                "Falling back to audio voice activity detection.",
+                "orange",
+            )
+            logger.info(
+                "No usable PGS stream in reference (%s). Skipping --pgs-ref-stream.",
+                reason,
+            )
+            effective_config["ffsubsync_use_pgs_subtitles"] = False
+        else:
+            callbacks._log(f"Using PGS subtitles as reference ({reason}).", "green")
+            logger.info("Found usable PGS stream in reference: %s", reason)
 
     effective_output = output
     use_temp_output = False
@@ -684,7 +737,7 @@ def run_sync(
                 effective_reference,
                 effective_subtitle,
                 effective_output,
-                config=config,
+                config=effective_config,
             )
             logger.info(f"Executing: {module_name} {' '.join(cmd_args)}")
             rc = run_module_tool(
@@ -732,7 +785,7 @@ def run_sync(
                 effective_reference,
                 effective_subtitle,
                 effective_output,
-                config=config,
+                config=effective_config,
             )
             if callbacks._cancelled():
                 return SyncResult(

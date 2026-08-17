@@ -435,6 +435,10 @@ def update_sync_tool_options(self, tool):
             dropdown.setToolTip(tooltip_text)
 
             saved = self.config.get(config_key, default)
+            if values and saved not in values:
+                saved = default
+                if config_key in self.config:
+                    self.config[config_key] = default
             idx = dropdown.findData(saved)
             if idx < 0:
                 idx = dropdown.findText(str(labels.get(saved, saved)))
@@ -471,18 +475,20 @@ def update_sync_tool_options(self, tool):
             )
             slider.setToolTip(tooltip_text)
 
-            # Special handling for alass split_penalty slider
-            if tool == "alass" and option_name == "split_penalty":
+            # Special handling for alass / ffsubsync split_penalty slider
+            if option_name == "split_penalty" and (tool in ("alass", "ffsubsync") or range_min == -1):
 
-                def update_split_penalty_display(value):
-                    val_label.setText("No splits" if value == -1 else str(value))
+                def update_split_penalty_display(value, key=config_key, lbl=val_label):
+                    lbl.setText(str(texts.NO_SPLITS) if value == -1 else str(value))
                     # Only update config if value changed
-                    if self.config.get(config_key) != value:
-                        update_config(self, config_key, value)
+                    if self.config.get(key) != value:
+                        update_config(self, key, value)
 
                 # Set initial display
-                update_split_penalty_display(current_value)
-                slider.valueChanged.connect(update_split_penalty_display)
+                update_split_penalty_display(current_value, config_key, val_label)
+                slider.valueChanged.connect(
+                    lambda value, key=config_key, lbl=val_label: update_split_penalty_display(value, key, lbl)
+                )
             else:
                 slider.valueChanged.connect(
                     lambda value, key=config_key: update_config(self, key, value)

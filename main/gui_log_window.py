@@ -162,9 +162,12 @@ class LogWindow(QWidget):
                 if opt_type == "checkbox":
                     display_val = texts.ENABLED if bool(val) else texts.DISABLED
                 elif opt_type == "dropdown":
+                    allowed_values = v.get("values", [])
+                    if allowed_values and val not in allowed_values:
+                        val = v.get("default")
                     lbls = v.get("value_labels", {})
                     display_val = str(lbls.get(val, val))
-                elif sync_tool == "alass" and k == "split_penalty" and val == -1:
+                elif sync_tool in ("alass", "ffsubsync") and k == "split_penalty" and val == -1:
                     display_val = texts.NO_SPLITS
                 elif (
                     sync_tool == "lapse"

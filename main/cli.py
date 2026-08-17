@@ -276,7 +276,9 @@ def cmd_sync(args) -> int:
         log.error(err)
         return EXIT_USAGE
 
-    if not os.path.exists(args.video):
+    from constants import is_remote_url
+
+    if not is_remote_url(args.video) and not os.path.exists(args.video):
         log.error("Reference not found: %s", args.video)
         return EXIT_USAGE
     if not os.path.exists(args.subtitle):

@@ -145,10 +145,141 @@ def _patch_ffsubsync_silero():
     st._make_silero_detector = _make_onnx_silero_detector
 
 
+_orig_get_pgs_timings_via_ffprobe = None
+
+
+def _patch_ffsubsync_pgs_timings():
+    """Patch ffsubsync's _get_pgs_timings_via_ffprobe to support standard Matroska Show/Clear packet pairs."""
+    global _orig_get_pgs_timings_via_ffprobe
+    try:
+        import ffsubsync.speech_transformers as st
+        from ffsubsync.ffmpeg_utils import ffmpeg_bin_path
+        import ffmpeg
+        from typing import List, Tuple, Optional
+    except Exception:
+        return
+
+    if getattr(st, "_is_patched_pgs_timings", False):
+        return
+
+    _orig_get_pgs_timings_via_ffprobe = getattr(st, "_get_pgs_timings_via_ffprobe", None)
+
+    def _robust_get_pgs_timings(
+        fname: str,
+        stream: str,
+        ffmpeg_path: Optional[str] = None,
+        gui_mode: bool = False,
+    ) -> Optional[List[Tuple[float, float]]]:
+        ffprobe_cmd = ffmpeg_bin_path(
+            "ffprobe", gui_mode, ffmpeg_resources_path=ffmpeg_path
+        )
+        probe_stream = stream[2:] if stream.startswith("0:") else stream
+        try:
+            probe_data = ffmpeg.probe(
+                fname,
+                cmd=ffprobe_cmd,
+                show_packets=None,
+                select_streams=probe_stream,
+                show_entries="packet=pts_time,duration_time,size",
+            )
+        except Exception:
+            return None
+
+        results: List[Tuple[float, float]] = []
+        current_start = None
+
+        for packet in probe_data.get("packets", []):
+            pts_str = packet.get("pts_time")
+            dur_str = packet.get("duration_time")
+            size_str = packet.get("size")
+            if pts_str is None or size_str is None:
+                continue
+            try:
+                pts = float(pts_str)
+                size = int(size_str)
+                dur = float(dur_str) if dur_str not in (None, "N/A") else None
+            except (ValueError, TypeError):
+                continue
+
+            if dur is not None and size > 50:
+                results.append((pts, pts + dur))
+                current_start = None
+            elif size > 50:
+                if current_start is not None and pts > current_start:
+                    results.append((current_start, min(pts, current_start + 7.0)))
+                current_start = pts
+            else:
+                # Clear packet (size <= 50)
+                if current_start is not None and pts > current_start:
+                    results.append((current_start, pts))
+                    current_start = None
+
+        if current_start is not None:
+            results.append((current_start, current_start + 3.0))
+
+        return results if results else None
+
+    st._get_pgs_timings_via_ffprobe = _robust_get_pgs_timings
+    st._is_patched_pgs_timings = True
+
+
+def _patch_ffsubsync_pgs_fallback():
+    """Patch ffsubsync's PGSSpeechTransformer to fall back to audio VAD if PGS timing extraction fails."""
+    try:
+        import ffsubsync.speech_transformers as st
+        import logging
+        logger = logging.getLogger("ffsubsync")
+    except Exception:
+        return
+
+    orig_fit = getattr(st.PGSSpeechTransformer, "fit", None)
+    if orig_fit is None or getattr(st.PGSSpeechTransformer, "_is_patched_fallback", False):
+        return
+
+    def _safe_fit(self, fname: str, *args, **kwargs):
+        try:
+            return orig_fit(self, fname, *args, **kwargs)
+        except Exception as e:
+            logger.warning(
+                "PGS subtitle timing extraction failed (%s). Falling back to audio voice activity detection.",
+                e,
+            )
+            from ffsubsync.constants import (
+                DEFAULT_VAD,
+                SAMPLE_RATE,
+                DEFAULT_FRAME_RATE,
+                DEFAULT_NON_SPEECH_LABEL,
+            )
+            vad = getattr(self, "vad", None) or DEFAULT_VAD
+            fallback = st.VideoSpeechTransformer(
+                vad=vad,
+                sample_rate=getattr(self, "sample_rate", None) or SAMPLE_RATE,
+                frame_rate=getattr(self, "frame_rate", None) or DEFAULT_FRAME_RATE,
+                non_speech_label=(
+                    getattr(self, "non_speech_label", None)
+                    if getattr(self, "non_speech_label", None) is not None
+                    else DEFAULT_NON_SPEECH_LABEL
+                ),
+                start_seconds=getattr(self, "start_seconds", 0) or 0,
+                ffmpeg_path=getattr(self, "ffmpeg_path", None),
+                gui_mode=getattr(self, "gui_mode", False),
+            )
+            fallback.fit(fname, *args, **kwargs)
+            self.pgs_speech_results_ = fallback.transform(fname)
+            if hasattr(fallback, "speech_frame_boundaries_"):
+                self.speech_frame_boundaries_ = fallback.speech_frame_boundaries_
+            return self
+
+    st.PGSSpeechTransformer.fit = _safe_fit
+    st.PGSSpeechTransformer._is_patched_fallback = True
+
+
 def _load_ffsubsync():
     try:
         from ffsubsync.ffsubsync import main as ffsubsync_main
         _patch_ffsubsync_silero()
+        _patch_ffsubsync_pgs_timings()
+        _patch_ffsubsync_pgs_fallback()
         return ffsubsync_main, None
     except Exception as e:
         return None, e

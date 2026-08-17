@@ -1713,6 +1713,10 @@ def check_file_readable(file_path: str) -> tuple[bool, str]:
     """
     if not file_path:
         return False, str(texts.NO_FILE_PATH_PROVIDED)
+    from constants import is_remote_url
+
+    if is_remote_url(file_path):
+        return True, ""
     if not os.path.exists(file_path):
         return False, f"{texts.FILE_DOES_NOT_EXIST} ({file_path})"
     try:
@@ -1754,3 +1758,32 @@ def check_file_writable(file_path: str) -> tuple[bool, str]:
             return True, ""
         except Exception as e:
             return False, str(e)
+
+
+def check_pgs_subtitles_usable(reference: str) -> tuple[bool, str]:
+    """Check if the reference file contains usable PGS subtitles.
+
+    Fast check (~10ms) that inspects container stream headers via ffprobe.
+
+    Returns:
+        tuple of (is_usable, message_or_reason)
+    """
+    from constants import is_remote_url, FFPROBE_EXECUTABLE
+
+    if not reference or is_remote_url(reference):
+        return False, "Remote URLs or empty paths do not support PGS timing extraction"
+
+    if not os.path.exists(reference):
+        return False, "Reference file does not exist"
+
+    try:
+        from ffsubsync.speech_transformers import find_pgs_stream
+
+        ffmpeg_dir = os.path.dirname(FFPROBE_EXECUTABLE) if FFPROBE_EXECUTABLE else None
+        stream = find_pgs_stream(reference, ffmpeg_path=ffmpeg_dir)
+        if not stream:
+            return False, "No PGS (hdmv_pgs_subtitle) subtitle stream found"
+
+        return True, f"Detected PGS stream {stream}"
+    except Exception as e:
+        return False, f"PGS probe check failed: {e}"

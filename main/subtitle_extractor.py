@@ -12,6 +12,7 @@ from constants import (
     EXTRACTABLE_SUBTITLE_EXTENSIONS,
     SUBTITLE_EXTENSIONS,
     SYNC_TOOLS,
+    is_remote_url,
 )
 
 
@@ -30,6 +31,9 @@ class SubtitleExtractionResult:
 
 def should_extract_subtitles(reference, tool, config, override=None):
     """Return whether embedded-subtitle extraction applies to this sync."""
+    if is_remote_url(reference):
+        return False
+
     if os.path.splitext(reference)[1].lower() in SUBTITLE_EXTENSIONS:
         return False
 
