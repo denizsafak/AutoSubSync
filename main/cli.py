@@ -600,6 +600,8 @@ def cmd_config(args) -> int:
                 except json.JSONDecodeError:
                     log.warning("Config file is invalid JSON; starting fresh")
                     data = {}
+        from utils import _atomic_write_config, clear_config_cache
+
         if args.config_op == "set":
             if args.key not in DEFAULT_OPTIONS and not args.force:
                 log.error(
@@ -607,25 +609,13 @@ def cmd_config(args) -> int:
                 )
                 return EXIT_USAGE
             data[args.key] = _parse_config_value(args.value)
-            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+            _atomic_write_config(path, data)
             log.info("Set %s = %r in %s", args.key, data[args.key], path)
         else:  # unset
             data.pop(args.key, None)
-            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+            _atomic_write_config(path, data)
             log.info("Unset %s in %s", args.key, path)
-        # Invalidate the cached config so subsequent calls in this process
-        # see the change.
-        try:
-            import utils
-
-            with utils._config_cache_lock:
-                utils._config_cache = None
-        except Exception:
-            pass
+        clear_config_cache()
         return EXIT_OK
 
     log.error("Unknown config op: %s", args.config_op)

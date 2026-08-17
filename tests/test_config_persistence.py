@@ -134,7 +134,7 @@ class TestConfigPersistence(unittest.TestCase):
 
     def test_atomic_save_and_load_config(self):
         with patch("utils.get_user_config_path", return_value=self.config_file):
-            test_data = {"sync_tool": "lapse", "theme": "dark", "lapse_mode": "voice"}
+            test_data = {"sync_tool": "lapse", "theme": "dark", "lapse_mode": "auto"}
             utils.save_config(test_data)
             self.assertTrue(os.path.exists(self.config_file))
 
@@ -142,52 +142,67 @@ class TestConfigPersistence(unittest.TestCase):
             loaded = utils.load_config()
             self.assertEqual(loaded, test_data)
 
-    def test_save_config_creates_backup(self):
+    def test_reset_to_defaults_cleans_up_file_and_cache(self):
         with patch("utils.get_user_config_path", return_value=self.config_file):
-            initial_data = {"sync_tool": "alass", "theme": "light"}
-            utils.save_config(initial_data)
+            utils.save_config({"sync_tool": "lapse"})
+            self.assertTrue(os.path.exists(self.config_file))
 
-            # Second save should create .bak containing initial_data
-            updated_data = {"sync_tool": "lapse", "theme": "dark"}
-            utils.save_config(updated_data)
+            from PyQt6.QtWidgets import QMessageBox
+            with patch("PyQt6.QtWidgets.QMessageBox.question", return_value=QMessageBox.StandardButton.Yes):
+                with patch("utils.restart_application"):
+                    utils.reset_to_defaults(MagicMock())
 
-            bak_file = f"{self.config_file}.bak"
-            self.assertTrue(os.path.exists(bak_file))
-            with open(bak_file, "r", encoding="utf-8") as f:
-                bak_data = json.load(f)
-            self.assertEqual(bak_data, initial_data)
+            self.assertFalse(os.path.exists(self.config_file))
+            self.assertIsNone(utils._config_cache)
 
-    def test_load_config_corrupted_recovers_from_backup(self):
-        with patch("utils.get_user_config_path", return_value=self.config_file):
-            good_data = {"sync_tool": "lapse", "remember_changes": True, "custom_suffix": "_synced"}
-            utils.save_config(good_data)
-            utils.save_config({**good_data, "custom_suffix": "_new"})  # Creates .bak
+    def test_handle_save_location_dropdown_ignores_negative_index(self):
+        mock_obj = MagicMock()
+        mock_obj.config = {"automatic_save_location": "save_to_desktop", "remember_changes": True}
+        mock_label = MagicMock()
 
-            # Now corrupt the main config file (e.g. simulate crash leaving 0 bytes or half-written JSON)
-            with open(self.config_file, "w", encoding="utf-8") as f:
-                f.write("{corrupt json...")
+        mock_dropdown = MagicMock()
+        mock_dropdown.currentIndex.return_value = -1
+        mock_dropdown.currentData.return_value = None
+        mock_dropdown.currentText.return_value = ""
 
-            utils._config_cache = None
-            loaded = utils.load_config()
-            # Should have recovered from the backup
-            self.assertEqual(loaded.get("sync_tool"), "lapse")
-            self.assertEqual(loaded.get("remember_changes"), True)
+        with patch("utils.save_config") as mock_save:
+            utils.handle_save_location_dropdown(
+                mock_obj,
+                mock_dropdown,
+                {str(v): k for k, v in AUTOMATIC_SAVE_MAP.items()},
+                "automatic_save_location",
+                "automatic_save_folder",
+                mock_label,
+                DEFAULT_OPTIONS["automatic_save_location"],
+            )
+            # Must NOT call save_config or overwrite with default
+            mock_save.assert_not_called()
+        self.assertEqual(mock_obj.config["automatic_save_location"], "save_to_desktop")
 
-    def test_load_config_empty_file_recovers_from_backup(self):
-        with patch("utils.get_user_config_path", return_value=self.config_file):
-            good_data = {"sync_tool": "alass", "theme": "dark"}
-            utils.save_config(good_data)
-            utils.save_config({**good_data, "theme": "light"})  # Creates .bak
+    def test_handle_save_location_dropdown_ignores_unresolved_data(self):
+        mock_obj = MagicMock()
+        mock_obj.config = {"automatic_save_location": "save_to_desktop", "remember_changes": True}
+        mock_label = MagicMock()
 
-            # Truncate main config file to 0 bytes
-            with open(self.config_file, "w", encoding="utf-8") as f:
-                f.write("")
+        mock_dropdown = MagicMock()
+        mock_dropdown.currentIndex.return_value = 0
+        mock_dropdown.currentData.return_value = None
+        mock_dropdown.currentText.return_value = ""
 
-            utils._config_cache = None
-            loaded = utils.load_config()
-            self.assertEqual(loaded.get("sync_tool"), "alass")
+        with patch("utils.save_config") as mock_save:
+            utils.handle_save_location_dropdown(
+                mock_obj,
+                mock_dropdown,
+                {str(v): k for k, v in AUTOMATIC_SAVE_MAP.items()},
+                "automatic_save_location",
+                "automatic_save_folder",
+                mock_label,
+                DEFAULT_OPTIONS["automatic_save_location"],
+            )
+            mock_save.assert_not_called()
+        self.assertEqual(mock_obj.config["automatic_save_location"], "save_to_desktop")
 
-    def test_load_config_corrupted_without_backup_preserves_corrupt_file(self):
+    def test_load_config_corrupted_preserves_corrupt_file_and_returns_empty(self):
         with patch("utils.get_user_config_path", return_value=self.config_file):
             with open(self.config_file, "w", encoding="utf-8") as f:
                 f.write("invalid json contents")

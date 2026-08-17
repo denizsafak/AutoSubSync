@@ -18,6 +18,7 @@ env/
 venv/
 .env/
 .venv/
+uv.lock
 
 # VS Code settings
 .vscode/

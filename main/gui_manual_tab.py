@@ -609,6 +609,8 @@ def _on_settings_changed(self, value=None):
     """Handle any setting change that affects output path or display"""
     # Handle different types of changes
     if hasattr(self, "manual_save_combo") and self.sender() == self.manual_save_combo:
+        if self.manual_save_combo.currentIndex() < 0:
+            return
         # Save location dropdown changed
         handle_save_location_dropdown(
             self,

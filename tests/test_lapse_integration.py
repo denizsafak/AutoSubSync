@@ -287,32 +287,33 @@ class TestLapseIntegration(unittest.TestCase):
         dummy._create_slider = _create_slider.__get__(dummy, QWidget)
         dummy._dropdown = autosubsyncapp._dropdown.__get__(dummy, QWidget)
 
-        # Test initial auto mode -> slider enabled
-        dummy.config["lapse_mode"] = "auto"
-        update_sync_tool_options(dummy, "lapse")
-        split_slider = dummy.tool_option_widgets["split_penalty"]
-        self.assertTrue(split_slider.isEnabled())
-        self.assertTrue(split_slider.title_label.isEnabled())
+        with patch("utils.save_config"):
+            # Test initial auto mode -> slider enabled
+            dummy.config["lapse_mode"] = "auto"
+            update_sync_tool_options(dummy, "lapse")
+            split_slider = dummy.tool_option_widgets["split_penalty"]
+            self.assertTrue(split_slider.isEnabled())
+            self.assertTrue(split_slider.title_label.isEnabled())
 
-        # Switch to nosplit -> slider disabled
-        mode_combo = dummy.tool_option_widgets["mode"]
-        labels = SYNC_TOOLS["lapse"]["options"]["mode"]["value_labels"]
-        nosplit_text = str(labels.get("nosplit", "nosplit"))
-        mode_combo.setCurrentText(nosplit_text)
-        self.assertFalse(split_slider.isEnabled())
-        self.assertFalse(split_slider.title_label.isEnabled())
+            # Switch to nosplit -> slider disabled
+            mode_combo = dummy.tool_option_widgets["mode"]
+            labels = SYNC_TOOLS["lapse"]["options"]["mode"]["value_labels"]
+            nosplit_text = str(labels.get("nosplit", "nosplit"))
+            mode_combo.setCurrentText(nosplit_text)
+            self.assertFalse(split_slider.isEnabled())
+            self.assertFalse(split_slider.title_label.isEnabled())
 
-        # Switch to split mode -> slider enabled
-        split_text = str(labels.get("split", "split"))
-        mode_combo.setCurrentText(split_text)
-        self.assertTrue(split_slider.isEnabled())
-        self.assertTrue(split_slider.title_label.isEnabled())
+            # Switch to split mode -> slider enabled
+            split_text = str(labels.get("split", "split"))
+            mode_combo.setCurrentText(split_text)
+            self.assertTrue(split_slider.isEnabled())
+            self.assertTrue(split_slider.title_label.isEnabled())
 
-        # Switch to ols -> slider disabled
-        ols_text = str(labels.get("ols", "ols"))
-        mode_combo.setCurrentText(ols_text)
-        self.assertFalse(split_slider.isEnabled())
-        self.assertFalse(split_slider.title_label.isEnabled())
+            # Switch to ols -> slider disabled
+            ols_text = str(labels.get("ols", "ols"))
+            mode_combo.setCurrentText(ols_text)
+            self.assertFalse(split_slider.isEnabled())
+            self.assertFalse(split_slider.title_label.isEnabled())
 
     def test_ffsubsync_onnx_silero_vad_sync(self):
         import call_ffsubsync

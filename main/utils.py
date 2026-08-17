@@ -508,9 +508,9 @@ def get_logs_directory():
     return logs_dir
 
 
-def _atomic_write_config(config_path, config_dict, create_backup=True):
+def _atomic_write_config(config_path, config_dict):
     """
-    Internal helper to atomically write config dict to disk and optionally create backup.
+    Internal helper to atomically write config dict to disk via a temporary file and fsync.
     """
     config_dir = os.path.dirname(config_path)
     os.makedirs(config_dir, exist_ok=True)
@@ -522,20 +522,12 @@ def _atomic_write_config(config_path, config_dict, create_backup=True):
         return False
 
     tmp_path = os.path.join(config_dir, f"config.json.tmp.{os.getpid()}")
-    bak_path = f"{config_path}.bak"
 
     try:
         with open(tmp_path, "w", encoding="utf-8") as f:
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
-
-        if create_backup and os.path.exists(config_path):
-            try:
-                if os.path.getsize(config_path) > 0:
-                    shutil.copy2(config_path, bak_path)
-            except Exception as bak_err:
-                logger.debug(f"Failed to update backup config: {bak_err}")
 
         os.replace(tmp_path, config_path)
         return True
@@ -552,7 +544,7 @@ def _atomic_write_config(config_path, config_dict, create_backup=True):
 def load_config():
     """
     Load configuration with caching to avoid multiple file reads.
-    Thread-safe implementation with automatic backup recovery on corruption.
+    Thread-safe implementation with atomic write integrity.
     """
     global _config_cache
 
@@ -564,23 +556,8 @@ def load_config():
             )  # Return a copy to prevent external modifications
 
         config_path = get_user_config_path()
-        bak_path = f"{config_path}.bak"
 
         if not os.path.exists(config_path):
-            # If main config doesn't exist, check if a backup exists
-            if os.path.exists(bak_path):
-                try:
-                    with open(bak_path, "r", encoding="utf-8") as f:
-                        config = json.load(f)
-                    if isinstance(config, dict):
-                        logger.warning("Main config missing, recovered from backup.")
-                        _config_cache = config.copy()
-                        # Restore main config from valid backup without overwriting .bak
-                        _atomic_write_config(config_path, config, create_backup=False)
-                        return config
-                except Exception as e:
-                    logger.warning(f"Failed to read backup config: {e}")
-
             logger.info("Config file does not exist, using defaults")
             _config_cache = {}
             return {}
@@ -600,24 +577,8 @@ def load_config():
             _config_cache = config.copy()
             return config
         except Exception as e:
-            logger.warning(f"Failed to load config ({e}), attempting recovery from backup...")
-            # Try to recover from .bak file if available
-            if os.path.exists(bak_path):
-                try:
-                    with open(bak_path, "r", encoding="utf-8") as f:
-                        bak_content = f.read()
-                    if bak_content.strip():
-                        bak_config = json.loads(bak_content)
-                        if isinstance(bak_config, dict):
-                            logger.info("Successfully recovered configuration from backup file.")
-                            _config_cache = bak_config.copy()
-                            # Restore main config from valid backup without overwriting .bak
-                            _atomic_write_config(config_path, bak_config, create_backup=False)
-                            return bak_config
-                except Exception as bak_err:
-                    logger.warning(f"Failed to recover from backup config: {bak_err}")
-
-            # If both failed, preserve corrupt config to prevent total loss
+            logger.warning(f"Failed to load config ({e})")
+            # Preserve corrupt config to prevent total loss before starting fresh
             try:
                 corrupt_path = f"{config_path}.corrupt.{int(time.time())}"
                 if os.path.exists(config_path):
@@ -632,7 +593,7 @@ def load_config():
 
 def save_config(config):
     """
-    Save configuration atomically and update cache and backup.
+    Save configuration atomically and update cache.
     Thread-safe implementation.
     """
     global _config_cache
@@ -643,7 +604,7 @@ def save_config(config):
 
     with _config_cache_lock:
         config_path = get_user_config_path()
-        if _atomic_write_config(config_path, config, create_backup=True):
+        if _atomic_write_config(config_path, config):
             logger.info("Config file updated")
             _config_cache = config.copy()
 
@@ -964,10 +925,15 @@ def reset_to_defaults(parent):
 
     if reply == QMessageBox.StandardButton.Yes:
         config_path = get_user_config_path()
+        bak_path = f"{config_path}.bak"
         try:
             if os.path.exists(config_path):
                 os.remove(config_path)
                 logger.info("Config file removed for reset to defaults.")
+            if os.path.exists(bak_path):
+                os.remove(bak_path)
+                logger.info("Backup config file removed for reset to defaults.")
+            clear_config_cache()
             restart_application()
         except Exception as e:
             logger.error(f"Failed to reset settings: {e}")
@@ -1450,9 +1416,17 @@ def handle_save_location_dropdown(
     """
     Generic handler for save location dropdowns with folder selection and label update.
     """
+    try:
+        if dropdown.currentIndex() < 0:
+            return
+    except Exception:
+        pass
+
     internal_val = dropdown.currentData()
     if not internal_val:
         text = dropdown.currentText()
+        if not text:
+            return
         internal_val = save_map.get(text)
         if not internal_val:
             for k, v in save_map.items():
@@ -1460,7 +1434,7 @@ def handle_save_location_dropdown(
                     internal_val = v
                     break
         if not internal_val:
-            internal_val = default_value
+            return
 
     # Handle folder selection case
     if internal_val == "select_destination_folder" and not skip_dialog:

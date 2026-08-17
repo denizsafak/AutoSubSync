@@ -167,10 +167,14 @@ def setup_auto_sync_tab(self):
     if idx >= 0:
         self.sync_tool_combo.setCurrentIndex(idx)
     self.sync_tool_combo.currentIndexChanged.connect(
-        lambda i: update_config(
-            self,
-            "sync_tool",
-            self.sync_tool_combo.currentData() or self.sync_tool_combo.currentText(),
+        lambda i: (
+            update_config(
+                self,
+                "sync_tool",
+                self.sync_tool_combo.currentData() or self.sync_tool_combo.currentText(),
+            )
+            if i >= 0
+            else None
         )
     )
     save_items = [(v, k) for k, v in AUTOMATIC_SAVE_MAP.items()]
@@ -194,14 +198,18 @@ def setup_auto_sync_tab(self):
 
     # Connect change handler with lambda to convert display text to internal value
     self.save_combo.currentIndexChanged.connect(
-        lambda i: handle_save_location_dropdown(
-            self,
-            self.save_combo,
-            {str(v): k for k, v in AUTOMATIC_SAVE_MAP.items()},
-            "automatic_save_location",
-            "automatic_save_folder",
-            self.selected_folder_label,
-            DEFAULT_OPTIONS["automatic_save_location"],
+        lambda i: (
+            handle_save_location_dropdown(
+                self,
+                self.save_combo,
+                {str(v): k for k, v in AUTOMATIC_SAVE_MAP.items()},
+                "automatic_save_location",
+                "automatic_save_folder",
+                self.selected_folder_label,
+                DEFAULT_OPTIONS["automatic_save_location"],
+            )
+            if i >= 0
+            else None
         )
     )
 
@@ -430,14 +438,20 @@ def update_sync_tool_options(self, tool):
             idx = dropdown.findData(saved)
             if idx < 0:
                 idx = dropdown.findText(str(labels.get(saved, saved)))
+            if idx < 0 and default is not None:
+                idx = dropdown.findData(default)
             if idx >= 0:
                 dropdown.setCurrentIndex(idx)
 
             dropdown.currentIndexChanged.connect(
-                lambda i, key=config_key, cb=dropdown: update_config(
-                    self,
-                    key,
-                    cb.currentData() if cb.currentData() is not None else cb.currentText(),
+                lambda i, key=config_key, cb=dropdown: (
+                    update_config(
+                        self,
+                        key,
+                        cb.currentData() if cb.currentData() is not None else cb.currentText(),
+                    )
+                    if i >= 0 and (cb.currentData() is not None or cb.currentText())
+                    else None
                 )
             )
             self.tool_option_widgets[option_name] = dropdown
