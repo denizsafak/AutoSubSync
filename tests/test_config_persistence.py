@@ -132,6 +132,97 @@ class TestConfigPersistence(unittest.TestCase):
 
         self.assertEqual(mock_obj.config["automatic_save_location"], "save_to_desktop")
 
+    def test_atomic_save_and_load_config(self):
+        with patch("utils.get_user_config_path", return_value=self.config_file):
+            test_data = {"sync_tool": "lapse", "theme": "dark", "lapse_mode": "voice"}
+            utils.save_config(test_data)
+            self.assertTrue(os.path.exists(self.config_file))
+
+            utils._config_cache = None
+            loaded = utils.load_config()
+            self.assertEqual(loaded, test_data)
+
+    def test_save_config_creates_backup(self):
+        with patch("utils.get_user_config_path", return_value=self.config_file):
+            initial_data = {"sync_tool": "alass", "theme": "light"}
+            utils.save_config(initial_data)
+
+            # Second save should create .bak containing initial_data
+            updated_data = {"sync_tool": "lapse", "theme": "dark"}
+            utils.save_config(updated_data)
+
+            bak_file = f"{self.config_file}.bak"
+            self.assertTrue(os.path.exists(bak_file))
+            with open(bak_file, "r", encoding="utf-8") as f:
+                bak_data = json.load(f)
+            self.assertEqual(bak_data, initial_data)
+
+    def test_load_config_corrupted_recovers_from_backup(self):
+        with patch("utils.get_user_config_path", return_value=self.config_file):
+            good_data = {"sync_tool": "lapse", "remember_changes": True, "custom_suffix": "_synced"}
+            utils.save_config(good_data)
+            utils.save_config({**good_data, "custom_suffix": "_new"})  # Creates .bak
+
+            # Now corrupt the main config file (e.g. simulate crash leaving 0 bytes or half-written JSON)
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                f.write("{corrupt json...")
+
+            utils._config_cache = None
+            loaded = utils.load_config()
+            # Should have recovered from the backup
+            self.assertEqual(loaded.get("sync_tool"), "lapse")
+            self.assertEqual(loaded.get("remember_changes"), True)
+
+    def test_load_config_empty_file_recovers_from_backup(self):
+        with patch("utils.get_user_config_path", return_value=self.config_file):
+            good_data = {"sync_tool": "alass", "theme": "dark"}
+            utils.save_config(good_data)
+            utils.save_config({**good_data, "theme": "light"})  # Creates .bak
+
+            # Truncate main config file to 0 bytes
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                f.write("")
+
+            utils._config_cache = None
+            loaded = utils.load_config()
+            self.assertEqual(loaded.get("sync_tool"), "alass")
+
+    def test_load_config_corrupted_without_backup_preserves_corrupt_file(self):
+        with patch("utils.get_user_config_path", return_value=self.config_file):
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                f.write("invalid json contents")
+
+            utils._config_cache = None
+            loaded = utils.load_config()
+            self.assertEqual(loaded, {})
+
+            # Verify a .corrupt file was preserved
+            corrupt_files = [f for f in os.listdir(self.temp_dir) if ".corrupt." in f]
+            self.assertTrue(len(corrupt_files) > 0)
+
+    def test_save_config_non_serializable_does_not_corrupt_existing_file(self):
+        with patch("utils.get_user_config_path", return_value=self.config_file):
+            good_data = {"sync_tool": "ffsubsync"}
+            utils.save_config(good_data)
+
+            # Try saving an un-serializable object (e.g. a set)
+            bad_data = {"sync_tool": "ffsubsync", "bad_value": {1, 2, 3}}
+            utils.save_config(bad_data)
+
+            # Main config should still be intact with good_data
+            utils._config_cache = None
+            loaded = utils.load_config()
+            self.assertEqual(loaded, good_data)
+
+    def test_default_options_contains_sync_tool_options(self):
+        self.assertIn("lapse_mode", DEFAULT_OPTIONS)
+        self.assertIn("lapse_split_penalty", DEFAULT_OPTIONS)
+        self.assertIn("alass_split_penalty", DEFAULT_OPTIONS)
+        self.assertIn("ffsubsync_dont_fix_framerate", DEFAULT_OPTIONS)
+        self.assertEqual(DEFAULT_OPTIONS["lapse_split_penalty"], 6)
+        self.assertEqual(DEFAULT_OPTIONS["alass_split_penalty"], 7)
+        self.assertEqual(DEFAULT_OPTIONS["lapse_mode"], "auto")
+
 
 if __name__ == "__main__":
     unittest.main()

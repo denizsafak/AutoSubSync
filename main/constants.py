@@ -1767,6 +1767,13 @@ for tool_name, tool_data in SYNC_TOOLS.items():
                     if isinstance(label, dict):
                         option_data["value_labels"][value] = TranslationDict(label)
 
+# Add sync tool options to DEFAULT_OPTIONS
+for tool_name, tool_data in SYNC_TOOLS.items():
+    for opt_name, opt_data in tool_data.get("options", {}).items():
+        key = f"{tool_name}_{opt_name}"
+        if "default" in opt_data and key not in DEFAULT_OPTIONS:
+            DEFAULT_OPTIONS[key] = opt_data["default"]
+
 # Set proper default language after LANGUAGES is defined
 try:
     from utils import get_locale

@@ -488,7 +488,9 @@ class autosubsyncapp(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.config = load_config()
+        merged_config = dict(DEFAULT_OPTIONS)
+        merged_config.update(load_config())
+        self.config = merged_config
         self.batch_mode_enabled = self.config.get(
             "batch_mode", DEFAULT_OPTIONS["batch_mode"]
         )
@@ -739,16 +741,22 @@ class autosubsyncapp(QWidget):
         current_encoding = self.config.get(
             "output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"]
         )
-        if current_encoding == "disabled":
+        norm_encoding = (
+            current_encoding.replace("-", "_").lower()
+            if isinstance(current_encoding, str)
+            else current_encoding
+        )
+        if current_encoding == "disabled" or norm_encoding == "disabled":
             self.encoding_disabled_action.setChecked(True)
-        elif current_encoding == "same_as_input":
+        elif current_encoding == "same_as_input" or norm_encoding == "same_as_input":
             self.encoding_same_action.setChecked(True)
         elif current_encoding in self.encoding_actions:
             self.encoding_actions[current_encoding].setChecked(True)
+        elif norm_encoding in self.encoding_actions:
+            self.encoding_actions[norm_encoding].setChecked(True)
         else:
-            # Fallback to "Same as input" if invalid encoding
+            # Fallback to "Same as input" visually if unrecognized
             self.encoding_same_action.setChecked(True)
-            update_config(self, "output_subtitle_encoding", "same_as_input")
 
         # Add Sync Tracking submenu (for Batch Mode)
         self._create_sync_tracking_menu()

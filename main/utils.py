@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 _config_path_cache = None
 _config_path_logged = False
 _config_cache = None
-_config_cache_lock = threading.Lock()
+_config_cache_lock = threading.RLock()
 _locale_cache = None
 default_encoding = sys.getfilesystemencoding()
 
@@ -508,10 +508,51 @@ def get_logs_directory():
     return logs_dir
 
 
+def _atomic_write_config(config_path, config_dict, create_backup=True):
+    """
+    Internal helper to atomically write config dict to disk and optionally create backup.
+    """
+    config_dir = os.path.dirname(config_path)
+    os.makedirs(config_dir, exist_ok=True)
+
+    try:
+        data = json.dumps(config_dict, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Failed to serialize config to JSON: {e}")
+        return False
+
+    tmp_path = os.path.join(config_dir, f"config.json.tmp.{os.getpid()}")
+    bak_path = f"{config_path}.bak"
+
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+
+        if create_backup and os.path.exists(config_path):
+            try:
+                if os.path.getsize(config_path) > 0:
+                    shutil.copy2(config_path, bak_path)
+            except Exception as bak_err:
+                logger.debug(f"Failed to update backup config: {bak_err}")
+
+        os.replace(tmp_path, config_path)
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to write config file: {e}")
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
+        return False
+
+
 def load_config():
     """
     Load configuration with caching to avoid multiple file reads.
-    Thread-safe implementation.
+    Thread-safe implementation with automatic backup recovery on corruption.
     """
     global _config_cache
 
@@ -523,39 +564,88 @@ def load_config():
             )  # Return a copy to prevent external modifications
 
         config_path = get_user_config_path()
+        bak_path = f"{config_path}.bak"
+
         if not os.path.exists(config_path):
+            # If main config doesn't exist, check if a backup exists
+            if os.path.exists(bak_path):
+                try:
+                    with open(bak_path, "r", encoding="utf-8") as f:
+                        config = json.load(f)
+                    if isinstance(config, dict):
+                        logger.warning("Main config missing, recovered from backup.")
+                        _config_cache = config.copy()
+                        # Restore main config from valid backup without overwriting .bak
+                        _atomic_write_config(config_path, config, create_backup=False)
+                        return config
+                except Exception as e:
+                    logger.warning(f"Failed to read backup config: {e}")
+
             logger.info("Config file does not exist, using defaults")
             _config_cache = {}
             return {}
 
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                config = json.load(f)
+                content = f.read()
+
+            if not content.strip():
+                raise ValueError("Config file is empty (0 bytes)")
+
+            config = json.loads(content)
+            if not isinstance(config, dict):
+                raise ValueError("Config root is not a dictionary")
+
             logger.info("Config file loaded successfully")
             _config_cache = config.copy()
             return config
         except Exception as e:
-            logger.info(f"Failed to load config: {e}")
+            logger.warning(f"Failed to load config ({e}), attempting recovery from backup...")
+            # Try to recover from .bak file if available
+            if os.path.exists(bak_path):
+                try:
+                    with open(bak_path, "r", encoding="utf-8") as f:
+                        bak_content = f.read()
+                    if bak_content.strip():
+                        bak_config = json.loads(bak_content)
+                        if isinstance(bak_config, dict):
+                            logger.info("Successfully recovered configuration from backup file.")
+                            _config_cache = bak_config.copy()
+                            # Restore main config from valid backup without overwriting .bak
+                            _atomic_write_config(config_path, bak_config, create_backup=False)
+                            return bak_config
+                except Exception as bak_err:
+                    logger.warning(f"Failed to recover from backup config: {bak_err}")
+
+            # If both failed, preserve corrupt config to prevent total loss
+            try:
+                corrupt_path = f"{config_path}.corrupt.{int(time.time())}"
+                if os.path.exists(config_path):
+                    shutil.copy2(config_path, corrupt_path)
+                    logger.info(f"Preserved corrupted config at {corrupt_path}")
+            except Exception:
+                pass
+
             _config_cache = {}
             return {}
 
 
 def save_config(config):
     """
-    Save configuration and update cache.
+    Save configuration atomically and update cache and backup.
+    Thread-safe implementation.
     """
     global _config_cache
 
-    try:
-        with open(get_user_config_path(), "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=2)
-        logger.info("Config file updated")
+    if not isinstance(config, dict):
+        logger.warning("save_config called with non-dict config")
+        return
 
-        # Update cache with new config
-        with _config_cache_lock:
+    with _config_cache_lock:
+        config_path = get_user_config_path()
+        if _atomic_write_config(config_path, config, create_backup=True):
+            logger.info("Config file updated")
             _config_cache = config.copy()
-    except Exception as e:
-        logger.warning(f"Failed to save config: {e}")
 
 
 def clear_config_cache():

@@ -450,18 +450,31 @@ class LogWindowStream:
     def write(self, s):
         self._buffer += s
         while True:
-            idx = min(
-                (
-                    i
-                    for i in (self._buffer.find("\r"), self._buffer.find("\n"))
-                    if i != -1
-                ),
-                default=-1,
-            )
-            if idx == -1:
+            cr_pos = self._buffer.find("\r")
+            lf_pos = self._buffer.find("\n")
+            if cr_pos == -1 and lf_pos == -1:
                 break
-            ch = self._buffer[idx]
-            line, self._buffer = self._buffer[:idx], self._buffer[idx + 1 :]
+
+            if cr_pos != -1 and lf_pos == cr_pos + 1:
+                line = self._buffer[:cr_pos]
+                self._buffer = self._buffer[cr_pos + 2 :]
+                is_overwrite = self._last_was_cr
+                self._last_was_cr = False
+            elif cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
+                if cr_pos == len(self._buffer) - 1:
+                    break
+                line = self._buffer[:cr_pos]
+                self._buffer = self._buffer[cr_pos + 1 :]
+                is_overwrite = True
+                self._last_was_cr = True
+            elif lf_pos != -1:
+                line = self._buffer[:lf_pos]
+                self._buffer = self._buffer[lf_pos + 1 :]
+                is_overwrite = self._last_was_cr
+                self._last_was_cr = False
+            else:
+                break
+
             if (
                 "Could not find codec parameters for stream" in line
                 or "Consider increasing the value for the 'analyzeduration'" in line
@@ -481,12 +494,8 @@ class LogWindowStream:
                         self.progress_percent_emit(float(percent_match.group(1)))
                     except Exception:
                         pass
-            if ch == "\r":
-                self.emit_func(display_line, True)
-                self._last_was_cr = True
-            else:
-                self.emit_func(display_line, self._last_was_cr)
-                self._last_was_cr = False
+            if display_line:
+                self.emit_func(display_line, is_overwrite)
 
     def flush(self):
         if self._buffer:

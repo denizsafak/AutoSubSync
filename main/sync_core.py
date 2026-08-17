@@ -263,15 +263,16 @@ def build_cmd(
             except Exception as e:
                 logger.warning(f"Failed to detect reference encoding: {e}")
     elif tool == "lapse":
-        mode = config.get("lapse_mode", "auto")
-        penalty = config.get("lapse_split_penalty", 6)
+        mode = config.get("lapse_mode", DEFAULT_OPTIONS.get("lapse_mode", "auto"))
+        default_penalty = DEFAULT_OPTIONS.get("lapse_split_penalty", 6)
+        penalty = config.get("lapse_split_penalty", default_penalty)
         if mode in ("nosplit", "ols"):
             cmd.append(mode)
         elif mode == "split":
             cmd.append("split")
             cmd.append(str(penalty))
         elif mode == "auto":
-            if penalty != 6:
+            if penalty != default_penalty:
                 cmd.append("auto")
                 cmd.append(str(penalty))
     return _append_opts(cmd, tool, config)
@@ -314,29 +315,38 @@ def module_worker(module_name, args, conn, idx, total):
             def write(self, s):
                 self._buffer += s
                 while True:
-                    i = min(
-                        [
-                            x
-                            for x in (
-                                self._buffer.find("\r"),
-                                self._buffer.find("\n"),
-                            )
-                            if x != -1
-                        ],
-                        default=-1,
-                    )
-                    if i == -1:
+                    cr_pos = self._buffer.find("\r")
+                    lf_pos = self._buffer.find("\n")
+                    if cr_pos == -1 and lf_pos == -1:
                         break
-                    ch = self._buffer[i]
-                    part, self._buffer = self._buffer[:i], self._buffer[i + 1 :]
-                    self.conn.send(
-                        ("progress", part, ch == "\r" or self._last_was_cr)
-                    )
-                    self._last_was_cr = ch == "\r"
+
+                    if cr_pos != -1 and lf_pos == cr_pos + 1:
+                        part = self._buffer[:cr_pos]
+                        self._buffer = self._buffer[cr_pos + 2 :]
+                        is_overwrite = self._last_was_cr
+                        self._last_was_cr = False
+                    elif cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
+                        if cr_pos == len(self._buffer) - 1:
+                            break
+                        part = self._buffer[:cr_pos]
+                        self._buffer = self._buffer[cr_pos + 1 :]
+                        is_overwrite = True
+                        self._last_was_cr = True
+                    elif lf_pos != -1:
+                        part = self._buffer[:lf_pos]
+                        self._buffer = self._buffer[lf_pos + 1 :]
+                        is_overwrite = self._last_was_cr
+                        self._last_was_cr = False
+                    else:
+                        break
+
+                    self.conn.send(("progress", part, is_overwrite))
 
             def flush(self):
                 if self._buffer:
-                    self.conn.send(("progress", self._buffer, self._last_was_cr))
+                    cleaned = self._buffer.rstrip("\r\n")
+                    if cleaned:
+                        self.conn.send(("progress", cleaned, self._last_was_cr))
                     self._buffer = ""
                     self._last_was_cr = False
 
@@ -396,7 +406,8 @@ def run_module_tool(
             msg = parent_conn.recv()
             if msg[0] == "progress":
                 cleaned, percent = process_output(msg[1], sync_tool)
-                callbacks._subprocess_line(cleaned, msg[2])
+                if cleaned:
+                    callbacks._subprocess_line(cleaned, msg[2])
                 if percent is not None:
                     callbacks._progress(percent)
             elif msg[0] == "error":
@@ -417,8 +428,9 @@ def run_executable_tool(
 ):
     """Run an external sync tool binary, streaming its stdout/stderr.
 
-    Reads in 128-byte chunks and splits on \\r / \\n so progress bars that
-    rewrite the same line are forwarded with is_overwrite=True.
+    Reads in 128-byte chunks and handles CRLF (\\r\\n), LF (\\n), and standalone CR (\\r)
+    so progress bars that rewrite the same line are forwarded with is_overwrite=True,
+    while standard CRLF/LF newlines are forwarded with is_overwrite=False.
     """
     process = create_process(cmd)
     if process_holder is not None:
@@ -433,26 +445,42 @@ def run_executable_tool(
             break
         buffer += chunk
         while True:
-            cr_pos, lf_pos = buffer.find(b"\r"), buffer.find(b"\n")
+            cr_pos = buffer.find(b"\r")
+            lf_pos = buffer.find(b"\n")
             if cr_pos == -1 and lf_pos == -1:
                 break
-            if cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
-                part, buffer = buffer[:cr_pos], buffer[cr_pos + 1 :]
+
+            if cr_pos != -1 and lf_pos == cr_pos + 1:
+                # CRLF (\r\n): standard Windows newline
+                part = buffer[:cr_pos]
+                buffer = buffer[cr_pos + 2 :]
+                is_overwrite = last_was_cr
+                last_was_cr = False
+            elif cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
+                if cr_pos == len(buffer) - 1:
+                    # Trailing \r at end of chunk: wait for next read to see if \n follows
+                    break
+                part = buffer[:cr_pos]
+                buffer = buffer[cr_pos + 1 :]
                 is_overwrite = True
                 last_was_cr = True
             elif lf_pos != -1:
-                part, buffer = buffer[:lf_pos], buffer[lf_pos + 1 :]
+                # LF (\n): standard Unix newline
+                part = buffer[:lf_pos]
+                buffer = buffer[lf_pos + 1 :]
                 is_overwrite = last_was_cr
                 last_was_cr = False
             else:
                 break
+
             cleaned, percent = process_output(
                 part.decode(default_encoding, errors="replace"), sync_tool
             )
-            if cleaned or not part:
+            if cleaned:
                 callbacks._subprocess_line(cleaned, is_overwrite)
             if percent is not None:
                 callbacks._progress(percent)
+
     if buffer and not callbacks._cancelled():
         cleaned, percent = process_output(
             buffer.decode(default_encoding, errors="replace").rstrip("\r\n"),

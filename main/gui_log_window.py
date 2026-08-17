@@ -97,16 +97,22 @@ class LogWindow(QWidget):
         bottom.setSpacing(15)
 
         # Create additional buttons that will be shown after completion
-        self.go_to_folder_button = self.parent()._button(texts.GO_TO_FOLDER, h=40)
+        create_btn = (
+            getattr(self.parent(), "_button", None)
+            if self.parent() is not None
+            else None
+        ) or (lambda txt, h=40: QPushButton(str(txt)))
+
+        self.go_to_folder_button = create_btn(texts.GO_TO_FOLDER, h=40)
         self.go_to_folder_button.setVisible(False)
         bottom.addWidget(self.go_to_folder_button)
 
-        self.new_conversion_button = self.parent()._button(texts.NEW_CONVERSION, h=40)
+        self.new_conversion_button = create_btn(texts.NEW_CONVERSION, h=40)
         self.new_conversion_button.setVisible(False)
         bottom.addWidget(self.new_conversion_button)
 
         # Create Go back button
-        self.go_back_button = self.parent()._button(texts.GO_BACK, h=40)
+        self.go_back_button = create_btn(texts.GO_BACK, h=40)
         self.go_back_button.setVisible(False)
         bottom.addWidget(self.go_back_button)
 
@@ -118,7 +124,7 @@ class LogWindow(QWidget):
         bottom.addLayout(progress_layout)
 
         # Initially setup with just cancel button
-        self.cancel_button = self.parent()._button(texts.CANCEL, h=40)
+        self.cancel_button = create_btn(texts.CANCEL, h=40)
         self.cancel_button.clicked.connect(self.cancel_clicked.emit)
         bottom.addWidget(self.cancel_button)
 
@@ -282,6 +288,8 @@ class LogWindow(QWidget):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.setCharFormat(fmt)
         if overwrite:
+            if not message:
+                return
             if self._last_line_is_update:
                 cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock)
                 cursor.movePosition(
@@ -622,4 +630,6 @@ class LogWindowHandler(logging.Handler):
         elif record.levelno >= logging.WARNING:
             color = COLORS["ORANGE"]
             bold = False
-        self.log_window.signal_relay.append_message_signal.emit(msg, bool(bold), color)
+        self.log_window.signal_relay.append_message_signal.emit(
+            msg, bool(bold), color, False, "\n"
+        )

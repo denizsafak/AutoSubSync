@@ -411,6 +411,94 @@ class TestLapseIntegration(unittest.TestCase):
                     self.assertEqual(env.get("LAPSE_VAD_MODEL"), fake_silero)
                     self.assertEqual(env.get("LAPSE_ONNXRUNTIME"), fake_lib)
 
+    def test_run_executable_tool_crlf_windows_logs(self):
+        """Verify that Windows CRLF (\\r\\n) lines are not misclassified as in-place overwrites."""
+        crlf_output = (
+            b"Format: mov,mp4 Duration: 30000000\r\n"
+            b"Cache: C:\\Users\\user\\.cache\\lapse\\model.spans\r\n"
+            b"Silero VAD: C:\\lapse\\silero_vad.onnx\r\n"
+            b"Done (ols): offset=-120ms confidence=12.3\r\n"
+        )
+        received_lines = []
+
+        cb = sync_core.SyncCallbacks(
+            on_subprocess_line=lambda line, is_ow: received_lines.append((line, is_ow)),
+        )
+
+        mock_proc = MagicMock()
+        mock_proc.stdout.read.side_effect = [crlf_output, b""]
+        mock_proc.wait.return_value = 0
+
+        with patch("sync_core.create_process", return_value=mock_proc):
+            rc = sync_core.run_executable_tool(["lapse.exe"], cb, sync_tool="lapse")
+            self.assertEqual(rc, 0)
+
+        # All CRLF lines should be forwarded with is_overwrite=False
+        self.assertEqual(len(received_lines), 4)
+        self.assertEqual(received_lines[0], ("Format: mov,mp4 Duration: 30000000", False))
+        self.assertEqual(received_lines[1], ("Cache: C:\\Users\\user\\.cache\\lapse\\model.spans", False))
+        self.assertEqual(received_lines[2], ("Silero VAD: C:\\lapse\\silero_vad.onnx", False))
+        self.assertEqual(received_lines[3], ("Done (ols): offset=-120ms confidence=12.3", False))
+
+    def test_run_executable_tool_progress_carriage_return_with_crlf(self):
+        """Verify that standalone \\r updates overwrite in place, and trailing CRLF is preserved."""
+        stream_data = [
+            b"Format: mov,mp4 Duration: 30000000\r\n",
+            b"Listening to the audio 10%\rListening to the audio 50%\r",
+            b"Listening to the audio 100%\r\n",
+            b"Done (ols): offset=-120ms confidence=12.3\r\n",
+        ]
+        received_lines = []
+
+        cb = sync_core.SyncCallbacks(
+            on_subprocess_line=lambda line, is_ow: received_lines.append((line, is_ow)),
+        )
+
+        mock_proc = MagicMock()
+        mock_proc.stdout.read.side_effect = stream_data + [b""]
+        mock_proc.wait.return_value = 0
+
+        with patch("sync_core.create_process", return_value=mock_proc):
+            rc = sync_core.run_executable_tool(["lapse.exe"], cb, sync_tool="lapse")
+            self.assertEqual(rc, 0)
+
+        # 1. Format (CRLF) -> is_overwrite=False
+        # 2. Listening 10% (\\r) -> is_overwrite=True
+        # 3. Listening 50% (\\r) -> is_overwrite=True
+        # 4. Listening 100% (\\r\\n following \\r) -> is_overwrite=True
+        # 5. Done (CRLF following CRLF) -> is_overwrite=False
+        self.assertEqual(len(received_lines), 5)
+        self.assertEqual(received_lines[0], ("Format: mov,mp4 Duration: 30000000", False))
+        self.assertEqual(received_lines[1], ("Listening to the audio 10%", True))
+        self.assertEqual(received_lines[2], ("Listening to the audio 50%", True))
+        self.assertEqual(received_lines[3], ("Listening to the audio 100%", True))
+        self.assertEqual(received_lines[4], ("Done (ols): offset=-120ms confidence=12.3", False))
+
+    def test_log_window_crlf_and_overwrite_rendering(self):
+        """Verify that LogWindow properly retains all lines when rendered with overwrite messages."""
+        from PyQt6.QtWidgets import QApplication
+        from gui_log_window import LogWindow
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        log_window = LogWindow()
+        log_window.clear()
+
+        # Simulate messages emitted during Windows lapse run
+        log_window.append_message("Format: mov,mp4 Duration: 30000000", overwrite=False)
+        log_window.append_message("Cache: C:\\lapse\\cache.spans", overwrite=False)
+        log_window.append_message("Silero VAD: C:\\lapse\\silero_vad.onnx", overwrite=False)
+        log_window.append_message("Listening to the audio 10%", overwrite=True)
+        log_window.append_message("Listening to the audio 50%", overwrite=True)
+        log_window.append_message("Listening to the audio 100%", overwrite=True)
+        log_window.append_message("Done (ols): offset=-120ms confidence=12.3", overwrite=False)
+
+        content = log_window.log_text.toPlainText()
+        self.assertIn("Format: mov,mp4 Duration: 30000000", content)
+        self.assertIn("Cache: C:\\lapse\\cache.spans", content)
+        self.assertIn("Silero VAD: C:\\lapse\\silero_vad.onnx", content)
+        self.assertIn("Listening to the audio 100%", content)
+        self.assertIn("Done (ols): offset=-120ms confidence=12.3", content)
+
 
 if __name__ == "__main__":
     unittest.main()
