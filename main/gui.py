@@ -739,8 +739,8 @@ class autosubsyncapp(QWidget):
         current_encoding = self.config.get(
             "output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"]
         )
-        if current_encoding == "default":
-            self.encoding_default_action.setChecked(True)
+        if current_encoding == "disabled":
+            self.encoding_disabled_action.setChecked(True)
         elif current_encoding == "same_as_input":
             self.encoding_same_action.setChecked(True)
         elif current_encoding in self.encoding_actions:
@@ -980,7 +980,11 @@ class autosubsyncapp(QWidget):
         row.addWidget(lab)
         combo = QComboBox(self)
         combo.setStyleSheet(style)
-        combo.addItems(items)
+        for item in items:
+            if isinstance(item, (tuple, list)) and len(item) == 2:
+                combo.addItem(str(item[0]), item[1])
+            else:
+                combo.addItem(str(item), item)
         combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         row.addWidget(combo)
         parent_layout.addLayout(row)

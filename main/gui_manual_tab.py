@@ -149,7 +149,7 @@ def setup_manual_sync_tab(self):
 
     # Install event filter on main window to catch global mouse clicks
     self.installEventFilter(self)
-    manual_save_items = list(MANUAL_SAVE_MAP.values())  # Use values as display text
+    manual_save_items = [(v, k) for k, v in MANUAL_SAVE_MAP.items()]
     self.manual_save_combo = self._dropdown(
         opts, texts.SAVE_LOCATION_LABEL, manual_save_items
     )
@@ -163,17 +163,17 @@ def setup_manual_sync_tab(self):
     manual_saved_location = self.config.get(
         "manual_save_location", DEFAULT_OPTIONS["manual_save_location"]
     )
-    # Look up display value from internal value
-    manual_display_value = MANUAL_SAVE_MAP.get(
-        manual_saved_location, manual_save_items[0]
-    )
-
-    idx = self.manual_save_combo.findText(manual_display_value)
+    idx = self.manual_save_combo.findData(manual_saved_location)
+    if idx < 0:
+        manual_display_value = str(
+            MANUAL_SAVE_MAP.get(manual_saved_location, "")
+        )
+        idx = self.manual_save_combo.findText(manual_display_value)
     if idx >= 0:
         self.manual_save_combo.setCurrentIndex(idx)
 
     # Connect change handler with lambda to convert display text to internal value
-    self.manual_save_combo.currentTextChanged.connect(self._on_settings_changed)
+    self.manual_save_combo.currentIndexChanged.connect(self._on_settings_changed)
 
     # Initialize folder label on startup
     if manual_saved_location == "select_destination_folder":
@@ -613,7 +613,7 @@ def _on_settings_changed(self, value=None):
         handle_save_location_dropdown(
             self,
             self.manual_save_combo,
-            {v: k for k, v in MANUAL_SAVE_MAP.items()},
+            {str(v): k for k, v in MANUAL_SAVE_MAP.items()},
             "manual_save_location",
             "manual_save_folder",
             self.manual_selected_folder_label,

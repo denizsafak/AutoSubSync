@@ -29,6 +29,44 @@ APPIMAGETOOL_URL = "https://github.com/AppImage/AppImageKit/releases/download/co
 # Add main directory to Python path to import constants and utils
 sys.path.insert(0, os.path.join(script_dir, "main"))
 
+UV_PATH = shutil.which("uv")
+USE_UV = UV_PATH is not None
+
+
+def get_venv_dir():
+    """Detect existing virtual environment directory or default appropriately."""
+    # 1. Check if running inside active virtualenv
+    env_dir = os.environ.get("VIRTUAL_ENV")
+    if env_dir and os.path.exists(env_dir):
+        return env_dir
+    # 2. Check local directories: .venv or venv
+    if os.path.exists(".venv"):
+        return ".venv"
+    if os.path.exists("venv"):
+        return "venv"
+    # 3. Default for new creations: prefer .venv if using uv, else venv
+    return ".venv" if USE_UV else "venv"
+
+
+def get_venv_python():
+    """Return the path to the Python executable in the local venv."""
+    vdir = get_venv_dir()
+    if IS_WINDOWS:
+        py = os.path.join(vdir, "Scripts", "python.exe")
+        if os.path.exists(py):
+            return py
+        return os.path.join(vdir, "Scripts", "python")
+    return os.path.join(vdir, "bin", "python")
+
+
+def get_venv_pyinstaller():
+    """Return the path to pyinstaller in the local venv."""
+    vdir = get_venv_dir()
+    if IS_WINDOWS:
+        exe = os.path.join(vdir, "Scripts", "pyinstaller.exe")
+        return exe if os.path.exists(exe) else os.path.join(vdir, "Scripts", "pyinstaller")
+    return os.path.join(vdir, "bin", "pyinstaller")
+
 
 def get_arch():
     """Get normalized architecture name for file naming.
@@ -47,61 +85,84 @@ def get_arch():
 
 
 def check_modules():
-    required_modules = ["pip", "venv"]
+    if USE_UV:
+        print(f"Package manager: 'uv' detected at {UV_PATH}")
+        return
+
+    required_modules = ["venv"]
     for module in required_modules:
         try:
             importlib.import_module(module)
         except ImportError:
-            if module == "pip":
-                sys.stderr.write(
-                    "Module 'pip' is not installed. Please install it using your system's package manager.\n"
-                )
-                sys.stderr.write(
-                    "Debian: sudo apt-get install python3-pip python3-venv\n"
-                )
-                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip\n")
-                sys.stderr.write("Fedora: sudo dnf install python3-pip python3-venv\n")
-                sys.stderr.write("macOS: brew install python3\n")
-                sys.exit(1)
-            elif module == "venv":
-                sys.stderr.write(
-                    "Module 'venv' is not installed. Please install it using your system's package manager.\n"
-                )
-                sys.stderr.write(
-                    "Debian: sudo apt-get install python3-pip python3-venv\n"
-                )
-                sys.stderr.write("Arch Linux: sudo pacman -S python python-pip\n")
-                sys.stderr.write("Fedora: sudo dnf install python3-pip python3-venv\n")
-                sys.stderr.write("macOS: brew install python3\n")
-                sys.exit(1)
+            sys.stderr.write(
+                f"Module '{module}' is not installed. Please install it or install 'uv' (https://docs.astral.sh/uv/).\n"
+            )
+            sys.stderr.write("Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh\n")
+            sys.stderr.write("Debian/Ubuntu: sudo apt-get install python3-pip python3-venv\n")
+            sys.stderr.write("Arch Linux: sudo pacman -S python python-pip uv\n")
+            sys.stderr.write("Fedora: sudo dnf install python3-pip python3-venv uv\n")
+            sys.stderr.write("macOS: brew install uv python3\n")
+            sys.exit(1)
+
+    try:
+        importlib.import_module("pip")
+    except ImportError:
+        try:
+            importlib.import_module("ensurepip")
+        except ImportError:
+            sys.stderr.write(
+                "Neither 'pip', 'ensurepip', nor 'uv' was found.\n"
+                "Please install uv (https://docs.astral.sh/uv/) or python3-pip.\n"
+            )
+            sys.exit(1)
+
     print("All required modules are installed.")
 
 
 def create_virtualenv():
-    if not os.path.exists("venv"):
-        print("Creating virtual environment...")
-        completed_process = subprocess.run(
-            [sys.executable, "-m", "venv", "venv"], text=True
-        )
+    vdir = get_venv_dir()
+    vpy = get_venv_python()
+    if not os.path.exists(vpy):
+        print(f"Creating virtual environment at '{vdir}'...")
+        if USE_UV:
+            completed_process = subprocess.run(
+                [UV_PATH, "venv", "--python", sys.executable, vdir], text=True
+            )
+        else:
+            completed_process = subprocess.run(
+                [sys.executable, "-m", "venv", vdir], text=True
+            )
         if completed_process.returncode != 0:
             print("Error creating virtual environment.")
             sys.exit(completed_process.returncode)
         print("Virtual environment created.")
     else:
-        print("Virtual environment already exists. Skipping creation.")
+        print(f"Virtual environment already exists at '{vdir}'. Skipping creation.")
 
 
 def install_requirements():
     print("Installing requirements from pyproject.toml...")
-    if IS_WINDOWS:
-        pip_executable = "venv\\Scripts\\pip"
+    venv_python = get_venv_python()
+    vdir = get_venv_dir()
+    if USE_UV:
+        completed_process = subprocess.run(
+            [UV_PATH, "pip", "install", "--python", venv_python, "-e", ".[dev]", "--upgrade"],
+            text=True,
+        )
     else:
-        pip_executable = "venv/bin/pip"
-    # Install package in editable mode with dev dependencies from pyproject.toml
-    completed_process = subprocess.run(
-        [pip_executable, "install", "-e", ".[dev]", "--upgrade"],
-        text=True,
-    )
+        pip_executable = (
+            os.path.join(vdir, "Scripts", "pip.exe")
+            if IS_WINDOWS
+            else os.path.join(vdir, "bin", "pip")
+        )
+        if os.path.exists(pip_executable):
+            cmd = [pip_executable, "install", "-e", ".[dev]", "--upgrade"]
+        else:
+            cmd = [venv_python, "-m", "pip", "install", "-e", ".[dev]", "--upgrade"]
+        completed_process = subprocess.run(
+            cmd,
+            text=True,
+        )
     if completed_process.returncode != 0:
         print("Error installing requirements.")
         sys.exit(completed_process.returncode)
@@ -109,23 +170,19 @@ def install_requirements():
 
 
 def remove_webrtcvad_hook():
-    if IS_WINDOWS:
-        hook_path = os.path.join(
-            "venv",
-            "Lib",
-            "site-packages",
-            "_pyinstaller_hooks_contrib",
-            "stdhooks",
-            "hook-webrtcvad.py",
-        )
-        if os.path.exists(hook_path):
+    vdir = get_venv_dir()
+    found = False
+    for root, dirs, files in os.walk(vdir):
+        if "hook-webrtcvad.py" in files:
+            hook_path = os.path.join(root, "hook-webrtcvad.py")
             try:
                 os.remove(hook_path)
-                print(f"Removed: {hook_path}")
+                print(f"Removed problematic PyInstaller hook: {hook_path}")
+                found = True
             except Exception as e:
                 print(f"Failed to remove {hook_path}: {e}")
-        else:
-            print(f"File not found, skipping: {hook_path}")
+    if not found:
+        print("hook-webrtcvad.py not found in venv, skipping.")
 
 
 def ensure_ffmpeg():
@@ -134,10 +191,9 @@ def ensure_ffmpeg():
     ffmpeg_dir = "main/resources/ffmpeg-bin"
     if not all(os.path.exists(os.path.join(ffmpeg_dir, app + exe)) for app in apps):
         print("FFmpeg executables not found, running ffmpeg_download.py...")
-        if IS_WINDOWS:
-            python_executable = "venv\\Scripts\\python"
-        else:
-            python_executable = "venv/bin/python"
+        python_executable = get_venv_python()
+        if not os.path.exists(python_executable):
+            python_executable = sys.executable
         if (
             subprocess.run(
                 [python_executable, "main/resources/ffmpeg_download.py"], text=True
@@ -151,12 +207,33 @@ def ensure_ffmpeg():
         print("FFmpeg executables already exist. Skipping download.")
 
 
+def ensure_lapse():
+    exe = ".exe" if IS_WINDOWS else ""
+    lapse_dir = "main/resources/lapse"
+    lapse_file = os.path.join(lapse_dir, "lapse" + exe)
+    if not os.path.exists(lapse_file):
+        print("Lapse executable not found, running lapse_download.py...")
+        python_executable = get_venv_python()
+        if not os.path.exists(python_executable):
+            python_executable = sys.executable
+        if (
+            subprocess.run(
+                [python_executable, "main/resources/lapse_download.py"], text=True
+            ).returncode
+            != 0
+        ):
+            print("Error downloading Lapse.")
+            sys.exit(1)
+        print("Lapse downloaded.")
+    else:
+        print("Lapse executable already exists. Skipping download.")
+
+
 def get_version_info(module_name):
     """Return a version information of package using the venv Python."""
-    if IS_WINDOWS:
-        python_executable = os.path.join("venv", "Scripts", "python.exe")
-    else:
-        python_executable = os.path.join("venv", "bin", "python")
+    python_executable = get_venv_python()
+    if not os.path.exists(python_executable):
+        python_executable = sys.executable
     try:
         result = subprocess.run(
             [
@@ -295,28 +372,34 @@ def fix_macos_dylib_versions():
 
     print("Checking for problematic macOS dylibs...")
 
-    # Find dylibs in the virtual environment that may lack version info
-    venv_site_packages = os.path.join(script_dir, "venv", "lib")
+    # Find dylibs in the virtual environment and resources that may lack version info
+    search_dirs = [
+        os.path.join(script_dir, get_venv_dir(), "lib"),
+        os.path.join(script_dir, "main", "resources"),
+    ]
 
     # Find all dylib files
     problematic_dylibs = []
-    for root, dirs, files in os.walk(venv_site_packages):
-        for file in files:
-            if file.endswith(".dylib"):
-                dylib_path = os.path.join(root, file)
-                # Check if the dylib has version info
-                try:
-                    result = subprocess.run(
-                        ["otool", "-l", dylib_path], capture_output=True, text=True
-                    )
-                    # Check for LC_BUILD_VERSION or LC_VERSION_MIN_MACOSX
-                    if (
-                        "LC_BUILD_VERSION" not in result.stdout
-                        and "LC_VERSION_MIN_MACOSX" not in result.stdout
-                    ):
-                        problematic_dylibs.append(dylib_path)
-                except Exception as e:
-                    print(f"  Warning: Error checking {dylib_path}: {e}")
+    for sdir in search_dirs:
+        if not os.path.exists(sdir):
+            continue
+        for root, dirs, files in os.walk(sdir):
+            for file in files:
+                if file.endswith(".dylib"):
+                    dylib_path = os.path.join(root, file)
+                    # Check if the dylib has version info
+                    try:
+                        result = subprocess.run(
+                            ["otool", "-l", dylib_path], capture_output=True, text=True
+                        )
+                        # Check for LC_BUILD_VERSION or LC_VERSION_MIN_MACOSX
+                        if (
+                            "LC_BUILD_VERSION" not in result.stdout
+                            and "LC_VERSION_MIN_MACOSX" not in result.stdout
+                        ):
+                            problematic_dylibs.append(dylib_path)
+                    except Exception as e:
+                        print(f"  Warning: Error checking {dylib_path}: {e}")
 
     if not problematic_dylibs:
         print("No problematic dylibs found.")
@@ -362,12 +445,14 @@ def fix_macos_dylib_versions():
 
 def build_with_pyinstaller():
     print("Building with PyInstaller...")
-    if IS_WINDOWS:
-        pyinstaller_executable = "venv\\Scripts\\pyinstaller"
+    pyinstaller_executable = get_venv_pyinstaller()
+    if os.path.exists(pyinstaller_executable):
+        cmd = [pyinstaller_executable, "--clean", "-y", "--dist", "./dist", "build.spec"]
     else:
-        pyinstaller_executable = "venv/bin/pyinstaller"
+        python_executable = get_venv_python()
+        cmd = [python_executable, "-m", "PyInstaller", "--clean", "-y", "--dist", "./dist", "build.spec"]
     completed_process = subprocess.run(
-        [pyinstaller_executable, "--clean", "-y", "--dist", "./dist", "build.spec"],
+        cmd,
         text=True,
     )
     if completed_process.returncode != 0:
@@ -724,6 +809,7 @@ if __name__ == "__main__":
     install_requirements()
     remove_webrtcvad_hook()
     ensure_ffmpeg()
+    ensure_lapse()
     check_versions()
     fix_macos_dylib_versions()
     build_with_pyinstaller()

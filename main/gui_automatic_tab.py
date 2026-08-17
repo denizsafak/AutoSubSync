@@ -156,18 +156,24 @@ def setup_auto_sync_tab(self):
 
     self.sync_options_group.resizeEvent = _move_buttons
 
+    sync_tool_items = [(k, k) for k in SYNC_TOOLS.keys()]
     self.sync_tool_combo = self._dropdown(
-        controls, texts.SYNC_TOOL_LABEL, list(SYNC_TOOLS.keys())
+        controls, texts.SYNC_TOOL_LABEL, sync_tool_items
     )
-    idx = self.sync_tool_combo.findText(
-        self.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
-    )
+    saved_tool = self.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
+    idx = self.sync_tool_combo.findData(saved_tool)
+    if idx < 0:
+        idx = self.sync_tool_combo.findText(saved_tool)
     if idx >= 0:
         self.sync_tool_combo.setCurrentIndex(idx)
-    self.sync_tool_combo.currentTextChanged.connect(
-        lambda text: update_config(self, "sync_tool", text)
+    self.sync_tool_combo.currentIndexChanged.connect(
+        lambda i: update_config(
+            self,
+            "sync_tool",
+            self.sync_tool_combo.currentData() or self.sync_tool_combo.currentText(),
+        )
     )
-    save_items = list(AUTOMATIC_SAVE_MAP.values())  # Use values as display text
+    save_items = [(v, k) for k, v in AUTOMATIC_SAVE_MAP.items()]
     self.save_combo = self._dropdown(controls, texts.SAVE_LOCATION_LABEL, save_items)
     # Add label to display selected folder
     self.selected_folder_label = QLabel("", self)
@@ -179,19 +185,19 @@ def setup_auto_sync_tab(self):
     saved_location = self.config.get(
         "automatic_save_location", DEFAULT_OPTIONS["automatic_save_location"]
     )
-    # Look up display value from internal value
-    display_value = AUTOMATIC_SAVE_MAP.get(saved_location, save_items[0])
-
-    idx = self.save_combo.findText(display_value)
+    idx = self.save_combo.findData(saved_location)
+    if idx < 0:
+        display_value = str(AUTOMATIC_SAVE_MAP.get(saved_location, ""))
+        idx = self.save_combo.findText(display_value)
     if idx >= 0:
         self.save_combo.setCurrentIndex(idx)
 
     # Connect change handler with lambda to convert display text to internal value
-    self.save_combo.currentTextChanged.connect(
-        lambda text: handle_save_location_dropdown(
+    self.save_combo.currentIndexChanged.connect(
+        lambda i: handle_save_location_dropdown(
             self,
             self.save_combo,
-            {v: k for k, v in AUTOMATIC_SAVE_MAP.items()},  # Invert mapping for lookup
+            {str(v): k for k, v in AUTOMATIC_SAVE_MAP.items()},
             "automatic_save_location",
             "automatic_save_folder",
             self.selected_folder_label,
@@ -408,9 +414,9 @@ def update_sync_tool_options(self, tool):
         elif option_type == "dropdown":
             values = option_data.get("values", [])
             labels = option_data.get("value_labels", {})
-
+            dropdown_items = [(labels.get(v, v), v) for v in values]
             dropdown = self._dropdown(
-                self.sync_options_layout, label, [labels.get(v, v) for v in values]
+                self.sync_options_layout, label, dropdown_items
             )
             argument = option_data.get("argument", "")
             tooltip_text = (
@@ -421,14 +427,17 @@ def update_sync_tool_options(self, tool):
             dropdown.setToolTip(tooltip_text)
 
             saved = self.config.get(config_key, default)
-            if (idx := dropdown.findText(labels.get(saved, saved))) >= 0:
+            idx = dropdown.findData(saved)
+            if idx < 0:
+                idx = dropdown.findText(str(labels.get(saved, saved)))
+            if idx >= 0:
                 dropdown.setCurrentIndex(idx)
 
-            dropdown.currentTextChanged.connect(
-                lambda text: update_config(
+            dropdown.currentIndexChanged.connect(
+                lambda i, key=config_key, cb=dropdown: update_config(
                     self,
-                    config_key,
-                    next((v for v in values if labels.get(v, v) == text), text),
+                    key,
+                    cb.currentData() if cb.currentData() is not None else cb.currentText(),
                 )
             )
             self.tool_option_widgets[option_name] = dropdown
@@ -473,6 +482,36 @@ def update_sync_tool_options(self, tool):
             )
             self.sync_options_layout.addItem(spacer)
             self.tool_option_widgets[option_name] = spacer
+
+    # Special handling for lapse mode and split_penalty enabling/disabling
+    if tool == "lapse":
+        split_slider = self.tool_option_widgets.get("split_penalty")
+        mode_dropdown = self.tool_option_widgets.get("mode")
+        if split_slider and mode_dropdown:
+            mode_data = tool_options.get("mode", {})
+            mode_values = mode_data.get("values", [])
+            mode_labels = mode_data.get("value_labels", {})
+
+            def set_lapse_split_penalty_enabled(mode_val):
+                enabled = mode_val not in ("nosplit", "ols")
+                split_slider.setEnabled(enabled)
+                if hasattr(split_slider, "title_label") and split_slider.title_label:
+                    split_slider.title_label.setEnabled(enabled)
+                if hasattr(split_slider, "value_label") and split_slider.value_label:
+                    split_slider.value_label.setEnabled(enabled)
+
+            def on_lapse_mode_changed(text):
+                mode_val = next(
+                    (v for v in mode_values if str(mode_labels.get(v, v)) == text),
+                    text,
+                )
+                set_lapse_split_penalty_enabled(mode_val)
+
+            mode_dropdown.currentTextChanged.connect(on_lapse_mode_changed)
+
+            # Set initial state
+            current_mode = self.config.get("lapse_mode", DEFAULT_OPTIONS.get("lapse_mode", "auto"))
+            set_lapse_split_penalty_enabled(current_mode)
 
     # Ensure the + button stays on top
     if hasattr(self, "btn_add_args"):
@@ -519,6 +558,8 @@ def _create_slider(self, parent_layout, title, minv, maxv, default, tick=5):
     slider.valueChanged.connect(lambda v: val_lab.setText(str(v)))
     lay.addWidget(slider)
     parent_layout.addLayout(lay)
+    slider.title_label = lab
+    slider.value_label = val_lab
     return slider, val_lab
 
 

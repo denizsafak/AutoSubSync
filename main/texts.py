@@ -31,13 +31,16 @@ class TranslationDict(str):
         return self._translations.get(language, self._translations.get("en_US", ""))
 
     def __repr__(self):
-        try:
-            from utils import get_locale
+        return repr(str(self))
 
-            language = get_locale()
-        except Exception:
-            language = "en_US"
-        return self._translations.get(language, self._translations.get("en_US", ""))
+    def __eq__(self, other):
+        return str(self) == (str(other) if other is not None else None)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __hash__(self):
+        return hash(str(self))
 
     def format(self, *args, **kwargs):
         try:
@@ -8159,6 +8162,111 @@ FFMPEG_DOWNLOAD_FAILED = {
     "th_TH": "ดาวน์โหลด FFmpeg ล้มเหลว: {error}\nบางฟีเจอร์อาจไม่ทำงานอย่างถูกต้อง",
     "ur_PK": "FFmpeg ڈاؤن لوڈ ناکام: {error}\nکچھ خصوصیات ٹھیک سے کام نہیں کر سکتیں۔",
 }
+
+DOWNLOADING_DEPENDENCIES = {
+    "en_US": "Downloading required files...",
+    "es_ES": "Descargando archivos necesarios...",
+    "tr_TR": "Gerekli dosyalar indiriliyor...",
+    "zh_CN": "正在下载必要文件...",
+    "zh_TW": "正在下載必要檔案...",
+    "ru_RU": "Загрузка необходимых файлов...",
+    "pl_PL": "Pobieranie wymaganych plików...",
+    "uk_UA": "Завантаження необхідних файлів...",
+    "ja_JP": "必要なファイルをダウンロード中...",
+    "ko_KR": "필요한 파일 다운로드 중...",
+    "hi_IN": "आवश्यक फ़ाइलें डाउनलोड हो रही हैं...",
+    "bn_BD": "প্রয়োজনীয় ফাইল ডাউনলোড হচ্ছে...",
+    "it_IT": "Download dei file necessari...",
+    "fr_FR": "Téléchargement des fichiers requis...",
+    "de_DE": "Erforderliche Dateien werden heruntergeladen...",
+    "pt_PT": "Baixando arquivos necessários...",
+    "ar_SA": "جاري تنزيل الملفات المطلوبة...",
+    "vi_VN": "Đang tải các tệp cần thiết...",
+    "fa_IR": "در حال دانلود فایل‌های مورد نیاز...",
+    "id_ID": "Mengunduh file yang diperlukan...",
+    "ms_MY": "Memuat turun fail yang diperlukan...",
+    "th_TH": "กำลังดาวน์โหลดไฟล์ที่จำเป็น...",
+    "ur_PK": "ضروری فائلیں ڈاؤن لوڈ ہو رہی ہیں...",
+}
+
+DOWNLOADING_LAPSE = {
+    "en_US": "Downloading lapse...",
+    "es_ES": "Descargando lapse...",
+    "tr_TR": "lapse indiriliyor...",
+    "zh_CN": "正在下载 lapse...",
+    "zh_TW": "正在下載 lapse...",
+    "ru_RU": "Загрузка lapse...",
+    "pl_PL": "Pobieranie lapse...",
+    "uk_UA": "Завантаження lapse...",
+    "ja_JP": "lapseをダウンロード中...",
+    "ko_KR": "lapse 다운로드 중...",
+    "hi_IN": "lapse डाउनलोड हो रहा है...",
+    "bn_BD": "lapse ডাউনলোড হচ্ছে...",
+    "it_IT": "Download di lapse...",
+    "fr_FR": "Téléchargement de lapse...",
+    "de_DE": "lapse wird heruntergeladen...",
+    "pt_PT": "Baixando lapse...",
+    "ar_SA": "جاري تنزيل lapse...",
+    "vi_VN": "Đang tải lapse...",
+    "fa_IR": "در حال دانلود lapse...",
+    "id_ID": "Mengunduh lapse...",
+    "ms_MY": "Memuat turun lapse...",
+    "th_TH": "กำลังดาวน์โหลด lapse...",
+    "ur_PK": "lapse ڈاؤن لوڈ ہو رہا ہے...",
+}
+
+DOWNLOADING_LAPSE_FIRST_RUN = {
+    "en_US": "lapse is a new sync tool.\nDownloading lapse binaries (first run only)...",
+    "es_ES": "lapse es una nueva herramienta de sincronización.\nDescargando archivos de lapse (solo la primera ejecución)...",
+    "tr_TR": "lapse yeni bir senkronizasyon aracıdır.\nlapse dosyaları indiriliyor (yalnızca ilk çalıştırmada)...",
+    "zh_CN": "lapse 是一个新的同步工具。\n正在下载 lapse 二进制文件（仅首次运行）...",
+    "zh_TW": "lapse 是一個新的同步工具。\n正在下載 lapse 二進位檔案（僅首次執行）...",
+    "ru_RU": "lapse — новый инструмент синхронизации.\nЗагрузка файлов lapse (только при первом запуске)...",
+    "pl_PL": "lapse to nowe narzędzie do synchronizacji.\nPobieranie plików lapse (tylko przy pierwszym uruchomieniu)...",
+    "uk_UA": "lapse — новий інструмент синхронізації.\nЗавантаження файлів lapse (лише при першому запуску)...",
+    "ja_JP": "lapseは新しい同期ツールです。\nlapseバイナリをダウンロード中（初回起動時のみ）...",
+    "ko_KR": "lapse는 새로운 동기화 도구입니다.\nlapse 바이너리 다운로드 중 (첫 실행 시에만)...",
+    "hi_IN": "lapse एक नया सिंक टूल है।\nlapse बाइनरी डाउनलोड हो रही है (केवल पहली बार)...",
+    "bn_BD": "lapse একটি নতুন সিঙ্ক টুল।\nlapse বাইনারি ডাউনলোড হচ্ছে (শুধুমাত্র প্রথম চালু)...",
+    "it_IT": "lapse è un nuovo strumento di sincronizzazione.\nDownload dei file lapse (solo alla prima esecuzione)...",
+    "fr_FR": "lapse est un nouvel outil de synchronisation.\nTéléchargement des fichiers lapse (première exécution uniquement)...",
+    "de_DE": "lapse ist ein neues Synchronisierungswerkzeug.\nlapse-Dateien werden heruntergeladen (nur beim ersten Start)...",
+    "pt_PT": "lapse é uma nova ferramenta de sincronização.\nBaixando arquivos do lapse (apenas na primeira execução)...",
+    "ar_SA": "lapse أداة مزامنة جديدة.\nجاري تنزيل ملفات lapse (التشغيل الأول فقط)...",
+    "vi_VN": "lapse là một công cụ đồng bộ mới.\nĐang tải các tệp lapse (chỉ chạy lần đầu)...",
+    "fa_IR": "lapse ابزار همگام‌سازی جدیدی است.\nدر حال دانلود فایل‌های lapse (فقط اجرای اول)...",
+    "id_ID": "lapse adalah alat sinkronisasi baru.\nMengunduh file lapse (hanya saat pertama kali)...",
+    "ms_MY": "lapse ialah alat penyelarasan baharu.\nMemuat turun fail lapse (hanya kali pertama)...",
+    "th_TH": "lapse เป็นเครื่องมือซิงค์ใหม่\nกำลังดาวน์โหลดไฟล์ lapse (เฉพาะครั้งแรก)...",
+    "ur_PK": "lapse ایک نیا سنک ٹول ہے۔\nlapse فائلیں ڈاؤن لوڈ ہو رہی ہیں (صرف پہلی بار)...",
+}
+
+LAPSE_DOWNLOAD_FAILED = {
+    "en_US": "lapse download failed: {error}\nAudio-based synchronization may not work.",
+    "es_ES": "Error al descargar lapse: {error}\nLa sincronización basada en audio puede no funcionar.",
+    "tr_TR": "lapse indirme başarısız: {error}\nSes tabanlı senkronizasyon çalışmayabilir.",
+    "zh_CN": "lapse 下载失败：{error}\n音频同步可能无法正常工作。",
+    "zh_TW": "lapse 下載失敗：{error}\n音訊同步可能無法正常運作。",
+    "ru_RU": "Ошибка загрузки lapse: {error}\nСинхронизация по аудио может не работать.",
+    "pl_PL": "Pobieranie lapse nie powiodło się: {error}\nSynchronizacja audio może nie działać.",
+    "uk_UA": "Помилка завантаження lapse: {error}\nСинхронізація за аудіо може не працювати.",
+    "ja_JP": "lapseのダウンロードに失敗しました：{error}\n音声ベースの同期が機能しない場合があります。",
+    "ko_KR": "lapse 다운로드 실패: {error}\n오디오 기반 동기화가 작동하지 않을 수 있습니다.",
+    "hi_IN": "lapse डाउनलोड विफल: {error}\nऑडियो-आधारित सिंक्रोनाइज़ेशन काम नहीं कर सकता।",
+    "bn_BD": "lapse ডাউনলোড ব্যর্থ: {error}\nঅডিও-ভিত্তিক সিঙ্ক্রোনাইজেশন কাজ নাও করতে পারে।",
+    "it_IT": "Download di lapse fallito: {error}\nLa sincronizzazione audio potrebbe non funzionare.",
+    "fr_FR": "Échec du téléchargement de lapse : {error}\nLa synchronisation audio peut ne pas fonctionner.",
+    "de_DE": "lapse-Download fehlgeschlagen: {error}\nDie audiobasierte Synchronisation funktioniert möglicherweise nicht.",
+    "pt_PT": "Falha no download do lapse: {error}\nA sincronização baseada em áudio pode não funcionar.",
+    "ar_SA": "فشل تنزيل lapse: {error}\nقد لا تعمل المزامنة المستندة إلى الصوت.",
+    "vi_VN": "Tải lapse thất bại: {error}\nĐồng bộ dựa trên âm thanh có thể không hoạt động.",
+    "fa_IR": "دانلود lapse ناموفق بود: {error}\nهمگام‌سازی مبتنی بر صدا ممکن است کار نکند.",
+    "id_ID": "Unduhan lapse gagal: {error}\nSinkronisasi berbasis audio mungkin tidak berfungsi.",
+    "ms_MY": "Muat turun lapse gagal: {error}\nPenyelarasan berasaskan audio mungkin tidak berfungsi.",
+    "th_TH": "ดาวน์โหลด lapse ล้มเหลว: {error}\nการซิงค์ตามเสียงอาจไม่ทำงาน",
+    "ur_PK": "lapse ڈاؤن لوڈ ناکام: {error}\nآڈیو پر مبنی سنکنگ کام نہیں کر سکتی۔",
+}
+
 
 COULD_NOT_ACCESS_OR_WRITE_SUBTITLE = {
     "en_US": "Could not access or write the subtitle file. It may be open in another application:\n{path}\n\n{error}",

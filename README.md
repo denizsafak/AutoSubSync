@@ -9,7 +9,7 @@
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/denizsafak/AutoSubSync/total?color=blue&label=downloads%20(github))](https://github.com/denizsafak/AutoSubSync/releases/latest)
 
 
-AutoSubSync is a user-friendly tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync) and [alass](https://github.com/kaegi/alass). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
+AutoSubSync is a user-friendly tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass) and [lapse](https://github.com/Schwponaco-org/lapse). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
 
 <img title="AutoSubSync Automatic Tab" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync4.png'>
 
@@ -75,20 +75,6 @@ uv tool install assy
 
 </details>
 
-#### For Silero VAD support in ffsubsync, install with torch (Python < 3.14):
-
-```bash
-pip install assy[torch]
-```
-<details>
-<summary><strong>With uv (click to expand)</strong></summary>
-
-```bash
-uv tool install assy[torch]
-```
-
-</details>
-
 #### Then run:
 ```bash
 assy
@@ -139,7 +125,7 @@ To access the GUI, open your web browser and go to: [http://localhost:6080](http
 
 1. Drag a video file into the `Video/Reference Subtitle` field
 2. Drag a subtitle file into the `Subtitle` field
-3. Select a sync tool (ffsubsync, autosubsync, or alass)
+3. Select a sync tool (ffsubsync, autosubsync, alass, or lapse)
 4. Click `Start`
 
 ### Batch Mode
@@ -233,6 +219,7 @@ Synchronize subtitles with video files using one of three available synchronizat
 - **[ffsubsync](https://github.com/smacke/ffsubsync)** – Analyzes the audio track of the video and aligns subtitles to match the speech. Works well for most content.
 - **[autosubsync](https://github.com/oseiskar/autosubsync)** – Uses machine learning to detect speech patterns and synchronize subtitles accordingly.
 - **[alass](https://github.com/kaegi/alass)** – Can align subtitles using either audio analysis or a reference subtitle file. Generally faster than other tools, and most of the time produces accurate results.
+- **[lapse](https://github.com/Schwponaco-org/lapse)** – Language-Agnostic Playback Synchronization Engine. A fast C++ engine built on FFmpeg, libfvad/Silero VAD, and FFTW3. Supports video and subtitle references, linear drift correction, and split mode for cuts.
 
 Instead of using a video file as the source, you can also use a correctly-timed reference subtitle file. This is useful when you have subtitles in one language that are already synchronized and want to sync subtitles in another language to match.
 
@@ -435,7 +422,7 @@ python build_pypi.py      # Builds PyPI package to dist/pypi folder
 Requires Python 3.10 or higher. Feel free to explore the code and make any changes you like.
 
 ## `Credits`
-Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass), [ffmpeg](https://www.ffmpeg.org/) and others. Automatic subtitle synchronization is possible because of these tools. This is just a GUI application that makes the process a bit easier.
+Thanks to creators of [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass), [lapse](https://github.com/Schwponaco-org/lapse), [ffmpeg](https://www.ffmpeg.org/) and others. Automatic subtitle synchronization is possible because of these tools. This is just a GUI application that makes the process a bit easier.
 
 > [!IMPORTANT]
 > The automatic sync feature is not always perfect. I recommend you to check the subtitles after syncing.

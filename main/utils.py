@@ -46,6 +46,73 @@ def create_process(cmd):
     with _process_lock:
         logger.info(f"Executing: {' '.join(cmd) if isinstance(cmd, list) else cmd}")
         env = {**os.environ, "TERM": "dumb", "COLUMNS": "70"}
+
+        # If executing lapse, ensure LAPSE_ONNXRUNTIME and LAPSE_VAD_MODEL are provided
+        if cmd and ("lapse" in os.path.basename(cmd[0]).lower()):
+            exe_dir = os.path.dirname(cmd[0])
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+            # Resolve silero_vad.onnx model path
+            if "LAPSE_VAD_MODEL" not in env:
+                candidates = [
+                    os.path.join(exe_dir, "silero_vad.onnx"),
+                    os.path.join(base_dir, "resources", "lapse", "silero_vad.onnx"),
+                ]
+                if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+                    candidates.append(
+                        os.path.join(sys._MEIPASS, "resources", "lapse", "silero_vad.onnx")
+                    )
+                for candidate in candidates:
+                    if os.path.isfile(candidate):
+                        env["LAPSE_VAD_MODEL"] = candidate
+                        break
+
+            # Resolve onnxruntime shared library
+            if "LAPSE_ONNXRUNTIME" not in env:
+                lib_names = (
+                    ("onnxruntime.dll",)
+                    if platform.system() == "Windows"
+                    else (
+                        "libonnxruntime.dylib",
+                        "libonnxruntime.1.dylib",
+                    )
+                    if platform.system() == "Darwin"
+                    else ("libonnxruntime.so", "libonnxruntime.so.1")
+                )
+                search_dirs = [exe_dir, os.path.join(base_dir, "resources", "lapse")]
+                if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+                    search_dirs.append(
+                        os.path.join(sys._MEIPASS, "resources", "lapse")
+                    )
+                found_lib = None
+                for sdir in search_dirs:
+                    if os.path.isdir(sdir):
+                        for lib_name in lib_names:
+                            candidate = os.path.join(sdir, lib_name)
+                            if os.path.isfile(candidate):
+                                found_lib = candidate
+                                break
+                    if found_lib:
+                        break
+
+                if not found_lib:
+                    try:
+                        import onnxruntime
+
+                        capi_dir = os.path.join(
+                            os.path.dirname(onnxruntime.__file__), "capi"
+                        )
+                        if os.path.isdir(capi_dir):
+                            for f in os.listdir(capi_dir):
+                                if "libonnxruntime" in f or "onnxruntime.dll" in f:
+                                    found_lib = os.path.join(capi_dir, f)
+                                    break
+                    except Exception:
+                        pass
+
+                if found_lib:
+                    env["LAPSE_ONNXRUNTIME"] = found_lib
+
         kwargs = {
             "shell": False,
             "stdout": subprocess.PIPE,
@@ -55,22 +122,23 @@ def create_process(cmd):
             "env": env,
         }
 
-        if platform.system() == "Windows":
+        if platform.system() == "Windows" and hasattr(subprocess, "STARTUPINFO"):
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = subprocess.SW_HIDE
             kwargs.update(
                 {
                     "startupinfo": startupinfo,
-                    "creationflags": subprocess.CREATE_NO_WINDOW
-                    | subprocess.CREATE_NEW_PROCESS_GROUP,
+                    "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                    | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
                 }
             )
-        else:
-            # On Unix-like systems, create a new process group
-            kwargs["preexec_fn"] = os.setsid
+        elif platform.system() != "Windows":
+            # On Unix-like systems, create a new session/process group via posix_spawn
+            kwargs["start_new_session"] = True
 
         return subprocess.Popen(cmd, **kwargs)
+
 
 
 def terminate_process_safely(process):
@@ -1292,10 +1360,20 @@ def handle_save_location_dropdown(
     """
     Generic handler for save location dropdowns with folder selection and label update.
     """
-    text = dropdown.currentText()
+    internal_val = dropdown.currentData()
+    if not internal_val:
+        text = dropdown.currentText()
+        internal_val = save_map.get(text)
+        if not internal_val:
+            for k, v in save_map.items():
+                if str(k) == text or k == text:
+                    internal_val = v
+                    break
+        if not internal_val:
+            internal_val = default_value
 
     # Handle folder selection case
-    if save_map.get(text) == "select_destination_folder" and not skip_dialog:
+    if internal_val == "select_destination_folder" and not skip_dialog:
         folder = open_filedialog(obj, "directory", texts.SELECT_DESTINATION_FOLDER)
         if folder:
             update_config(obj, folder_key, folder)
@@ -1303,143 +1381,193 @@ def handle_save_location_dropdown(
         else:
             # Revert to previous selection if cancelled
             prev = obj.config.get(config_key, default_value)
-            display = next(
-                (k for k, v in save_map.items() if v == prev), list(save_map.keys())[0]
-            )
-            idx = dropdown.findText(display)
+            idx = dropdown.findData(prev)
+            if idx < 0:
+                display = next(
+                    (str(k) for k, v in save_map.items() if v == prev),
+                    str(list(save_map.keys())[0]),
+                )
+                idx = dropdown.findText(display)
             if idx >= 0:
                 dropdown.setCurrentIndex(idx)
             update_folder_label(label)
             return
 
     # Update config for any selection
-    update_config(obj, config_key, save_map.get(text, default_value))
+    update_config(obj, config_key, internal_val)
 
     # Update label based on current selection
-    if save_map.get(text) == "select_destination_folder":
+    if internal_val == "select_destination_folder":
         folder = obj.config.get(folder_key, "")
         update_folder_label(label, folder)
     else:
         update_folder_label(label)
 
 
-# FFmpeg initialization for pip installs
-class FFmpegDownloadSignals(QObject):
-    """Signals for FFmpeg download progress."""
+# Dependency initialization for pip installs
+class DownloadSignals(QObject):
+    """Signals for dependency download progress."""
 
-    finished = pyqtSignal(bool, str)  # success, error_message
+    finished = pyqtSignal(bool, str)  # success, JSON-encoded list of [component, error] pairs
+    status = pyqtSignal(str)          # current status label text
+
+
+FFmpegDownloadSignals = DownloadSignals  # backward compatibility alias
+
+
+def _needs_lapse_download():
+    """Return True if lapse binary or silero_vad.onnx need to be downloaded (pip installs only)."""
+    if getattr(sys, "frozen", False):
+        return False  # PyInstaller build: lapse is bundled
+    try:
+        from resources import lapse_download
+
+        lapse_bin = "lapse.exe" if platform.system() == "Windows" else "lapse"
+        lapse_path = os.path.join(lapse_download.DIST_BIN_PATH, lapse_bin)
+        silero_path = os.path.join(lapse_download.DIST_BIN_PATH, "silero_vad.onnx")
+        return not (os.path.isfile(lapse_path) and os.path.isfile(silero_path))
+    except Exception as e:
+        logger.debug(f"Could not check lapse download status: {e}")
+        return False
 
 
 def initialize_static_ffmpeg(parent=None, callback=None):
     """
-    Initialize static_ffmpeg if needed (for pip installs).
-    Shows a loading dialog while downloading.
+    Initialize static_ffmpeg and lapse if needed (for pip installs).
+    Shows a single loading dialog while downloading any missing components.
+
+    Components are downloaded sequentially; the status label updates in real time.
+    On per-component failure a QMessageBox warning is shown, but the other
+    component's result is still reported correctly.
 
     Args:
         parent: Parent widget for the dialog
-        callback: Optional callback function to call when done (receives success bool)
+        callback: Optional callback called when done (receives overall success bool)
 
     Returns:
-        bool: True if successful or not needed, False if failed
+        bool: True if successful or not needed, False if a critical component failed
     """
     from PyQt6.QtWidgets import QMessageBox
     from constants import NEEDS_STATIC_FFMPEG, FFMPEG_EXECUTABLE
 
-    if not NEEDS_STATIC_FFMPEG:
-        logger.info(f"Using bundled FFmpeg: {FFMPEG_EXECUTABLE}")
+    # --- Determine what needs downloading ---
+    needs_ffmpeg = NEEDS_STATIC_FFMPEG
+    needs_lapse = _needs_lapse_download()
+
+    # Fast path: check if static_ffmpeg executables are already cached on disk
+    if needs_ffmpeg:
+        try:
+            import static_ffmpeg
+            from static_ffmpeg import run
+
+            platform_dir = run.get_platform_dir()
+            if platform.system() == "Windows":
+                ffmpeg_path = os.path.join(platform_dir, "ffmpeg.exe")
+                ffprobe_path = os.path.join(platform_dir, "ffprobe.exe")
+            else:
+                ffmpeg_path = os.path.join(platform_dir, "ffmpeg")
+                ffprobe_path = os.path.join(platform_dir, "ffprobe")
+
+            if os.path.isfile(ffmpeg_path) and os.path.isfile(ffprobe_path):
+                static_ffmpeg.add_paths()
+                logger.info(f"Using static_ffmpeg (module): {ffmpeg_path}")
+                needs_ffmpeg = False
+        except ImportError as e:
+            logger.error(f"static_ffmpeg not installed: {e}")
+            if callback:
+                callback(False)
+            return False
+        except Exception as e:
+            logger.debug(f"Error checking for static_ffmpeg: {e}")
+
+    # Nothing to download — everything is already present
+    if not needs_ffmpeg and not needs_lapse:
+        if not NEEDS_STATIC_FFMPEG:
+            logger.info(f"Using bundled FFmpeg: {FFMPEG_EXECUTABLE}")
         if callback:
             callback(True)
         return True
 
-    # Check if static_ffmpeg executables are already cached
-    try:
-        import static_ffmpeg
-        from static_ffmpeg import run
-
-        # Check if executables already exist (without downloading)
-        platform_dir = run.get_platform_dir()
-        if platform.system() == "Windows":
-            ffmpeg_path = os.path.join(platform_dir, "ffmpeg.exe")
-            ffprobe_path = os.path.join(platform_dir, "ffprobe.exe")
-        else:
-            ffmpeg_path = os.path.join(platform_dir, "ffmpeg")
-            ffprobe_path = os.path.join(platform_dir, "ffprobe")
-
-        # Verify the files actually exist on disk
-        if os.path.isfile(ffmpeg_path) and os.path.isfile(ffprobe_path):
-            # Executables are already present - just add to PATH
-            static_ffmpeg.add_paths()
-            logger.info(f"Using static_ffmpeg (module): {ffmpeg_path}")
-            if callback:
-                callback(True)
-            return True
-        # Otherwise fall through to download
-    except ImportError as e:
-        logger.error(f"static_ffmpeg not installed: {e}")
-        if callback:
-            callback(False)
-        return False
-    except Exception as e:
-        # Other error, try downloading anyway
-        logger.debug(f"Error checking for module ffmpeg: {e}")
-
-    # Need to download - show dialog
+    # --- Show combined download dialog ---
     from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
     from PyQt6.QtCore import Qt, QThread
 
     class DownloadThread(QThread):
-        """Thread to download ffmpeg without blocking UI."""
+        """Background thread that downloads missing dependencies sequentially."""
 
-        def __init__(self, signals):
+        def __init__(self, signals, do_ffmpeg, do_lapse):
             super().__init__()
             self.signals = signals
+            self.do_ffmpeg = do_ffmpeg
+            self.do_lapse = do_lapse
 
         def run(self):
-            try:
-                import static_ffmpeg
-                from static_ffmpeg import run
+            errors = []  # list of [component, error_msg]
 
-                # Get the platform directory and expected paths
-                platform_dir = run.get_platform_dir()
-                if platform.system() == "Windows":
-                    ffmpeg_path = os.path.join(platform_dir, "ffmpeg.exe")
-                    ffprobe_path = os.path.join(platform_dir, "ffprobe.exe")
-                else:
-                    ffmpeg_path = os.path.join(platform_dir, "ffmpeg")
-                    ffprobe_path = os.path.join(platform_dir, "ffprobe")
+            # --- FFmpeg ---
+            if self.do_ffmpeg:
+                self.signals.status.emit(texts.DOWNLOADING_FFMPEG_FIRST_RUN)
+                try:
+                    import static_ffmpeg
+                    from static_ffmpeg import run as ffmpeg_run
 
-                # If executables don't exist, remove the installed.crumb marker
-                # to force static_ffmpeg to re-download
-                if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
-                    crumb_file = os.path.join(platform_dir, "installed.crumb")
-                    if os.path.exists(crumb_file):
-                        try:
-                            os.remove(crumb_file)
-                            logger.info("Removed installed.crumb to force re-download")
-                        except OSError as e:
-                            logger.warning(f"Could not remove installed.crumb: {e}")
+                    platform_dir = ffmpeg_run.get_platform_dir()
+                    if platform.system() == "Windows":
+                        ffmpeg_path = os.path.join(platform_dir, "ffmpeg.exe")
+                        ffprobe_path = os.path.join(platform_dir, "ffprobe.exe")
+                    else:
+                        ffmpeg_path = os.path.join(platform_dir, "ffmpeg")
+                        ffprobe_path = os.path.join(platform_dir, "ffprobe")
 
-                # This downloads the binaries if not present
-                ffmpeg_path, ffprobe_path = run.get_or_fetch_platform_executables_else_raise()
-                
-                # Verify the files actually exist after download
-                if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
-                    self.signals.finished.emit(False, "FFmpeg download failed - files not found after download")
-                    return
-                    
-                # Then add them to PATH
-                static_ffmpeg.add_paths()
-                self.signals.finished.emit(True, ffmpeg_path)
-            except ImportError as e:
-                self.signals.finished.emit(
-                    False, f"static_ffmpeg not installed: {str(e)}"
-                )
-            except Exception as e:
-                self.signals.finished.emit(False, str(e))
+                    # Remove stale .crumb so static_ffmpeg re-downloads if binaries are missing
+                    if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
+                        crumb_file = os.path.join(platform_dir, "installed.crumb")
+                        if os.path.exists(crumb_file):
+                            try:
+                                os.remove(crumb_file)
+                                logger.info("Removed installed.crumb to force re-download")
+                            except OSError as e:
+                                logger.warning(f"Could not remove installed.crumb: {e}")
 
-    # Create and show the dialog
+                    ffmpeg_path, ffprobe_path = ffmpeg_run.get_or_fetch_platform_executables_else_raise()
+
+                    if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
+                        errors.append(["ffmpeg", "FFmpeg download failed — files not found after download"])
+                    else:
+                        static_ffmpeg.add_paths()
+                        logger.info(f"Using static_ffmpeg (downloaded): {ffmpeg_path}")
+                except ImportError as e:
+                    errors.append(["ffmpeg", f"static_ffmpeg not installed: {e}"])
+                except Exception as e:
+                    errors.append(["ffmpeg", str(e)])
+
+            # --- lapse ---
+            if self.do_lapse:
+                self.signals.status.emit(texts.DOWNLOADING_LAPSE_FIRST_RUN)
+                try:
+                    from resources import lapse_download
+
+                    downloaded = lapse_download.download()
+                    if downloaded and os.path.isfile(downloaded):
+                        logger.info(f"Using lapse (downloaded): {downloaded}")
+                    else:
+                        errors.append(["lapse", "lapse download failed — binary not found after download"])
+                except Exception as e:
+                    errors.append(["lapse", str(e)])
+
+            self.signals.finished.emit(len(errors) == 0, json.dumps(errors))
+
+    # Choose dialog title based on what's being downloaded
+    if needs_ffmpeg and needs_lapse:
+        dialog_title = texts.DOWNLOADING_DEPENDENCIES
+    elif needs_ffmpeg:
+        dialog_title = texts.DOWNLOADING_FFMPEG
+    else:
+        dialog_title = texts.DOWNLOADING_LAPSE
+
+    # Build the dialog
     dialog = QDialog(parent)
-    dialog.setWindowTitle(texts.DOWNLOADING_FFMPEG)
+    dialog.setWindowTitle(dialog_title)
     dialog.setWindowFlags(
         dialog.windowFlags()
         & ~Qt.WindowType.WindowContextHelpButtonHint
@@ -1452,37 +1580,54 @@ def initialize_static_ffmpeg(parent=None, callback=None):
     layout.setContentsMargins(20, 20, 20, 20)
     layout.setSpacing(15)
 
-    label = QLabel(texts.DOWNLOADING_FFMPEG_FIRST_RUN)
+    label = QLabel(
+        texts.DOWNLOADING_FFMPEG_FIRST_RUN if needs_ffmpeg else texts.DOWNLOADING_LAPSE_FIRST_RUN
+    )
     label.setWordWrap(True)
     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(label)
 
     progress = QProgressBar()
-    progress.setRange(0, 0)  # Indeterminate progress
+    progress.setRange(0, 0)  # Indeterminate
     progress.setTextVisible(False)
     layout.addWidget(progress)
 
-    # Setup signals and thread
-    signals = FFmpegDownloadSignals()
-    thread = DownloadThread(signals)
+    # Wire up signals
+    dl_signals = DownloadSignals()
+    thread = DownloadThread(dl_signals, needs_ffmpeg, needs_lapse)
 
-    def on_finished(success, error_msg):
+    def on_status(msg):
+        label.setText(msg)
+
+    def on_finished(success, error_data):
         dialog.accept()
-        if success:
-            logger.info(f"Using static_ffmpeg (downloaded): {error_msg}")
-        else:
-            logger.error(f"FFmpeg download failed: {error_msg}")
-            QMessageBox.warning(
-                parent,
-                texts.DOWNLOADING_FFMPEG,
-                texts.FFMPEG_DOWNLOAD_FAILED.format(error=error_msg),
-            )
+        try:
+            errors = json.loads(error_data)
+        except Exception:
+            errors = []
+
+        for component, error_msg in errors:
+            if component == "ffmpeg":
+                logger.error(f"FFmpeg download failed: {error_msg}")
+                QMessageBox.warning(
+                    parent,
+                    texts.DOWNLOADING_FFMPEG,
+                    texts.FFMPEG_DOWNLOAD_FAILED.format(error=error_msg),
+                )
+            elif component == "lapse":
+                logger.error(f"lapse download failed: {error_msg}")
+                QMessageBox.warning(
+                    parent,
+                    texts.DOWNLOADING_LAPSE,
+                    texts.LAPSE_DOWNLOAD_FAILED.format(error=error_msg),
+                )
+
         if callback:
             callback(success)
 
-    signals.finished.connect(on_finished)
+    dl_signals.status.connect(on_status)
+    dl_signals.finished.connect(on_finished)
 
-    # Start download in background
     thread.start()
 
     # Show dialog (blocks until download completes)
@@ -1493,6 +1638,7 @@ def initialize_static_ffmpeg(parent=None, callback=None):
         thread.wait()
 
     return True
+
 
 
 def check_file_readable(file_path: str) -> tuple[bool, str]:

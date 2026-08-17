@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import time
+import shutil
 import logging
 import platform
 import importlib
@@ -102,21 +103,27 @@ def process_output(message: str, sync_tool: str):
     """Clean a chunk of subprocess output and extract its percent-complete value."""
     if not message:
         return "", None
-    percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", message)
+    percent_match = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%", message)
     percent = float(percent_match.group(1)) if percent_match else None
     lines = message.split("\n")
-    if sync_tool == "alass":
-        result = [
-            (
-                shorten_progress_bar(line)
-                if "[" in line and "]" in line
-                else line.rstrip()
-            )
-            for line in lines
-        ]
-    else:
-        result = [line.rstrip() for line in lines]
-    return "\n".join(result), percent
+    cleaned_lines = []
+    for line in lines:
+        stripped = line.rstrip()
+        if not stripped:
+            continue
+        # Suppress harmless container demuxer warnings from FFmpeg / libavformat
+        if (
+            "Could not find codec parameters for stream" in stripped
+            or "Consider increasing the value for the 'analyzeduration'" in stripped
+            or "invalid as first byte of an EBML number" in stripped
+            or "EBML number" in stripped
+        ):
+            continue
+        if sync_tool == "alass" and "[" in stripped and "]" in stripped:
+            cleaned_lines.append(shorten_progress_bar(stripped))
+        else:
+            cleaned_lines.append(stripped)
+    return "\n".join(cleaned_lines), percent
 
 
 def get_tool_with_fallback(
@@ -255,6 +262,18 @@ def build_cmd(
                 cmd.extend(["--encoding-ref", new_ref_encoding])
             except Exception as e:
                 logger.warning(f"Failed to detect reference encoding: {e}")
+    elif tool == "lapse":
+        mode = config.get("lapse_mode", "auto")
+        penalty = config.get("lapse_split_penalty", 6)
+        if mode in ("nosplit", "ols"):
+            cmd.append(mode)
+        elif mode == "split":
+            cmd.append("split")
+            cmd.append(str(penalty))
+        elif mode == "auto":
+            if penalty != 6:
+                cmd.append("auto")
+                cmd.append(str(penalty))
     return _append_opts(cmd, tool, config)
 
 
@@ -651,7 +670,27 @@ def run_sync(
             exe_info = current_tool_info["executable"]
             current_os = platform.system()
             exe = exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
-            if not exe:
+            if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
+                if current_tool == "lapse":
+                    try:
+                        from resources import lapse_download
+
+                        # The startup dialog (or a previous run) may have already
+                        # downloaded lapse to DIST_BIN_PATH even though constants.py
+                        # cached a None/stale path at import time.
+                        lapse_bin = "lapse.exe" if platform.system() == "Windows" else "lapse"
+                        cached_exe = os.path.join(lapse_download.DIST_BIN_PATH, lapse_bin)
+                        if os.path.isfile(cached_exe):
+                            exe = cached_exe
+                        else:
+                            if callbacks:
+                                callbacks._log("Lapse executable not found. Downloading...", "grey")
+                            downloaded = lapse_download.download()
+                            if downloaded and os.path.isfile(downloaded):
+                                exe = downloaded
+                    except Exception as e:
+                        logger.error(f"Failed to auto-download lapse: {e}")
+            if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
                 msg = str(texts.NO_EXECUTABLE_FOUND).format(
                     tool=current_tool, os=current_os
                 )
@@ -677,6 +716,12 @@ def run_sync(
                 sync_tool=current_tool,
                 process_holder=process_holder,
             )
+
+        if current_tool == "lapse" and rc == 3:
+            if os.path.exists(effective_output) and os.path.getsize(effective_output) > 0:
+                logger.info("Lapse produced output with low-confidence/unsure verdict (code 3)")
+                callbacks._log("Lapse synced subtitles with low-confidence/unsure verdict.", "orange")
+                rc = 0
 
         # Check output file existence and non-zero size
         if rc == 0 and not callbacks._cancelled():

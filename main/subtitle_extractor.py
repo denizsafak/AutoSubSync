@@ -33,6 +33,11 @@ def should_extract_subtitles(reference, tool, config, override=None):
     if os.path.splitext(reference)[1].lower() in SUBTITLE_EXTENSIONS:
         return False
 
+    # Tools that natively search and parse embedded subtitles (like lapse)
+    # should NOT use external ffmpeg pre-extraction.
+    if tool == "lapse":
+        return False
+
     tool_info = SYNC_TOOLS.get(tool, {})
     option = tool_info.get("options", {}).get("check_video_for_subtitles")
     if not option:

@@ -342,10 +342,11 @@ def handle_completion(app, ok, out, in_path):
 
 # --- SIGNALS ---
 class SyncSignals(QObject):
-    finished = pyqtSignal(bool, str)
+    finished = pyqtSignal(bool, object)
     progress = pyqtSignal(str, bool)
     progress_percent = pyqtSignal(float)
     error = pyqtSignal(str)
+    log = pyqtSignal(str, object)
 
 
 class SyncProcess:
@@ -359,6 +360,11 @@ class SyncProcess:
     def __init__(self, app):
         self.app = app
         self.signals = SyncSignals()
+        self.signals.log.connect(
+            lambda msg, color: append_log(
+                self.app, msg, COLORS.get(color.upper()) if color else None
+            )
+        )
         self.should_cancel = False
         self._process_lock = threading.Lock()
         self._process_holder = {}  # populated by sync_core: {"process": Popen, "module_proc": Process}
@@ -411,9 +417,7 @@ class SyncProcess:
 
     def _run(self, reference, subtitle, tool, output):
         cb = sync_core.SyncCallbacks(
-            on_log=lambda msg, color: append_log(
-                self.app, msg, COLORS.get(color.upper()) if color else None
-            ),
+            on_log=lambda msg, color: self.signals.log.emit(msg, color),
             on_progress=lambda percent: self.signals.progress_percent.emit(percent),
             on_subprocess_line=lambda line, is_overwrite: self.signals.progress.emit(
                 line, is_overwrite
@@ -458,13 +462,20 @@ class LogWindowStream:
                 break
             ch = self._buffer[idx]
             line, self._buffer = self._buffer[:idx], self._buffer[idx + 1 :]
+            if (
+                "Could not find codec parameters for stream" in line
+                or "Consider increasing the value for the 'analyzeduration'" in line
+                or "invalid as first byte of an EBML number" in line
+                or "EBML number" in line
+            ):
+                continue
             display_line = line
             if self.idx is not None and self.total is not None:
-                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", line)
+                percent_match = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%", line)
                 if percent_match:
                     display_line = f"{line} [{self.idx}/{self.total}]"
             if self.progress_percent_emit:
-                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", line)
+                percent_match = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%", line)
                 if percent_match:
                     try:
                         self.progress_percent_emit(float(percent_match.group(1)))
@@ -479,13 +490,22 @@ class LogWindowStream:
 
     def flush(self):
         if self._buffer:
+            if (
+                "Could not find codec parameters for stream" in self._buffer
+                or "Consider increasing the value for the 'analyzeduration'" in self._buffer
+                or "invalid as first byte of an EBML number" in self._buffer
+                or "EBML number" in self._buffer
+            ):
+                self._buffer = ""
+                self._last_was_cr = False
+                return
             display_line = self._buffer
             if self.idx is not None and self.total is not None:
-                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", self._buffer)
+                percent_match = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%", self._buffer)
                 if percent_match:
                     display_line = f"{self._buffer} [{self.idx}/{self.total}]"
             if self.progress_percent_emit:
-                percent_match = re.search(r"(\d{1,2}(?:\.\d{1,2})?)\s*%", self._buffer)
+                percent_match = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%", self._buffer)
                 if percent_match:
                     try:
                         self.progress_percent_emit(float(percent_match.group(1)))

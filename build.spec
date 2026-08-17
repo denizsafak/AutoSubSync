@@ -39,6 +39,7 @@ qt_platforms_dir = os.path.join(qt_plugins_dir, 'platforms')
 
 ffmpeg_bin = os.path.join(os.curdir, 'main', 'resources', 'ffmpeg-bin')
 alass_bin = os.path.join(os.curdir, 'main', 'resources', 'alass-bin')
+lapse_bin = os.path.join(os.curdir, 'main', 'resources', 'lapse')
 autosubsync = os.path.join(os.curdir, 'main', 'resources', 'autosubsync')
 #ffsubsync_bin = os.path.join(os.curdir, 'main', 'resources', 'ffsubsync-bin')
 
@@ -49,6 +50,7 @@ autosubsync = os.path.join(os.curdir, 'main', 'resources', 'autosubsync')
 datas = [
     (os.path.join(os.curdir, 'main', 'VERSION'), '.'),
     (os.path.join(os.curdir, 'main', 'assets'), 'assets'),
+    (lapse_bin, 'resources/lapse'),
     (qt_platforms_dir, 'platforms'),
 ]
 
@@ -97,6 +99,7 @@ a = Analysis(
     binaries=[
         (ffmpeg_bin, 'resources/ffmpeg-bin'),
         (alass_bin, 'resources/alass-bin'),
+        (lapse_bin, 'resources/lapse'),
         (autosubsync, 'resources/autosubsync'),
     #    (ffsubsync_bin, 'resources/ffsubsync-bin'),
     ],
@@ -104,6 +107,7 @@ a = Analysis(
     hiddenimports=all_main_modules + [
         'ffsubsync',
         'autosubsync',
+        'onnxruntime',
     ],
     #hookspath=['main/resources/hooks'],
     hooksconfig={},

@@ -17,38 +17,53 @@ def main():
     print(f"📁 Script directory: {script_dir}")
     print(f"📦 Output directory: {output_dir}")
     
-    # Check if build module is installed, install if not
-    # Temporarily remove script_dir from sys.path to avoid importing local build.py
-    import sys
-    original_path = sys.path[:]
-    try:
-        sys.path = [p for p in sys.path if os.path.abspath(p) != script_dir]
-        import build
-    except ImportError:
-        print("📦 Installing build module...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "build"], check=True)
-    finally:
-        sys.path = original_path
+    uv_path = shutil.which("uv")
+    if uv_path:
+        print("📦 Using 'uv build'...")
+        # Create output directory
+        print(f"📂 Preparing output directory: {output_dir}")
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
-    # Create output directory
-    print(f"📂 Preparing output directory: {output_dir}")
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-    os.makedirs(output_dir, exist_ok=True)
-
-    print("🏗️  Building PyPI package...")
-    print("   Using temporary directory to avoid module conflicts...")
-
-    # Run from temp directory to avoid local build.py shadowing the build module
-    with tempfile.TemporaryDirectory() as tmpdir:
-        print(f"   Temp directory: {tmpdir}")
-        print("   Running: python -m build -o <output_dir> <source_dir>")
-
+        print("🏗️  Building PyPI package with uv...")
         result = subprocess.run(
-            [sys.executable, "-m", "build", "-o", output_dir, script_dir],
+            [uv_path, "build", "--out-dir", output_dir, script_dir],
             check=False,
-            cwd=tmpdir,
         )
+    else:
+        # Check if build module is installed, install if not
+        # Temporarily remove script_dir from sys.path to avoid importing local build.py
+        import sys
+        original_path = sys.path[:]
+        try:
+            sys.path = [p for p in sys.path if os.path.abspath(p) != script_dir]
+            import build
+        except ImportError:
+            print("📦 Installing build module...")
+            subprocess.run([sys.executable, "-m", "pip", "install", "build"], check=True)
+        finally:
+            sys.path = original_path
+
+        # Create output directory
+        print(f"📂 Preparing output directory: {output_dir}")
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
+        print("🏗️  Building PyPI package...")
+        print("   Using temporary directory to avoid module conflicts...")
+
+        # Run from temp directory to avoid local build.py shadowing the build module
+        with tempfile.TemporaryDirectory() as tmpdir:
+            print(f"   Temp directory: {tmpdir}")
+            print("   Running: python -m build -o <output_dir> <source_dir>")
+
+            result = subprocess.run(
+                [sys.executable, "-m", "build", "-o", output_dir, script_dir],
+                check=False,
+                cwd=tmpdir,
+            )
 
     print("\n" + "=" * 40)
     if result.returncode == 0:

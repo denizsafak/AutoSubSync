@@ -74,7 +74,7 @@ SAVE_MODES_AUTO = (
     "select_destination_folder",
 )
 
-TOOL_CHOICES = ("ffsubsync", "alass", "autosubsync")
+TOOL_CHOICES = ("ffsubsync", "lapse", "alass", "autosubsync")
 
 EXIT_OK = 0
 EXIT_SYNC_FAILED = 1

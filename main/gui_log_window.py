@@ -19,8 +19,37 @@ from utils import get_resource_path, get_logs_directory, open_folder
 logger = logging.getLogger(__name__)
 
 
+_log_font_family = None
+_log_font_loaded = False
+
+
+def _get_log_font():
+    global _log_font_family, _log_font_loaded
+    if not _log_font_loaded:
+        _log_font_loaded = True
+        try:
+            font_path = get_resource_path("autosubsyncapp.assets.fonts", "hack.ttf")
+            if font_path and os.path.exists(font_path):
+                font_id = QFontDatabase.addApplicationFont(font_path)
+                if font_id != -1:
+                    families = QFontDatabase.applicationFontFamilies(font_id)
+                    if families:
+                        _log_font_family = families[0]
+                        logger.info(f'Loaded custom font: "{_log_font_family}" for log window.')
+        except Exception as e:
+            logger.error(f"Exception loading custom font: {e}")
+
+    if _log_font_family:
+        return QFont(_log_font_family)
+    font = QFont()
+    font.setFamilies(["Consolas", "Monospace", "DejaVu Sans Mono", "Courier New"])
+    return font
+
+
+from PyQt6.QtCore import pyqtSignal, QObject, QThread
+
 class LogSignalRelay(QObject):
-    append_message_signal = pyqtSignal(str, bool, object)
+    append_message_signal = pyqtSignal(str, bool, object, bool, str)
 
 
 class LogWindow(QWidget):
@@ -30,7 +59,7 @@ class LogWindow(QWidget):
         super().__init__(parent)
         self._config_printed = False
         self.signal_relay = LogSignalRelay()
-        self.signal_relay.append_message_signal.connect(self.append_message)
+        self.signal_relay.append_message_signal.connect(self._do_append_message)
         self._last_line_is_update = False  # Initialize state for overwrite logic
         self._user_scrolled_up = False  # Track if user scrolled up
         self._setup_ui()
@@ -40,25 +69,7 @@ class LogWindow(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(15)
         self.log_text = QTextEdit(readOnly=True)
-
-        # Set custom font
-        try:
-            font_path = get_resource_path("autosubsyncapp.assets.fonts", "hack.ttf")
-            font_id = QFontDatabase.addApplicationFont(font_path)
-            if font_id != -1:
-                family = QFontDatabase.applicationFontFamilies(font_id)[0]
-                self.log_text.setFont(QFont(family))
-                logger.info(f'Loaded custom font: "{family}" for log window.')
-            else:
-                font = QFont()
-                font.setFamilies(["Consolas", "Monospace"])
-                self.log_text.setFont(font)
-                logger.warning(f"Failed to load custom font, using fallback.")
-        except Exception as e:
-            font = QFont()
-            font.setFamilies(["Consolas", "Monospace"])
-            self.log_text.setFont(font)
-            logger.error(f"Exception loading custom font: {e}. Using fallback.")
+        self.log_text.setFont(_get_log_font())
 
         self.log_text.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.log_text.setSizePolicy(
@@ -141,9 +152,20 @@ class LogWindow(QWidget):
             for i, (k, v) in enumerate(display_opts.items()):
                 prefix = "└─ " if i == len(display_opts) - 1 else "├─ "
                 val = cfg.get(f"{sync_tool}_{k}", v.get("default"))
-                # Special handling for alass split_penalty
-                if sync_tool == "alass" and k == "split_penalty" and val == -1:
+                opt_type = v.get("type")
+                if opt_type == "checkbox":
+                    display_val = texts.ENABLED if bool(val) else texts.DISABLED
+                elif opt_type == "dropdown":
+                    lbls = v.get("value_labels", {})
+                    display_val = str(lbls.get(val, val))
+                elif sync_tool == "alass" and k == "split_penalty" and val == -1:
                     display_val = texts.NO_SPLITS
+                elif (
+                    sync_tool == "lapse"
+                    and k == "split_penalty"
+                    and cfg.get("lapse_mode") in ("nosplit", "ols")
+                ):
+                    display_val = texts.DISABLED
                 elif isinstance(val, bool):
                     display_val = texts.ENABLED if val else texts.DISABLED
                 else:
@@ -234,6 +256,16 @@ class LogWindow(QWidget):
         self._scroll_to_bottom()
 
     def append_message(
+        self, message, bold=False, color=None, overwrite=False, end="\n"
+    ):
+        if QThread.currentThread() != self.thread():
+            self.signal_relay.append_message_signal.emit(
+                str(message), bool(bold), color, bool(overwrite), str(end)
+            )
+            return
+        self._do_append_message(message, bold, color, overwrite, end)
+
+    def _do_append_message(
         self, message, bold=False, color=None, overwrite=False, end="\n"
     ):
         txt = self.log_text
