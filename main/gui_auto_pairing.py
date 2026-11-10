@@ -28,11 +28,11 @@ logger = logging.getLogger(__name__)
 
 # Season/episode patterns for matching video/subtitle files
 PATTERNS = [
-    r"(?:s|S)(\d{1,2})(?:[eE])(\d{1,2})",  # S01E01, S1E1, etc.
-    r"(?:s|S)(\d{1,2})(?:[bB])(\d{1,2})",  # S01B01, S1B1, etc.
-    r"(\d{1,2})x(\d{1,2})",  # 1x01, 01x1, etc.
-    r"(?:[eE][pP]?|EP)(\d{1,2})",  # E01, EP01 (assumes season 1)
-    r"(?:[pP](?:art|t))(\d{1,2})",  # Part01, Pt1 (assumes season 1)
+    r"(?:s|S)(\d{1,2})(?:[eE])(\d+)",  # S01E001, S1E156, etc.
+    r"(?:s|S)(\d{1,2})(?:[bB])(\d+)",  # S01B001, S1B156, etc.
+    r"(\d{1,2})x(\d+)",  # 1x001, 01x156, etc.
+    r"(?:[eE][pP]?|EP)(\d+)",  # E001, EP156 (assumes season 1)
+    r"(?:[pP](?:art|t))(\d+)",  # Part001, Pt156 (assumes season 1)
     r"(?<!\d)([1-9])(\d{2})(?!\d)",  # 101, 201, etc.
 ]
 
