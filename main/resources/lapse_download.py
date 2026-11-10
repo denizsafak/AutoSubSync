@@ -1,17 +1,25 @@
+import functools
 import io
 import os
 import stat
 import shutil
+import sys
 import platform
 import subprocess
 import tarfile
 import zipfile
+import platformdirs
 import requests
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-LAPSE_VERSION = "v2.3.3"
-LAPSE_GITHUB_URL = f"https://github.com/Schwponaco-org/lapse/releases/download/{LAPSE_VERSION}"
-DIST_BIN_PATH = os.path.join(script_dir, "lapse")
+LAPSE_RELEASES_URL = "https://github.com/Schwponaco-org/lapse/releases/latest"
+BINARY_NAME = "lapse.exe" if platform.system() == "Windows" else "lapse"
+# A packaged app can be read-only or signed, so its updates live in the user's data folder
+DIST_BIN_PATH = (
+    os.path.join(platformdirs.user_data_dir("AutoSubSync", appauthor=False), "lapse")
+    if getattr(sys, "frozen", False)
+    else os.path.join(script_dir, "lapse")
+)
 
 
 def get_archive_filename():
@@ -57,31 +65,55 @@ def ensure_silero_vad():
     return silero_path if os.path.isfile(silero_path) else None
 
 
-def is_outdated(exe):
-    """Builds older than v2.0.2 have no --version, so they count as outdated too."""
+@functools.lru_cache(maxsize=None)
+def latest_version():
+    """The newest release, or None when offline. The redirect has no rate limit, unlike the API."""
     try:
-        found = subprocess.run(
+        url = requests.head(LAPSE_RELEASES_URL, allow_redirects=True, timeout=10).url
+    except requests.RequestException:
+        return None
+    return url.rsplit("/tag/v", 1)[-1] if "/tag/v" in url else None
+
+
+def installed(bundled):
+    """The binary to run: an update if we have one, otherwise the one shipped with the app."""
+    exe = os.path.join(DIST_BIN_PATH, BINARY_NAME)
+    return bundled if bundled and os.path.isfile(bundled) and not os.path.isfile(exe) else exe
+
+
+def current_version(exe):
+    """Empty when it can't run or is too old to have --version."""
+    try:
+        return subprocess.run(
             [exe, "--version"],
             capture_output=True,
             text=True,
             timeout=10,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-        )
+        ).stdout.strip()
     except (OSError, subprocess.SubprocessError):
-        return True
-    return found.stdout.strip() != LAPSE_VERSION.lstrip("v")
+        return ""
+
+
+def is_outdated(exe):
+    found = current_version(exe)
+    latest = latest_version()
+    return not found or (latest is not None and found != latest)
 
 
 def download():
     try:
         archive_name = get_archive_filename()
-        download_url = f"{LAPSE_GITHUB_URL}/{archive_name}"
+        download_url = f"{LAPSE_RELEASES_URL}/download/{archive_name}"
         print(f"Downloading lapse archive from {download_url}...")
 
-        response = requests.get(download_url, stream=True)
+        response = requests.get(download_url, stream=True, timeout=30)
         response.raise_for_status()
 
-        os.makedirs(DIST_BIN_PATH, exist_ok=True)
+        # Unpack beside the old version so a bad download can't take it away
+        staging = DIST_BIN_PATH + ".new"
+        shutil.rmtree(staging, ignore_errors=True)
+        os.makedirs(staging)
         content_bytes = response.content
 
         if archive_name.endswith(".tar.gz") or archive_name.endswith(".tgz"):
@@ -92,7 +124,7 @@ def download():
                         continue
                     member_file = tar.extractfile(member)
                     if member_file:
-                        target_path = os.path.join(DIST_BIN_PATH, rel_name)
+                        target_path = os.path.join(staging, rel_name)
                         with open(target_path, "wb") as out_f:
                             out_f.write(member_file.read())
         elif archive_name.endswith(".zip"):
@@ -102,29 +134,34 @@ def download():
                     if not rel_name:
                         continue
                     with zf.open(member) as member_file:
-                        target_path = os.path.join(DIST_BIN_PATH, rel_name)
+                        target_path = os.path.join(staging, rel_name)
                         with open(target_path, "wb") as out_f:
                             out_f.write(member_file.read())
 
-        dest_filename = "lapse.exe" if platform.system().lower() == "windows" else "lapse"
-        dest_path = os.path.join(DIST_BIN_PATH, dest_filename)
+        dest_path = os.path.join(staging, BINARY_NAME)
+        if not os.path.isfile(dest_path):
+            raise RuntimeError(f"{archive_name} has no {BINARY_NAME} in it")
 
-        if platform.system().lower() != "windows" and os.path.exists(dest_path):
+        if platform.system().lower() != "windows":
             st = os.stat(dest_path)
             os.chmod(dest_path, st.st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH | stat.S_IRWXU)
 
         # Ensure standard library symlinks / copies exist if versioned names were extracted
-        for fname in os.listdir(DIST_BIN_PATH):
-            full = os.path.join(DIST_BIN_PATH, fname)
+        for fname in os.listdir(staging):
+            full = os.path.join(staging, fname)
             if "libonnxruntime" in fname and fname.endswith(".dylib") and fname != "libonnxruntime.dylib":
-                std_dylib = os.path.join(DIST_BIN_PATH, "libonnxruntime.dylib")
+                std_dylib = os.path.join(staging, "libonnxruntime.dylib")
                 if not os.path.exists(std_dylib):
                     shutil.copy2(full, std_dylib)
             elif "libonnxruntime" in fname and ".so" in fname and fname != "libonnxruntime.so":
-                std_so = os.path.join(DIST_BIN_PATH, "libonnxruntime.so")
+                std_so = os.path.join(staging, "libonnxruntime.so")
                 if not os.path.exists(std_so):
                     shutil.copy2(full, std_so)
 
+        if os.path.isdir(DIST_BIN_PATH):
+            shutil.rmtree(DIST_BIN_PATH)
+        os.replace(staging, DIST_BIN_PATH)
+        dest_path = os.path.join(DIST_BIN_PATH, BINARY_NAME)
         print(f"Downloaded and extracted lapse to {dest_path}")
         return dest_path
     except Exception as e:
@@ -134,8 +171,7 @@ def download():
 
 if __name__ == "__main__":
     try:
-        name = "lapse.exe" if platform.system() == "Windows" else "lapse"
-        if is_outdated(os.path.join(DIST_BIN_PATH, name)):
+        if is_outdated(os.path.join(DIST_BIN_PATH, BINARY_NAME)):
             download()
     except Exception:
         exit(1)

@@ -197,7 +197,6 @@ class TestLapseIntegration(unittest.TestCase):
 
         versions = build.get_sync_tools_versions()
         self.assertIn("lapse", versions)
-        self.assertEqual(versions["lapse"]["version"], "2.3.3")
         self.assertEqual(
             versions["lapse"]["github"], "https://github.com/Schwponaco-org/lapse"
         )
@@ -396,12 +395,80 @@ class TestLapseIntegration(unittest.TestCase):
 
     def test_is_outdated(self):
         from resources import lapse_download
-        current = lapse_download.LAPSE_VERSION.lstrip("v") + "\n"
-        with patch("subprocess.run", return_value=MagicMock(stdout=current)):
+        with patch("resources.lapse_download.latest_version", return_value="9.9.9"):
+            with patch("subprocess.run", return_value=MagicMock(stdout="9.9.9\n")):
+                self.assertFalse(lapse_download.is_outdated("lapse"))
+            with patch("subprocess.run", return_value=MagicMock(stdout="2.3.3\n")):
+                self.assertTrue(lapse_download.is_outdated("lapse"))
+            self.assertTrue(lapse_download.is_outdated(os.path.join(self.temp_dir, "missing")))
+        with patch("resources.lapse_download.latest_version", return_value=None), \
+             patch("subprocess.run", return_value=MagicMock(stdout="2.3.3\n")):
             self.assertFalse(lapse_download.is_outdated("lapse"))
-        with patch("subprocess.run", return_value=MagicMock(stdout="usage: lapse\n")):
-            self.assertTrue(lapse_download.is_outdated("lapse"))
-        self.assertTrue(lapse_download.is_outdated(os.path.join(self.temp_dir, "missing")))
+
+    def test_download_replaces_the_old_version(self):
+        import io, tarfile
+        from resources import lapse_download
+        target = os.path.join(self.temp_dir, "lapse")
+        os.makedirs(target)
+        with open(os.path.join(target, "old.so"), "w") as f:
+            f.write("old")
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w:gz") as tar:
+            info = tarfile.TarInfo("lapse-x/lapse")
+            info.size = 3
+            tar.addfile(info, io.BytesIO(b"new"))
+        with patch("resources.lapse_download.DIST_BIN_PATH", target), \
+             patch("resources.lapse_download.BINARY_NAME", "lapse"), \
+             patch("resources.lapse_download.get_archive_filename", return_value="a.tar.gz"), \
+             patch("requests.get", return_value=MagicMock(content=archive.getvalue())):
+            lapse_download.download()
+        self.assertEqual(os.listdir(target), ["lapse"])
+        self.assertFalse(os.path.exists(target + ".new"))
+
+    def test_broken_download_keeps_the_old_version(self):
+        import io, tarfile
+        from resources import lapse_download
+        target = os.path.join(self.temp_dir, "lapse")
+        os.makedirs(target)
+        with open(os.path.join(target, "lapse"), "w") as f:
+            f.write("old")
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w:gz"):
+            pass
+        with patch("resources.lapse_download.DIST_BIN_PATH", target), \
+             patch("resources.lapse_download.get_archive_filename", return_value="a.tar.gz"), \
+             patch("requests.get", return_value=MagicMock(content=archive.getvalue())):
+            with self.assertRaises(RuntimeError):
+                lapse_download.download()
+        with open(os.path.join(target, "lapse")) as f:
+            self.assertEqual(f.read(), "old")
+
+    def test_run_sync_retries_through_ffmpeg_when_lapse_cannot_read_the_audio(self):
+        out_sub = os.path.join(self.temp_dir, "synced_lapse.srt")
+        calls = []
+
+        def fake_run_executable(cmd, callbacks, *, sync_tool, process_holder=None):
+            calls.append(list(cmd))
+            if len(calls) == 1:
+                return 1
+            if len(calls) == 3:
+                with open(out_sub, "w", encoding="utf-8") as f:
+                    f.write("1\n00:00:02,000 --> 00:00:04,000\nSynced\n")
+            return 0
+
+        with patch("sync_core.run_executable_tool", side_effect=fake_run_executable), \
+             patch("resources.lapse_download.is_outdated", return_value=False):
+            result = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="lapse",
+                output=out_sub,
+                config=dict(DEFAULT_OPTIONS),
+            )
+        self.assertTrue(result.ok)
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(calls[2][1], calls[1][-1])
+        self.assertFalse(os.path.exists(calls[1][-1]))
 
     def test_ensure_silero_vad_helper(self):
         from resources import lapse_download

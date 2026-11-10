@@ -323,6 +323,13 @@ def get_sync_tools_versions():
                                 tool_version = v.value
                             elif k.value == "github" and isinstance(v, ast.Constant):
                                 github_url = v.value
+                    lapse_file = "main/resources/lapse/lapse" + (".exe" if IS_WINDOWS else "")
+                    if tool_name == "lapse" and os.path.exists(lapse_file):
+                        tool_version = subprocess.run(
+                            [lapse_file, "--version"],
+                            capture_output=True,
+                            text=True,
+                        ).stdout.strip()
                     sync_tools[tool_name] = {
                         "version": (
                             tool_version
