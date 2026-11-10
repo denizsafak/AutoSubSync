@@ -224,6 +224,27 @@ class TestLapseIntegration(unittest.TestCase):
         )
         self.assertFalse(should_extract)
 
+    def test_build_cmd_extra_engine_options(self):
+        config = dict(DEFAULT_OPTIONS)
+        config.update(
+            lapse_force=True,
+            lapse_strict=True,
+            lapse_snap=True,
+            lapse_confidence=12,
+            lapse_audio_track=1,
+            lapse_min_shift=50,
+        )
+        cmd = sync_core.build_cmd("lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=config)
+        for flag in ("--force", "--strict", "--snap"):
+            self.assertIn(flag, cmd)
+        self.assertEqual(cmd[cmd.index("--confidence") + 1], "12")
+        self.assertEqual(cmd[cmd.index("--audio-track") + 1], "1")
+        self.assertEqual(cmd[cmd.index("--min-shift") + 1], "50")
+
+        defaults = sync_core.build_cmd("lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=dict(DEFAULT_OPTIONS))
+        for flag in ("--force", "--strict", "--snap", "--confidence", "--audio-track", "--min-shift"):
+            self.assertNotIn(flag, defaults)
+
     def test_build_cmd_no_embedded_when_disabled(self):
         config = dict(DEFAULT_OPTIONS)
         config["lapse_check_video_for_subtitles"] = False
