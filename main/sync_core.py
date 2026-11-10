@@ -751,6 +751,15 @@ def run_sync(
             exe_info = current_tool_info["executable"]
             current_os = platform.system()
             exe = exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
+            if current_tool == "lapse" and exe and os.path.isfile(exe):
+                try:
+                    from resources import lapse_download
+
+                    if lapse_download.is_outdated(exe):
+                        callbacks._log("Updating Lapse...", "grey")
+                        lapse_download.download()
+                except Exception as e:
+                    logger.error(f"Failed to update lapse: {e}")
             if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
                 if current_tool == "lapse":
                     try:
@@ -799,6 +808,9 @@ def run_sync(
             )
 
         if current_tool == "lapse" and rc == 3:
+            root, ext = os.path.splitext(effective_output)
+            if os.path.exists(f"{root}.lapse-unsure{ext}"):
+                os.replace(f"{root}.lapse-unsure{ext}", effective_output)
             if os.path.exists(effective_output) and os.path.getsize(effective_output) > 0:
                 logger.info("Lapse produced output with low-confidence/unsure verdict (code 3)")
                 callbacks._log("Lapse synced subtitles with low-confidence/unsure verdict.", "orange")

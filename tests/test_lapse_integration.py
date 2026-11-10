@@ -197,7 +197,7 @@ class TestLapseIntegration(unittest.TestCase):
 
         versions = build.get_sync_tools_versions()
         self.assertIn("lapse", versions)
-        self.assertEqual(versions["lapse"]["version"], "2.0.1")
+        self.assertEqual(versions["lapse"]["version"], "2.3.3")
         self.assertEqual(
             versions["lapse"]["github"], "https://github.com/Schwponaco-org/lapse"
         )
@@ -371,6 +371,37 @@ class TestLapseIntegration(unittest.TestCase):
                         expected,
                         f"Failed mapping for {system} / {machine}: got {arch}, expected {expected}",
                     )
+
+    def test_run_sync_keeps_unsure_result_written_beside_output(self):
+        out_sub = os.path.join(self.temp_dir, "synced_lapse.srt")
+        unsure = os.path.join(self.temp_dir, "synced_lapse.lapse-unsure.srt")
+
+        def fake_run_executable(cmd, callbacks, *, sync_tool, process_holder=None):
+            with open(unsure, "w", encoding="utf-8") as f:
+                f.write("1\n00:00:02,000 --> 00:00:04,000\nGuess\n")
+            return 3
+
+        with patch("sync_core.run_executable_tool", side_effect=fake_run_executable), \
+             patch("resources.lapse_download.is_outdated", return_value=False):
+            result = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="lapse",
+                output=out_sub,
+                config=dict(DEFAULT_OPTIONS),
+            )
+        self.assertTrue(result.ok)
+        self.assertTrue(os.path.exists(out_sub))
+        self.assertFalse(os.path.exists(unsure))
+
+    def test_is_outdated(self):
+        from resources import lapse_download
+        current = lapse_download.LAPSE_VERSION.lstrip("v") + "\n"
+        with patch("subprocess.run", return_value=MagicMock(stdout=current)):
+            self.assertFalse(lapse_download.is_outdated("lapse"))
+        with patch("subprocess.run", return_value=MagicMock(stdout="usage: lapse\n")):
+            self.assertTrue(lapse_download.is_outdated("lapse"))
+        self.assertTrue(lapse_download.is_outdated(os.path.join(self.temp_dir, "missing")))
 
     def test_ensure_silero_vad_helper(self):
         from resources import lapse_download

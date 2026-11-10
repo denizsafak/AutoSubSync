@@ -691,7 +691,7 @@ SYNC_TOOLS = {
         },
     },
     "lapse": {
-        "version": "2.0.1",
+        "version": "2.3.3",
         "description": {
             "en_US": "Language-Agnostic Playback Synchronization Engine",
             "es_ES": "Motor de sincronización de reproducción independiente del idioma",
@@ -719,7 +719,7 @@ SYNC_TOOLS = {
         },
         "github": "https://github.com/Schwponaco-org/lapse",
         "documentation": "https://github.com/Schwponaco-org/lapse/blob/main/docs/benchmarks.md",
-        "supported_formats": [".srt", ".ass", ".ssa", ".vtt"],
+        "supported_formats": [".srt", ".ass", ".ssa", ".vtt", ".sbv", ".ttml", ".dfxp", ".smi"],
         "supports_subtitle_as_reference": True,
         "type": "executable",
         "executable": {

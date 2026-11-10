@@ -3,12 +3,13 @@ import os
 import stat
 import shutil
 import platform
+import subprocess
 import tarfile
 import zipfile
 import requests
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-LAPSE_VERSION = "v2.0.1"
+LAPSE_VERSION = "v2.3.3"
 LAPSE_GITHUB_URL = f"https://github.com/Schwponaco-org/lapse/releases/download/{LAPSE_VERSION}"
 DIST_BIN_PATH = os.path.join(script_dir, "lapse")
 
@@ -54,6 +55,21 @@ def ensure_silero_vad():
         return silero_path
     download()
     return silero_path if os.path.isfile(silero_path) else None
+
+
+def is_outdated(exe):
+    """Builds older than v2.0.2 have no --version, so they count as outdated too."""
+    try:
+        found = subprocess.run(
+            [exe, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return True
+    return found.stdout.strip() != LAPSE_VERSION.lstrip("v")
 
 
 def download():
@@ -118,7 +134,9 @@ def download():
 
 if __name__ == "__main__":
     try:
-        download()
+        name = "lapse.exe" if platform.system() == "Windows" else "lapse"
+        if is_outdated(os.path.join(DIST_BIN_PATH, name)):
+            download()
     except Exception:
         exit(1)
 

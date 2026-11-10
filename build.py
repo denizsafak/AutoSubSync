@@ -208,25 +208,18 @@ def ensure_ffmpeg():
 
 
 def ensure_lapse():
-    exe = ".exe" if IS_WINDOWS else ""
-    lapse_dir = "main/resources/lapse"
-    lapse_file = os.path.join(lapse_dir, "lapse" + exe)
-    if not os.path.exists(lapse_file):
-        print("Lapse executable not found, running lapse_download.py...")
-        python_executable = get_venv_python()
-        if not os.path.exists(python_executable):
-            python_executable = sys.executable
-        if (
-            subprocess.run(
-                [python_executable, "main/resources/lapse_download.py"], text=True
-            ).returncode
-            != 0
-        ):
-            print("Error downloading Lapse.")
-            sys.exit(1)
-        print("Lapse downloaded.")
-    else:
-        print("Lapse executable already exists. Skipping download.")
+    python_executable = get_venv_python()
+    if not os.path.exists(python_executable):
+        python_executable = sys.executable
+    if (
+        subprocess.run(
+            [python_executable, "main/resources/lapse_download.py"], text=True
+        ).returncode
+        != 0
+    ):
+        print("Error downloading Lapse.")
+        sys.exit(1)
+    print("Lapse is up to date.")
 
 
 def get_version_info(module_name):
