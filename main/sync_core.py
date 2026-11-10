@@ -11,6 +11,7 @@ import sys
 import time
 import shutil
 import logging
+import tempfile
 import platform
 import importlib
 import multiprocessing
@@ -19,7 +20,7 @@ from typing import Callable, Optional
 
 import platformdirs
 import texts
-from constants import SYNC_TOOLS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
+from constants import SYNC_TOOLS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS, FFMPEG_EXECUTABLE
 from utils import (
     create_process,
     create_backup,
@@ -751,26 +752,17 @@ def run_sync(
             exe_info = current_tool_info["executable"]
             current_os = platform.system()
             exe = exe_info.get(current_os) if isinstance(exe_info, dict) else exe_info
-            if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
-                if current_tool == "lapse":
-                    try:
-                        from resources import lapse_download
+            if current_tool == "lapse":
+                try:
+                    from resources import lapse_download
 
-                        # The startup dialog (or a previous run) may have already
-                        # downloaded lapse to DIST_BIN_PATH even though constants.py
-                        # cached a None/stale path at import time.
-                        lapse_bin = "lapse.exe" if platform.system() == "Windows" else "lapse"
-                        cached_exe = os.path.join(lapse_download.DIST_BIN_PATH, lapse_bin)
-                        if os.path.isfile(cached_exe):
-                            exe = cached_exe
-                        else:
-                            if callbacks:
-                                callbacks._log("Lapse executable not found. Downloading...", "grey")
-                            downloaded = lapse_download.download()
-                            if downloaded and os.path.isfile(downloaded):
-                                exe = downloaded
-                    except Exception as e:
-                        logger.error(f"Failed to auto-download lapse: {e}")
+                    # constants.py caches this path at import, an update may have moved it
+                    exe = lapse_download.installed(exe)
+                    if lapse_download.is_outdated(exe):
+                        callbacks._log("Downloading the latest Lapse...", "grey")
+                        exe = lapse_download.download()
+                except Exception as e:
+                    logger.error(f"Failed to update lapse: {e}")
             if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
                 msg = str(texts.NO_EXECUTABLE_FOUND).format(
                     tool=current_tool, os=current_os
@@ -797,12 +789,44 @@ def run_sync(
                 sync_tool=current_tool,
                 process_holder=process_holder,
             )
+            if (
+                current_tool == "lapse"
+                and rc == 1
+                and ref_ext not in SUBTITLE_EXTENSIONS
+                and not callbacks._cancelled()
+            ):
+                # LAPSE only ships some containers and codecs, ffmpeg can read the rest
+                callbacks._log("Lapse could not read this audio, converting it with ffmpeg...", "grey")
+                audio_fd, audio = tempfile.mkstemp(suffix=".flac")
+                os.close(audio_fd)
+                converted_files_to_clean.append(audio)
+                if not run_executable_tool(
+                    [FFMPEG_EXECUTABLE, "-y", "-loglevel", "error", "-i", effective_reference, "-vn", "-map", "0:a:0", "-c:a", "flac", audio],
+                    callbacks,
+                    sync_tool=current_tool,
+                    process_holder=process_holder,
+                ):
+                    cmd[cmd.index(effective_reference)] = audio
+                    rc = run_executable_tool(
+                        cmd,
+                        callbacks,
+                        sync_tool=current_tool,
+                        process_holder=process_holder,
+                    )
 
         if current_tool == "lapse" and rc == 3:
-            if os.path.exists(effective_output) and os.path.getsize(effective_output) > 0:
+            root, ext = os.path.splitext(effective_output)
+            if os.path.exists(f"{root}.lapse-unsure{ext}"):
+                os.replace(f"{root}.lapse-unsure{ext}", effective_output)
                 logger.info("Lapse produced output with low-confidence/unsure verdict (code 3)")
                 callbacks._log("Lapse synced subtitles with low-confidence/unsure verdict.", "orange")
                 rc = 0
+
+        # A .idx is only an index, it needs the .sub with the pictures beside it
+        if rc == 0 and current_tool == "lapse" and output.lower().endswith(".idx"):
+            pictures = os.path.splitext(effective_subtitle)[0] + ".sub"
+            if os.path.exists(pictures) and os.path.abspath(pictures) != os.path.abspath(os.path.splitext(output)[0] + ".sub"):
+                shutil.copy2(pictures, os.path.splitext(output)[0] + ".sub")
 
         # Check output file existence and non-zero size
         if rc == 0 and not callbacks._cancelled():

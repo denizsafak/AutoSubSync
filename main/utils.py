@@ -1138,6 +1138,12 @@ def show_tool_info_dialog(parent):
     icon.setPixmap(info_icon.pixmap(32, 32))
     header.addWidget(icon)
     version = tool.get("version", "")
+    if tool_name == "lapse":
+        from resources import lapse_download
+
+        version = lapse_download.current_version(
+            lapse_download.installed(tool["executable"].get(platform.system()))
+        )
     t = QLabel(
         f"<h1 style='margin-bottom: 0;'>{tool_name} <span style='font-size: 12px; font-weight: normal; color: {COLORS['GREY']};'>v{version}</span></h1>"
     )
