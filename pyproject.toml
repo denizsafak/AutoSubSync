@@ -35,6 +35,7 @@ dependencies = [
     "platformdirs",
     "ffsubsync",
     "autosubsync",
+    "soundfile>=0.13.1",
     "static-ffmpeg",
     "onnxruntime",
 ]
@@ -73,6 +74,14 @@ assy = "main.main:main"
 
 [project.scripts]
 assy-cli = "main.cli:main"
+
+[tool.uv]
+# autosubsync still depends on the abandoned PySoundFile distribution. Its
+# platform-independent wheel omits libsndfile and shadows the maintained
+# soundfile package, which ships a compatible libsndfile for every platform
+# (including Apple Silicon). Exclude the legacy distribution so uv resolves
+# the maintained package instead.
+exclude-dependencies = ["pysoundfile"]
 
 [tool.hatch.build.targets.sdist]
 artifacts = [

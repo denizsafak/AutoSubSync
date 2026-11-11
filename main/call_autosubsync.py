@@ -45,6 +45,13 @@ def _redirect_fd(fd, target_stream):
 
 
 def cli_entry(args=None):
+    """Run the bundled autosubsync CLI and return its process exit code.
+
+    The compatibility hook runs before autosubsync imports ``soundfile`` so
+    the legacy PySoundFile module can find libsndfile on platforms where its
+    wheel does not bundle the library.
+    """
+    compat.ensure_soundfile_library()
     _argv = sys.argv
     model_file_default = get_resource_path(
         "autosubsync.resources.autosubsync", "trained-model.bin"

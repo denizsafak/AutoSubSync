@@ -107,6 +107,9 @@ a = Analysis(
     hiddenimports=all_main_modules + [
         'ffsubsync',
         'autosubsync',
+        'soundfile',
+        '_soundfile',
+        '_soundfile_data',
         'onnxruntime',
     ],
     #hookspath=['main/resources/hooks'],

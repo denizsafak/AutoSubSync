@@ -26,6 +26,10 @@ IS_LINUX = CURRENT_PLATFORM == "Linux"
 # AppImage tool URL for Linux
 APPIMAGETOOL_URL = "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
 
+# Minimum version of the maintained `soundfile` package whose wheels bundle
+# libsndfile for every supported platform, including Apple Silicon.
+SOUNDFILE_MIN_VERSION = "0.13.1"
+
 # Add main directory to Python path to import constants and utils
 sys.path.insert(0, os.path.join(script_dir, "main"))
 
@@ -166,7 +170,65 @@ def install_requirements():
     if completed_process.returncode != 0:
         print("Error installing requirements.")
         sys.exit(completed_process.returncode)
+    force_reinstall_modern_soundfile()
     print("Requirements installed.")
+
+
+def force_reinstall_modern_soundfile():
+    """Ensure the maintained ``soundfile`` package provides ``soundfile.py``.
+
+    ``autosubsync`` still depends on the abandoned ``PySoundFile``
+    distribution, whose platform-independent wheel omits libsndfile and can
+    shadow the maintained package in long-lived virtual environments.
+    Reinstalling ``soundfile`` last guarantees that its module and bundled
+    libsndfile binaries win over the legacy files on every platform.
+    """
+    print(f"Ensuring soundfile>={SOUNDFILE_MIN_VERSION} is installed...")
+    venv_python = get_venv_python()
+    requirement = f"soundfile>={SOUNDFILE_MIN_VERSION}"
+
+    if USE_UV:
+        cmd = [
+            UV_PATH,
+            "pip",
+            "install",
+            "--python",
+            venv_python,
+            "--force-reinstall",
+            "--no-deps",
+            requirement,
+        ]
+    else:
+        vdir = get_venv_dir()
+        pip_executable = (
+            os.path.join(vdir, "Scripts", "pip.exe")
+            if IS_WINDOWS
+            else os.path.join(vdir, "bin", "pip")
+        )
+        if os.path.exists(pip_executable):
+            cmd = [
+                pip_executable,
+                "install",
+                "--force-reinstall",
+                "--no-deps",
+                requirement,
+            ]
+        else:
+            cmd = [
+                venv_python,
+                "-m",
+                "pip",
+                "install",
+                "--force-reinstall",
+                "--no-deps",
+                requirement,
+            ]
+
+    completed_process = subprocess.run(cmd, text=True)
+    if completed_process.returncode != 0:
+        print("Error installing the maintained soundfile package.")
+        sys.exit(completed_process.returncode)
+    print("soundfile is ready.")
 
 
 def remove_webrtcvad_hook():
