@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QFileIconProvider,
     QDialog,
+    QFileDialog,
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer
 from PyQt6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QAction, QActionGroup

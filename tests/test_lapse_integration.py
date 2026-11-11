@@ -619,6 +619,29 @@ class TestLapseIntegration(unittest.TestCase):
         self.assertIn("Listening to the audio 100%", content)
         self.assertIn("Done (ols): offset=-120ms confidence=12.3", content)
 
+    def test_qfiledialog_not_raising_nameerror_on_database_backup_and_import(self):
+        """Verify that _backup_processed_database and _import_processed_database have QFileDialog imported."""
+        from PyQt6.QtWidgets import QApplication
+        from gui import autosubsyncapp
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        dummy = autosubsyncapp.__new__(autosubsyncapp)
+
+        mock_mgr = MagicMock()
+        mock_mgr.get_db_path.return_value = "/fake/db.db"
+        mock_mgr.import_from_database.return_value = (0, 0)
+
+        with patch("gui.QFileDialog.getSaveFileName", return_value=("", "")), \
+             patch("processed_items_manager.get_processed_items_manager", return_value=mock_mgr), \
+             patch("os.path.exists", return_value=True):
+            # Should not raise NameError: name 'QFileDialog' is not defined
+            dummy._backup_processed_database()
+
+        with patch("gui.QFileDialog.getOpenFileName", return_value=("", "")), \
+             patch("processed_items_manager.get_processed_items_manager", return_value=mock_mgr):
+            # Should not raise NameError: name 'QFileDialog' is not defined
+            dummy._import_processed_database()
+
 
 if __name__ == "__main__":
     unittest.main()
