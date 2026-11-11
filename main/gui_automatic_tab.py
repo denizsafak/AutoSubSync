@@ -492,7 +492,7 @@ def show_add_arguments_dialog(self):
 
 
 def show_other_options_dialog(self):
-    """Show dialog for other options of the current sync tool"""
+    """Show the per-tool other options dialog with consistent spacing and tool context."""
     current_tool = getattr(self, "current_sync_tool", None)
     if not current_tool:
         current_tool = (
@@ -511,11 +511,18 @@ def show_other_options_dialog(self):
     dialog.setWindowFlags(
         dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
     )
-    dialog.setMinimumWidth(380)
+    dialog.setMinimumWidth(440)
 
     layout = QVBoxLayout(dialog)
-    layout.setSpacing(6)
-    layout.setContentsMargins(12, 12, 12, 12)
+    layout.setSpacing(12)
+    layout.setContentsMargins(18, 18, 18, 18)
+
+    description_label = QLabel(
+        str(texts.OTHER_OPTIONS_FOR_TOOL).format(tool=current_tool)
+    )
+    description_label.setWordWrap(True)
+    description_label.setStyleSheet("color: gray; font-size: 11px;")
+    layout.addWidget(description_label)
 
     for option_name, option_data in other_options.items():
         option_type = option_data.get("type")

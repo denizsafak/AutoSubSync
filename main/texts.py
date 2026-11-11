@@ -6781,6 +6781,32 @@ OTHER_OPTIONS = {
     "fa_IR": "گزینه‌های دیگر",
 }
 
+OTHER_OPTIONS_FOR_TOOL = {
+    "en_US": "Configure additional settings for {tool}. This window lets you adjust extra options that control how this sync tool runs.",
+    "es_ES": "Configura ajustes adicionales para {tool}. Esta ventana te permite modificar opciones extra que controlan cómo se ejecuta esta herramienta de sincronización.",
+    "de_DE": "Konfigurieren Sie zusätzliche Einstellungen für {tool}. In diesem Fenster können Sie weitere Optionen anpassen, die das Verhalten dieses Synchronisierungstools steuern.",
+    "fr_FR": "Configurez les paramètres supplémentaires pour {tool}. Cette fenêtre vous permet d'ajuster des options additionnelles qui contrôlent le fonctionnement de cet outil de synchronisation.",
+    "it_IT": "Configura impostazioni aggiuntive per {tool}. Questa finestra consente di regolare opzioni extra che controllano il funzionamento di questo strumento di sincronizzazione.",
+    "pl_PL": "Skonfiguruj dodatkowe ustawienia dla {tool}. To okno umożliwia dostosowanie dodatkowych opcji kontrolujących działanie tego narzędzia synchronizacji.",
+    "pt_PT": "Configure definições adicionais para {tool}. Esta janela permite ajustar opções extra que controlam o funcionamento desta ferramenta de sincronização.",
+    "tr_TR": "{tool} için ek ayarları yapılandırın. Bu pencere, bu senkronizasyon aracının nasıl çalıştığını kontrol eden ek seçenekleri ayarlamanızı sağlar.",
+    "vi_VN": "Cấu hình các cài đặt bổ sung cho {tool}. Cửa sổ này cho phép bạn điều chỉnh các tùy chọn thêm để kiểm soát cách công cụ đồng bộ này hoạt động.",
+    "id_ID": "Konfigurasikan pengaturan tambahan untuk {tool}. Jendela ini memungkinkan Anda menyesuaikan opsi ekstra yang mengontrol cara alat sinkronisasi ini berjalan.",
+    "ms_MY": "Konfigurasikan tetapan tambahan untuk {tool}. Tetingkap ini membolehkan anda melaraskan pilihan tambahan yang mengawal cara alat penyegerakan ini berfungsi.",
+    "th_TH": "กำหนดค่าการตั้งค่าเพิ่มเติมสำหรับ {tool} หน้าต่างนี้ให้คุณปรับตัวเลือกเสริมที่ควบคุมการทำงานของเครื่องมือซิงค์นี้",
+    "uk_UA": "Налаштуйте додаткові параметри для {tool}. Це вікно дозволяє змінювати додаткові опції, які керують роботою цього інструмента синхронізації.",
+    "ru_RU": "Настройте дополнительные параметры для {tool}. Это окно позволяет изменить дополнительные опции, управляющие работой этого инструмента синхронизации.",
+    "zh_CN": "为 {tool} 配置附加设置。此窗口允许您调整控制此同步工具运行方式的额外选项。",
+    "zh_TW": "為 {tool} 設定附加選項。此視窗可讓您調整控制此同步工具運作方式的額外選項。",
+    "ja_JP": "{tool} の追加設定を構成します。このウィンドウでは、この同期ツールの動作を制御する追加オプションを調整できます。",
+    "ko_KR": "{tool}의 추가 설정을 구성합니다. 이 창에서는 이 동기화 도구의 동작을 제어하는 추가 옵션을 조정할 수 있습니다.",
+    "hi_IN": "{tool} के लिए अतिरिक्त सेटिंग्स कॉन्फ़िगर करें। यह विंडो आपको उन अतिरिक्त विकल्पों को समायोजित करने देती है जो नियंत्रित करते हैं कि यह सिंक टूल कैसे चलता है।",
+    "bn_BD": "{tool} এর জন্য অতিরিক্ত সেটিংস কনফিগার করুন। এই উইন্ডোটি আপনাকে অতিরিক্ত বিকল্পগুলি সামঞ্জস্য করতে দেয় যা এই সিঙ্ক টুলটি কীভাবে কাজ করে তা নিয়ন্ত্রণ করে।",
+    "ur_PK": "{tool} کے لیے اضافی ترتیبات ترتیب دیں۔ یہ ونڈو آپ کو اضافی اختیارات کو ایڈجسٹ کرنے کی اجازت دیتی ہے جو اس سنک ٹول کے کام کرنے کے طریقے کو کنٹرول کرتے ہیں۔",
+    "ar_SA": "قم بتكوين إعدادات إضافية لـ {tool}. تتيح لك هذه النافذة ضبط خيارات إضافية تتحكم في كيفية عمل أداة المزامنة هذه.",
+    "fa_IR": "تنظیمات اضافی را برای {tool} پیکربندی کنید. این پنجره به شما امکان می‌دهد گزینه‌های اضافی را که نحوه اجرای این ابزار همگام‌سازی را کنترل می‌کنند تنظیم کنید.",
+}
+
 UPDATE_LAPSE_CONFIRMATION = {
     "en_US": "Would you like to update LAPSE now?",
     "es_ES": "¿Desea actualizar LAPSE ahora?",
