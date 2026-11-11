@@ -2206,6 +2206,35 @@ LAPSE_RESULT_NOT_WRITTEN = {
     "ur_PK": "Lapse کو کافی یقین نہیں تھا اور اس نے کوئی نتیجہ نہیں لکھا (غیر یقینی سائیڈ کار فائلیں غیر فعال ہیں)۔",
 }
 
+# Shown when autosubsync exits with code 1 because the fit quality is below
+# its confidence threshold: it has already written the resynced subtitle, so
+# the result is surfaced as needs-review instead of a plain failure.
+AUTOSUBSYNC_LOW_QUALITY_SAVED = {
+    "en_US": "Autosubsync reported a low quality of fit; the result was saved but is likely wrong and needs review.",
+    "es_ES": "Autosubsync informó una baja calidad de ajuste; el resultado se guardó, pero probablemente sea incorrecto y necesita revisión.",
+    "tr_TR": "Autosubsync düşük bir eşleşme kalitesi bildirdi; sonuç kaydedildi ancak büyük olasılıkla yanlış, kontrol edilmeli.",
+    "zh_CN": "Autosubsync 报告拟合质量较低；结果已保存，但很可能不正确，需要检查。",
+    "zh_TW": "Autosubsync 回報擬合品質較低；結果已儲存，但很可能不正確，需要檢查。",
+    "ru_RU": "Autosubsync сообщил о низком качестве подгонки; результат сохранён, но, вероятно, неверен и требует проверки.",
+    "pl_PL": "Autosubsync zgłosił niską jakość dopasowania; wynik został zapisany, ale prawdopodobnie jest błędny i wymaga sprawdzenia.",
+    "uk_UA": "Autosubsync повідомив про низьку якість підбору; результат збережено, але він, імовірно, неправильний і потребує перевірки.",
+    "ja_JP": "Autosubsync がフィットの品質が低いと報告しました。結果は保存されましたが、おそらく誤りがあるため確認が必要です。",
+    "ko_KR": "Autosubsync이 낮은 피트 품질을 보고했습니다. 결과가 저장되었지만 잘못되었을 가능성이 높아 검토가 필요합니다.",
+    "hi_IN": "Autosubsync ने फिट की निम्न गुणवत्ता की सूचना दी; परिणाम सहेजा गया लेकिन संभवतः गलत है और समीक्षा की आवश्यकता है।",
+    "bn_BD": "Autosubsync ফিটের নিম্ন মানের রিপোর্ট করেছে; ফলাফল সংরক্ষিত হয়েছে তবে সম্ভবত ভুল এবং পরীক্ষা প্রয়োজন।",
+    "it_IT": "Autosubsync ha segnalato una bassa qualità di adattamento; il risultato è stato salvato ma è probabilmente errato e richiede una revisione.",
+    "fr_FR": "Autosubsync a signalé une faible qualité d'ajustement ; le résultat a été enregistré, mais il est probablement incorrect et doit être vérifié.",
+    "de_DE": "Autosubsync meldete eine geringe Anpassungsqualität; das Ergebnis wurde gespeichert, ist aber wahrscheinlich falsch und muss überprüft werden.",
+    "pt_PT": "O Autosubsync relatou uma baixa qualidade de ajuste; o resultado foi salvo, mas provavelmente está errado e precisa de revisão.",
+    "ar_SA": "أبلغ Autosubsync عن جودة مطابقة منخفضة؛ تم حفظ النتيجة لكنها على الأرجح خاطئة وتحتاج إلى مراجعة.",
+    "vi_VN": "Autosubsync báo cáo chất lượng khớp thấp; kết quả đã được lưu nhưng có thể sai và cần được kiểm tra lại.",
+    "fa_IR": "Autosubsync کیفیت تطبیق پایینی را گزارش کرد؛ نتیجه ذخیره شد اما به احتمال زیاد نادرست است و نیاز به بازبینی دارد.",
+    "id_ID": "Autosubsync melaporkan kualitas kecocokan yang rendah; hasil disimpan tetapi kemungkinan besar salah dan perlu ditinjau.",
+    "ms_MY": "Autosubsync melaporkan kualiti padanan yang rendah; hasil disimpan tetapi kemungkinan besar salah dan perlu disemak.",
+    "th_TH": "Autosubsync รายงานคุณภาพการจับคู่ต่ำ; บันทึกผลลัพธ์แล้วแต่น่าจะไม่ถูกต้อง จำเป็นต้องตรวจสอบ",
+    "ur_PK": "Autosubsync نے فٹ کی کم معیار کی اطلاع دی؛ نتیجہ محفوظ کر لیا گیا لیکن ممکنہ طور پر غلط ہے اور جائزے کی ضرورت ہے۔",
+}
+
 SAVED_TO_LABEL = {
     "en_US": "Saved to: {output}",
     "es_ES": "Guardado en: {output}",

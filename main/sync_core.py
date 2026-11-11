@@ -684,32 +684,38 @@ def run_sync(
     Performs path validation, tool fallback, format conversion, output-path resolution,
     backup, autosubsync overwrite-protection, tool execution, and post-replace of the
     temp output file. Returns a SyncResult; errors/progress are also reported
-    through callbacks as they happen. For LAPSE, the final stdout verdict tag
-    ([solid]/[unsure]/[nothing]) is captured so that exit code 3 (unsure or
-    nothing) can be recovered from the sidecar file and flagged with
+    through callbacks as they happen. Low-confidence results are flagged with
     SyncResult.needs_review instead of failing silently or being counted as a
-    plain success.
+    plain success: for LAPSE, the final stdout verdict tag
+    ([solid]/[unsure]/[nothing]) is captured so that exit code 3 (unsure or
+    nothing) can be recovered from the sidecar file, and for autosubsync, a
+    "low quality of fit" warning with a written output (exit code 1) keeps the
+    resynced subtitle it already produced.
     """
     callbacks = callbacks or SyncCallbacks()
     start = time.monotonic()
     needs_review = False
 
     # LAPSE prints its verdict as a trailing [solid]/[unsure]/[nothing] tag on
-    # stdout; remember the last one seen so exit code 3 can be reported with
-    # the right message below.
+    # stdout, and autosubsync warns on stderr when the fit quality is below
+    # its confidence threshold; remember both so exit codes can be
+    # interpreted after the run.
     lapse_verdict = {"name": None}
+    autosubsync_low_quality = {"warned": False}
     original_subprocess_line = callbacks.on_subprocess_line
 
-    def _capture_lapse_verdict(line, is_overwrite):
-        """Forward a subprocess line and record LAPSE's trailing verdict tag."""
+    def _capture_tool_verdicts(line, is_overwrite):
+        """Forward a subprocess line and record tool confidence signals."""
         match = re.search(r"\[(solid|unsure|nothing)\]\s*$", line or "")
         if match:
             lapse_verdict["name"] = match.group(1)
+        if "low quality of fit" in (line or ""):
+            autosubsync_low_quality["warned"] = True
         if original_subprocess_line:
             original_subprocess_line(line, is_overwrite)
 
-    if tool == "lapse":
-        callbacks.on_subprocess_line = _capture_lapse_verdict
+    if tool in ("lapse", "autosubsync"):
+        callbacks.on_subprocess_line = _capture_tool_verdicts
 
     from constants import is_remote_url
 
@@ -1012,6 +1018,26 @@ def run_sync(
                         sync_tool=current_tool,
                         process_holder=process_holder,
                     )
+
+        if (
+            current_tool == "autosubsync"
+            and rc == 1
+            and autosubsync_low_quality["warned"]
+            and not callbacks._cancelled()
+            and os.path.exists(effective_output)
+            and os.path.getsize(effective_output) > 0
+        ):
+            # autosubsync writes the resynced subtitle even when the fit
+            # quality is below its confidence threshold, then exits 1. The
+            # file on disk is a genuine (if doubtful) result: surface it as
+            # needs-review instead of failing, mirroring the LAPSE unsure
+            # verdict flow above.
+            callbacks._log(str(texts.AUTOSUBSYNC_LOW_QUALITY_SAVED), "orange")
+            logger.info(
+                "Autosubsync reported low fit quality; keeping output as needs-review"
+            )
+            needs_review = True
+            rc = 0
 
         if current_tool == "lapse" and rc == 3:
             # LAPSE exits 3 for both unsure and nothing verdicts: the result is
