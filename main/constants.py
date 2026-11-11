@@ -148,6 +148,7 @@ DEFAULT_OPTIONS = {
     "backup_subtitles_before_overwriting": True,
     "keep_extracted_subtitles": False,
     "keep_converted_subtitles": False,
+    "keep_converted_audio_files": False,
     "output_subtitle_encoding": "same_as_input",
     "add_ms_prefix_to_filename": True,
     "keep_log_records": True,
@@ -3134,6 +3135,30 @@ VIDEO_EXTENSIONS = [
     ".h265",
     ".hevc",
 ]
+
+# Audio-only files accepted as sync references. The sync tools expect a video
+# container, so sync_core converts these to audio-only .mp4 files (created next
+# to the source audio) before handing them to the tool.
+AUDIO_EXTENSIONS = [
+    ".mp3",
+    ".m4a",
+    ".aac",
+    ".flac",
+    ".ogg",
+    ".oga",
+    ".opus",
+    ".wav",
+    ".wma",
+    ".aiff",
+    ".aif",
+    ".ape",
+    ".mka",
+]
+
+# Files usable on the reference ("video") side of a sync pair: videos plus
+# audio-only files. Reference selections that also allow subtitle references
+# append SUBTITLE_EXTENSIONS on top of this list.
+REFERENCE_MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS
 
 EXTRACTABLE_SUBTITLE_EXTENSIONS = {
     "subrip": "srt",

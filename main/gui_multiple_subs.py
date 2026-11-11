@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QFrame,
 )
 from PyQt6.QtCore import Qt, QFileInfo
-from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, PROGRAM_NAME
+from constants import REFERENCE_MEDIA_EXTENSIONS, SUBTITLE_EXTENSIONS, PROGRAM_NAME
 from utils import open_filedialog, open_folder
 
 logger = logging.getLogger(__name__)
@@ -212,7 +212,7 @@ class MultipleSubsDialog(QDialog):
             if not folder:
                 return
             files = _collect_files_from_paths(
-                [folder], VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS
+                [folder], REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS
             )
             if not files:
                 QMessageBox.warning(
@@ -223,7 +223,8 @@ class MultipleSubsDialog(QDialog):
                 return
             # Prefer a video if available
             files.sort(
-                key=lambda f: os.path.splitext(f)[1].lower() not in VIDEO_EXTENSIONS,
+                key=lambda f: os.path.splitext(f)[1].lower()
+                not in REFERENCE_MEDIA_EXTENSIONS,
             )
             self.ref_input.set_file(files[0])
         else:
@@ -231,7 +232,7 @@ class MultipleSubsDialog(QDialog):
                 self.parent_window,
                 "file-open",
                 texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE,
-                f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})",
+                f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)})",
             )
             if file_path:
                 self.ref_input.set_file(file_path)

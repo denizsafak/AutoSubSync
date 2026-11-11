@@ -240,6 +240,12 @@ class LogWindow(QWidget):
             bold=True,
             color=COLORS["GREEN"],
         )
+        self.append_message(f"{texts.KEEP_CONVERTED_AUDIO_FILES}: ", end="")
+        self.append_message(
+            bool_display(get("keep_converted_audio_files")),
+            bold=True,
+            color=COLORS["GREEN"],
+        )
 
         loc = get("automatic_save_location")
         # Get display text for the save location (mapping is now key:internal -> value:display)

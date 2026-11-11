@@ -703,7 +703,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser(
         "sync", help="Auto-sync one subtitle to a video or reference subtitle"
     )
-    s.add_argument("video", help="Video or reference subtitle path")
+    s.add_argument("video", help="Video, audio, or reference subtitle path")
     s.add_argument("subtitle", help="Subtitle file to sync")
     s.add_argument("-o", "--output", help="Output subtitle path (overrides save-mode)")
     s.add_argument("-t", "--tool", choices=TOOL_CHOICES, help="Sync engine")

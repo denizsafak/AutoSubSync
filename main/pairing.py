@@ -8,14 +8,20 @@ and pair_paths from this module.
 import os
 from typing import Iterable
 
-from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS
+from constants import REFERENCE_MEDIA_EXTENSIONS, SUBTITLE_EXTENSIONS
 
 
 def is_video_file(file_path: str) -> bool:
-    return os.path.splitext(file_path)[-1].lower() in VIDEO_EXTENSIONS
+    """Return True for files usable as the reference side of a pair.
+
+    Audio-only files count as well: they are accepted as references and
+    converted to audio-only .mp4 files by sync_core before the sync runs.
+    """
+    return os.path.splitext(file_path)[-1].lower() in REFERENCE_MEDIA_EXTENSIONS
 
 
 def is_subtitle_file(file_path: str) -> bool:
+    """Return True if the file has a supported subtitle extension."""
     return os.path.splitext(file_path)[-1].lower() in SUBTITLE_EXTENSIONS
 
 

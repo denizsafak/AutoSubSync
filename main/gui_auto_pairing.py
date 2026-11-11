@@ -21,7 +21,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QFileInfo
 from PyQt6.QtGui import QColor
-from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, PROGRAM_NAME, COLORS
+from constants import (
+    REFERENCE_MEDIA_EXTENSIONS,
+    SUBTITLE_EXTENSIONS,
+    PROGRAM_NAME,
+    COLORS,
+)
 from utils import open_filedialog, open_folder
 
 logger = logging.getLogger(__name__)
@@ -93,7 +98,7 @@ def collect_files_from_paths(paths, allowed_extensions, prioritize_videos=False)
         all_files.sort(
             key=lambda f: (
                 os.path.splitext(f)[1].lower()
-                not in VIDEO_EXTENSIONS,  # Videos first (False sorts before True)
+                not in REFERENCE_MEDIA_EXTENSIONS,  # Media first (False sorts before True)
                 os.path.basename(f).lower(),  # Then alphabetically
             )
         )
@@ -112,7 +117,7 @@ def get_list_components(dialog, is_reference):
         "remove_btn": getattr(dialog, f"{prefix}_remove_selected_btn"),
         "move_btn": getattr(dialog, f"{prefix}_move_to_other_btn"),
         "allowed_ext": (
-            (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
+            (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)
             if is_reference
             else SUBTITLE_EXTENSIONS
         ),
@@ -386,7 +391,7 @@ class AutoPairingDialog(QDialog):
                 if url.isLocalFile()
             ]
             allowed = (
-                (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
+                (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)
                 if is_reference
                 else SUBTITLE_EXTENSIONS
             )
@@ -462,8 +467,8 @@ class AutoPairingDialog(QDialog):
             if file_path in source["list"]:
                 ext = os.path.splitext(file_path)[1].lower()
 
-                # Check if trying to move video file from reference to subtitle list
-                if is_reference and ext in VIDEO_EXTENSIONS:
+                # Check if trying to move video/audio file from reference to subtitle list
+                if is_reference and ext in REFERENCE_MEDIA_EXTENSIONS:
                     errors["moving_video"].append(os.path.basename(file_path))
                 elif ext in target["allowed_ext"] and file_path not in target["list"]:
                     # Check for duplicate season-episode in target list
@@ -549,7 +554,7 @@ class AutoPairingDialog(QDialog):
                 else texts.SELECT_SUBTITLE_FILE_TITLE
             ),
             (
-                f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL if is_reference else texts.SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+                f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL if is_reference else texts.SUBTITLE_FILES_LABEL} (*{' *'.join(REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
                 if is_reference
                 else f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
             ),
@@ -567,7 +572,7 @@ class AutoPairingDialog(QDialog):
         input_box = self.ref_input_box if is_reference else self.sub_input_box
         buttons = self.ref_buttons_widget if is_reference else self.sub_buttons_widget
         allowed = (
-            (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
+            (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)
             if is_reference
             else SUBTITLE_EXTENSIONS
         )
@@ -743,7 +748,7 @@ class AutoPairingDialog(QDialog):
             return
 
         allowed = (
-            (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)
+            (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)
             if is_reference
             else SUBTITLE_EXTENSIONS
         )

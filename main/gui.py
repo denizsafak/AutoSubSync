@@ -150,7 +150,7 @@ class InputBox(QLabel):
             )
             title = texts.SELECT_SUBTITLE_FILE_TITLE
         elif self.input_type == "video_or_subtitle":
-            file_filter = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+            file_filter = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
             title = texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE
         else:
             # For "batch" type, file browsing is handled by the menu triggered from mousePressEvent.
@@ -265,11 +265,11 @@ class InputBox(QLabel):
             reference_file = None
             subtitle_file = None
 
-            # Determine which is video and which is subtitle
-            if ext1 in VIDEO_EXTENSIONS and ext2 in SUBTITLE_EXTENSIONS:
+            # Determine which is video/audio and which is subtitle
+            if ext1 in REFERENCE_MEDIA_EXTENSIONS and ext2 in SUBTITLE_EXTENSIONS:
                 reference_file = files[0]
                 subtitle_file = files[1]
-            elif ext1 in SUBTITLE_EXTENSIONS and ext2 in VIDEO_EXTENSIONS:
+            elif ext1 in SUBTITLE_EXTENSIONS and ext2 in REFERENCE_MEDIA_EXTENSIONS:
                 reference_file = files[1]
                 subtitle_file = files[0]
 
@@ -316,7 +316,7 @@ class InputBox(QLabel):
             return
         elif (
             self.input_type == "video_or_subtitle"
-            and ext not in VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS
+            and ext not in REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS
         ):
             self.show_error(
                 texts.UNSUPPORTED_VIDEO_OR_SUBTITLE_FORMAT_WITH_EXT.format(ext=ext)
@@ -875,6 +875,21 @@ class autosubsyncapp(QWidget):
             lambda checked: update_config(self, "keep_converted_subtitles", checked)
         )
         self.settings_menu.addAction(self.keep_converted_subtitles_action)
+
+        self.keep_converted_audio_files_action = QAction(
+            texts.KEEP_CONVERTED_AUDIO_FILES, self
+        )
+        self.keep_converted_audio_files_action.setCheckable(True)
+        self.keep_converted_audio_files_action.setChecked(
+            self.config.get(
+                "keep_converted_audio_files",
+                DEFAULT_OPTIONS["keep_converted_audio_files"],
+            )
+        )
+        self.keep_converted_audio_files_action.triggered.connect(
+            lambda checked: update_config(self, "keep_converted_audio_files", checked)
+        )
+        self.settings_menu.addAction(self.keep_converted_audio_files_action)
 
         self.auto_rename_bracket_paths_action = QAction(texts.ALASS_RENAME_ALWAYS, self)
         self.auto_rename_bracket_paths_action.setCheckable(True)

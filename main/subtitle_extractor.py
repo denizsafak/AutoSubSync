@@ -11,6 +11,7 @@ from constants import (
     FFPROBE_EXECUTABLE,
     EXTRACTABLE_SUBTITLE_EXTENSIONS,
     SUBTITLE_EXTENSIONS,
+    AUDIO_EXTENSIONS,
     SYNC_TOOLS,
     is_remote_url,
 )
@@ -35,6 +36,11 @@ def should_extract_subtitles(reference, tool, config, override=None):
         return False
 
     if os.path.splitext(reference)[1].lower() in SUBTITLE_EXTENSIONS:
+        return False
+
+    # Audio-only references have no embedded subtitle streams; sync_core
+    # wraps them into an .mp4 later, which would not add any either.
+    if os.path.splitext(reference)[1].lower() in AUDIO_EXTENSIONS:
         return False
 
     # Tools that natively search and parse embedded subtitles (like lapse)

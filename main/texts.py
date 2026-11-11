@@ -788,6 +788,32 @@ KEEP_CONVERTED_SUBTITLES = {
     "ur_PK": "تبدیل شدہ سب ٹائٹلز محفوظ رکھیں",
 }
 
+KEEP_CONVERTED_AUDIO_FILES = {
+    "en_US": "Keep converted audio files",
+    "es_ES": "Mantener archivos de audio convertidos",
+    "tr_TR": "Dönüştürülen ses dosyalarını sakla",
+    "zh_CN": "保留转换的音频文件",
+    "zh_TW": "保留轉換的音訊檔案",
+    "ru_RU": "Сохранить конвертированные аудиофайлы",
+    "pl_PL": "Zachowaj skonwertowane pliki audio",
+    "uk_UA": "Зберегти конвертовані аудіофайли",
+    "ja_JP": "変換されたオーディオファイルを保持",
+    "ko_KR": "변환된 오디오 파일 유지",
+    "hi_IN": "परिवर्तित ऑडियो फ़ाइलें रखें",
+    "bn_BD": "রূপান্তরিত অডিও ফাইল রাখুন",
+    "it_IT": "Mantieni file audio convertiti",
+    "fr_FR": "Conserver les fichiers audio convertis",
+    "de_DE": "Konvertierte Audiodateien behalten",
+    "pt_PT": "Manter arquivos de áudio convertidos",
+    "ar_SA": "احتفظ بملفات الصوت المحولة",
+    "vi_VN": "Giữ tệp âm thanh đã chuyển đổi",
+    "fa_IR": "حفظ فایل‌های صوتی تبدیل‌شده",
+    "id_ID": "Simpan file audio yang dikonversi",
+    "ms_MY": "Simpan fail audio yang ditukar",
+    "th_TH": "เก็บไฟล์เสียงที่แปลงแล้ว",
+    "ur_PK": "تبدیل شدہ آڈیو فائلیں محفوظ رکھیں",
+}
+
 ADD_TOOL_PREFIX_TO_SUBTITLES = {
     "en_US": 'Add "tool_" prefix to subtitles',
     "es_ES": 'Agregar prefijo "tool_" a los subtítulos',
@@ -6001,6 +6027,32 @@ CONVERTING_FORMAT_TO_SRT = {
     "ms_MY": "Menukar {format} kepada SRT...",
     "th_TH": "กำลังแปลง {format} เป็น SRT...",
     "ur_PK": "{format} کو SRT میں تبدیل کیا جا رہا ہے...",
+}
+
+CONVERTING_AUDIO_TO_MP4 = {
+    "en_US": "Converting {filename} to MP4...",
+    "es_ES": "Convirtiendo {filename} a MP4...",
+    "tr_TR": "{filename} MP4'e dönüştürülüyor...",
+    "zh_CN": "正在将 {filename} 转换为 MP4...",
+    "zh_TW": "正在將 {filename} 轉換為 MP4...",
+    "ru_RU": "Конвертация {filename} в MP4...",
+    "pl_PL": "Konwertowanie {filename} na MP4...",
+    "uk_UA": "Конвертація {filename} в MP4...",
+    "ja_JP": "{filename} を MP4 に変換中...",
+    "ko_KR": "{filename}을(를) MP4로 변환 중...",
+    "hi_IN": "{filename} को MP4 में कन्वर्ट कर रहे हैं...",
+    "bn_BD": "{filename} থেকে MP4 এ রূপান্তর করা হচ্ছে...",
+    "it_IT": "Conversione di {filename} in MP4...",
+    "fr_FR": "Conversion de {filename} vers MP4...",
+    "de_DE": "Konvertierung von {filename} zu MP4...",
+    "pt_PT": "Convertendo {filename} para MP4...",
+    "ar_SA": "تحويل {filename} إلى MP4...",
+    "vi_VN": "Đang chuyển đổi {filename} sang MP4...",
+    "fa_IR": "در حال تبدیل {filename} به MP4...",
+    "id_ID": "Mengonversi {filename} ke MP4...",
+    "ms_MY": "Menukar {filename} kepada MP4...",
+    "th_TH": "กำลังแปลง {filename} เป็น MP4...",
+    "ur_PK": "{filename} کو MP4 میں تبدیل کیا جا رہا ہے...",
 }
 
 

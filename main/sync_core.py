@@ -20,7 +20,13 @@ from typing import Callable, Optional
 
 import platformdirs
 import texts
-from constants import SYNC_TOOLS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS, FFMPEG_EXECUTABLE
+from constants import (
+    SYNC_TOOLS,
+    DEFAULT_OPTIONS,
+    SUBTITLE_EXTENSIONS,
+    AUDIO_EXTENSIONS,
+    FFMPEG_EXECUTABLE,
+)
 from utils import (
     create_process,
     create_backup,
@@ -234,6 +240,73 @@ def determine_output_path(
             output_path = os.path.join(out_dir, out_name)
             counter += 1
     return output_path
+
+
+def convert_audio_to_mp4(
+    audio_path: str,
+    callbacks: Optional[SyncCallbacks] = None,
+    process_holder: Optional[dict] = None,
+) -> Optional[str]:
+    """Convert an audio-only file to an audio-only .mp4 next to it.
+
+    The sync tools expect a video container, so an audio reference is wrapped
+    into an .mp4 with the same basename in the same directory. An .mp4 from a
+    previous run (kept via the "Keep converted audio files" option) is reused
+    instead of being re-encoded. The stream is first remuxed without
+    re-encoding; codecs the MP4 container cannot hold (e.g. FLAC, Vorbis, WMA)
+    fall back to an AAC re-encode, which is fine for synchronization purposes.
+
+    Returns the converted file path, or None when ffmpeg fails to produce a
+    non-empty output.
+    """
+    target_path = os.path.splitext(audio_path)[0] + ".mp4"
+    if os.path.isfile(target_path) and os.path.getsize(target_path) > 0:
+        logger.info("Reusing existing converted audio reference: %s", target_path)
+        return target_path
+
+    base_cmd = [
+        FFMPEG_EXECUTABLE,
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        audio_path,
+        "-vn",
+        "-map",
+        "0:a:0",
+    ]
+    # Fast path: container remux (stream copy) for MP4-compatible codecs.
+    attempts = [
+        base_cmd + ["-c:a", "copy", target_path],
+        # Fallback: re-encode to AAC for codecs MP4 cannot store as-is.
+        base_cmd + ["-c:a", "aac", "-b:a", "192k", target_path],
+    ]
+    callbacks = callbacks or SyncCallbacks()
+    for index, cmd in enumerate(attempts):
+        try:
+            rc = run_executable_tool(
+                cmd,
+                callbacks,
+                sync_tool="ffmpeg",
+                process_holder=process_holder,
+            )
+        except Exception as e:
+            # A missing or crashing ffmpeg binary must surface as a sync
+            # error, not an unhandled exception in the caller.
+            logger.error("Audio conversion command failed: %s", e)
+            rc = 1
+        if rc == 0 and os.path.isfile(target_path) and os.path.getsize(target_path) > 0:
+            logger.info("Converted audio reference '%s' -> '%s'", audio_path, target_path)
+            return target_path
+        # Remove a partial/empty target before retrying or giving up.
+        try:
+            if os.path.exists(target_path):
+                os.remove(target_path)
+        except OSError as e:
+            logger.warning("Failed to remove partial conversion '%s': %s", target_path, e)
+        if index == 0:
+            logger.info("Stream copy to MP4 failed, retrying with AAC re-encode")
+    return None
 
 
 def build_cmd(
@@ -730,8 +803,33 @@ def run_sync(
         ):
             converted_files_to_clean.append(converted)
 
-    # Convert reference if it is a subtitle and not supported by the tool
+    # Convert an audio-only reference (e.g. .mp3) to an audio-only .mp4 next
+    # to it, since the sync tools expect a video container.
     effective_reference = reference
+    if not ref_is_url and ref_ext in AUDIO_EXTENSIONS:
+        callbacks._log(
+            str(texts.CONVERTING_AUDIO_TO_MP4).format(
+                filename=os.path.basename(reference)
+            ),
+            "grey",
+        )
+        converted_ref = convert_audio_to_mp4(
+            reference, callbacks=callbacks, process_holder=process_holder
+        )
+        if not converted_ref:
+            err_msg = str(texts.CONVERSION_FAILED_FOR_FILE).format(
+                filename=os.path.basename(reference)
+            )
+            callbacks._error(err_msg)
+            return SyncResult(False, None, current_tool, err_msg, 1, _elapsed(start))
+        effective_reference = converted_ref
+        if not config.get(
+            "keep_converted_audio_files",
+            DEFAULT_OPTIONS["keep_converted_audio_files"],
+        ):
+            converted_files_to_clean.append(converted_ref)
+
+    # Convert reference if it is a subtitle and not supported by the tool
     if ref_ext in SUBTITLE_EXTENSIONS and ref_ext not in supported_formats:
         temp_dir = (
             os.path.dirname(os.path.abspath(output))
@@ -1009,9 +1107,9 @@ def run_sync(
             try:
                 if os.path.exists(f):
                     os.remove(f)
-                    logger.info("Cleaned up converted subtitle: %s", f)
+                    logger.info("Cleaned up converted file: %s", f)
             except Exception as e:
-                logger.warning("Failed to remove converted subtitle '%s': %s", f, e)
+                logger.warning("Failed to remove converted file '%s': %s", f, e)
 
 
 def _elapsed(start: float) -> int:

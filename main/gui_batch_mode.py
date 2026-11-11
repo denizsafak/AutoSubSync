@@ -26,15 +26,22 @@ import os
 import re
 import logging
 import texts
-from constants import VIDEO_EXTENSIONS, SUBTITLE_EXTENSIONS, COLORS, DEFAULT_OPTIONS
+from constants import (
+    REFERENCE_MEDIA_EXTENSIONS,
+    SUBTITLE_EXTENSIONS,
+    COLORS,
+    DEFAULT_OPTIONS,
+)
 from utils import update_config, open_filedialog, open_folder, load_config
 
 # Set up logging for batch events
 logger = logging.getLogger(__name__)
 
-# Constants for file dialogs
-VIDEO_SUBTITLE_FILTER = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
-VIDEO_FILTER = f"{texts.VIDEO_FILES_LABEL} (*{' *'.join(VIDEO_EXTENSIONS)})"
+# Constants for file dialogs. Reference-side filters also list audio
+# extensions: audio references are converted to audio-only .mp4 files
+# before the sync tools run (see sync_core.convert_audio_to_mp4).
+VIDEO_SUBTITLE_FILTER = f"{texts.VIDEO_OR_SUBTITLE_FILES_LABEL} (*{' *'.join(REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS)})"
+VIDEO_FILTER = f"{texts.VIDEO_FILES_LABEL} (*{' *'.join(REFERENCE_MEDIA_EXTENSIONS)})"
 SUBTITLE_FILTER = f"{texts.SUBTITLE_FILES_LABEL} (*{' *'.join(SUBTITLE_EXTENSIONS)})"
 
 
@@ -45,8 +52,12 @@ def get_file_extension(file_path):
 
 
 def is_video_file(file_path):
-    """Check if a file is a video file based on its extension."""
-    return get_file_extension(file_path) in VIDEO_EXTENSIONS
+    """Check if a file can act as the reference side of a pair.
+
+    Audio-only files count as well: they are accepted as references and
+    converted to audio-only .mp4 files by sync_core before the sync runs.
+    """
+    return get_file_extension(file_path) in REFERENCE_MEDIA_EXTENSIONS
 
 
 def is_subtitle_file(file_path):
@@ -57,7 +68,7 @@ def is_subtitle_file(file_path):
 def is_media_file(file_path):
     """Check if a file is either a video or subtitle file."""
     ext = get_file_extension(file_path)
-    return ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS
+    return ext in REFERENCE_MEDIA_EXTENSIONS or ext in SUBTITLE_EXTENSIONS
 
 
 def update_last_dir(app_instance, dir_path):
@@ -263,7 +274,7 @@ class BatchTreeView(QTreeWidget):
             child_file_path = child.data(0, Qt.ItemDataRole.UserRole)
             if (
                 not child_file_path
-                or get_file_extension(child_file_path) in VIDEO_EXTENSIONS
+                or get_file_extension(child_file_path) in REFERENCE_MEDIA_EXTENSIONS
             ):
                 return False
         return True
@@ -710,7 +721,7 @@ class BatchTreeView(QTreeWidget):
                     file_path = os.path.join(root, filename)
                     norm_path = os.path.normpath(file_path)
                     ext = os.path.splitext(file_path)[1].lower()
-                    if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                    if ext in REFERENCE_MEDIA_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                         if norm_path not in existing_files:
                             new_files.append(file_path)
 
@@ -724,7 +735,7 @@ class BatchTreeView(QTreeWidget):
         logger.info(f"Found {len(new_files)} new files in library folders")
 
         # Separate into videos and subtitles
-        new_videos = [f for f in new_files if get_file_extension(f) in VIDEO_EXTENSIONS]
+        new_videos = [f for f in new_files if get_file_extension(f) in REFERENCE_MEDIA_EXTENSIONS]
         new_subs = [
             f for f in new_files if get_file_extension(f) in SUBTITLE_EXTENSIONS
         ]
@@ -1814,7 +1825,7 @@ class BatchTreeView(QTreeWidget):
                 return False
             exts = [os.path.splitext(path)[1].lower() for path in paths]
             # Check if we have one video and one subtitle file
-            if exts[0] in VIDEO_EXTENSIONS and exts[1] in SUBTITLE_EXTENSIONS:
+            if exts[0] in REFERENCE_MEDIA_EXTENSIONS and exts[1] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[0], paths[1]):
                     QMessageBox.warning(
                         self.app_parent,
@@ -1828,7 +1839,7 @@ class BatchTreeView(QTreeWidget):
                     f"Added pair: {os.path.basename(reference_path)} + {os.path.basename(sub_path)}"
                 )
                 return True
-            elif exts[1] in VIDEO_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS:
+            elif exts[1] in REFERENCE_MEDIA_EXTENSIONS and exts[0] in SUBTITLE_EXTENSIONS:
                 if self.is_duplicate_pair(paths[1], paths[0]):
                     QMessageBox.warning(
                         self.app_parent,
@@ -1851,11 +1862,11 @@ class BatchTreeView(QTreeWidget):
                     for filename in filenames:
                         file_path = os.path.join(root, filename)
                         ext = os.path.splitext(file_path)[1].lower()
-                        if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                        if ext in REFERENCE_MEDIA_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                             files_to_process.append(file_path)
             elif os.path.isfile(path):
                 ext = os.path.splitext(path)[1].lower()
-                if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                if ext in REFERENCE_MEDIA_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                     files_to_process.append(path)
 
         if not files_to_process:
@@ -2381,7 +2392,7 @@ class BatchTreeView(QTreeWidget):
         if new_file_path:
             new_ext = os.path.splitext(new_file_path)[1].lower()
             valid_new_type = False
-            if is_parent and new_ext in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
+            if is_parent and new_ext in (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS):
                 valid_new_type = True
             elif not is_parent and new_ext in SUBTITLE_EXTENSIONS:
                 valid_new_type = True
@@ -2960,7 +2971,7 @@ def handle_add_pair(self):
 
     # Check if the selected file is a supported media type
     ext = os.path.splitext(video_ref_path)[1].lower()
-    if ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
+    if ext not in (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS):
         QMessageBox.warning(
             self,
             texts.UNSUPPORTED_FILE_TYPE_TITLE,
@@ -3011,7 +3022,7 @@ def handle_add_folder(self):
         for root, _, filenames in os.walk(folder_path):
             for filename in filenames:
                 ext = os.path.splitext(filename)[1].lower()
-                if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+                if ext in REFERENCE_MEDIA_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                     media_files_found = True
                     break
             if media_files_found:
@@ -3038,7 +3049,7 @@ def handle_add_multiple_files(self):
         supported_files = []
         for file_path in files_paths:
             ext = os.path.splitext(file_path)[1].lower()
-            if ext in VIDEO_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
+            if ext in REFERENCE_MEDIA_EXTENSIONS or ext in SUBTITLE_EXTENSIONS:
                 supported_files.append(file_path)
 
         if not supported_files:
@@ -3073,7 +3084,7 @@ def handle_add_pairs_continuously(self):
 
         # Check if the selected file is a supported media type
         ext = os.path.splitext(video_ref_path)[1].lower()
-        if ext not in (VIDEO_EXTENSIONS + SUBTITLE_EXTENSIONS):
+        if ext not in (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS):
             QMessageBox.warning(
                 self,
                 texts.UNSUPPORTED_FILE_TYPE_TITLE,
