@@ -155,6 +155,9 @@ DEFAULT_OPTIONS = {
     "skip_previously_processed_videos": True,
     "auto_rename_bracket_paths": False,
     "disable_alass_rename_prompt": False,
+    # LAPSE release the user declined in the update prompt; startup stops
+    # asking for it until a newer version appears ("" means nothing skipped)
+    "lapse_skip_version": "",
 }
 
 # ffmpeg and ffprobe paths

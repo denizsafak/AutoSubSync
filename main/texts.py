@@ -6859,6 +6859,32 @@ UPDATING_LAPSE = {
     "fa_IR": "در حال به‌روزرسانی LAPSE...",
 }
 
+SKIP_THIS_VERSION = {
+    "en_US": "Skip this version",
+    "es_ES": "Omitir esta versión",
+    "de_DE": "Diese Version überspringen",
+    "fr_FR": "Ignorer cette version",
+    "it_IT": "Salta questa versione",
+    "pl_PL": "Pomiń tę wersję",
+    "pt_PT": "Ignorar esta versão",
+    "tr_TR": "Bu sürümü atla",
+    "vi_VN": "Bỏ qua phiên bản này",
+    "id_ID": "Lewati versi ini",
+    "ms_MY": "Langkau versi ini",
+    "th_TH": "ข้ามเวอร์ชันนี้",
+    "uk_UA": "Пропустити цю версію",
+    "ru_RU": "Пропустить эту версию",
+    "zh_CN": "跳过此版本",
+    "zh_TW": "跳過此版本",
+    "ja_JP": "このバージョンをスキップ",
+    "ko_KR": "이 버전 건너뛰기",
+    "hi_IN": "इस संस्करण को छोड़ें",
+    "bn_BD": "এই সংস্করণ এড়িয়ে যান",
+    "ur_PK": "اس ورژن کو چھوڑ دیں",
+    "ar_SA": "تخطي هذا الإصدار",
+    "fa_IR": "رد کردن این نسخه",
+}
+
 LAPSE_UPDATE_SUCCESS = {
     "en_US": "LAPSE has been updated successfully to version {version}.",
     "es_ES": "LAPSE se ha actualizado correctamente a la versión {version}.",

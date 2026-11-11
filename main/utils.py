@@ -1575,7 +1575,14 @@ def check_for_updates_startup(parent):
 
 
 def check_for_lapse_updates(parent, manual=False):
-    """Check if a new version of LAPSE is available and prompt user to update."""
+    """Check if a new version of LAPSE is available and prompt user to update.
+
+    Runs in a background thread and shows the update dialog on the GUI thread
+    when the installed version differs from the latest release. A version the
+    user previously skipped (config key "lapse_skip_version") is not prompted
+    for again; manual checks are unaffected because they do not pass through
+    the dialog-skip gate.
+    """
     from constants import SYNC_TOOLS
     import platform
 
@@ -1600,6 +1607,12 @@ def check_for_lapse_updates(parent, manual=False):
                 return
             latest = lapse_download.latest_version()
             if latest and current != latest:
+                skipped_version = load_config().get("lapse_skip_version", "")
+                if latest == skipped_version:
+                    logger.info(
+                        f"LAPSE update {latest} skipped by user; not prompting."
+                    )
+                    return
                 logger.info(f"LAPSE update available: {current} -> {latest}")
                 signals.update_available.emit(latest, current)
             elif latest and current == latest:
@@ -1614,6 +1627,14 @@ check_for_lapse_updates_startup = check_for_lapse_updates
 
 
 def _show_lapse_update_dialog(parent, remote_version, local_version):
+    """Show the LAPSE update prompt with Yes / No / 'Skip this version' actions.
+
+    "Yes" downloads the new release right away. "No" and closing the dialog
+    (X / Esc) do nothing, so the prompt reappears on the next launch.
+    "Skip this version" records the offered version in the config so the
+    startup check stops asking for that exact version (a newer release will
+    prompt again).
+    """
     from PyQt6.QtWidgets import QMessageBox
 
     msg_box = QMessageBox(parent)
@@ -1627,11 +1648,19 @@ def _show_lapse_update_dialog(parent, remote_version, local_version):
         )
     )
     msg_box.setInformativeText(str(texts.UPDATE_LAPSE_CONFIRMATION))
-    msg_box.setStandardButtons(
-        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    update_button = msg_box.addButton(QMessageBox.StandardButton.Yes)
+    no_button = msg_box.addButton(QMessageBox.StandardButton.No)
+    skip_button = msg_box.addButton(
+        str(texts.SKIP_THIS_VERSION), QMessageBox.ButtonRole.NoRole
     )
-    msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
-    if msg_box.exec() == QMessageBox.StandardButton.Yes:
+    msg_box.setDefaultButton(update_button)
+    msg_box.setEscapeButton(no_button)
+    msg_box.exec()
+    if msg_box.clickedButton() is skip_button:
+        config = load_config()
+        config["lapse_skip_version"] = remote_version
+        save_config(config)
+    elif msg_box.clickedButton() is update_button:
         _perform_lapse_update(parent, remote_version)
 
 
