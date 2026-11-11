@@ -352,13 +352,18 @@ class LogWindow(QWidget):
         else:
             self.progress_bar.setFormat("%p%")
 
-    def handle_sync_completion(self, success, output, post_success_callback=None):
+    def handle_sync_completion(
+        self, success, output, post_success_callback=None, needs_review=False
+    ):
         """Handle completion of a synchronization process
 
         Args:
             success: Whether the synchronization was successful
             output: Path to the output file if successful, None otherwise
             post_success_callback: Optional callback to run after success message but before saved to message
+            needs_review: True when the tool produced an output it is not
+                confident about (e.g. LAPSE unsure/nothing verdict); the green
+                success line is replaced by an orange "needs review" warning.
         """
         # Get the main application instance
         app = self.window()
@@ -366,8 +371,13 @@ class LogWindow(QWidget):
 
         if success:
             self.append_message(
-                "\n" + texts.SYNC_COMPLETED_SUCCESSFULLY,
-                color=COLORS["GREEN"],
+                "\n"
+                + (
+                    texts.SYNC_COMPLETED_NEEDS_REVIEW
+                    if needs_review
+                    else texts.SYNC_COMPLETED_SUCCESSFULLY
+                ),
+                color=COLORS["ORANGE"] if needs_review else COLORS["GREEN"],
                 bold=True,
             )
             # Call the post-success callback (e.g., sync tracking message)
@@ -432,7 +442,7 @@ class LogWindow(QWidget):
         self._scroll_to_bottom()
 
     def handle_batch_completion(
-        self, success, output, callback, post_success_callback=None
+        self, success, output, callback, post_success_callback=None, needs_review=False
     ):
         """Handle completion of a single item in batch processing
 
@@ -441,11 +451,19 @@ class LogWindow(QWidget):
             output: Path to the output file if successful, None otherwise
             callback: Function to call to process the next item
             post_success_callback: Optional callback to run after success message but before saved to message
+            needs_review: True when the tool produced an output it is not
+                confident about (e.g. LAPSE unsure/nothing verdict); the green
+                success line is replaced by an orange "needs review" warning.
         """
         if success:
             self.append_message(
-                "\n" + texts.SYNC_COMPLETED_SUCCESSFULLY,
-                color=COLORS["GREEN"],
+                "\n"
+                + (
+                    texts.SYNC_COMPLETED_NEEDS_REVIEW
+                    if needs_review
+                    else texts.SYNC_COMPLETED_SUCCESSFULLY
+                ),
+                color=COLORS["ORANGE"] if needs_review else COLORS["GREEN"],
                 bold=True,
             )
             # Call the post-success callback (e.g., sync tracking message)

@@ -45,6 +45,10 @@ class SyncResult:
     returncode: Optional[int]
     elapsed_ms: int
     cancelled: bool = False
+    # True when the tool produced an output it does not stand behind
+    # (e.g. LAPSE's unsure/nothing verdict); callers should surface this
+    # as "needs review" instead of counting the sync as plain success.
+    needs_review: bool = False
 
 
 @dataclass
@@ -607,10 +611,32 @@ def run_sync(
     Performs path validation, tool fallback, format conversion, output-path resolution,
     backup, autosubsync overwrite-protection, tool execution, and post-replace of the
     temp output file. Returns a SyncResult; errors/progress are also reported
-    through callbacks as they happen.
+    through callbacks as they happen. For LAPSE, the final stdout verdict tag
+    ([solid]/[unsure]/[nothing]) is captured so that exit code 3 (unsure or
+    nothing) can be recovered from the sidecar file and flagged with
+    SyncResult.needs_review instead of failing silently or being counted as a
+    plain success.
     """
     callbacks = callbacks or SyncCallbacks()
     start = time.monotonic()
+    needs_review = False
+
+    # LAPSE prints its verdict as a trailing [solid]/[unsure]/[nothing] tag on
+    # stdout; remember the last one seen so exit code 3 can be reported with
+    # the right message below.
+    lapse_verdict = {"name": None}
+    original_subprocess_line = callbacks.on_subprocess_line
+
+    def _capture_lapse_verdict(line, is_overwrite):
+        """Forward a subprocess line and record LAPSE's trailing verdict tag."""
+        match = re.search(r"\[(solid|unsure|nothing)\]\s*$", line or "")
+        if match:
+            lapse_verdict["name"] = match.group(1)
+        if original_subprocess_line:
+            original_subprocess_line(line, is_overwrite)
+
+    if tool == "lapse":
+        callbacks.on_subprocess_line = _capture_lapse_verdict
 
     from constants import is_remote_url
 
@@ -890,12 +916,29 @@ def run_sync(
                     )
 
         if current_tool == "lapse" and rc == 3:
+            # LAPSE exits 3 for both unsure and nothing verdicts: the result is
+            # only a best guess and the original subtitle was left untouched.
+            # Promote the sidecar to the output and flag the result as needing
+            # review instead of counting it as a plain success.
             root, ext = os.path.splitext(effective_output)
-            if os.path.exists(f"{root}.lapse-unsure{ext}"):
-                os.replace(f"{root}.lapse-unsure{ext}", effective_output)
-                logger.info("Lapse produced output with low-confidence/unsure verdict (code 3)")
-                callbacks._log("Lapse synced subtitles with low-confidence/unsure verdict.", "orange")
+            unsure_sidecar = f"{root}.lapse-unsure{ext}"
+            if os.path.exists(unsure_sidecar):
+                os.replace(unsure_sidecar, effective_output)
+                logger.info(
+                    "Lapse produced output with a low-confidence verdict (%s)",
+                    lapse_verdict["name"],
+                )
+                if lapse_verdict["name"] == "nothing":
+                    callbacks._log(str(texts.LAPSE_NOTHING_RESULT), "orange")
+                else:
+                    callbacks._log(str(texts.LAPSE_UNSURE_RESULT), "orange")
+                needs_review = True
                 rc = 0
+            else:
+                # --no-sidecar mode: LAPSE deliberately wrote nothing, so the
+                # sync below fails; explain why instead of a generic
+                # missing-output error.
+                callbacks._log(str(texts.LAPSE_RESULT_NOT_WRITTEN), "orange")
 
         # A .idx is only an index, it needs the .sub with the pictures beside it
         if rc == 0 and current_tool == "lapse" and output.lower().endswith(".idx"):
@@ -947,7 +990,9 @@ def run_sync(
             msg = str(texts.TOOL_FAILED_WITH_CODE).format(tool=tool, code=rc)
             callbacks._error(msg)
             return SyncResult(False, None, current_tool, msg, rc, _elapsed(start))
-        return SyncResult(True, output, current_tool, "ok", rc, _elapsed(start))
+        return SyncResult(
+            True, output, current_tool, "ok", rc, _elapsed(start), False, needs_review
+        )
     except Exception as e:
         if callbacks._cancelled():
             return SyncResult(

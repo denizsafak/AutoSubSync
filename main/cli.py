@@ -266,6 +266,11 @@ def _prepare_reference(reference, subtitle, output_target, tool, config, args):
 
 
 def cmd_sync(args) -> int:
+    """Run one video+subtitle sync and report the result.
+
+    Returns EXIT_OK on success (including results flagged needs_review, which
+    get a warning) or EXIT_SYNC_FAILED on failure/cancellation.
+    """
     from subtitle_extractor import cleanup_extracted_subtitles
     from sync_core import run_sync
 
@@ -318,11 +323,15 @@ def cmd_sync(args) -> int:
                 "returncode": result.returncode,
                 "elapsed_ms": result.elapsed_ms,
                 "cancelled": result.cancelled,
+                "needs_review": result.needs_review,
             }
         )
     else:
         if result.ok:
             log.info("Synced -> %s (%dms)", result.output_path, result.elapsed_ms)
+            if result.needs_review:
+                # LAPSE unsure/nothing verdict: the output is only a best guess.
+                log.warning("Result needs review (low-confidence verdict)")
         else:
             log.error("Sync failed: %s", result.message)
 
@@ -363,6 +372,12 @@ def cmd_shift(args) -> int:
 
 
 def cmd_batch(args) -> int:
+    """Run a batch of video+subtitle pairs and print a summary.
+
+    Results the tool is not confident about (LAPSE unsure/nothing verdicts)
+    are counted separately as needs_review in the JSON summary and log line.
+    Returns EXIT_OK when no pair failed, else EXIT_SYNC_FAILED.
+    """
     from subtitle_extractor import cleanup_extracted_subtitles
     from sync_core import determine_output_path, run_sync
     from pairing import pair_paths, pair_folder, pair_folders
@@ -428,6 +443,7 @@ def cmd_batch(args) -> int:
     ok_count = 0
     fail_count = 0
     skip_count = 0
+    review_count = 0
     failed_pairs = []
 
     for idx, (video, subtitle) in enumerate(pairs, 1):
@@ -497,13 +513,18 @@ def cmd_batch(args) -> int:
                     "output": result.output_path,
                     "tool": result.tool_used,
                     "message": result.message,
-                    "returncode": result.returncode,
-                    "elapsed_ms": result.elapsed_ms,
-                }
-            )
+                "returncode": result.returncode,
+                "elapsed_ms": result.elapsed_ms,
+                "needs_review": result.needs_review,
+            }
+        )
 
         if result.ok:
             ok_count += 1
+            if result.needs_review:
+                # LAPSE unsure/nothing verdict: count separately in the summary
+                # so it is not mistaken for a plain success.
+                review_count += 1
         else:
             fail_count += 1
             failed_pairs.append((video, subtitle, result.message))
@@ -517,6 +538,7 @@ def cmd_batch(args) -> int:
                                 "ok": ok_count,
                                 "failed": fail_count,
                                 "skipped": skip_count,
+                                "needs_review": review_count,
                                 "aborted": True,
                             }
                         }
@@ -531,6 +553,7 @@ def cmd_batch(args) -> int:
                     "ok": ok_count,
                     "failed": fail_count,
                     "skipped": skip_count,
+                    "needs_review": review_count,
                 }
             }
         )
@@ -541,6 +564,10 @@ def cmd_batch(args) -> int:
         fail_count,
         skip_count,
     )
+    if review_count:
+        log.warning(
+            "%d result(s) need review (low-confidence verdict)", review_count
+        )
     return EXIT_OK if fail_count == 0 else EXIT_SYNC_FAILED
 
 

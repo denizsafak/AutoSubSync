@@ -342,7 +342,7 @@ def handle_completion(app, ok, out, in_path):
 
 # --- SIGNALS ---
 class SyncSignals(QObject):
-    finished = pyqtSignal(bool, object)
+    finished = pyqtSignal(bool, object, bool)  # success, output path, needs review
     progress = pyqtSignal(str, bool)
     progress_percent = pyqtSignal(float)
     error = pyqtSignal(str)
@@ -434,7 +434,7 @@ class SyncProcess:
             callbacks=cb,
             process_holder=self._process_holder,
         )
-        self.signals.finished.emit(result.ok, result.output_path)
+        self.signals.finished.emit(result.ok, result.output_path, result.needs_review)
 
 
 class LogWindowStream:
@@ -549,9 +549,11 @@ def start_sync_process(app):
             current_item_idx,
             batch_success_count,
             batch_fail_count,
+            batch_review_count,
             total_items,
             failed_pairs,
-        ) = (0, 0, 0, len(items), [])
+            review_pairs,
+        ) = (0, 0, 0, 0, len(items), [], [])
         app._batch_state = {"should_cancel": False, "current_process": None}
         if app.batch_mode_enabled and len(items) > 1:
 
@@ -598,7 +600,8 @@ def start_sync_process(app):
             app.log_window.cancel_clicked.connect(cancel_single)
 
         def process_next_item():
-            nonlocal current_item_idx, batch_success_count, batch_fail_count, failed_pairs
+            nonlocal current_item_idx, batch_success_count, batch_fail_count
+            nonlocal batch_review_count, failed_pairs, review_pairs
             converted_files_to_clean = []
             if hasattr(app, "_batch_state") and app._batch_state.get(
                 "should_cancel", False
@@ -618,6 +621,28 @@ def start_sync_process(app):
                         texts.BATCH_SYNC_SUCCESSFUL.format(count=batch_success_count),
                         COLORS["GREEN"],
                     )
+                    if batch_review_count > 0:
+                        # LAPSE produced results it is not confident about;
+                        # surface them so the user knows to double-check.
+                        append_log(
+                            app,
+                            texts.BATCH_SYNC_NEEDS_REVIEW.format(
+                                count=batch_review_count
+                            ),
+                            COLORS["ORANGE"],
+                        )
+                        for review_idx, v, s in review_pairs:
+                            append_log(
+                                app,
+                                texts.BATCH_SYNC_REVIEW_PAIR.format(
+                                    idx=review_idx + 1, total=total_items
+                                ),
+                                COLORS["ORANGE"],
+                            )
+                            append_log(app, f"{texts.REFERENCE_LABEL} ", end="")
+                            append_log(app, v, COLORS["ORANGE"], end="\n")
+                            append_log(app, f"{texts.SUBTITLE_LABEL} ", end="")
+                            append_log(app, s, COLORS["ORANGE"], end="\n\n")
                     if batch_fail_count > 0:
                         append_log(
                             app,
@@ -810,8 +835,14 @@ def start_sync_process(app):
                 )
             )
 
-            def batch_completion_handler(ok, out):
-                nonlocal batch_success_count, batch_fail_count
+            def batch_completion_handler(ok, out, needs_review=False):
+                """Record the outcome of one batch item and continue with the next.
+
+                Items the tool flagged as needing review (e.g. LAPSE unsure/
+                nothing verdicts) are counted separately from plain successes
+                so the batch summary can list them.
+                """
+                nonlocal batch_success_count, batch_fail_count, batch_review_count
                 if hasattr(app, "_batch_state") and app._batch_state.get(
                     "should_cancel", False
                 ):
@@ -820,7 +851,13 @@ def start_sync_process(app):
                     return
                 ok = handle_completion(app, ok, out, original_sub_path)
                 if ok:
-                    batch_success_count += 1
+                    if needs_review:
+                        batch_review_count += 1
+                        review_pairs.append(
+                            (original_idx, original_ref_path, original_sub_path)
+                        )
+                    else:
+                        batch_success_count += 1
                 else:
                     batch_fail_count += 1
                     failed_pairs.append(
@@ -841,10 +878,11 @@ def start_sync_process(app):
                     else None
                 )
                 app.log_window.handle_batch_completion(
-                    ok, out, process_next_item, post_success_cb
+                    ok, out, process_next_item, post_success_cb, needs_review
                 )
 
-            def single_completion_handler(ok, out):
+            def single_completion_handler(ok, out, needs_review=False):
+                """Report the outcome of a single (non-batch) sync to the log window."""
                 ok = handle_completion(app, ok, out, original_sub_path)
                 cleanup_files(converted_files_to_clean)
                 cleanup_extracted_subtitles(extraction)
@@ -854,7 +892,9 @@ def start_sync_process(app):
                     if ok
                     else None
                 )
-                app.log_window.handle_sync_completion(ok, out, post_success_cb)
+                app.log_window.handle_sync_completion(
+                    ok, out, post_success_cb, needs_review
+                )
 
             if app.batch_mode_enabled and len(items) > 1:
                 proc.signals.finished.connect(batch_completion_handler)
