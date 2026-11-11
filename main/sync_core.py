@@ -276,22 +276,55 @@ def build_cmd(
             except Exception as e:
                 logger.warning(f"Failed to detect reference encoding: {e}")
     elif tool == "lapse":
-        mode = config.get("lapse_mode", DEFAULT_OPTIONS.get("lapse_mode", "auto"))
-        default_penalty = DEFAULT_OPTIONS.get("lapse_split_penalty", 6)
-        penalty = config.get("lapse_split_penalty", default_penalty)
-        if mode in ("nosplit", "ols"):
-            cmd.append(mode)
-        elif mode == "split":
-            cmd.append("split")
-            cmd.append(str(penalty))
-        elif mode == "auto":
-            if penalty != default_penalty:
-                cmd.append("auto")
+        extra_str = config.get(f"{tool}_arguments", "").strip()
+        try:
+            import shlex
+
+            extra_tokens = shlex.split(extra_str)
+        except Exception:
+            extra_tokens = extra_str.split()
+        has_mode_in_extra = any(
+            t in ("auto", "split", "nosplit", "ols") for t in extra_tokens
+        )
+        if not has_mode_in_extra:
+            mode = config.get("lapse_mode", DEFAULT_OPTIONS.get("lapse_mode", "auto"))
+            default_penalty = DEFAULT_OPTIONS.get("lapse_split_penalty", 6)
+            penalty = config.get("lapse_split_penalty", default_penalty)
+            if mode in ("nosplit", "ols"):
+                cmd.append(mode)
+            elif mode == "split":
+                cmd.append("split")
                 cmd.append(str(penalty))
+            elif mode == "auto":
+                if penalty != default_penalty:
+                    cmd.append("auto")
+                    cmd.append(str(penalty))
     return _append_opts(cmd, tool, config)
 
 
-def _append_opts(cmd, tool: str, config: dict):
+def _is_flag_in_extra(flag_or_flags, extra_tokens):
+    """Check if a CLI flag or any of its aliases is present in extra_tokens."""
+    if not flag_or_flags or not extra_tokens:
+        return False
+    flags = [flag_or_flags] if isinstance(flag_or_flags, str) else list(flag_or_flags)
+    for token in extra_tokens:
+        tok_clean = token.split("=")[0].strip()
+        for f in flags:
+            if tok_clean == f:
+                return True
+    return False
+
+
+def _append_opts(cmd, tool: str, config: dict, extra_tokens: list = None):
+    if extra_tokens is None:
+        extra_str = config.get(f"{tool}_arguments", "").strip()
+        try:
+            import shlex
+
+            extra_tokens = shlex.split(extra_str)
+        except Exception:
+            extra_tokens = extra_str.split()
+
     info = SYNC_TOOLS.get(tool, {})
     all_options = {**info.get("options", {}), **info.get("other_options", {})}
     for name, opt in all_options.items():
@@ -309,17 +342,57 @@ def _append_opts(cmd, tool: str, config: dict):
                     default,
                 )
                 val = default
+
+        # Handle special cases with flag override detection
+        if tool == "ffsubsync" and name == "audio_track":
+            if not _is_flag_in_extra(
+                [
+                    "--reference-stream",
+                    "--refstream",
+                    "--reference-track",
+                    "--reftrack",
+                ],
+                extra_tokens,
+            ):
+                if val is not None and val >= 0:
+                    cmd.extend(["--reference-stream", f"a:{val}"])
+            continue
+
+        if tool == "ffsubsync" and name == "max_duration_seconds":
+            if not _is_flag_in_extra("--max-duration-seconds", extra_tokens):
+                if val is not None and val > 0:
+                    cmd.extend(["--max-duration-seconds", str(val)])
+            continue
+
+        if tool == "alass" and name == "split_penalty":
+            if not _is_flag_in_extra(
+                ["-p", "--split-penalty", "-l", "--no-split"], extra_tokens
+            ):
+                if val == -1:
+                    cmd.append("--no-split")
+                elif val != default:
+                    cmd.extend([arg, str(val)])
+            continue
+
+        flags_to_check = [arg] if arg else []
+        no_splits_arg = opt.get("no_split_argument")
+        if no_splits_arg:
+            flags_to_check.append(no_splits_arg)
+
+        # If user explicitly supplied this flag in additional arguments, let additional arguments override it
+        if _is_flag_in_extra(flags_to_check, extra_tokens):
+            continue
+
         if arg and val != default:
             if name == "split_penalty" and val == -1:
-                no_splits_arg = opt.get("no_split_argument")
                 if no_splits_arg:
                     cmd.append(no_splits_arg)
             elif isinstance(default, bool):
                 cmd.append(arg)
             else:
                 cmd.extend([arg, str(val)])
-    extra = config.get(f"{tool}_arguments", "").strip().split()
-    return cmd + extra if extra else cmd
+
+    return cmd + extra_tokens if extra_tokens else cmd
 
 
 def module_worker(module_name, args, conn, idx, total):
