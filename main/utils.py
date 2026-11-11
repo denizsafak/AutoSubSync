@@ -1265,6 +1265,17 @@ class UpdateSignals(QObject):
     check_failed = pyqtSignal(str)
 
 
+class LapseUpdateSignals(QObject):
+    update_available = pyqtSignal(str, str)
+    update_complete = pyqtSignal(bool, str)
+    up_to_date = pyqtSignal(str)
+    check_failed = pyqtSignal(str)
+
+
+class UnifiedUpdateSignals(QObject):
+    finished = pyqtSignal(dict)
+
+
 def get_locale():
     """Get the current locale of the system using PyQt with caching."""
     global _locale_cache
@@ -1339,9 +1350,162 @@ def _show_check_failed(parent, error_message):
 
 
 def manual_check_for_updates(parent):
+    """Manually check for updates for both AutoSubSync and LAPSE, displaying a single unified dialog."""
     logger.info("Manual update check triggered.")
-    parent._show_update_check_result = True
-    check_for_updates_startup(parent)
+    from constants import (
+        GITHUB_VERSION_URL,
+        VERSION,
+        GITHUB_LATEST_RELEASE_URL,
+        PROGRAM_NAME,
+        SYNC_TOOLS,
+    )
+    import platform
+    import certifi
+    from PyQt6.QtWidgets import QMessageBox
+
+    signals = UnifiedUpdateSignals()
+
+    def handle_unified_result(res):
+        app_remote = res.get("app_remote")
+        app_update = res.get("app_update", False)
+        app_error = res.get("app_error")
+        lapse_local = res.get("lapse_local")
+        lapse_remote = res.get("lapse_remote")
+        lapse_update = res.get("lapse_update", False)
+        lapse_error = res.get("lapse_error")
+
+        # Scenario 1: AutoSubSync update is available
+        if app_update:
+            msg_box = QMessageBox(parent)
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            msg_box.setWindowTitle(str(texts.UPDATE_AVAILABLE_TITLE))
+            app_text = str(texts.NEW_VERSION_AVAILABLE).format(
+                program_name=PROGRAM_NAME,
+                local_version=VERSION,
+                remote_version=app_remote,
+            )
+            if lapse_update:
+                lapse_text = str(texts.NEW_VERSION_AVAILABLE).format(
+                    program_name="LAPSE",
+                    local_version=lapse_local,
+                    remote_version=lapse_remote,
+                )
+                msg_box.setText(f"{app_text}\n\n{lapse_text}")
+                msg_box.setInformativeText(
+                    f"{texts.VISIT_GITHUB_DOWNLOAD_LATEST}\n\n{texts.UPDATE_LAPSE_CONFIRMATION}"
+                )
+            else:
+                msg_box.setText(app_text)
+                msg_box.setInformativeText(str(texts.VISIT_GITHUB_DOWNLOAD_LATEST))
+            msg_box.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
+            if msg_box.exec() == QMessageBox.StandardButton.Yes:
+                safe_open_url(GITHUB_LATEST_RELEASE_URL)
+                if lapse_update:
+                    _perform_lapse_update(parent, lapse_remote)
+            return
+
+        # Scenario 2: AutoSubSync is up to date, but LAPSE update is available
+        if app_remote and not app_update and lapse_update:
+            msg_box = QMessageBox(parent)
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            msg_box.setWindowTitle(str(texts.UPDATE_AVAILABLE_TITLE))
+            status_text = str(texts.RUNNING_LATEST_VERSION).format(
+                program_name=PROGRAM_NAME,
+                version=VERSION,
+            )
+            lapse_text = str(texts.NEW_VERSION_AVAILABLE).format(
+                program_name="LAPSE",
+                local_version=lapse_local,
+                remote_version=lapse_remote,
+            )
+            msg_box.setText(f"{status_text}\n\n{lapse_text}")
+            msg_box.setInformativeText(str(texts.UPDATE_LAPSE_CONFIRMATION))
+            msg_box.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
+            if msg_box.exec() == QMessageBox.StandardButton.Yes:
+                _perform_lapse_update(parent, lapse_remote)
+            return
+
+        # Scenario 3: Both are up to date
+        if app_remote and not app_update:
+            msg = str(texts.RUNNING_LATEST_VERSION).format(
+                program_name=PROGRAM_NAME,
+                version=VERSION,
+            )
+            if lapse_local and not lapse_update:
+                msg += f"\n\n{str(texts.LAPSE_UP_TO_DATE).format(version=lapse_local)}"
+            QMessageBox.information(parent, str(texts.UP_TO_DATE_TITLE), msg)
+            return
+
+        # Scenario 4: Update check failed
+        err = app_error or lapse_error or "Unknown error"
+        _show_check_failed(parent, err)
+
+    signals.finished.connect(handle_unified_result)
+
+    def worker():
+        from resources import lapse_download
+
+        res = {
+            "app_remote": None,
+            "app_update": False,
+            "app_error": None,
+            "lapse_local": None,
+            "lapse_remote": None,
+            "lapse_update": False,
+            "lapse_error": None,
+        }
+
+        # Check AutoSubSync
+        try:
+            logger.info("Checking for updates...")
+            response = requests.get(
+                GITHUB_VERSION_URL, timeout=5, verify=certifi.where()
+            )
+            response.raise_for_status()
+            remote = response.text.strip()
+            res["app_remote"] = remote
+            if int("".join(remote.split("."))) > int("".join(VERSION.split("."))):
+                logger.info(f"Update available: {VERSION} -> {remote}")
+                res["app_update"] = True
+            else:
+                logger.info(f"Up to date (Remote: {remote}, Local: {VERSION})")
+        except Exception as e:
+            logger.error(f"Update check failed: {e}")
+            res["app_error"] = str(e)
+
+        # Check LAPSE
+        try:
+            logger.info("Checking for LAPSE updates...")
+            tool = SYNC_TOOLS.get("lapse", {})
+            bundled = tool.get("executable", {}).get(platform.system())
+            exe = lapse_download.installed(bundled)
+            if exe and os.path.isfile(exe):
+                current = lapse_download.current_version(exe)
+                res["lapse_local"] = current
+                latest = lapse_download.latest_version()
+                res["lapse_remote"] = latest
+                if latest and current and latest != current:
+                    logger.info(f"LAPSE update available: {current} -> {latest}")
+                    res["lapse_update"] = True
+                elif latest and current:
+                    logger.info(
+                        f"LAPSE up to date (Remote: {latest}, Local: {current})"
+                    )
+            else:
+                logger.info("LAPSE not installed, skipping LAPSE update check.")
+        except Exception as e:
+            logger.warning(f"LAPSE update check failed: {e}")
+            res["lapse_error"] = str(e)
+
+        signals.finished.emit(res)
+
+    threading.Thread(target=worker, daemon=True).start()
 
 
 def check_for_updates_startup(parent):
@@ -1385,6 +1549,114 @@ def check_for_updates_startup(parent):
             signals.check_failed.emit(str(e))
 
     threading.Thread(target=worker, daemon=True).start()
+
+
+def check_for_lapse_updates(parent, manual=False):
+    """Check if a new version of LAPSE is available and prompt user to update."""
+    from constants import SYNC_TOOLS
+    import platform
+
+    signals = LapseUpdateSignals()
+    signals.update_available.connect(
+        lambda r, l: _show_lapse_update_dialog(parent, r, l)
+    )
+
+    def worker():
+        try:
+            logger.info("Checking for LAPSE updates...")
+            from resources import lapse_download
+
+            tool = SYNC_TOOLS.get("lapse", {})
+            bundled = tool.get("executable", {}).get(platform.system())
+            exe = lapse_download.installed(bundled)
+            if not exe or not os.path.isfile(exe):
+                logger.info("LAPSE not installed, skipping LAPSE update check.")
+                return
+            current = lapse_download.current_version(exe)
+            if not current:
+                return
+            latest = lapse_download.latest_version()
+            if latest and current != latest:
+                logger.info(f"LAPSE update available: {current} -> {latest}")
+                signals.update_available.emit(latest, current)
+            elif latest and current == latest:
+                logger.info(f"LAPSE up to date (Remote: {latest}, Local: {current})")
+        except Exception as e:
+            logger.warning(f"LAPSE update check failed: {e}")
+
+    threading.Thread(target=worker, daemon=True).start()
+
+
+check_for_lapse_updates_startup = check_for_lapse_updates
+
+
+def _show_lapse_update_dialog(parent, remote_version, local_version):
+    from PyQt6.QtWidgets import QMessageBox
+
+    msg_box = QMessageBox(parent)
+    msg_box.setIcon(QMessageBox.Icon.Information)
+    msg_box.setWindowTitle(str(texts.UPDATE_AVAILABLE_TITLE))
+    msg_box.setText(
+        str(texts.NEW_VERSION_AVAILABLE).format(
+            program_name="LAPSE",
+            local_version=local_version,
+            remote_version=remote_version,
+        )
+    )
+    msg_box.setInformativeText(str(texts.UPDATE_LAPSE_CONFIRMATION))
+    msg_box.setStandardButtons(
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    )
+    msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
+    if msg_box.exec() == QMessageBox.StandardButton.Yes:
+        _perform_lapse_update(parent, remote_version)
+
+
+def _perform_lapse_update(parent, remote_version):
+    from PyQt6.QtWidgets import QProgressDialog, QMessageBox
+    from PyQt6.QtCore import Qt
+
+    progress = QProgressDialog(parent)
+    progress.setWindowTitle(str(texts.UPDATE_AVAILABLE_TITLE))
+    progress.setLabelText(str(texts.UPDATING_LAPSE))
+    progress.setRange(0, 0)
+    progress.setCancelButton(None)
+    progress.setWindowModality(Qt.WindowModality.WindowModal)
+    progress.show()
+
+    signals = LapseUpdateSignals()
+
+    def on_complete(success, message):
+        progress.close()
+        if success:
+            QMessageBox.information(
+                parent,
+                str(texts.UPDATE_AVAILABLE_TITLE),
+                str(texts.LAPSE_UPDATE_SUCCESS).format(version=message),
+            )
+        else:
+            QMessageBox.warning(
+                parent,
+                str(texts.ERROR),
+                str(texts.LAPSE_UPDATE_FAILED).format(error=message),
+            )
+
+    signals.update_complete.connect(on_complete)
+
+    def download_thread():
+        try:
+            from resources import lapse_download
+
+            downloaded = lapse_download.download()
+            if downloaded and os.path.isfile(downloaded):
+                signals.update_complete.emit(True, remote_version)
+            else:
+                signals.update_complete.emit(False, "Binary not found after download")
+        except Exception as e:
+            logger.error(f"Failed to download LAPSE update: {e}")
+            signals.update_complete.emit(False, str(e))
+
+    threading.Thread(target=download_thread, daemon=True).start()
 
 
 def update_folder_label(label, folder_path=""):

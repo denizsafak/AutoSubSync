@@ -510,6 +510,7 @@ class autosubsyncapp(QWidget):
             "check_updates_startup", DEFAULT_OPTIONS["check_updates_startup"]
         ):
             QTimer.singleShot(1000, lambda: check_for_updates_startup(self))
+            QTimer.singleShot(1500, lambda: check_for_lapse_updates_startup(self))
         # Flag to track if ffmpeg has been initialized
         self._ffmpeg_initialized = False
         self.initUI()

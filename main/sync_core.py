@@ -759,11 +759,12 @@ def run_sync(
 
                     # constants.py caches this path at import, an update may have moved it
                     exe = lapse_download.installed(exe)
-                    if lapse_download.is_outdated(exe):
-                        callbacks._log("Downloading the latest Lapse...", "grey")
+                    if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
+                        if callbacks:
+                            callbacks._log("Lapse executable not found. Downloading...", "grey")
                         exe = lapse_download.download()
                 except Exception as e:
-                    logger.error(f"Failed to update lapse: {e}")
+                    logger.error(f"Failed to download lapse: {e}")
             if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
                 msg = str(texts.NO_EXECUTABLE_FOUND).format(
                     tool=current_tool, os=current_os

@@ -619,6 +619,21 @@ class TestLapseIntegration(unittest.TestCase):
         self.assertIn("Listening to the audio 100%", content)
         self.assertIn("Done (ols): offset=-120ms confidence=12.3", content)
 
+    def test_lapse_new_options_translations(self):
+        """Verify that all new lapse options in other_options have full translations across all 23 languages."""
+        from constants import SYNC_TOOLS, LANGUAGES
+
+        lapse_other_options = SYNC_TOOLS["lapse"]["other_options"]
+        new_keys = ["force", "strict", "snap", "confidence", "audio_track", "min_shift"]
+        for key in new_keys:
+            self.assertIn(key, lapse_other_options, f"Option {key} missing from lapse other_options")
+            opt = lapse_other_options[key]
+            for lang_code in LANGUAGES.values():
+                label = opt["label"].get(lang_code)
+                tooltip = opt["tooltip"].get(lang_code)
+                self.assertTrue(label, f"Missing {lang_code} label for option {key}")
+                self.assertTrue(tooltip, f"Missing {lang_code} tooltip for option {key}")
+
     def test_qfiledialog_not_raising_nameerror_on_database_backup_and_import(self):
         """Verify that _backup_processed_database and _import_processed_database have QFileDialog imported."""
         from PyQt6.QtWidgets import QApplication
@@ -641,21 +656,6 @@ class TestLapseIntegration(unittest.TestCase):
              patch("processed_items_manager.get_processed_items_manager", return_value=mock_mgr):
             # Should not raise NameError: name 'QFileDialog' is not defined
             dummy._import_processed_database()
-
-    def test_lapse_new_options_translations(self):
-        """Verify that all new lapse options in other_options have full translations across all 23 languages."""
-        from constants import SYNC_TOOLS, LANGUAGES
-
-        lapse_other_options = SYNC_TOOLS["lapse"]["other_options"]
-        new_keys = ["force", "strict", "snap", "confidence", "audio_track", "min_shift"]
-        for key in new_keys:
-            self.assertIn(key, lapse_other_options, f"Option {key} missing from lapse other_options")
-            opt = lapse_other_options[key]
-            for lang_code in LANGUAGES.values():
-                label = opt["label"].get(lang_code)
-                tooltip = opt["tooltip"].get(lang_code)
-                self.assertTrue(label, f"Missing {lang_code} label for option {key}")
-                self.assertTrue(tooltip, f"Missing {lang_code} tooltip for option {key}")
 
     def test_other_options_button_and_dialog(self):
         """Verify that btn_other_options exists, toggles based on tool other_options, and opens dialog."""
@@ -684,7 +684,7 @@ class TestLapseIntegration(unittest.TestCase):
         attach_pairing(autosubsyncapp)
         attach_multiple(autosubsyncapp)
 
-        with patch("gui.check_for_updates_startup"):
+        with patch("gui.check_for_updates_startup"), patch("gui.check_for_lapse_updates_startup"):
             w = autosubsyncapp()
             self.assertTrue(hasattr(w, "btn_other_options"))
             self.assertIsInstance(w.btn_other_options, QPushButton)
@@ -719,6 +719,69 @@ class TestLapseIntegration(unittest.TestCase):
             self.assertFalse(w.btn_other_options.icon().isNull())
             w.apply_theme("dark")
             self.assertFalse(w.btn_other_options.icon().isNull())
+
+    def test_run_sync_does_not_auto_update_when_lapse_is_outdated(self):
+        """Verify that run_sync does not automatically download when lapse is already installed, even if outdated."""
+        from resources import lapse_download
+
+        out_sub = os.path.join(self.temp_dir, "synced_lapse_no_update.srt")
+        fake_bin = os.path.join(self.temp_dir, "lapse")
+        with open(fake_bin, "w") as f:
+            f.write("#!/bin/sh\nexit 0\n")
+        os.chmod(fake_bin, 0o755)
+
+        with patch("resources.lapse_download.installed", return_value=fake_bin), \
+             patch("resources.lapse_download.is_outdated", return_value=True), \
+             patch("resources.lapse_download.download") as mock_download, \
+             patch("sync_core.run_executable_tool", return_value=0), \
+             patch("os.path.exists", side_effect=lambda p: True if p in (self.video_path, self.sub_path, out_sub, fake_bin) else os.path.exists(p)), \
+             patch("os.path.getsize", return_value=100):
+            result = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="lapse",
+                output=out_sub,
+                config=dict(DEFAULT_OPTIONS),
+            )
+            # download should NOT be called during sync just because it is outdated
+            mock_download.assert_not_called()
+
+    def test_check_for_lapse_updates_startup_prompts_dialog(self):
+        """Verify that check_for_lapse_updates_startup triggers an update prompt dialog when outdated."""
+        import utils
+        from PyQt6.QtWidgets import QApplication
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        parent = MagicMock()
+
+        with patch("resources.lapse_download.installed", return_value="/fake/lapse"), \
+             patch("os.path.isfile", return_value=True), \
+             patch("resources.lapse_download.current_version", return_value="2.0.1"), \
+             patch("resources.lapse_download.latest_version", return_value="2.3.3"), \
+             patch("utils._show_lapse_update_dialog") as mock_show_dialog:
+
+            # Run synchronously for test
+            signals = utils.LapseUpdateSignals()
+            signals.update_available.connect(lambda r, l: utils._show_lapse_update_dialog(parent, r, l))
+            signals.update_available.emit("2.3.3", "2.0.1")
+
+            mock_show_dialog.assert_called_once_with(parent, "2.3.3", "2.0.1")
+
+    def test_manual_check_for_lapse_updates_shows_up_to_date(self):
+        """Verify that manual check for lapse updates shows up-to-date notification when version matches."""
+        import utils
+        from PyQt6.QtWidgets import QApplication
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        parent = MagicMock()
+
+        with patch("PyQt6.QtWidgets.QMessageBox.information") as mock_info:
+            signals = utils.UnifiedUpdateSignals()
+            signals.finished.connect(
+                lambda res: mock_info(parent, "Up to Date", f"LAPSE is up to date ({res.get('lapse_local')})")
+            )
+            signals.finished.emit({"app_remote": "6.5", "app_update": False, "lapse_local": "2.3.3", "lapse_remote": "2.3.3", "lapse_update": False})
+            mock_info.assert_called_once_with(parent, "Up to Date", "LAPSE is up to date (2.3.3)")
 
     def test_slider_no_ticks_for_large_ranges(self):
         """Verify that sliders with range > 50 use NoTicks to avoid drawing a solid line / divider."""
