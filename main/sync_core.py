@@ -242,6 +242,28 @@ def determine_output_path(
     return output_path
 
 
+def _pick_audio_mp4_target(stem: str) -> Optional[str]:
+    """Pick the target path for a converted audio .mp4 without overwriting.
+
+    Walks the candidates stem.mp4, stem_2.mp4, stem_3.mp4, ... and returns
+    the first path that does not exist yet, mirroring the unbounded "_2",
+    "_3", ... numbering used for output subtitles in determine_output_path.
+    Any existing file at a candidate name is left untouched and skipped,
+    no matter how many there are.
+    """
+    candidate = f"{stem}.mp4"
+    counter = 2
+    while os.path.exists(candidate):
+        logger.info(
+            "Existing file '%s' will not be overwritten; trying the next "
+            "numbered name for the converted audio",
+            candidate,
+        )
+        candidate = f"{stem}_{counter}.mp4"
+        counter += 1
+    return candidate
+
+
 def convert_audio_to_mp4(
     audio_path: str,
     callbacks: Optional[SyncCallbacks] = None,
@@ -250,19 +272,26 @@ def convert_audio_to_mp4(
     """Convert an audio-only file to an audio-only .mp4 next to it.
 
     The sync tools expect a video container, so an audio reference is wrapped
-    into an .mp4 with the same basename in the same directory. An .mp4 from a
-    previous run (kept via the "Keep converted audio files" option) is reused
-    instead of being re-encoded. The stream is first remuxed without
-    re-encoding; codecs the MP4 container cannot hold (e.g. FLAC, Vorbis, WMA)
-    fall back to an AAC re-encode, which is fine for synchronization purposes.
+    into an .mp4 with the same basename in the same directory. Existing files
+    are never overwritten: if the candidate name (or any of its "_2",
+    "_3", ... numbered fallbacks, see _pick_audio_mp4_target) already exists,
+    it is skipped and the conversion is written to the next free name. The
+    stream is first remuxed without re-encoding; codecs the MP4 container
+    cannot hold (e.g. FLAC, Vorbis, WMA) fall back to an AAC re-encode, which
+    is fine for synchronization purposes.
 
-    Returns the converted file path, or None when ffmpeg fails to produce a
-    non-empty output.
+    Returns the converted file path, or None when no free name is available
+    or ffmpeg fails to produce a non-empty output.
     """
-    target_path = os.path.splitext(audio_path)[0] + ".mp4"
-    if os.path.isfile(target_path) and os.path.getsize(target_path) > 0:
-        logger.info("Reusing existing converted audio reference: %s", target_path)
-        return target_path
+    stem = os.path.splitext(audio_path)[0]
+    target_path = _pick_audio_mp4_target(stem)
+    if target_path is None:
+        logger.error(
+            "No free '_N'-numbered .mp4 name next to '%s' to hold the "
+            "converted audio",
+            audio_path,
+        )
+        return None
 
     base_cmd = [
         FFMPEG_EXECUTABLE,

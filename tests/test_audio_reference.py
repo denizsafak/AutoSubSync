@@ -321,12 +321,15 @@ class TestShouldExtractSubtitlesAudio(unittest.TestCase):
 
 
 class TestConvertAudioToMp4RealFfmpeg(unittest.TestCase):
-    """Real conversion tests; skipped when ffmpeg is unavailable."""
+    """Real conversion tests; skipped when ffmpeg/ffprobe are unavailable."""
 
     @classmethod
     def setUpClass(cls):
         if not FFMPEG_AVAILABLE:
             raise unittest.SkipTest("ffmpeg not available")
+        cls.ffprobe = shutil.which("ffprobe") or constants.FFPROBE_EXECUTABLE
+        if not (os.path.isfile(cls.ffprobe) and os.access(cls.ffprobe, os.X_OK)):
+            raise unittest.SkipTest("ffprobe not available")
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp(prefix="AutoSubSync-audio-convert-")
@@ -334,17 +337,33 @@ class TestConvertAudioToMp4RealFfmpeg(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    def _make_sine(self, name):
+        path = os.path.join(self.temp_dir, name)
+        _make_sine_audio(path)
+        return path
+
+    def _make_video_mp4(self, name):
+        """Create a real video file (testsrc + audio) at temp_dir/name."""
+        path = os.path.join(self.temp_dir, name)
+        subprocess.run(
+            [FFMPEG, "-y", "-loglevel", "error",
+             "-f", "lavfi", "-i", "testsrc=duration=1:size=128x128:rate=10",
+             "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
+             "-shortest", path],
+            check=True,
+        )
+        return path
+
     def test_wav_converts_to_mp4_next_to_source(self):
-        wav = os.path.join(self.temp_dir, "tone.wav")
-        _make_sine_audio(wav)
+        wav = self._make_sine("tone.wav")
         result = sync_core.convert_audio_to_mp4(wav)
-        self.assertEqual(result, os.path.join(self.temp_dir, "tone.mp4"))
-        self.assertTrue(os.path.isfile(result))
-        self.assertGreater(os.path.getsize(result), 0)
+        expected = os.path.join(self.temp_dir, "tone.mp4")
+        self.assertEqual(result, expected)
+        self.assertTrue(os.path.isfile(expected))
+        self.assertGreater(os.path.getsize(expected), 0)
 
     def test_converted_mp4_has_usable_audio_stream(self):
-        wav = os.path.join(self.temp_dir, "tone.wav")
-        _make_sine_audio(wav)
+        wav = self._make_sine("tone.wav")
         result = sync_core.convert_audio_to_mp4(wav)
         probe = subprocess.run(
             ["ffprobe", "-v", "error", "-select_streams", "a:0",
@@ -358,8 +377,7 @@ class TestConvertAudioToMp4RealFfmpeg(unittest.TestCase):
 
     def test_flac_converts_with_usable_audio_stream(self):
         flac = os.path.join(self.temp_dir, "tone.flac")
-        wav = os.path.join(self.temp_dir, "tone.wav")
-        _make_sine_audio(wav)
+        wav = self._make_sine("tone.wav")
         subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", wav, flac],
                        check=True)
         result = sync_core.convert_audio_to_mp4(flac)
@@ -374,43 +392,42 @@ class TestConvertAudioToMp4RealFfmpeg(unittest.TestCase):
         # fall back to the AAC re-encode. Both outcomes are valid.
         self.assertIn(probe.stdout.strip(), ("flac", "aac"))
 
-    def test_existing_nonempty_mp4_is_reused_without_ffmpeg(self):
-        mp3 = os.path.join(self.temp_dir, "tone.mp3")
-        mp4 = os.path.join(self.temp_dir, "tone.mp4")
-        with open(mp3, "wb") as f:
-            f.write(b"x")
-        with open(mp4, "wb") as f:
-            f.write(b"previously converted")
-        with patch("sync_core.run_executable_tool",
-                   side_effect=AssertionError("ffmpeg must not run")):
-            self.assertEqual(sync_core.convert_audio_to_mp4(mp3), mp4)
+    def test_existing_mp4_is_skipped_and_left_untouched(self):
+        # Any existing file at the candidate name (here an audio-only mp4
+        # kept by a previous run) is skipped, never overwritten or reused.
+        mp3 = self._make_sine("tone.mp3")
+        mp4 = self._make_sine("tone.mp4")
+        before = os.path.getmtime(mp4)
+        result = sync_core.convert_audio_to_mp4(mp3)
+        self.assertEqual(result, os.path.join(self.temp_dir, "tone_2.mp4"))
+        self.assertGreater(os.path.getsize(result), 0)
+        self.assertEqual(os.path.getmtime(mp4), before)  # original untouched
 
-    def test_empty_existing_mp4_is_not_reused(self):
-        wav = os.path.join(self.temp_dir, "tone.wav")
+    def test_existing_empty_mp4_is_skipped_too(self):
+        # Even a zero-byte leftover counts as "existing": skipped, not
+        # removed and not converted over.
+        wav = self._make_sine("tone.wav")
         mp4 = os.path.join(self.temp_dir, "tone.mp4")
-        _make_sine_audio(wav)
         with open(mp4, "wb"):
-            pass  # zero bytes: stale/partial output from a crashed run
+            pass
         result = sync_core.convert_audio_to_mp4(wav)
-        self.assertEqual(result, mp4)
-        self.assertGreater(os.path.getsize(mp4), 0)
+        self.assertEqual(result, os.path.join(self.temp_dir, "tone_2.mp4"))
+        self.assertTrue(os.path.exists(mp4))
+        self.assertEqual(os.path.getsize(mp4), 0)
 
     def test_uppercase_extension_converts_to_lowercase_mp4_name(self):
-        wav = os.path.join(self.temp_dir, "tone.WAV")
-        _make_sine_audio(wav)
+        wav = self._make_sine("tone.WAV")
         result = sync_core.convert_audio_to_mp4(wav)
         self.assertEqual(os.path.basename(result), "tone.mp4")
 
     def test_multi_dot_basename_keeps_intermediate_dots(self):
         # os.path.splitext strips only the final extension.
-        wav = os.path.join(self.temp_dir, "artist.track.one.wav")
-        _make_sine_audio(wav)
+        wav = self._make_sine("artist.track.one.wav")
         result = sync_core.convert_audio_to_mp4(wav)
         self.assertEqual(os.path.basename(result), "artist.track.one.mp4")
 
     def test_failing_ffmpeg_returns_none_and_leaves_no_target(self):
-        wav = os.path.join(self.temp_dir, "tone.wav")
-        _make_sine_audio(wav)
+        wav = self._make_sine("tone.wav")
         failing = os.path.join(self.temp_dir, "failing-ffmpeg.sh")
         with open(failing, "w", encoding="utf-8") as f:
             f.write("#!/bin/sh\nexit 1\n")
@@ -420,24 +437,43 @@ class TestConvertAudioToMp4RealFfmpeg(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "tone.mp4")))
 
     def test_missing_ffmpeg_binary_returns_none(self):
-        wav = os.path.join(self.temp_dir, "tone.wav")
-        _make_sine_audio(wav)
+        wav = self._make_sine("tone.wav")
         with patch("sync_core.FFMPEG_EXECUTABLE",
                    os.path.join(self.temp_dir, "no-such-ffmpeg")):
             self.assertIsNone(sync_core.convert_audio_to_mp4(wav))
 
-    def test_target_collision_with_real_video_is_not_converted_over(self):
-        # The reuse check only looks at existence and size, so a genuine
-        # video named movie.mp4 next to movie.wav is reused as-is. That is
-        # the documented behaviour; assert it stays deterministic.
-        wav = os.path.join(self.temp_dir, "tone.wav")
-        mp4 = os.path.join(self.temp_dir, "tone.mp4")
-        _make_sine_audio(wav)
-        with open(mp4, "wb") as f:
-            f.write(b"unrelated file")
-        with patch("sync_core.run_executable_tool",
-                   side_effect=AssertionError("ffmpeg must not run")):
-            self.assertEqual(sync_core.convert_audio_to_mp4(wav), mp4)
+    def test_existing_video_mp4_is_never_overwritten(self):
+        # A genuine video sharing the stem must not be touched; the
+        # converted audio goes to the next numbered name instead.
+        wav = self._make_sine("tone.wav")
+        video = self._make_video_mp4("tone.mp4")
+        video_bytes = open(video, "rb").read()
+        result = sync_core.convert_audio_to_mp4(wav)
+        expected = os.path.join(self.temp_dir, "tone_2.mp4")
+        self.assertEqual(result, expected)
+        self.assertGreater(os.path.getsize(expected), 0)
+        with open(video, "rb") as f:
+            self.assertEqual(f.read(), video_bytes)  # original untouched
+
+    def test_unrecognizable_nonempty_file_is_never_overwritten(self):
+        # Not a media file at all: must be left alone, target shifts to _2.
+        wav = self._make_sine("tone.wav")
+        stranger = os.path.join(self.temp_dir, "tone.mp4")
+        with open(stranger, "wb") as f:
+            f.write(b"definitely not an mp4")
+        result = sync_core.convert_audio_to_mp4(wav)
+        self.assertEqual(result, os.path.join(self.temp_dir, "tone_2.mp4"))
+        with open(stranger, "rb") as f:
+            self.assertEqual(f.read(), b"definitely not an mp4")
+
+    def test_numbering_skips_occupied_names(self):
+        # Video at tone.mp4 and tone_2.mp4: the conversion must land on
+        # tone_3.mp4, leaving both existing files untouched.
+        wav = self._make_sine("tone.wav")
+        self._make_video_mp4("tone.mp4")
+        self._make_video_mp4("tone_2.mp4")
+        result = sync_core.convert_audio_to_mp4(wav)
+        self.assertEqual(result, os.path.join(self.temp_dir, "tone_3.mp4"))
 
 
 class _FakeSyncTool:
@@ -498,8 +534,9 @@ class TestRunSyncAudioReferenceWiring(unittest.TestCase):
     def _fake_convert(self):
         def convert(audio_path, callbacks=None, process_holder=None):
             target = os.path.splitext(audio_path)[0] + ".mp4"
-            with open(target, "wb") as f:
-                f.write(b"converted-mp4")
+            if not os.path.exists(target):
+                with open(target, "wb") as f:
+                    f.write(b"converted-mp4")
             return target
 
         return convert
