@@ -151,8 +151,8 @@ class LogWindow(QWidget):
         self.append_message(f"{texts.SYNC_TOOL_LABEL} ", end="")
         self.append_message(sync_tool, bold=True, color=COLORS["GREEN"])
         tool_info = SYNC_TOOLS.get(sync_tool)
-        if tool_info and "options" in tool_info:
-            opts = tool_info["options"]
+        if tool_info and ("options" in tool_info or "other_options" in tool_info):
+            opts = {**tool_info.get("options", {}), **tool_info.get("other_options", {})}
             # Filter out spacer options for display
             display_opts = {k: v for k, v in opts.items() if v.get("type") != "spacer"}
             for i, (k, v) in enumerate(display_opts.items()):

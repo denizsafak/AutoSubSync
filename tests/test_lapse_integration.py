@@ -642,6 +642,98 @@ class TestLapseIntegration(unittest.TestCase):
             # Should not raise NameError: name 'QFileDialog' is not defined
             dummy._import_processed_database()
 
+    def test_lapse_new_options_translations(self):
+        """Verify that all new lapse options in other_options have full translations across all 23 languages."""
+        from constants import SYNC_TOOLS, LANGUAGES
+
+        lapse_other_options = SYNC_TOOLS["lapse"]["other_options"]
+        new_keys = ["force", "strict", "snap", "confidence", "audio_track", "min_shift"]
+        for key in new_keys:
+            self.assertIn(key, lapse_other_options, f"Option {key} missing from lapse other_options")
+            opt = lapse_other_options[key]
+            for lang_code in LANGUAGES.values():
+                label = opt["label"].get(lang_code)
+                tooltip = opt["tooltip"].get(lang_code)
+                self.assertTrue(label, f"Missing {lang_code} label for option {key}")
+                self.assertTrue(tooltip, f"Missing {lang_code} tooltip for option {key}")
+
+    def test_other_options_button_and_dialog(self):
+        """Verify that btn_other_options exists, toggles based on tool other_options, and opens dialog."""
+        from PyQt6.QtWidgets import QApplication, QPushButton
+        from gui import autosubsyncapp
+        from gui_automatic_tab import (
+            attach_functions_to_autosubsyncapp as attach_auto,
+        )
+        from gui_manual_tab import (
+            attach_functions_to_autosubsyncapp as attach_manual,
+        )
+        from gui_batch_mode import (
+            attach_functions_to_autosubsyncapp as attach_batch,
+        )
+        from gui_auto_pairing import (
+            attach_functions_to_autosubsyncapp as attach_pairing,
+        )
+        from gui_multiple_subs import (
+            attach_functions_to_autosubsyncapp as attach_multiple,
+        )
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        attach_auto(autosubsyncapp)
+        attach_manual(autosubsyncapp)
+        attach_batch(autosubsyncapp)
+        attach_pairing(autosubsyncapp)
+        attach_multiple(autosubsyncapp)
+
+        with patch("gui.check_for_updates_startup"):
+            w = autosubsyncapp()
+            self.assertTrue(hasattr(w, "btn_other_options"))
+            self.assertIsInstance(w.btn_other_options, QPushButton)
+
+            # lapse has other_options -> button should be visible (not hidden)
+            w.update_sync_tool_options("lapse")
+            self.assertFalse(w.btn_other_options.isHidden())
+
+            # alass has no other_options -> button should be hidden
+            w.update_sync_tool_options("alass")
+            self.assertTrue(w.btn_other_options.isHidden())
+
+            # Switch back to lapse and test opening other options dialog
+            w.update_sync_tool_options("lapse")
+            with patch("PyQt6.QtWidgets.QDialog.exec"):
+                w.show_other_options_dialog()
+
+            # Verify that encoding menu has standard QActions
+            self.assertTrue(hasattr(w, "encoding_disabled_action"))
+            self.assertTrue(hasattr(w, "encoding_same_action"))
+            self.assertTrue(hasattr(w, "encoding_actions"))
+            self.assertGreater(len(w.encoding_actions), 50)
+
+            # Verify button ordering: Show tool info (?), Additional arguments (+), Other options (tune)
+            w.sync_options_group.resize(400, 300)
+            w._move_sync_options_buttons()
+            self.assertLess(w.btn_tool_info.x(), w.btn_add_args.x())
+            self.assertLess(w.btn_add_args.x(), w.btn_other_options.x())
+
+            # Verify theme adaptation of tune icon
+            w.apply_theme("light")
+            self.assertFalse(w.btn_other_options.icon().isNull())
+            w.apply_theme("dark")
+            self.assertFalse(w.btn_other_options.icon().isNull())
+
+    def test_slider_no_ticks_for_large_ranges(self):
+        """Verify that sliders with range > 50 use NoTicks to avoid drawing a solid line / divider."""
+        from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget, QSlider
+        from gui import autosubsyncapp
+        from gui_automatic_tab import attach_functions_to_autosubsyncapp as attach_auto
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        attach_auto(autosubsyncapp)
+
+        parent_widget = QWidget()
+        parent_layout = QVBoxLayout(parent_widget)
+        slider, _ = autosubsyncapp._create_slider(parent_widget, parent_layout, "Test min_shift", 0, 1000, 0)
+        self.assertEqual(slider.tickPosition(), QSlider.TickPosition.NoTicks)
+
 
 if __name__ == "__main__":
     unittest.main()

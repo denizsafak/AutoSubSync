@@ -25,8 +25,10 @@ from PyQt6.QtWidgets import (
     QSpacerItem,
     QLabel,
     QMessageBox,
+    QDialog,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QIcon
 from constants import COLORS, DEFAULT_OPTIONS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
 from utils import (
     update_config,
@@ -35,6 +37,7 @@ from utils import (
     show_tool_info_dialog,
     check_file_readable,
     check_file_writable,
+    get_resource_path,
 )
 from sync_core import determine_output_path
 
@@ -59,6 +62,8 @@ def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
     autosubsyncapp_class.restore_auto_sync_tab = restore_auto_sync_tab
     autosubsyncapp_class.show_log_window = show_log_window
     autosubsyncapp_class.show_tool_info_dialog = show_tool_info_dialog
+    autosubsyncapp_class.show_other_options_dialog = show_other_options_dialog
+    autosubsyncapp_class.update_other_options_icon = update_other_options_icon
 
 
 class OneStepSlider(QSlider):
@@ -81,6 +86,35 @@ class OneStepSlider(QSlider):
             self.setValue(self.value() + delta)
         else:
             super().keyPressEvent(event)
+
+
+def update_other_options_icon(self, theme=None):
+    """Update btn_other_options icon according to the active theme."""
+    if not hasattr(self, "btn_other_options"):
+        return
+    if theme is None:
+        theme = self.config.get("theme", DEFAULT_OPTIONS.get("theme", "system"))
+
+    if theme == "dark":
+        is_dark = True
+    elif theme == "light":
+        is_dark = False
+    else:
+        bg = self.palette().color(self.btn_other_options.backgroundRole())
+        if bg.isValid() and bg.alpha() > 0:
+            is_dark = bg.lightness() < 128
+        else:
+            text_color = self.palette().color(self.btn_other_options.foregroundRole())
+            is_dark = text_color.lightness() > 128 if text_color.isValid() else True
+
+    svg_name = "tune.svg" if is_dark else "tune_light.svg"
+    icon_path = get_resource_path("autosubsyncapp.assets", svg_name)
+
+    if os.path.exists(icon_path):
+        self.btn_other_options.setIcon(QIcon(icon_path))
+    else:
+        self.btn_other_options.setIcon(QIcon())
+    self.btn_other_options.setIconSize(QSize(18, 18))
 
 
 def setup_auto_sync_tab(self):
@@ -134,27 +168,42 @@ def setup_auto_sync_tab(self):
     self.btn_tool_info.setToolTip(texts.SHOW_TOOL_INFORMATION)
     self.btn_tool_info.clicked.connect(self.show_tool_info_dialog)
 
+    # Create the button for other options
+    self.btn_other_options = QPushButton(self)
+    self.btn_other_options.setFixedSize(30, 30)
+    self.btn_other_options.setToolTip(texts.OTHER_OPTIONS)
+    self.update_other_options_icon()
+    self.btn_other_options.clicked.connect(self.show_other_options_dialog)
+    self.btn_other_options.hide()
+
     # Set the sync options group layout
     self.sync_options_layout = QVBoxLayout()
     self.sync_options_group.setLayout(self.sync_options_layout)
     controls.addWidget(self.sync_options_group)
 
-    # Position the + and ? buttons in the top right of the group box
-    self.btn_add_args.setParent(self.sync_options_group)
+    # Position the ?, + and other_options buttons in the top right of the group box
     self.btn_tool_info.setParent(self.sync_options_group)
+    self.btn_add_args.setParent(self.sync_options_group)
+    self.btn_other_options.setParent(self.sync_options_group)
 
     def _move_buttons(event=None):
-        # Place + to the left of ?
-        x_info = self.sync_options_group.width() - self.btn_tool_info.width() - 10
-        x_add = x_info - self.btn_add_args.width() - 5
-        y = 30
-        self.btn_add_args.move(x_add, y)
-        self.btn_tool_info.move(x_info, y)
-        # Ensure both buttons are on top
+        # Place buttons in top right in order: [Show tool info (?)] [Additional arguments (+)] [Other options (tune)]
+        if not self.btn_other_options.isHidden():
+            x_other = self.sync_options_group.width() - self.btn_other_options.width() - 10
+            x_add = x_other - self.btn_add_args.width() - 5
+            x_info = x_add - self.btn_tool_info.width() - 5
+            self.btn_other_options.move(x_other, 30)
+            self.btn_other_options.raise_()
+        else:
+            x_add = self.sync_options_group.width() - self.btn_add_args.width() - 10
+            x_info = x_add - self.btn_tool_info.width() - 5
+        self.btn_add_args.move(x_add, 30)
+        self.btn_tool_info.move(x_info, 30)
         self.btn_add_args.raise_()
         self.btn_tool_info.raise_()
 
     self.sync_options_group.resizeEvent = _move_buttons
+    self._move_sync_options_buttons = _move_buttons
 
     sync_tool_items = [(k, k) for k in SYNC_TOOLS.keys()]
     self.sync_tool_combo = self._dropdown(
@@ -308,6 +357,124 @@ def show_add_arguments_dialog(self):
         self.update_args_tooltip()
 
 
+def show_other_options_dialog(self):
+    """Show dialog for other options of the current sync tool"""
+    current_tool = (
+        self.sync_tool_combo.currentData()
+        or self.sync_tool_combo.currentText()
+        if hasattr(self, "sync_tool_combo")
+        else self.config.get("sync_tool", DEFAULT_OPTIONS.get("sync_tool", ""))
+    )
+    tool_info = SYNC_TOOLS.get(current_tool, {})
+    other_options = tool_info.get("other_options", {})
+    if not other_options:
+        return
+
+    dialog = QDialog(self)
+    dialog.setWindowTitle(f"{texts.OTHER_OPTIONS} - {current_tool}")
+    dialog.setWindowFlags(
+        dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
+    )
+    dialog.setMinimumWidth(380)
+
+    layout = QVBoxLayout(dialog)
+    layout.setSpacing(6)
+    layout.setContentsMargins(12, 12, 12, 12)
+
+    for option_name, option_data in other_options.items():
+        option_type = option_data.get("type")
+        label = option_data.get("label", "")
+        tooltip = option_data.get("tooltip", "")
+        config_key = f"{current_tool}_{option_name}"
+        default = option_data.get("default", DEFAULT_OPTIONS.get(config_key, None))
+
+        if option_type == "checkbox":
+            checkbox = self._checkbox(label)
+            argument = option_data.get("argument", "")
+            tooltip_text = (
+                f"{argument}: {tooltip}"
+                if argument and tooltip
+                else (argument if argument else tooltip)
+            )
+            checkbox.setToolTip(tooltip_text)
+            checkbox.setChecked(self.config.get(config_key, default))
+            checkbox.toggled.connect(
+                lambda state, key=config_key: update_config(self, key, state)
+            )
+            layout.addWidget(checkbox)
+
+        elif option_type == "dropdown":
+            values = option_data.get("values", [])
+            labels = option_data.get("value_labels", {})
+            dropdown_items = [(labels.get(v, v), v) for v in values]
+            dropdown = self._dropdown(layout, label, dropdown_items)
+            argument = option_data.get("argument", "")
+            tooltip_text = (
+                f"{argument}: {tooltip}"
+                if argument and tooltip
+                else (argument if argument else tooltip)
+            )
+            dropdown.setToolTip(tooltip_text)
+
+            saved = self.config.get(config_key, default)
+            if values and saved not in values:
+                saved = default
+                if config_key in self.config:
+                    self.config[config_key] = default
+            idx = dropdown.findData(saved)
+            if idx < 0:
+                idx = dropdown.findText(str(labels.get(saved, saved)))
+            if idx < 0 and default is not None:
+                idx = dropdown.findData(default)
+            if idx >= 0:
+                dropdown.setCurrentIndex(idx)
+
+            dropdown.currentIndexChanged.connect(
+                lambda i, key=config_key, cb=dropdown: (
+                    update_config(
+                        self,
+                        key,
+                        cb.currentData()
+                        if cb.currentData() is not None
+                        else cb.currentText(),
+                    )
+                    if i >= 0 and (cb.currentData() is not None or cb.currentText())
+                    else None
+                )
+            )
+
+        elif option_type == "slider":
+            range_min, range_max = option_data.get("range", [0, 100])
+            current_value = self.config.get(config_key, default)
+            slider, val_label = self._create_slider(
+                layout, label, range_min, range_max, current_value
+            )
+            argument = option_data.get("argument", "")
+            tooltip_text = (
+                f"{argument}: {tooltip}"
+                if argument and tooltip
+                else (argument if argument else tooltip)
+            )
+            slider.setToolTip(tooltip_text)
+            slider.valueChanged.connect(
+                lambda value, key=config_key: update_config(self, key, value)
+            )
+
+        elif option_type == "spacer":
+            value = option_data.get("value", 10)
+            spacer = QSpacerItem(
+                0, value, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+            )
+            layout.addItem(spacer)
+
+    close_btn = QPushButton(str(texts.CLOSE_BUTTON))
+    close_btn.setFixedHeight(32)
+    close_btn.clicked.connect(dialog.accept)
+    layout.addWidget(close_btn)
+
+    dialog.exec()
+
+
 def show_auto_sync_inputs(self):
     """Update the automatic sync input UI based on current mode"""
     # Clear existing widgets from the layout first, but don't delete them
@@ -379,8 +546,14 @@ def update_sync_tool_options(self, tool):
     self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if has_args else "")
     self.update_args_tooltip()
 
-    # Update the group box title to include the tool description if available
     tool_info = SYNC_TOOLS.get(tool, {})
+    has_other_options = bool(tool_info.get("other_options"))
+    if hasattr(self, "btn_other_options"):
+        self.btn_other_options.setVisible(has_other_options)
+        if hasattr(self, "_move_sync_options_buttons"):
+            self._move_sync_options_buttons()
+
+    # Update the group box title to include the tool description if available
     description = tool_info.get("description", "")
     self.sync_options_group.setTitle(f"{texts.SYNC_TOOL_SETTINGS} - {tool}")
 
@@ -572,8 +745,11 @@ def _create_slider(self, parent_layout, title, minv, maxv, default, tick=5):
     slider.setMinimum(minv)
     slider.setMaximum(maxv)
     slider.setValue(default)
-    slider.setTickPosition(QSlider.TickPosition.TicksBelow)
-    slider.setTickInterval(tick)
+    if (maxv - minv) <= 50:
+        slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        slider.setTickInterval(tick)
+    else:
+        slider.setTickPosition(QSlider.TickPosition.NoTicks)
     slider.setMinimumHeight(30)
     slider.valueChanged.connect(lambda v: val_lab.setText(str(v)))
     lay.addWidget(slider)

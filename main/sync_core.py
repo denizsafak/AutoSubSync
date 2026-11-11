@@ -293,7 +293,8 @@ def build_cmd(
 
 def _append_opts(cmd, tool: str, config: dict):
     info = SYNC_TOOLS.get(tool, {})
-    for name, opt in info.get("options", {}).items():
+    all_options = {**info.get("options", {}), **info.get("other_options", {})}
+    for name, opt in all_options.items():
         arg, default = opt.get("argument"), opt.get("default")
         val = config.get(f"{tool}_{name}", default)
         if opt.get("type") == "dropdown":

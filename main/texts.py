@@ -6755,6 +6755,32 @@ VISIT_GITHUB_DOWNLOAD_LATEST = {
     "ur_PK": "براہ کرم GitHub صفحہ ملاحظہ کریں اور تازہ ترین ورژن ڈاؤن لوڈ کریں۔ کیا آپ GitHub ریلیز صفحہ کھولنا چاہتے ہیں؟",
 }
 
+OTHER_OPTIONS = {
+    "en_US": "Other options",
+    "es_ES": "Otras opciones",
+    "de_DE": "Weitere Optionen",
+    "fr_FR": "Autres options",
+    "it_IT": "Altre opzioni",
+    "pl_PL": "Inne opcje",
+    "pt_PT": "Outras opções",
+    "tr_TR": "Diğer seçenekler",
+    "vi_VN": "Tùy chọn khác",
+    "id_ID": "Opsi lainnya",
+    "ms_MY": "Pilihan lain",
+    "th_TH": "ตัวเลือกอื่นๆ",
+    "uk_UA": "Інші параметри",
+    "ru_RU": "Другие параметры",
+    "zh_CN": "其他选项",
+    "zh_TW": "其他選項",
+    "ja_JP": "その他のオプション",
+    "ko_KR": "기타 옵션",
+    "hi_IN": "अन्य विकल्प",
+    "bn_BD": "অন্যান্য বিকল্প",
+    "ur_PK": "دیگر اختیارات",
+    "ar_SA": "خيارات أخرى",
+    "fa_IR": "گزینه‌های دیگر",
+}
+
 UP_TO_DATE_TITLE = {
     "en_US": "Up to Date",
     "es_ES": "Actualizado",

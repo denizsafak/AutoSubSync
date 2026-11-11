@@ -613,6 +613,10 @@ class autosubsyncapp(QWidget):
             self.config["theme"] = theme
             save_config(self.config)
 
+        # Update other options icon for current theme
+        if hasattr(self, "update_other_options_icon"):
+            self.update_other_options_icon(theme)
+
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
         screen = QApplication.primaryScreen().geometry()
