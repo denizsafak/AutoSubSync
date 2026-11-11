@@ -26,9 +26,9 @@ from PyQt6.QtWidgets import (
     QLabel,
     QMessageBox,
     QDialog,
+    QDialogButtonBox,
 )
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QIcon
 from constants import COLORS, DEFAULT_OPTIONS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
 from utils import (
     update_config,
@@ -38,6 +38,7 @@ from utils import (
     check_file_readable,
     check_file_writable,
     get_resource_path,
+    load_svg_icon,
 )
 from sync_core import determine_output_path
 
@@ -64,6 +65,8 @@ def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
     autosubsyncapp_class.show_tool_info_dialog = show_tool_info_dialog
     autosubsyncapp_class.show_other_options_dialog = show_other_options_dialog
     autosubsyncapp_class.update_other_options_icon = update_other_options_icon
+    autosubsyncapp_class.update_restore_defaults_icon = update_restore_defaults_icon
+    autosubsyncapp_class.restore_current_tool_defaults = restore_current_tool_defaults
 
 
 class OneStepSlider(QSlider):
@@ -110,11 +113,101 @@ def update_other_options_icon(self, theme=None):
     svg_name = "tune.svg" if is_dark else "tune_light.svg"
     icon_path = get_resource_path("autosubsyncapp.assets", svg_name)
 
-    if os.path.exists(icon_path):
-        self.btn_other_options.setIcon(QIcon(icon_path))
-    else:
-        self.btn_other_options.setIcon(QIcon())
+    self.btn_other_options.setIcon(load_svg_icon(icon_path, 18))
     self.btn_other_options.setIconSize(QSize(18, 18))
+    self.btn_other_options.update()
+
+
+def update_restore_defaults_icon(self, theme=None):
+    """Update btn_restore_defaults icon according to the active theme."""
+    if not hasattr(self, "btn_restore_defaults"):
+        return
+    if theme is None:
+        theme = self.config.get("theme", DEFAULT_OPTIONS.get("theme", "system"))
+
+    if theme == "dark":
+        is_dark = True
+    elif theme == "light":
+        is_dark = False
+    else:
+        bg = self.palette().color(self.btn_restore_defaults.backgroundRole())
+        if bg.isValid() and bg.alpha() > 0:
+            is_dark = bg.lightness() < 128
+        else:
+            text_color = self.palette().color(self.btn_restore_defaults.foregroundRole())
+            is_dark = text_color.lightness() > 128 if text_color.isValid() else True
+
+    svg_name = "restore.svg" if is_dark else "restore_light.svg"
+    icon_path = get_resource_path("autosubsyncapp.assets", svg_name)
+
+    self.btn_restore_defaults.setIcon(load_svg_icon(icon_path, 18))
+    self.btn_restore_defaults.setIconSize(QSize(18, 18))
+    self.btn_restore_defaults.update()
+
+
+def restore_current_tool_defaults(self):
+    """Restore all options for the current sync tool to defaults, ignoring additional arguments."""
+    current_tool = getattr(self, "current_sync_tool", None)
+    if not current_tool:
+        current_tool = (
+            self.sync_tool_combo.currentData()
+            or self.sync_tool_combo.currentText()
+            if hasattr(self, "sync_tool_combo")
+            else self.config.get("sync_tool", DEFAULT_OPTIONS.get("sync_tool", ""))
+        )
+
+    # Prompt user for confirmation before resetting
+    confirm_msg = str(texts.RESTORE_TOOL_DEFAULTS_CONFIRMATION).format(tool=current_tool)
+    reply = QMessageBox.question(
+        self,
+        str(texts.RESTORE_TO_DEFAULTS),
+        confirm_msg,
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No,
+    )
+    if reply != QMessageBox.StandardButton.Yes:
+        return
+
+    tool_info = SYNC_TOOLS.get(current_tool, {})
+    all_options = {**tool_info.get("options", {}), **tool_info.get("other_options", {})}
+
+    for opt_name, opt_data in all_options.items():
+        if "default" in opt_data and opt_data["default"] is not None:
+            key = f"{current_tool}_{opt_name}"
+            self.config[key] = opt_data["default"]
+
+    # Important: Do NOT clear or alter current_tool_arguments (additional arguments)
+    from utils import save_config
+
+    save_config(self.config)
+    self.update_sync_tool_options(current_tool)
+    logger.info(f"Restored default settings for tool: {current_tool}")
+
+
+def format_option_tooltip(option_data, option_name=None):
+    """Format tooltip for an option, including its CLI argument and default value."""
+    argument = option_data.get("argument", "")
+    tooltip = str(option_data.get("tooltip", "")).strip()
+    default = option_data.get("default", None)
+
+    if default is not None:
+        if isinstance(default, bool):
+            def_disp = str(texts.ENABLED if default else texts.DISABLED)
+        elif "value_labels" in option_data and default in option_data["value_labels"]:
+            def_disp = str(option_data["value_labels"][default])
+        elif default == -1 and (option_name == "split_penalty" or "no_split_argument" in option_data):
+            def_disp = f"{texts.NO_SPLITS} (-1)" if hasattr(texts, "NO_SPLITS") else "No splits (-1)"
+        else:
+            def_disp = str(default)
+        default_label_str = getattr(texts, "DEFAULT_LABEL", "Default")
+        default_suffix = f"\n({default_label_str}: {def_disp})"
+        tooltip = f"{tooltip}{default_suffix}" if tooltip else f"({default_label_str}: {def_disp})"
+
+    if argument and tooltip:
+        return f"{argument}: {tooltip}"
+    elif argument:
+        return argument
+    return tooltip
 
 
 def setup_auto_sync_tab(self):
@@ -176,29 +269,40 @@ def setup_auto_sync_tab(self):
     self.btn_other_options.clicked.connect(self.show_other_options_dialog)
     self.btn_other_options.hide()
 
+    # Create the button for restore to defaults
+    self.btn_restore_defaults = QPushButton(self)
+    self.btn_restore_defaults.setFixedSize(30, 30)
+    self.btn_restore_defaults.setToolTip(str(texts.RESTORE_TO_DEFAULTS))
+    self.update_restore_defaults_icon()
+    self.btn_restore_defaults.clicked.connect(self.restore_current_tool_defaults)
+
     # Set the sync options group layout
     self.sync_options_layout = QVBoxLayout()
     self.sync_options_group.setLayout(self.sync_options_layout)
     controls.addWidget(self.sync_options_group)
 
-    # Position the ?, + and other_options buttons in the top right of the group box
+    # Position the ?, +, other_options, and restore_defaults buttons in the top right of the group box
     self.btn_tool_info.setParent(self.sync_options_group)
     self.btn_add_args.setParent(self.sync_options_group)
     self.btn_other_options.setParent(self.sync_options_group)
+    self.btn_restore_defaults.setParent(self.sync_options_group)
 
     def _move_buttons(event=None):
-        # Place buttons in top right in order: [Show tool info (?)] [Additional arguments (+)] [Other options (tune)]
+        # Order: [Show tool info (?)] [Additional arguments (+)] [Restore to defaults] [Other options (tune)]
         if not self.btn_other_options.isHidden():
             x_other = self.sync_options_group.width() - self.btn_other_options.width() - 10
-            x_add = x_other - self.btn_add_args.width() - 5
-            x_info = x_add - self.btn_tool_info.width() - 5
+            x_restore = x_other - self.btn_restore_defaults.width() - 5
             self.btn_other_options.move(x_other, 30)
             self.btn_other_options.raise_()
         else:
-            x_add = self.sync_options_group.width() - self.btn_add_args.width() - 10
-            x_info = x_add - self.btn_tool_info.width() - 5
+            x_restore = self.sync_options_group.width() - self.btn_restore_defaults.width() - 10
+
+        x_add = x_restore - self.btn_add_args.width() - 5
+        x_info = x_add - self.btn_tool_info.width() - 5
+        self.btn_restore_defaults.move(x_restore, 30)
         self.btn_add_args.move(x_add, 30)
         self.btn_tool_info.move(x_info, 30)
+        self.btn_restore_defaults.raise_()
         self.btn_add_args.raise_()
         self.btn_tool_info.raise_()
 
@@ -337,34 +441,66 @@ def validate_auto_sync_inputs(self):
 
 def show_add_arguments_dialog(self):
     """Show dialog for additional arguments for the sync tool"""
-    current_tool = self.sync_tool_combo.currentText()
+    current_tool = getattr(self, "current_sync_tool", None)
+    if not current_tool:
+        current_tool = (
+            self.sync_tool_combo.currentData()
+            or self.sync_tool_combo.currentText()
+            if hasattr(self, "sync_tool_combo")
+            else self.config.get("sync_tool", DEFAULT_OPTIONS.get("sync_tool", ""))
+        )
     args_key = f"{current_tool}_arguments"
     current_args = self.config.get(args_key, "")
 
-    args, ok = QInputDialog.getText(
-        self,
-        texts.ADDITIONAL_ARGUMENTS_TITLE.format(tool=current_tool),
-        texts.ENTER_ADDITIONAL_ARGUMENTS_PROMPT.format(tool=current_tool),
-        QLineEdit.EchoMode.Normal,
-        current_args,
+    dialog = QDialog(self)
+    dialog.setWindowTitle(texts.ADDITIONAL_ARGUMENTS_TITLE.format(tool=current_tool))
+    dialog.setWindowFlags(
+        dialog.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint
     )
+    dialog.setMinimumWidth(440)
 
-    if ok:
+    layout = QVBoxLayout(dialog)
+    layout.setSpacing(12)
+    layout.setContentsMargins(18, 18, 18, 18)
+
+    prompt_label = QLabel(texts.ENTER_ADDITIONAL_ARGUMENTS_PROMPT.format(tool=current_tool))
+    prompt_label.setWordWrap(True)
+    layout.addWidget(prompt_label)
+
+    line_edit = QLineEdit(current_args)
+    line_edit.setFixedHeight(32)
+    layout.addWidget(line_edit)
+
+    note_label = QLabel(str(texts.ADDITIONAL_ARGUMENTS_OVERRIDE_NOTE))
+    note_label.setWordWrap(True)
+    note_label.setStyleSheet("color: gray; font-size: 11px;")
+    layout.addWidget(note_label)
+
+    btn_box = QDialogButtonBox(
+        QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+    )
+    btn_box.accepted.connect(dialog.accept)
+    btn_box.rejected.connect(dialog.reject)
+    layout.addWidget(btn_box)
+
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        args = line_edit.text()
         logger.info(f"Arguments set for {current_tool}: {args}")
         update_config(self, args_key, args)
-        # Update the button color based on whether arguments exist
         self.btn_add_args.setStyleSheet(f"color: {COLORS['GREEN']};" if args else "")
         self.update_args_tooltip()
 
 
 def show_other_options_dialog(self):
     """Show dialog for other options of the current sync tool"""
-    current_tool = (
-        self.sync_tool_combo.currentData()
-        or self.sync_tool_combo.currentText()
-        if hasattr(self, "sync_tool_combo")
-        else self.config.get("sync_tool", DEFAULT_OPTIONS.get("sync_tool", ""))
-    )
+    current_tool = getattr(self, "current_sync_tool", None)
+    if not current_tool:
+        current_tool = (
+            self.sync_tool_combo.currentData()
+            or self.sync_tool_combo.currentText()
+            if hasattr(self, "sync_tool_combo")
+            else self.config.get("sync_tool", DEFAULT_OPTIONS.get("sync_tool", ""))
+        )
     tool_info = SYNC_TOOLS.get(current_tool, {})
     other_options = tool_info.get("other_options", {})
     if not other_options:
@@ -384,19 +520,12 @@ def show_other_options_dialog(self):
     for option_name, option_data in other_options.items():
         option_type = option_data.get("type")
         label = option_data.get("label", "")
-        tooltip = option_data.get("tooltip", "")
         config_key = f"{current_tool}_{option_name}"
         default = option_data.get("default", DEFAULT_OPTIONS.get(config_key, None))
 
         if option_type == "checkbox":
             checkbox = self._checkbox(label)
-            argument = option_data.get("argument", "")
-            tooltip_text = (
-                f"{argument}: {tooltip}"
-                if argument and tooltip
-                else (argument if argument else tooltip)
-            )
-            checkbox.setToolTip(tooltip_text)
+            checkbox.setToolTip(format_option_tooltip(option_data, option_name))
             checkbox.setChecked(self.config.get(config_key, default))
             checkbox.toggled.connect(
                 lambda state, key=config_key: update_config(self, key, state)
@@ -408,13 +537,7 @@ def show_other_options_dialog(self):
             labels = option_data.get("value_labels", {})
             dropdown_items = [(labels.get(v, v), v) for v in values]
             dropdown = self._dropdown(layout, label, dropdown_items)
-            argument = option_data.get("argument", "")
-            tooltip_text = (
-                f"{argument}: {tooltip}"
-                if argument and tooltip
-                else (argument if argument else tooltip)
-            )
-            dropdown.setToolTip(tooltip_text)
+            dropdown.setToolTip(format_option_tooltip(option_data, option_name))
 
             saved = self.config.get(config_key, default)
             if values and saved not in values:
@@ -449,13 +572,7 @@ def show_other_options_dialog(self):
             slider, val_label = self._create_slider(
                 layout, label, range_min, range_max, current_value
             )
-            argument = option_data.get("argument", "")
-            tooltip_text = (
-                f"{argument}: {tooltip}"
-                if argument and tooltip
-                else (argument if argument else tooltip)
-            )
-            slider.setToolTip(tooltip_text)
+            slider.setToolTip(format_option_tooltip(option_data, option_name))
             slider.valueChanged.connect(
                 lambda value, key=config_key: update_config(self, key, value)
             )
@@ -466,6 +583,9 @@ def show_other_options_dialog(self):
                 0, value, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
             )
             layout.addItem(spacer)
+
+    # Add a little breathing room above the Close button
+    layout.addSpacing(10)
 
     close_btn = QPushButton(str(texts.CLOSE_BUTTON))
     close_btn.setFixedHeight(32)
@@ -538,6 +658,7 @@ def update_auto_sync_ui_for_batch(self):
 
 def update_sync_tool_options(self, tool):
     """Update sync tool options based on selected tool"""
+    self.current_sync_tool = tool
     self.clear_layout(self.sync_options_layout)
 
     # Check if there are arguments for the current tool and update button color
@@ -578,13 +699,7 @@ def update_sync_tool_options(self, tool):
         if option_type == "checkbox":
             # Create checkbox
             checkbox = self._checkbox(label)
-            argument = option_data.get("argument", "")
-            tooltip_text = (
-                f"{argument}: {tooltip}"
-                if argument and tooltip
-                else (argument if argument else tooltip)
-            )
-            checkbox.setToolTip(tooltip_text)
+            checkbox.setToolTip(format_option_tooltip(option_data, option_name))
             checkbox.setChecked(self.config.get(config_key, default))
             checkbox.toggled.connect(
                 lambda state, key=config_key: update_config(self, key, state)
@@ -599,13 +714,7 @@ def update_sync_tool_options(self, tool):
             dropdown = self._dropdown(
                 self.sync_options_layout, label, dropdown_items
             )
-            argument = option_data.get("argument", "")
-            tooltip_text = (
-                f"{argument}: {tooltip}"
-                if argument and tooltip
-                else (argument if argument else tooltip)
-            )
-            dropdown.setToolTip(tooltip_text)
+            dropdown.setToolTip(format_option_tooltip(option_data, option_name))
 
             saved = self.config.get(config_key, default)
             if values and saved not in values:
@@ -640,13 +749,7 @@ def update_sync_tool_options(self, tool):
             slider, val_label = self._create_slider(
                 self.sync_options_layout, label, range_min, range_max, current_value
             )
-            argument = option_data.get("argument", "")
-            tooltip_text = (
-                f"{argument}: {tooltip}"
-                if argument and tooltip
-                else (argument if argument else tooltip)
-            )
-            slider.setToolTip(tooltip_text)
+            slider.setToolTip(format_option_tooltip(option_data, option_name))
 
             # Special handling for alass / ffsubsync split_penalty slider
             if option_name == "split_penalty" and (tool in ("alass", "ffsubsync") or range_min == -1):

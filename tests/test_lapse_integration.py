@@ -244,6 +244,13 @@ class TestLapseIntegration(unittest.TestCase):
         for flag in ("--force", "--strict", "--snap", "--confidence", "--audio-track", "--min-shift"):
             self.assertNotIn(flag, defaults)
 
+        # These defaults must match the LAPSE engine itself.
+        lapse_options = SYNC_TOOLS["lapse"]["other_options"]
+        self.assertEqual(lapse_options["confidence"]["default"], 8)
+        self.assertEqual(lapse_options["audio_track"]["default"], -1)
+        self.assertEqual(lapse_options["min_shift"]["default"], 1)
+        self.assertEqual(lapse_options["min_shift"]["range"], [1, 1000])
+
     def test_build_cmd_no_embedded_when_disabled(self):
         config = dict(DEFAULT_OPTIONS)
         config["lapse_check_video_for_subtitles"] = False
@@ -624,7 +631,12 @@ class TestLapseIntegration(unittest.TestCase):
         from constants import SYNC_TOOLS, LANGUAGES
 
         lapse_other_options = SYNC_TOOLS["lapse"]["other_options"]
-        new_keys = ["force", "strict", "snap", "confidence", "audio_track", "min_shift"]
+        new_keys = ["force", "strict", "snap", "no_sidecar", "confidence", "audio_track", "min_shift"]
+        self.assertEqual(
+            list(lapse_other_options),
+            ["force", "strict", "snap", "no_sidecar", "confidence", "audio_track", "min_shift"],
+            "lapse other options must keep no_sidecar directly under snap",
+        )
         for key in new_keys:
             self.assertIn(key, lapse_other_options, f"Option {key} missing from lapse other_options")
             opt = lapse_other_options[key]
@@ -689,13 +701,21 @@ class TestLapseIntegration(unittest.TestCase):
             self.assertTrue(hasattr(w, "btn_other_options"))
             self.assertIsInstance(w.btn_other_options, QPushButton)
 
-            # lapse has other_options -> button should be visible (not hidden)
-            w.update_sync_tool_options("lapse")
-            self.assertFalse(w.btn_other_options.isHidden())
+            # Tools with other_options -> button should be visible (not hidden)
+            for tool_name in ("lapse", "alass", "ffsubsync"):
+                w.update_sync_tool_options(tool_name)
+                self.assertFalse(w.btn_other_options.isHidden(), f"btn_other_options was hidden for {tool_name}")
 
-            # alass has no other_options -> button should be hidden
-            w.update_sync_tool_options("alass")
+            # autosubsync's fixed_skew is a main option now, so it has no Other options
+            self.assertIn("fixed_skew", SYNC_TOOLS["autosubsync"]["options"])
+            self.assertNotIn("other_options", SYNC_TOOLS["autosubsync"])
+            w.update_sync_tool_options("autosubsync")
             self.assertTrue(w.btn_other_options.isHidden())
+
+            # Fake tool with no other_options -> button should be hidden
+            with patch.dict("constants.SYNC_TOOLS", {"dummy": {"options": {}}}):
+                w.update_sync_tool_options("dummy")
+                self.assertTrue(w.btn_other_options.isHidden())
 
             # Switch back to lapse and test opening other options dialog
             w.update_sync_tool_options("lapse")
@@ -708,17 +728,75 @@ class TestLapseIntegration(unittest.TestCase):
             self.assertTrue(hasattr(w, "encoding_actions"))
             self.assertGreater(len(w.encoding_actions), 50)
 
-            # Verify button ordering: Show tool info (?), Additional arguments (+), Other options (tune)
+            # Verify button ordering: Show tool info (?), Additional arguments (+), Restore to defaults, Other options (tune)
             w.sync_options_group.resize(400, 300)
             w._move_sync_options_buttons()
             self.assertLess(w.btn_tool_info.x(), w.btn_add_args.x())
-            self.assertLess(w.btn_add_args.x(), w.btn_other_options.x())
+            self.assertLess(w.btn_add_args.x(), w.btn_restore_defaults.x())
+            self.assertLess(w.btn_restore_defaults.x(), w.btn_other_options.x())
 
-            # Verify theme adaptation of tune icon
+            # Verify theme adaptation changes the actual icon pixels, not just the QIcon object
+            from PyQt6.QtCore import QSize
+
+            def icon_pixels(button):
+                image = button.icon().pixmap(QSize(18, 18)).toImage()
+                light = dark = mid = 0
+                for y in range(image.height()):
+                    for x in range(image.width()):
+                        color = image.pixelColor(x, y)
+                        if color.alpha() < 100:
+                            continue
+                        if color.lightness() > 180:
+                            light += 1
+                        elif color.lightness() < 90:
+                            dark += 1
+                        else:
+                            mid += 1
+                return light, dark, mid
+
             w.apply_theme("light")
-            self.assertFalse(w.btn_other_options.icon().isNull())
+            for button in (w.btn_other_options, w.btn_restore_defaults):
+                self.assertFalse(button.icon().isNull())
+                light, dark, _ = icon_pixels(button)
+                self.assertGreater(dark, 0, "light theme icon should be dark")
+                self.assertEqual(light, 0, "light theme icon should not contain white pixels")
+            light, dark, mid = icon_pixels(w.settings_btn)
+            self.assertFalse(w.settings_btn.icon().isNull())
+            self.assertGreater(mid, 0, "settings icon should stay grey")
+            self.assertEqual((light, dark), (0, 0), "settings icon should not be white or black")
+
             w.apply_theme("dark")
-            self.assertFalse(w.btn_other_options.icon().isNull())
+            for button in (w.btn_other_options, w.btn_restore_defaults):
+                self.assertFalse(button.icon().isNull())
+                light, dark, _ = icon_pixels(button)
+                self.assertGreater(light, 0, "dark theme icon should be light")
+                self.assertEqual(dark, 0, "dark theme icon should not contain black pixels")
+            light, dark, mid = icon_pixels(w.settings_btn)
+            self.assertFalse(w.settings_btn.icon().isNull())
+            self.assertGreater(mid, 0, "settings icon should stay grey")
+            self.assertEqual((light, dark), (0, 0), "settings icon should not be white or black")
+
+            # Light -> System(dark): the widget palette is not updated synchronously,
+            # so the icon theme must be resolved from the application palette.
+            from PyQt6.QtCore import Qt
+            from PyQt6.QtGui import QColor, QPalette
+
+            app = QApplication.instance()
+            old_palette = app.palette()
+            system_dark = QPalette()
+            system_dark.setColor(QPalette.ColorRole.Window, QColor("#2b2b2b"))
+            system_dark.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+            app.setPalette(system_dark)
+            try:
+                w.config["theme"] = "system"
+                w.refresh_theme_icons()
+                for button in (w.btn_other_options, w.btn_restore_defaults):
+                    light, dark, _ = icon_pixels(button)
+                    self.assertGreater(light, 0, "system-dark icon should be light")
+                    self.assertEqual(dark, 0, "system-dark icon should not be black")
+            finally:
+                app.setPalette(old_palette)
+                w.config["theme"] = "light"
 
     def test_run_sync_does_not_auto_update_when_lapse_is_outdated(self):
         """Verify that run_sync does not automatically download when lapse is already installed, even if outdated."""
@@ -796,6 +874,274 @@ class TestLapseIntegration(unittest.TestCase):
         parent_layout = QVBoxLayout(parent_widget)
         slider, _ = autosubsyncapp._create_slider(parent_widget, parent_layout, "Test min_shift", 0, 1000, 0)
         self.assertEqual(slider.tickPosition(), QSlider.TickPosition.NoTicks)
+
+    def test_all_tools_other_options_translations(self):
+        """Verify that each tool's other_options has translations for all 23 supported languages."""
+        from constants import SYNC_TOOLS, LANGUAGES
+
+        for tool_name, tool_data in SYNC_TOOLS.items():
+            other_opts = tool_data.get("other_options", {})
+            if not other_opts:
+                continue
+            for opt_key, opt_data in other_opts.items():
+                for lang_code in LANGUAGES.values():
+                    label = opt_data["label"].get(lang_code)
+                    tooltip = opt_data["tooltip"].get(lang_code)
+                    self.assertTrue(
+                        label,
+                        f"Missing label for {tool_name}.other_options.{opt_key} in {lang_code}",
+                    )
+                    self.assertTrue(
+                        tooltip,
+                        f"Missing tooltip for {tool_name}.other_options.{opt_key} in {lang_code}",
+                    )
+                if "value_labels" in opt_data:
+                    for val_k, val_labels in opt_data["value_labels"].items():
+                        for lang_code in LANGUAGES.values():
+                            val_lbl = val_labels.get(lang_code)
+                            self.assertTrue(
+                                val_lbl,
+                                f"Missing value_label for {tool_name}.{opt_key}.{val_k} in {lang_code}",
+                            )
+
+    def test_build_cmd_all_tools_other_options(self):
+        """Verify build_cmd properly formats new other_options for all sync tools."""
+        # 1. alass
+        cfg_alass = dict(DEFAULT_OPTIONS)
+        cfg_alass.update(
+            alass_allow_negative_timestamps=True,
+            alass_interval=5,
+            alass_sub_fps_inc="24.0",
+        )
+        cmd_alass = sync_core.build_cmd(
+            "alass", "alass", "v.mkv", "s.srt", "o.srt", config=cfg_alass
+        )
+        self.assertIn("--allow-negative-timestamps", cmd_alass)
+        self.assertIn("--interval", cmd_alass)
+        self.assertEqual(cmd_alass[cmd_alass.index("--interval") + 1], "5")
+        self.assertIn("--sub-fps-inc", cmd_alass)
+        self.assertEqual(cmd_alass[cmd_alass.index("--sub-fps-inc") + 1], "24.0")
+
+        # 2. ffsubsync
+        cfg_ffs = dict(DEFAULT_OPTIONS)
+        cfg_ffs.update(
+            ffsubsync_skip_sync_on_low_quality=True,
+            ffsubsync_quality_max_offset_seconds=45,
+            ffsubsync_max_offset_seconds=90,
+            ffsubsync_skip_intro_outro=True,
+            ffsubsync_segment_count=12,
+            ffsubsync_audio_track=2,
+            ffsubsync_strict=True,
+            ffsubsync_max_duration_seconds=500,
+        )
+        cmd_ffs = sync_core.build_cmd(
+            "ffsubsync", None, "v.mkv", "s.srt", "o.srt", config=cfg_ffs
+        )
+        self.assertIn("--skip-sync-on-low-quality", cmd_ffs)
+        self.assertIn("--quality-max-offset-seconds", cmd_ffs)
+        self.assertEqual(cmd_ffs[cmd_ffs.index("--quality-max-offset-seconds") + 1], "45")
+        self.assertIn("--max-offset-seconds", cmd_ffs)
+        self.assertEqual(cmd_ffs[cmd_ffs.index("--max-offset-seconds") + 1], "90")
+        self.assertIn("--skip-intro-outro", cmd_ffs)
+        self.assertIn("--segment-count", cmd_ffs)
+        self.assertEqual(cmd_ffs[cmd_ffs.index("--segment-count") + 1], "12")
+        self.assertIn("--reference-stream", cmd_ffs)
+        self.assertEqual(cmd_ffs[cmd_ffs.index("--reference-stream") + 1], "a:2")
+        self.assertIn("--strict", cmd_ffs)
+        self.assertIn("--max-duration-seconds", cmd_ffs)
+        self.assertEqual(cmd_ffs[cmd_ffs.index("--max-duration-seconds") + 1], "500")
+
+        # 3. autosubsync
+        cfg_auto = dict(DEFAULT_OPTIONS)
+        cfg_auto.update(autosubsync_fixed_skew="1.0427")
+        cmd_auto = sync_core.build_cmd(
+            "autosubsync", None, "v.mkv", "s.srt", "o.srt", config=cfg_auto
+        )
+        self.assertIn("--fixed_skew", cmd_auto)
+        self.assertEqual(cmd_auto[cmd_auto.index("--fixed_skew") + 1], "1.0427")
+
+        # 4. lapse
+        cfg_lapse = dict(DEFAULT_OPTIONS)
+        cfg_lapse.update(lapse_no_sidecar=True)
+        cmd_lapse = sync_core.build_cmd(
+            "lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=cfg_lapse
+        )
+        self.assertIn("--no-sidecar", cmd_lapse)
+
+    def test_all_tooltips_include_default_value(self):
+        """Verify that format_option_tooltip ensures every option mentions its default value."""
+        from gui_automatic_tab import format_option_tooltip
+        import re
+
+        default_pattern = re.compile(
+            r"(?:default|varsayılan|по умолчанию|默认|預設|기본값|ค่าเริ่มต้น|lalai|domyślnie|par défaut|standard|padrão)",
+            re.IGNORECASE,
+        )
+
+        for tool_name, tool_data in SYNC_TOOLS.items():
+            all_opts = {**tool_data.get("options", {}), **tool_data.get("other_options", {})}
+            for opt_name, opt_data in all_opts.items():
+                if "default" not in opt_data or opt_data.get("default") is None:
+                    continue
+                tooltip = format_option_tooltip(opt_data, opt_name)
+                self.assertTrue(
+                    bool(default_pattern.search(tooltip)),
+                    f"Option '{opt_name}' for tool '{tool_name}' missing default value in tooltip: '{tooltip}'",
+                )
+
+    def test_restore_to_defaults_resets_options_and_preserves_additional_args(self):
+        """Verify that restore_current_tool_defaults asks confirmation, restores all options, and preserves user-set additional arguments."""
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+        from gui import autosubsyncapp
+        from gui_automatic_tab import attach_functions_to_autosubsyncapp as attach_auto
+        from gui_manual_tab import attach_functions_to_autosubsyncapp as attach_manual
+        from gui_batch_mode import attach_functions_to_autosubsyncapp as attach_batch
+        from gui_auto_pairing import attach_functions_to_autosubsyncapp as attach_pairing
+        from gui_multiple_subs import attach_functions_to_autosubsyncapp as attach_multiple
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        attach_auto(autosubsyncapp)
+        attach_manual(autosubsyncapp)
+        attach_batch(autosubsyncapp)
+        attach_pairing(autosubsyncapp)
+        attach_multiple(autosubsyncapp)
+
+        with patch("gui.check_for_updates_startup"), patch("gui.check_for_lapse_updates_startup"), patch("utils.save_config"):
+            w = autosubsyncapp()
+
+            # Test 1: User cancels confirmation -> settings should NOT change
+            w.update_sync_tool_options("lapse")
+            w.config["lapse_confidence"] = 19
+            with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No):
+                w.restore_current_tool_defaults()
+            self.assertEqual(w.config["lapse_confidence"], 19)
+
+            # Test 2: User confirms -> settings restored to defaults, additional args preserved
+            for tool in ("lapse", "alass", "ffsubsync"):
+                w.update_sync_tool_options(tool)
+
+                # Set custom arguments and custom option values
+                args_key = f"{tool}_arguments"
+                custom_arg = f"--custom-{tool}-flag 42"
+                w.config[args_key] = custom_arg
+
+                tool_info = SYNC_TOOLS[tool]
+                all_opts = {**tool_info.get("options", {}), **tool_info.get("other_options", {})}
+                for opt_name, opt_data in all_opts.items():
+                    if "default" in opt_data and opt_data["default"] is not None:
+                        key = f"{tool}_{opt_name}"
+                        # Invert boolean or add 1 to number
+                        if isinstance(opt_data["default"], bool):
+                            w.config[key] = not opt_data["default"]
+                        elif isinstance(opt_data["default"], (int, float)):
+                            w.config[key] = opt_data["default"] + 1
+
+                # Call restore with confirmed Yes
+                with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
+                    w.restore_current_tool_defaults()
+
+                # Verify all options restored to defaults
+                for opt_name, opt_data in all_opts.items():
+                    if "default" in opt_data and opt_data["default"] is not None:
+                        key = f"{tool}_{opt_name}"
+                        self.assertEqual(
+                            w.config[key],
+                            opt_data["default"],
+                            f"Option {key} was not restored to default {opt_data['default']}",
+                        )
+
+                # Crucially verify additional arguments were NOT cleared or touched
+                self.assertEqual(
+                    w.config[args_key],
+                    custom_arg,
+                    f"Additional arguments for {tool} were incorrectly altered by restore_current_tool_defaults!",
+                )
+
+    def test_additional_arguments_override_ui_options_in_build_cmd(self):
+        """Verify that arguments entered in additional arguments override UI options and avoid flag conflicts."""
+        # 1. lapse: UI confidence=8, extra says '--confidence 25' -> should only have 25, no duplicate --confidence
+        cfg_lapse = dict(DEFAULT_OPTIONS)
+        cfg_lapse["lapse_confidence"] = 14
+        cfg_lapse["lapse_arguments"] = "--confidence 25"
+        cmd = sync_core.build_cmd("lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=cfg_lapse)
+        self.assertEqual(cmd.count("--confidence"), 1)
+        self.assertEqual(cmd[cmd.index("--confidence") + 1], "25")
+
+        # 2. lapse: mode in extra overrides lapse_mode
+        cfg_lapse2 = dict(DEFAULT_OPTIONS)
+        cfg_lapse2["lapse_mode"] = "split"
+        cfg_lapse2["lapse_split_penalty"] = 12
+        cfg_lapse2["lapse_arguments"] = "nosplit"
+        cmd2 = sync_core.build_cmd("lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=cfg_lapse2)
+        self.assertIn("nosplit", cmd2)
+        self.assertNotIn("split", cmd2)
+
+        # 3. alass: UI split_penalty=15, extra has '-p 4' -> should only have -p 4
+        cfg_alass = dict(DEFAULT_OPTIONS)
+        cfg_alass["alass_split_penalty"] = 15
+        cfg_alass["alass_arguments"] = "-p 4"
+        cmd_alass = sync_core.build_cmd("alass", "alass", "v.mkv", "s.srt", "o.srt", config=cfg_alass)
+        self.assertEqual(cmd_alass.count("-p"), 1)
+        self.assertEqual(cmd_alass[cmd_alass.index("-p") + 1], "4")
+
+        # 4. alass: UI split_penalty=-1 (--no-split), extra has '-p 8' -> extra overrides, no --no-split
+        cfg_alass2 = dict(DEFAULT_OPTIONS)
+        cfg_alass2["alass_split_penalty"] = -1
+        cfg_alass2["alass_arguments"] = "-p 8"
+        cmd_alass2 = sync_core.build_cmd("alass", "alass", "v.mkv", "s.srt", "o.srt", config=cfg_alass2)
+        self.assertNotIn("--no-split", cmd_alass2)
+        self.assertIn("-p", cmd_alass2)
+
+        # 5. ffsubsync: UI audio_track=1, extra has '--reference-stream a:3' -> only a:3
+        cfg_ffs = dict(DEFAULT_OPTIONS)
+        cfg_ffs["ffsubsync_audio_track"] = 1
+        cfg_ffs["ffsubsync_arguments"] = "--reference-stream a:3"
+        cmd_ffs = sync_core.build_cmd("ffsubsync", None, "v.mkv", "s.srt", "o.srt", config=cfg_ffs)
+        self.assertEqual(cmd_ffs.count("--reference-stream"), 1)
+        self.assertEqual(cmd_ffs[cmd_ffs.index("--reference-stream") + 1], "a:3")
+
+    def test_additional_arguments_dialog_displays_override_note(self):
+        """Verify that show_add_arguments_dialog includes the override notice note."""
+        from PyQt6.QtWidgets import QApplication, QLabel, QDialog
+        from gui import autosubsyncapp
+        from gui_automatic_tab import attach_functions_to_autosubsyncapp as attach_auto
+        from gui_manual_tab import attach_functions_to_autosubsyncapp as attach_manual
+        from gui_batch_mode import attach_functions_to_autosubsyncapp as attach_batch
+        from gui_auto_pairing import attach_functions_to_autosubsyncapp as attach_pairing
+        from gui_multiple_subs import attach_functions_to_autosubsyncapp as attach_multiple
+        import texts
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        attach_auto(autosubsyncapp)
+        attach_manual(autosubsyncapp)
+        attach_batch(autosubsyncapp)
+        attach_pairing(autosubsyncapp)
+        attach_multiple(autosubsyncapp)
+
+        with patch("gui.check_for_updates_startup"), patch("gui.check_for_lapse_updates_startup"):
+            w = autosubsyncapp()
+            w.config["sync_tool"] = "lapse"
+
+            with patch("PyQt6.QtWidgets.QDialog.exec") as mock_exec:
+                # Capture dialog instance
+                created_dialogs = []
+                orig_init = QDialog.__init__
+
+                def capture_init(dlg, *args, **kwargs):
+                    orig_init(dlg, *args, **kwargs)
+                    created_dialogs.append(dlg)
+
+                with patch.object(QDialog, "__init__", capture_init):
+                    w.show_add_arguments_dialog()
+
+                self.assertTrue(len(created_dialogs) > 0)
+                dlg = created_dialogs[0]
+                labels = dlg.findChildren(QLabel)
+                label_texts = [l.text() for l in labels]
+                self.assertTrue(
+                    any(str(texts.ADDITIONAL_ARGUMENTS_OVERRIDE_NOTE) in t for t in label_texts),
+                    f"Override note not found in dialog labels: {label_texts}",
+                )
 
 
 if __name__ == "__main__":
