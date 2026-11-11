@@ -26,28 +26,49 @@ from utils import open_filedialog, open_folder
 
 logger = logging.getLogger(__name__)
 
-# Season/episode patterns for matching video/subtitle files
+# Season/episode patterns for matching video/subtitle files. Each entry is a
+# (regex, kind) tuple: KIND_SEASON_EPISODE patterns capture both a season and
+# an episode number, while KIND_EPISODE_ONLY patterns capture only an episode
+# number and default to season 1. Patterns are tried in order, so more
+# specific markers (e.g. "S01E02") win over generic ones.
+KIND_SEASON_EPISODE = "season_episode"
+KIND_EPISODE_ONLY = "episode_only"
+
 PATTERNS = [
-    r"(?:s|S)(\d{1,2})(?:[eE])(\d+)",  # S01E001, S1E156, etc.
-    r"(?:s|S)(\d{1,2})(?:[bB])(\d+)",  # S01B001, S1B156, etc.
-    r"(\d{1,2})x(\d+)",  # 1x001, 01x156, etc.
-    r"(?:[eE][pP]?|EP)(\d+)",  # E001, EP156 (assumes season 1)
-    r"(?:[pP](?:art|t))(\d+)",  # Part001, Pt156 (assumes season 1)
-    r"(?<!\d)([1-9])(\d{2})(?!\d)",  # 101, 201, etc.
+    (r"(?:s|S)(\d{1,2})(?:[eE])(\d+)", KIND_SEASON_EPISODE),  # S01E001, S1E156, etc.
+    (r"(?:s|S)(\d{1,2})(?:[bB])(\d+)", KIND_SEASON_EPISODE),  # S01B001, S1B156, etc.
+    (r"(\d{1,2})x(\d+)", KIND_SEASON_EPISODE),  # 1x001, 01x156, etc.
+    (r"(?:[eE][pP]?|EP)(\d+)", KIND_EPISODE_ONLY),  # E001, EP156 (assumes season 1)
+    (r"\b(?:part|pt)[ ._-]*(\d+)", KIND_EPISODE_ONLY),  # Part001, Pt156, Part 2 (assumes season 1)
+    (
+        r"\b(?:episode|ep|bölüm|bolum)[ ._-]*(\d+)",
+        KIND_EPISODE_ONLY,
+    ),  # Episode 1, Ep.01, Episode_2, bölüm 3 (assumes season 1)
+    (
+        r"(?<![\dhx.])([1-9])(\d{2})(?![\dip])",
+        KIND_SEASON_EPISODE,
+    ),  # 101, 201, etc. (but not years like 1994, resolutions like 720p/480i,
+    #  or codec tags like x264/h264/H.264)
 ]
 
 
 def extract_season_episode(filename):
-    """Extract season and episode from filename."""
+    """Extract the season and episode numbers from a filename.
+
+    Tries each pattern in PATTERNS in order and returns the first match as a
+    ``(season, episode, key)`` tuple, where key is a canonical "s01e02" style
+    string. Patterns tagged KIND_EPISODE_ONLY assume season 1 when no season
+    marker is present (e.g. "Episode 5", "EP05", "bölüm 3"). Returns
+    ``(None, None, None)`` when nothing matches.
+    """
     base = os.path.basename(filename).lower()
-    for i, pattern in enumerate(PATTERNS):
+    for pattern, kind in PATTERNS:
         if match := re.search(pattern, base):
-            if i in [3, 4]:  # Episode/Part only (assumes season 1)
+            if kind == KIND_EPISODE_ONLY:
                 episode = int(match.group(1))
                 return 1, episode, f"s1e{episode:02d}"
-            else:
-                season, episode = int(match.group(1)), int(match.group(2))
-                return season, episode, f"s{season:02d}e{episode:02d}"
+            season, episode = int(match.group(1)), int(match.group(2))
+            return season, episode, f"s{season:02d}e{episode:02d}"
     return None, None, None
 
 
