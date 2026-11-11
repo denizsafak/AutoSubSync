@@ -769,6 +769,29 @@ def get_resource_path(package, resource):
     return None
 
 
+def load_svg_icon(icon_path, size=20):
+    """Render an SVG file into a QIcon at the given logical size.
+
+    Reading the SVG into a pixmap ourselves avoids platform icon-loader
+    caches that can keep returning the previous theme's pixmap after a
+    light/dark theme switch.
+    """
+    from PyQt6.QtCore import QSize
+    from PyQt6.QtGui import QIcon, QImageReader, QPixmap
+
+    if not icon_path or not os.path.exists(icon_path):
+        return QIcon()
+
+    # Render larger than the logical size so the icon stays crisp on HiDPI.
+    pixel_size = max(64, int(size) * 4)
+    reader = QImageReader(icon_path)
+    reader.setScaledSize(QSize(pixel_size, pixel_size))
+    image = reader.read()
+    if image.isNull():
+        return QIcon(icon_path)
+    return QIcon(QPixmap.fromImage(image))
+
+
 def format_num(size):
     """Format file size in human readable format"""
     for unit in ["B", "KB", "MB", "GB"]:

@@ -19,8 +19,15 @@ from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
 )
-from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer
-from PyQt6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QAction, QActionGroup
+from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer, QEvent
+from PyQt6.QtGui import (
+    QIcon,
+    QDragEnterEvent,
+    QDropEvent,
+    QAction,
+    QActionGroup,
+    QPixmapCache,
+)
 
 from utils import *
 from constants import *
@@ -614,9 +621,68 @@ class autosubsyncapp(QWidget):
             self.config["theme"] = theme
             save_config(self.config)
 
-        # Update other options icon for current theme
+        self.refresh_theme_icons(theme)
+
+    def changeEvent(self, event):
+        """Refresh icons when the system theme changes while using System theme."""
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.ApplicationPaletteChange and hasattr(
+            self, "config"
+        ):
+            if self.config.get("theme", DEFAULT_OPTIONS["theme"]) == "system":
+                self.refresh_theme_icons()
+
+    def resolve_icon_theme(self, theme=None):
+        """Resolve 'system' to 'dark' or 'light' using the application palette.
+
+        Widget palettes are not updated synchronously when the application
+        palette changes, so reading the application palette avoids picking the
+        previous theme's icon during a light -> system switch.
+        """
+        if theme is None:
+            theme = self.config.get("theme", DEFAULT_OPTIONS["theme"])
+        if theme in ("dark", "light"):
+            return theme
+
+        from PyQt6.QtGui import QPalette
+
+        app = QApplication.instance()
+        palette = app.palette() if app is not None else self.palette()
+        background = palette.color(QPalette.ColorRole.Window)
+        if background.isValid() and background.alpha() > 0:
+            return "dark" if background.lightness() < 128 else "light"
+        foreground = palette.color(QPalette.ColorRole.WindowText)
+        return "dark" if foreground.lightness() > 128 else "light"
+
+    def refresh_theme_icons(self, theme=None):
+        """Update every theme-aware toolbar icon."""
+        theme = self.resolve_icon_theme(theme)
+        # Drop cached pixmaps so any icon still loaded through QIcon is refreshed.
+        QPixmapCache.clear()
         if hasattr(self, "update_other_options_icon"):
             self.update_other_options_icon(theme)
+        if hasattr(self, "update_restore_defaults_icon"):
+            self.update_restore_defaults_icon(theme)
+        self.update_settings_icon(theme)
+
+    def update_settings_icon(self, theme=None):
+        """Update the main settings button icon according to the active theme."""
+        if not hasattr(self, "settings_btn"):
+            return
+        if theme is None:
+            theme = self.config.get("theme", DEFAULT_OPTIONS["theme"])
+        if theme == "dark":
+            is_dark = True
+        elif theme == "light":
+            is_dark = False
+        else:
+            text_color = self.palette().color(self.settings_btn.foregroundRole())
+            is_dark = text_color.lightness() > 128 if text_color.isValid() else True
+        svg_name = "settings.svg" if is_dark else "settings_light.svg"
+        icon_path = get_resource_path("autosubsyncapp.assets", svg_name)
+        self.settings_btn.setIcon(load_svg_icon(icon_path, 20))
+        self.settings_btn.setIconSize(QSize(20, 20))
+        self.settings_btn.update()
 
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
@@ -637,9 +703,7 @@ class autosubsyncapp(QWidget):
         self.tab_widget.setStyleSheet(self.TAB_STYLE)
         outer_layout.addWidget(self.tab_widget)
         self.settings_btn = QPushButton(self)
-        self.settings_btn.setIcon(
-            QIcon(get_resource_path("autosubsyncapp.assets", "settings.svg"))
-        )
+        self.update_settings_icon()
         self.settings_btn.setToolTip(texts.SETTINGS)
         self.settings_btn.setFixedSize(36, 36)
         self.settings_btn.move(self.width() - 36 - 15, 15)
