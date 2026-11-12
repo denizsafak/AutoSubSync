@@ -2226,10 +2226,10 @@ class BatchTreeView(QTreeWidget):
                 self._schedule_ui_update()
 
     def add_video_to_subtitle_dialog(self, subtitle_item):
-        """Add a video file as parent to an existing subtitle item, maintaining item position."""
+        """Add a video or reference subtitle as parent to an existing subtitle item, maintaining item position."""
 
         logger.info(
-            f"Adding video to subtitle item: {os.path.basename(subtitle_item.data(0, Qt.ItemDataRole.UserRole)) if subtitle_item and subtitle_item.data(0, Qt.ItemDataRole.UserRole) else None}"
+            f"Adding reference to subtitle item: {os.path.basename(subtitle_item.data(0, Qt.ItemDataRole.UserRole)) if subtitle_item and subtitle_item.data(0, Qt.ItemDataRole.UserRole) else None}"
         )
 
         # Verify the item is actually a subtitle
@@ -2245,10 +2245,22 @@ class BatchTreeView(QTreeWidget):
             return
 
         reference_path = open_filedialog(
-            self.app_parent, "file-open", texts.SELECT_VIDEO_FILE_TITLE, VIDEO_FILTER
+            self.app_parent,
+            "file-open",
+            texts.SELECT_VIDEO_OR_SUBTITLE_FILE_TITLE,
+            VIDEO_SUBTITLE_FILTER,
         )
 
         if not reference_path:
+            return
+
+        reference_ext = get_file_extension(reference_path)
+        if reference_ext not in (REFERENCE_MEDIA_EXTENSIONS + SUBTITLE_EXTENSIONS):
+            QMessageBox.warning(
+                self.app_parent,
+                texts.UNSUPPORTED_FILE_TYPE_TITLE,
+                texts.UNSUPPORTED_FILE_TYPE_MESSAGE,
+            )
             return
 
         if reference_path == subtitle_item.data(0, Qt.ItemDataRole.UserRole):
@@ -2286,10 +2298,10 @@ class BatchTreeView(QTreeWidget):
         if sub_index == -1:
             return  # Item not found, should not happen
 
-        # Create new video parent item with an ID
-        video_item_id = self._get_next_id()
-        video_item = create_tree_widget_item(
-            reference_path, None, self.icon_provider, item_id=video_item_id
+        # Create new reference parent item with an ID
+        reference_item_id = self._get_next_id()
+        reference_item = create_tree_widget_item(
+            reference_path, None, self.icon_provider, item_id=reference_item_id
         )
 
         # Preserve subtitle's existing ID or assign a new one if it doesn't have one
@@ -2301,17 +2313,17 @@ class BatchTreeView(QTreeWidget):
         # Take the subtitle item from its current position
         root.removeChild(subtitle_item)
 
-        # Add the subtitle as a child of the video item
-        video_item.addChild(subtitle_item)
+        # Add the subtitle as a child of the reference item
+        reference_item.addChild(subtitle_item)
 
-        # Insert the video item back at the same position
-        root.insertChild(sub_index, video_item)
+        # Insert the reference item back at the same position
+        root.insertChild(sub_index, reference_item)
 
-        # Expand the new video parent
-        video_item.setExpanded(True)
+        # Expand the new reference parent
+        reference_item.setExpanded(True)
 
         # Only update this specific item
-        self._update_parent_item_style([video_item])
+        self._update_parent_item_style([reference_item])
         self._schedule_ui_update()
 
     def remove_item(self, item):
