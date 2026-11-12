@@ -13,7 +13,7 @@ jobs:
     container: archlinux:base-devel
     steps:
       - name: Install tools
-        run: pacman -Syu --noconfirm git openssh curl pacman-contrib
+        run: pacman -Syu --noconfirm git openssh curl jq pacman-contrib
 
       - name: Configure builder and AUR key
         env:
@@ -34,18 +34,39 @@ jobs:
           test -n "$tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Bump pkgver, regenerate checksums and .SRCINFO, push
+      - name: Bump pkgver, update checksums and .SRCINFO, push
         env:
           TAG: ${{ steps.tag.outputs.tag }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           version="${TAG#v}"
-          cat > /tmp/push.sh <<EOF
+          appimage_sha=$(curl -fsSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
+            | jq -r 'first(.assets[] | select(.name == "AutoSubSync-linux-amd64.AppImage") | .digest)' \
+            | sed 's/^sha256://')
+          if ! printf '%s' "$appimage_sha" | grep -Eq '^[0-9a-f]{64}$'; then
+            appimage_sha=""
+          fi
+
+          cat > /tmp/push.sh <<'EOF'
           set -euo pipefail
+          version="$1"
+          appimage_sha="$2"
           git clone ssh://aur@aur.archlinux.org/autosubsync-bin.git aur
           cd aur
           sed -i "s/^pkgver=.*/pkgver=${version}/" PKGBUILD
-          updpkgsums
+          if [ -n "$appimage_sha" ]; then
+            desktop_sha=$(sha256sum autosubsync.desktop | awk '{print $1}')
+            sha_line=$(grep -n '^sha256sums=(' PKGBUILD | cut -d: -f1)
+            test "$(sed -n '/^sha256sums=(/,/^)/p' PKGBUILD | grep -c "^  '")" -eq 2
+            sed -i "$((sha_line+1))s/.*/  '${appimage_sha}'/" PKGBUILD
+            sed -i "$((sha_line+2))s/.*/  '${desktop_sha}'/" PKGBUILD
+          else
+            updpkgsums
+          fi
           makepkg --printsrcinfo > .SRCINFO
           git config user.name "denizsafak"
           git config user.email "denizsafak98@gmail.com"
@@ -54,4 +75,4 @@ jobs:
           git push origin master
           EOF
           chown builder:builder /tmp/push.sh
-          su - builder -c 'bash /tmp/push.sh'
+          su - builder -c "bash /tmp/push.sh '${version}' '${appimage_sha}'"
