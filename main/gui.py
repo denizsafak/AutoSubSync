@@ -18,8 +18,19 @@ from PyQt6.QtWidgets import (
     QFileIconProvider,
     QDialog,
     QFileDialog,
+    QScrollArea,
+    QFrame,
 )
-from PyQt6.QtCore import Qt, QTimer, QSize, QFileInfo, QIODevice, QBuffer, QEvent
+from PyQt6.QtCore import (
+    Qt,
+    QTimer,
+    QSize,
+    QFileInfo,
+    QIODevice,
+    QBuffer,
+    QEvent,
+    QRect,
+)
 from PyQt6.QtGui import (
     QIcon,
     QDragEnterEvent,
@@ -44,6 +55,26 @@ if platform.system() == "Windows":
     import ctypes
 
 logger = logging.getLogger(__name__)
+
+
+MIN_WINDOW_HEIGHT_WHEN_SCROLLING = 400
+
+
+def initial_window_geometry(available):
+    """Return a centered window geometry that fits inside the work area.
+
+    The window used to be a fixed 500x800 client area centered on the full
+    screen. On smaller displays that pushed the title bar above the screen and
+    the bottom of the window below it. Clamp to the available work area and
+    leave room for window decorations so the title bar stays reachable.
+    """
+    width = min(500, available.width() - 40)
+    height = min(800, available.height() - 40)
+    width = max(1, min(width, available.width()))
+    height = max(1, min(height, available.height()))
+    x = available.x() + max(20, (available.width() - width) // 2)
+    y = available.y() + max(40, (available.height() - height) // 2)
+    return QRect(x, y, width, height)
 
 
 class InputBox(QLabel):
@@ -71,8 +102,8 @@ class InputBox(QLabel):
         },
     }
     BORDER_RADIUS = 5
-    PADDING = 20
-    MIN_HEIGHT = 100
+    PADDING = 12
+    MIN_HEIGHT = 80
 
     def __init__(
         self,
@@ -526,6 +557,8 @@ class autosubsyncapp(QWidget):
     def showEvent(self, event):
         """Handle show event to initialize ffmpeg after GUI is visible."""
         super().showEvent(event)
+        # Recalculate the size limits once the layout has real geometry.
+        QTimer.singleShot(0, self._update_size_limits)
         # Only initialize ffmpeg once, after the first show
         if not self._ffmpeg_initialized:
             self._ffmpeg_initialized = True
@@ -686,13 +719,14 @@ class autosubsyncapp(QWidget):
 
     def initUI(self):
         self.setWindowTitle(f"{PROGRAM_NAME} v{VERSION}")
-        screen = QApplication.primaryScreen().geometry()
-        width, height = 500, 800
-        self.setGeometry(
-            (screen.width() - width) // 2,
-            (screen.height() - height) // 2,
-            width,
-            height,
+        screen = self.screen() or QApplication.primaryScreen()
+        self.setGeometry(initial_window_geometry(screen.availableGeometry()))
+        # Some window managers only expose maximize when the hint is present.
+        self.setWindowFlags(
+            self.windowFlags()
+            | Qt.WindowType.WindowMinimizeButtonHint
+            | Qt.WindowType.WindowMaximizeButtonHint
+            | Qt.WindowType.WindowCloseButtonHint
         )
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(15, 15, 15, 15)
@@ -996,10 +1030,71 @@ class autosubsyncapp(QWidget):
         self.setupAutoSyncTab()
         self.setupManualSyncTab()
         self.setLayout(outer_layout)
+
+        # Keep the window large enough that scrollbars only appear when the
+        # screen cannot fit the content.
+        self._update_size_limits()
+        QTimer.singleShot(0, self._update_size_limits)
+        self.sync_tool_combo.currentTextChanged.connect(
+            lambda *_: QTimer.singleShot(0, self._update_size_limits)
+        )
+        self.btn_batch_mode.clicked.connect(
+            lambda *_: QTimer.singleShot(0, self._update_size_limits)
+        )
+
         self.update_auto_sync_ui_for_batch()  # Ensure correct UI for batch mode on startup
 
         # Connect tab change to update InputBox positions
         self.tab_widget.currentChanged.connect(self._update_inputbox_positions_on_tab)
+
+    def _update_size_limits(self):
+        """Limit shrinking to the point where scrollbars become necessary.
+
+        The width limit prevents the horizontal scrollbar entirely. The height
+        limit stops the window from being resized below the point where the
+        vertical scrollbar appears, as long as the screen has room for it.
+        On screens that cannot fit the content the limit is clamped to the
+        available work area, so the scrollbar remains a fallback.
+        """
+        screen = self.screen() or QApplication.primaryScreen()
+        available = screen.availableGeometry()
+
+        min_content_width = 0
+        min_content_height = 0
+        for i in range(self.tab_widget.count()):
+            page = self.tab_widget.widget(i)
+            content = getattr(page, "_scroll_content", None)
+            if content is None:
+                continue
+            hint = content.minimumSizeHint()
+            min_content_width = max(min_content_width, hint.width())
+            min_content_height = max(min_content_height, hint.height())
+
+        self.setMinimumWidth(
+            min(available.width(), max(420, min_content_width + 60))
+        )
+
+        # Skip the height calculation until the layout has been laid out; the
+        # deferred calls run once the window is shown.
+        if not self.isVisible():
+            return
+        current_page = self.tab_widget.currentWidget()
+        if current_page is None or current_page.height() <= 0:
+            return
+        chrome_height = self.height() - current_page.height()
+        # A couple of pixels of slack keeps rounding from bringing the
+        # scrollbar back at exactly the minimum height.
+        required_height = min_content_height + chrome_height + 2
+        max_height = max(1, available.height() - 40)
+        if required_height <= max_height:
+            # The screen can fit the whole layout: stop the window from being
+            # resized down to the point where a scrollbar is needed.
+            self.setMinimumHeight(required_height)
+        else:
+            # Even at full height the content does not fit, so a scrollbar is
+            # unavoidable. Keep a usable minimum height, but let the user
+            # shrink the window below the screen height for breathing room.
+            self.setMinimumHeight(min(max_height, MIN_WINDOW_HEIGHT_WHEN_SCROLLING))
 
     def _update_inputbox_positions_on_tab(self, index):
         # Find all InputBox instances in the current tab and trigger their resizeEvent
@@ -1048,12 +1143,44 @@ class autosubsyncapp(QWidget):
     def _container(self):
         c = QWidget()
         c.setAutoFillBackground(True)
-        l = QVBoxLayout(c)
+        outer = QVBoxLayout(c)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        # Make each tab scrollable so the controls stay reachable when the
+        # window is smaller than the tab's preferred height.
+        scroll = QScrollArea(c)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.viewport().setAutoFillBackground(False)
+
+        content = QWidget()
+        content.setAutoFillBackground(False)
+        l = QVBoxLayout(content)
         l.setContentsMargins(0, 0, 0, 0)
         l.setSpacing(15)
+
+        def update_scrollbar_padding(_minimum=0, maximum=0):
+            # Keep a small gap between the content and the scrollbar when it
+            # is visible; otherwise let the content use the full width.
+            right = 10 if maximum > 0 else 0
+            margins = l.contentsMargins()
+            if margins.right() != right:
+                l.setContentsMargins(
+                    margins.left(), margins.top(), right, margins.bottom()
+                )
+
+        scroll.verticalScrollBar().rangeChanged.connect(update_scrollbar_padding)
+
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
+        c._scroll_area = scroll
+        c._scroll_content = content
         return c, l
 
-    def _button(self, text, h=60, w=None, checkable=False):
+    def _button(self, text, h=52, w=None, checkable=False):
         b = QPushButton(text, self)
         b.setFixedHeight(h)
         if w:
