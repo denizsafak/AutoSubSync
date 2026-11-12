@@ -2,10 +2,6 @@ name: Publish AUR
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag (e.g. v6.6)
-        required: true
 
 permissions:
   contents: read
@@ -25,15 +21,22 @@ jobs:
         run: |
           useradd -m builder
           install -d -m 700 -o builder -g builder /home/builder/.ssh
-          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > /home/builder/.ssh/aur
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" | tr -d '\r' > /home/builder/.ssh/aur
           chmod 600 /home/builder/.ssh/aur
           ssh-keyscan aur.archlinux.org > /home/builder/.ssh/known_hosts
           printf 'Host aur.archlinux.org\n  IdentityFile ~/.ssh/aur\n  User aur\n' > /home/builder/.ssh/config
-          chown builder:builder /home/builder/.ssh/known_hosts /home/builder/.ssh/config
+          chown builder:builder /home/builder/.ssh/aur /home/builder/.ssh/known_hosts /home/builder/.ssh/config
+
+      - name: Determine latest version tag
+        id: tag
+        run: |
+          tag=$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/${GITHUB_REPOSITORY}.git" | grep 'refs/tags/v' | head -n1 | sed 's#.*refs/tags/##')
+          test -n "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Bump pkgver, regenerate checksums and .SRCINFO, push
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           set -euo pipefail
           version="${TAG#v}"

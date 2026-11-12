@@ -2,10 +2,6 @@ name: Publish PyPI
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag (e.g. v6.6)
-        required: true
 
 jobs:
   pypi:
@@ -18,14 +14,27 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine latest version tag
+        id: tag
+        run: |
+          tag=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          test -n "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the release tag
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: git checkout "$TAG"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Verify tag matches main/VERSION
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: test "v$(cat main/VERSION)" = "$TAG"
 
       - name: Build sdist and wheel
