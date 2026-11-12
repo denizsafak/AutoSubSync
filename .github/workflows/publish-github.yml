@@ -1,4 +1,4 @@
-name: AutoSubSync
+name: Publish GitHub Release
 
 on:
   workflow_dispatch:

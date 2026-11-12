@@ -1,0 +1,35 @@
+name: Publish PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (e.g. v6.6)
+        required: true
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Verify tag matches main/VERSION
+        env:
+          TAG: ${{ inputs.tag }}
+        run: test "v$(cat main/VERSION)" = "$TAG"
+
+      - name: Build sdist and wheel
+        run: uv build --out-dir dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

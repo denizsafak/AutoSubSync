@@ -1,6 +1,6 @@
 # AutoSubSync: Automatic / Manual Subtitle Synchronization Tool <img title="AutoSubSync Icon" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync.ico' align="right" style="padding-left: 10px; padding-top:5px;">
 
-[![Build Status](https://github.com/denizsafak/AutoSubSync/actions/workflows/app.yml/badge.svg)](https://github.com/denizsafak/AutoSubSync/actions)
+[![Build Status](https://github.com/denizsafak/AutoSubSync/actions/workflows/publish-github.yml/badge.svg)](https://github.com/denizsafak/AutoSubSync/actions)
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 [![PyPI version](https://img.shields.io/pypi/v/assy)](https://pypi.org/project/assy/)
 [![GitHub Release](https://img.shields.io/github/v/release/denizsafak/AutoSubSync)](https://github.com/denizsafak/AutoSubSync/releases/latest)
@@ -9,7 +9,7 @@
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/denizsafak/AutoSubSync/total?color=blue&label=downloads%20(github))](https://github.com/denizsafak/AutoSubSync/releases/latest)
 
 
-AutoSubSync is a user-friendly tool that automatically synchronizes your subtitles with your videos using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass) and [lapse](https://github.com/Schwponaco-org/lapse). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
+AutoSubSync is a user-friendly tool that automatically synchronizes your subtitles with your videos or audio files using powerful tools such as [ffsubsync](https://github.com/smacke/ffsubsync), [autosubsync](https://github.com/oseiskar/autosubsync), [alass](https://github.com/kaegi/alass) and [lapse](https://github.com/Schwponaco-org/lapse). It also lets you manually adjust the subtitle timings. Just drag and drop your files, and let AutoSubSync do the rest, making subtitle alignment both simple and efficient.
 
 <img title="AutoSubSync Automatic Tab" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync1.png'> <img title="AutoSubSync Manual Tab" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync2.png'> <img title="AutoSubSync Batch Mode" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync3.png'> <img title="AutoSubSync Processing" src='https://raw.githubusercontent.com/denizsafak/AutoSubSync/main/images/AutoSubSync4.png'>
 
@@ -29,6 +29,10 @@ AutoSubSync is a user-friendly tool that automatically synchronizes your subtitl
 > ```
 > chmod +x AutoSubSync-linux-amd64.AppImage
 > ```
+
+#### Debian, Ubuntu, and Linux Mint
+Download the latest [AutoSubSync-linux-amd64.deb](https://github.com/denizsafak/AutoSubSync/releases/latest/download/AutoSubSync-linux-amd64.deb) and double-click it to install it with your software installer.
+The package installs the application under `/opt/autosubsync`, adds the `autosubsync` command, and creates a desktop launcher.
 
 #### Arch Linux
 You can also download AutoSubSync from AUR in **Arch Linux** using the following command:
@@ -59,7 +63,7 @@ yay -S autosubsync-bin
 ### PyPI (All Platforms)
 [![PyPi Python Versions](https://img.shields.io/pypi/pyversions/assy)](https://pypi.org/project/assy/)
 
-You can install AutoSubSync using either pip or uv (a fast Python package manager) on any platform with Python 3.10 - 3.13:
+You can install AutoSubSync using either pip or uv (a fast Python package manager) on any platform with Python 3.10 - 3.14:
 
 
 ```bash
@@ -83,7 +87,7 @@ assy
 
 #### If your system Python is not compatible (e.g., macOS with older Python):
 
-If your system Python version is below 3.10 or above 3.13, the recommended solution is to use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) to install and run AutoSubSync with a compatible Python version automatically.
+If your system Python version is below 3.10 or above 3.14, the recommended solution is to use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) to install and run AutoSubSync with a compatible Python version automatically.
 
 **First, install `uv` by following the instructions at [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/).**
 
@@ -123,7 +127,7 @@ To access the GUI, open your web browser and go to: [http://localhost:6080](http
 
 ### Automatic Synchronization
 
-1. Drag a video file into the `Video/Reference Subtitle` field
+1. Drag a video, audio file, or reference subtitle into the `Video/Reference Subtitle` field
 2. Drag a subtitle file into the `Subtitle` field
 3. Select a sync tool (ffsubsync, autosubsync, alass, or lapse)
 4. Click `Start`
@@ -152,6 +156,9 @@ fully-featured CLI that never starts a Qt event loop or requires a display.
 # Auto-sync one subtitle (machine-readable output)
 assy-cli sync video.mkv subs.srt -o synced.srt --json
 # {"ok": true, "input": "subs.srt", "output": "synced.srt", "tool": "ffsubsync", ...}
+
+# Use an audio file as the sync reference
+assy-cli sync audio.mp3 subs.srt -o synced.srt
 
 # Prefer a matching embedded subtitle stream as the sync reference
 assy-cli sync video.mkv subs.srt --embedded-subtitles
@@ -182,7 +189,7 @@ assy-cli config set sync_tool alass
 
 | Subcommand | Purpose |
 |---|---|
-| `sync` | Auto-sync one subtitle to a video or reference subtitle |
+| `sync` | Auto-sync one subtitle to a video, audio file, or reference subtitle |
 | `shift` | Shift subtitle timing by milliseconds |
 | `batch` | Process many pairs from `--folder`, `--video-dir`+`--subtitle-dir`, or repeated `--pair` |
 | `config` | `get` / `set` / `unset` / `list` / `path` for the user config JSON |
@@ -194,6 +201,8 @@ setting for that invocation. Without either flag, the saved setting and tool
 default are used.
 
 **Exit codes:** `0` success · `1` at least one sync failed · `2` usage or config error · `130` SIGINT.
+
+**Needs review:** LAPSE results marked as unsure or nothing, and autosubsync results with a low-quality warning, are reported with `needs_review: true` in JSON output and as warnings in human-readable logs.
 
 **JSON mode** (`--json`) writes structured results to stdout (one object per sync; for `batch`, NDJSON plus a final `{"summary": ...}` line) while human-readable logs go to stderr. Pipe straight into `jq`:
 
@@ -214,14 +223,22 @@ Or via compose: `docker compose --profile cli run --rm assy-cli sync /data/video
 
 ### Automatic Synchronization
 
-Synchronize subtitles with video files using one of three available synchronization tools. Each tool uses a different approach, so if one doesn't produce satisfactory results, you can try another.
+Synchronize subtitles with video or audio files using one of four available synchronization tools. Each tool uses a different approach, so if one doesn't produce satisfactory results, you can try another.
 
 - **[ffsubsync](https://github.com/smacke/ffsubsync)** – Analyzes the audio track of the video and aligns subtitles to match the speech. Works well for most content.
 - **[autosubsync](https://github.com/oseiskar/autosubsync)** – Uses machine learning to detect speech patterns and synchronize subtitles accordingly.
 - **[alass](https://github.com/kaegi/alass)** – Can align subtitles using either audio analysis or a reference subtitle file. Generally faster than other tools, and most of the time produces accurate results.
-- **[lapse](https://github.com/Schwponaco-org/lapse)** – Language-Agnostic Playback Synchronization Engine. A fast C++ engine built on FFmpeg, libfvad/Silero VAD, and FFTW3. Supports video and subtitle references, linear drift correction, and split mode for cuts.
+- **[lapse](https://github.com/Schwponaco-org/lapse)** – Language-Agnostic Playback Synchronization Engine. A fast C++ engine built on FFmpeg, libfvad/Silero VAD, and FFTW3. Supports video, audio, and subtitle references, linear drift correction, and split mode for cuts. AutoSubSync keeps LAPSE updated automatically and stores downloaded updates in your user data folder.
 
-Instead of using a video file as the source, you can also use a correctly-timed reference subtitle file. This is useful when you have subtitles in one language that are already synchronized and want to sync subtitles in another language to match.
+In addition to video files, you can use an audio file or a correctly-timed reference subtitle file as the source. Audio references are converted to a temporary MP4 automatically; enable `Keep converted audio files` in Settings to keep the converted file. Supported audio references include MP3, M4A, AAC, FLAC, OGG/OGA, OPUS, WAV, WMA, AIFF/AIF, APE, and MKA. Reference subtitles are useful when you have subtitles in one language that are already synchronized and want to sync subtitles in another language to match.
+
+Results that a tool is unsure about, or low-quality matches from autosubsync, are marked **Needs review** in orange instead of being reported as successful.
+
+### Sync Tool Settings
+
+Each sync tool has its own settings on the Automatic tab. Use `Other options` for advanced tool-specific settings, and `Additional arguments` for custom command-line flags. Additional arguments take priority over the app's settings, so you won't pass the same option twice. Use `Restore to defaults` to reset the selected tool to its defaults while keeping your Additional arguments.
+
+Advanced settings include ffsubsync quality and offset limits, segmented sampling, audio-track selection, strict mode, and maximum duration; ALASS negative timestamps, alignment interval, and subtitle framerate; and LAPSE confidence, snapping, audio-track, and minimum-shift controls.
 
 ---
 
@@ -237,18 +254,20 @@ You can choose to save the adjusted subtitle to your desktop as a new file, or r
 
 ### Batch Processing
 
-Process multiple video-subtitle pairs in a single operation. Enable batch mode to access the batch list and additional file management options.
+Process many subtitles against their video, audio, or reference subtitle sources in a single operation. Enable batch mode to access the batch list and additional file management options.
 
 **Adding files to the batch list:**
 
 | Option | Description |
 |--------|-------------|
-| `Add pair` | Manually select a video file and a subtitle file to add as a pair. |
-| `Add pair (continuously)` | Keep adding video-subtitle pairs until you cancel. |
-| `Add folder` | Select a folder to scan for video and subtitle files, including all subfolders. (Videos and subtitles with matching filenames will be paired automatically.) |
-| `Add multiple files` | Select multiple files at once to add to the list. (Videos and subtitles with matching filenames will be paired automatically.) |
+| `Add pair` | Manually select a video, audio file, or reference subtitle and a subtitle file to add as a pair. |
+| `Add pair (continuously)` | Keep adding reference-subtitle pairs until you cancel. |
+| `Add folder` | Select a folder to scan for video, audio, and subtitle files, including all subfolders. (Files with matching filenames will be paired automatically.) |
+| `Add multiple files` | Select multiple files at once to add to the list. (Files with matching filenames will be paired automatically.) |
 | `Auto-Pairing with Season/Episode` | Automatically match videos with subtitles based on episode patterns (see [Auto-Pairing with Season/Episode](#auto-pairing-with-seasonepisode)). |
-| `Pair multiple subtitles with single source` | Pair multiple subtitle files with one video (see [Pair multiple subtitles with single source](#pair-multiple-subtitles-with-single-source)). |
+| `Pair multiple subtitles with single source` | Pair multiple subtitle files with one video, audio file, or reference subtitle (see [Pair multiple subtitles with single source](#pair-multiple-subtitles-with-single-source)). |
+
+> You can also right-click a subtitle item and choose `Add video/reference to this item` to pair it with a video, audio file, or reference subtitle.
 
 > You can also drag and drop files or folders directly onto the batch list.
 
@@ -256,11 +275,11 @@ Process multiple video-subtitle pairs in a single operation. Enable batch mode t
 
 ### Sync Tracking
 
-AutoSubSync maintains a database of videos that have been synchronized previously. When you add videos to the batch list, any videos that have been previously processed are automatically identified and marked to be skipped. This feature is designed for **video files only**; reference or output subtitle files are not tracked.
+AutoSubSync maintains a database of reference files (videos or audio files) that have been synchronized previously. When you add references to the batch list, any references that have been previously processed are automatically identified and marked to be skipped. This feature is designed for **reference files only**; subtitle files are not tracked.
 
-Videos are identified by their content using a hash, not by their filename or location. This means **you can rename, move, or reorganize your videos** and AutoSubSync will still recognize them as already processed.
+References are identified by their content using a hash, not by their filename or location. This means **you can rename, move, or reorganize your references** and AutoSubSync will still recognize them as already processed.
 
-In the batch list, previously processed videos appear greyed out with a `Status: Skipped` tooltip.
+In the batch list, previously processed references appear greyed out with a `Status: Skipped` tooltip.
 
 **Right-click on items in the batch list to access the following options:**
 
@@ -280,7 +299,7 @@ In the batch list, previously processed videos appear greyed out with a `Status:
 | `Backup processed items database` | Export your database to a file for safekeeping or transfer to another computer. |
 | `Import processed items database` | Import entries from a backup file. Duplicate entries are automatically ignored. |
 | `Manage library folders` | Open the Library Manager to add or remove saved folders. |
-| `Load library` | Load all videos and subtitles from your saved library folders into the batch list. |
+| `Load library` | Load all videos, audio files, and subtitles from your saved library folders into the batch list. |
 
 **Location:** `Settings` → `Sync tracking`, or the `Sync tracking` button in Batch Mode
 
@@ -292,7 +311,7 @@ In the batch list, previously processed videos appear greyed out with a `Status:
 
 Save folders containing your media files for quick access. The Library Manager stores your folder list in a database that persists between sessions.
 
-Add folders that contain video files and their corresponding subtitle files. When you click `Load library`, all video and subtitle files from your saved folders are loaded into the batch list. This is useful if you regularly work with the same media collection and want to quickly check for new content to process.
+Add folders that contain video or audio files and their corresponding subtitle files. When you click `Load library`, all video, audio, and subtitle files from your saved folders are loaded into the batch list. This is useful if you regularly work with the same media collection and want to quickly check for new content to process.
 
 You can add new folders, remove individual folders, or clear the entire list.
 
@@ -306,14 +325,18 @@ You can add new folders, remove individual folders, or clear the entire list.
 
 ### Auto-Pairing with Season/Episode
 
-When working with TV series or other episodic content, AutoSubSync can automatically match video files with their corresponding subtitle files based on season and episode information in the filenames.
+When working with TV series or other episodic content, AutoSubSync can automatically match video or audio files with their corresponding subtitle files based on season and episode information in the filenames.
 
 Supported naming patterns include:
-- `S01E01`, `s01e01` – Standard season/episode format
+- `S01E01`, `s01e01`, `S01E156` – Standard season/episode format, including longer episode numbers
+- `E01`, `EP01`, `Episode 1`, `Episode.1`, `Ep 01`, `bölüm 3` – Episode-only formats (assume season 1)
 - `1x01`, `01x01` – Alternative format with 'x' separator
-- Various other common episode numbering schemes
+- `Part 2`, `Pt2` – Part-based numbering (assumes season 1)
+- `E001` and other longer episode numbers
 
-This feature is particularly useful when you have a folder of video files and a separate folder of subtitle files that need to be paired up.
+Years, video resolutions, and codec names are not treated as episode numbers.
+
+This feature is particularly useful when you have a folder of video or audio files and a separate folder of subtitle files that need to be paired up.
 
 Location: Enable **Batch Mode**, then click input box to open the batch add menu, and select `Auto-Pairing with Season/Episode`.
 
@@ -323,9 +346,9 @@ Location: Enable **Batch Mode**, then click input box to open the batch add menu
 
 ### Pair Multiple Subtitles with Single Source
 
-In Batch Mode, you can pair multiple subtitle files with a single video or reference subtitle. This allows you to synchronize subtitles in several languages against the same source in one batch operation.
+In Batch Mode, you can pair multiple subtitle files with a single video, audio file, or reference subtitle. This allows you to synchronize subtitles in several languages against the same source in one batch operation.
 
-For example, if you have a video file and subtitle files in English, Spanish, and French, you can sync all three subtitle files against the video simultaneously.
+For example, if you have a video or audio file and subtitle files in English, Spanish, and French, you can sync all three subtitle files against the same source simultaneously.
 
 Location: Enable **Batch Mode**, then click input box to open the batch add menu, and select `Pair multiple subtitles with single source`.
 
@@ -353,14 +376,16 @@ AutoSubSync supports the following subtitle formats:
 
 Subtitles can be converted between formats during the synchronization process if needed.
 
+> LAPSE also reads VobSub `.idx` files together with their matching `.sub` file. AutoSubSync copies the `.sub` file alongside the synced `.idx` output.
+
 ---
 
 ### Drag and Drop
 
 The interface supports drag and drop for all file inputs. You can drag:
-- Individual video or subtitle files onto their respective input fields
+- Individual video, audio, or subtitle files onto their respective input fields
 - Multiple files onto the batch list
-- Entire folders onto the batch list (AutoSubSync will scan for video and subtitle files)
+- Entire folders onto the batch list (AutoSubSync will scan for video, audio, and subtitle files)
 - A mix of files and folders
 
 This eliminates the need to navigate through file browser dialogs for most operations.
@@ -385,7 +410,7 @@ Access settings via the gear icon in the **top right** corner.
 
 | Setting | Description |
 |---------|-------------|
-| **Language** | Choose from 22 interface languages. The application will restart to apply the new language. |
+| **Language** | Choose from 23 interface languages. The application will restart to apply the new language. |
 | **Theme** | Select the visual theme: `System` (follows OS setting), `Dark`, or `Light`. |
 | **Change output subtitle encoding** | Force the output subtitle to use a specific encoding such as `UTF-8`, `UTF-16`, `ISO-8859-1`, or keep the same encoding as the input file. |
 | **Sync tracking** | Access sync tracking options: toggle tracking on/off, manage the processed items database, backup/import database, and manage library folders. |
@@ -393,6 +418,7 @@ Access settings via the gear icon in the **top right** corner.
 | **Auto-rename files if needed** | When enabled (and `alass` is selected), AutoSubSync will automatically rename any file or folder path components that contain `[` or `]` (replacing them with `(` and `)`) to fix an error where `alass` cannot work with paths containing these characters. When disabled, AutoSubSync will display a 30-second prompt asking whether to rename the affected paths; if the prompt times out, the rename will be skipped. |
 | **Keep extracted subtitles** | When synchronizing against embedded video subtitles, keep the extracted subtitle files instead of deleting them after processing. |
 | **Keep converted subtitles** | When subtitle format conversion is required, keep the converted file instead of deleting it after processing. |
+| **Keep converted audio files** | When an audio reference is converted to MP4, keep the converted file instead of deleting it after processing. |
 | **Add "tool_" prefix to subtitles** | Add the name of the sync tool (e.g., `ffsubsync_`, `alass_`) to the beginning of the output subtitle filename. |
 | **Add custom suffix for subtitles** | Add a custom suffix to the end of the output subtitle filename (ignored in "Overwrite input subtitle" mode). |
 | **Open config file directory** | Open the folder where configuration files and databases (`processed_items.db`, `library_folders.db`) are stored. |
@@ -400,7 +426,7 @@ Access settings via the gear icon in the **top right** corner.
 | **Keep log records** | When enabled, saves detailed logs of synchronization operations for debugging purposes. |
 | **Clear all logs** | Delete all log files from the logs directory to free up space. |
 | **Remember the changes** | When enabled, saves your current settings and restores them when AutoSubSync is reopened. |
-| **Check for updates at startup** | Automatically check for new versions when AutoSubSync starts. |
+| **Check for updates at startup** | Automatically check for new versions of AutoSubSync and LAPSE when AutoSubSync starts. |
 | **Reset to default settings** | Restore all application settings to their original default values. |
 | **About** | Display application version, credits, and links to the project repository. |
 
@@ -416,7 +442,7 @@ If you'd like to modify the code and contribute to development, you can [downloa
 pip install -e .[dev]     # Installs the package in editable mode with dev dependencies
 assy                    # Opens the GUI
 assy-cli                # Alternative CLI command
-python build.py           # Builds standalone executables (AppImage/Windows/macOS)
+python build.py           # Builds standalone executables (AppImage/.deb/Windows/macOS)
 python build_pypi.py      # Builds PyPI package to dist/pypi folder
 ```
 Requires Python 3.10 or higher. Feel free to explore the code and make any changes you like.
@@ -457,6 +483,14 @@ uv tool uninstall assy
 
 ```bash
 yay -R autosubsync-bin
+```
+</details>
+
+<details>
+<summary><strong>If installed from a .deb package</strong></summary>
+
+```bash
+sudo apt remove autosubsync
 ```
 </details>
 

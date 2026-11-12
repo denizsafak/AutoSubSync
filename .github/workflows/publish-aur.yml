@@ -1,0 +1,54 @@
+name: Publish AUR
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (e.g. v6.6)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  aur:
+    runs-on: ubuntu-latest
+    environment: aur
+    container: archlinux:base-devel
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm git openssh curl pacman-contrib
+
+      - name: Configure builder and AUR key
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          useradd -m builder
+          install -d -m 700 -o builder -g builder /home/builder/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > /home/builder/.ssh/aur
+          chmod 600 /home/builder/.ssh/aur
+          ssh-keyscan aur.archlinux.org > /home/builder/.ssh/known_hosts
+          printf 'Host aur.archlinux.org\n  IdentityFile ~/.ssh/aur\n  User aur\n' > /home/builder/.ssh/config
+          chown builder:builder /home/builder/.ssh/known_hosts /home/builder/.ssh/config
+
+      - name: Bump pkgver, regenerate checksums and .SRCINFO, push
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          cat > /tmp/push.sh <<EOF
+          set -euo pipefail
+          git clone ssh://aur@aur.archlinux.org/autosubsync-bin.git aur
+          cd aur
+          sed -i "s/^pkgver=.*/pkgver=${version}/" PKGBUILD
+          updpkgsums
+          makepkg --printsrcinfo > .SRCINFO
+          git config user.name "denizsafak"
+          git config user.email "denizsafak98@gmail.com"
+          git add PKGBUILD .SRCINFO
+          git diff --cached --quiet || git commit -m "v${version}"
+          git push origin master
+          EOF
+          chown builder:builder /tmp/push.sh
+          su - builder -c 'bash /tmp/push.sh'
