@@ -86,6 +86,7 @@ jobs:
             *.zip
             *.tar.gz
             *.AppImage
+            *.deb
 
   build-linux-ubuntu:
     runs-on: ubuntu-latest
@@ -116,6 +117,7 @@ jobs:
           path: |
             *.AppImage
             *.tar.gz
+            *.deb
 
   release:
     needs: [build, build-linux-ubuntu]
@@ -174,6 +176,7 @@ jobs:
             * **macOS (Apple Silicon - M1/M2/M3):** [AutoSubSync-macos-arm64.zip](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-macos-arm64.zip)
             * **macOS (Intel):** [AutoSubSync-macos-amd64.zip](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-macos-amd64.zip)
             * **Linux (AppImage):** [AutoSubSync-linux-amd64.AppImage](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-linux-amd64.AppImage)
+            * **Linux (Debian/Ubuntu/Mint):** [AutoSubSync-linux-amd64.deb](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-linux-amd64.deb)
             * **Linux (Tarball):** [AutoSubSync-linux-amd64.tar.gz](https://github.com/denizsafak/AutoSubSync/releases/download/v${{ needs.build.outputs.version }}/AutoSubSync-linux-amd64.tar.gz)
 
             > MacOS users please read the [instructions](https://github.com/denizsafak/AutoSubSync?tab=readme-ov-file#macos).

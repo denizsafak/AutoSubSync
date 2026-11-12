@@ -106,11 +106,13 @@ exclude = [
     "build.py",
     "build_pypi.py",
     "build.spec",
+    "linux_packaging.py",
     "PROMPTS.md",
     "main/resources/ffmpeg_download.py",
     "*.AppImage",
     "*.zip",
     "*.tar.gz",
+    "*.deb",
 ]
 
 [tool.hatch.build.targets.wheel]

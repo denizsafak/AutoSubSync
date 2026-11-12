@@ -36,3 +36,4 @@ jobs:
           path: |
             AutoSubSync-linux-*.AppImage
             AutoSubSync-linux-*.tar.gz
+            AutoSubSync-linux-*.deb

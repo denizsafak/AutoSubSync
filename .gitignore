@@ -25,6 +25,7 @@ uv.lock
 
 # AutoSubSync
 *AppImage*
+*.deb
 *config.json
 build/
 dist/

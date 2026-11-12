@@ -1,0 +1,128 @@
+name: Test Linux Debian Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEB_ARTIFACT_NAME: build-artifacts-linux-deb_amd64
+
+jobs:
+  build-deb:
+    name: Build .deb on Debian bookworm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Build with build.py in a Debian container
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/workspace" -w /workspace \
+            --env DEBIAN_FRONTEND=noninteractive \
+            --env TZ=Etc/UTC \
+            --privileged \
+            --entrypoint bash \
+            python:3.12.8-slim-bookworm \
+            -c "apt-get update && \
+                apt-get install -y --no-install-recommends \
+                  ca-certificates dpkg file fuse libfuse2 tk-dev \
+                  libglib2.0-0 libxkbcommon-x11-0 libxcb-xinerama0 \
+                  libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+                  libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+                  libxcb-shape0 libxcb-xfixes0 libxcb-xkb1 libxrender1 \
+                  libsm6 libxext6 libx11-xcb1 libdbus-1-3 libxcb-sync1 \
+                  libxcb-glx0 libgdk-pixbuf2.0-0 libgtk-3-0 libpango-1.0-0 \
+                  libcairo2 libatk1.0-0 libpangocairo-1.0-0 libcairo-gobject2 && \
+                echo 'GLIBC version:' && \
+                ldd --version | head -n 1 && \
+                pip install --upgrade pip uv requests && \
+                python build.py && \
+                echo '--- Package metadata ---' && \
+                dpkg-deb --info AutoSubSync-linux-*.deb && \
+                echo '--- Package contents ---' && \
+                dpkg-deb --contents AutoSubSync-linux-*.deb | head -n 40"
+
+      - name: Upload the Debian package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DEB_ARTIFACT_NAME }}
+          path: AutoSubSync-linux-*.deb
+          if-no-files-found: error
+
+      - name: Write install instructions
+        run: |
+          {
+            echo "## AutoSubSync .deb package"
+            echo ""
+            echo "Download \`AutoSubSync-linux-amd64.deb\` from the artifacts of this run, then install it with:"
+            echo ""
+            echo '```bash'
+            echo "sudo apt install ./AutoSubSync-linux-amd64.deb"
+            echo '```'
+            echo ""
+            echo "The package installs the \`autosubsync\` command and a desktop launcher."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  install-deb:
+    name: Install .deb on ${{ matrix.image }}
+    needs: build-deb
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - debian:bookworm
+          - ubuntu:24.04
+
+    steps:
+      - name: Download the Debian package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.DEB_ARTIFACT_NAME }}
+          path: ${{ runner.temp }}/deb
+
+      - name: Install and smoke test headlessly
+        run: |
+          cat > "$RUNNER_TEMP/install-test.sh" <<'SCRIPT'
+          #!/bin/bash
+          set -euo pipefail
+
+          apt-get update
+          apt-get install -y ca-certificates /debs/AutoSubSync-linux-amd64.deb
+
+          dpkg -s autosubsync >/dev/null
+          test -x /usr/bin/autosubsync
+          test -f /usr/share/applications/autosubsyncapp.desktop
+          test -f /usr/share/icons/hicolor/256x256/apps/autosubsync.png
+
+          ldd_output=$(ldd /opt/autosubsync/AutoSubSync)
+          if grep -q 'not found' <<<"$ldd_output"; then
+            echo 'Missing shared libraries:'
+            grep 'not found' <<<"$ldd_output"
+            exit 1
+          fi
+
+          set +e
+          QT_QPA_PLATFORM=offscreen timeout 15s autosubsync \
+            >/tmp/autosubsync.log 2>&1
+          status=$?
+          set -e
+
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            echo "AutoSubSync exited with status $status"
+            cat /tmp/autosubsync.log
+            exit 1
+          fi
+
+          echo "AutoSubSync started successfully (headless)."
+          SCRIPT
+
+          docker run --rm \
+            -v "${{ runner.temp }}/deb:/debs:ro" \
+            -v "$RUNNER_TEMP/install-test.sh:/install-test.sh:ro" \
+            --env DEBIAN_FRONTEND=noninteractive \
+            --entrypoint bash \
+            ${{ matrix.image }} /install-test.sh
