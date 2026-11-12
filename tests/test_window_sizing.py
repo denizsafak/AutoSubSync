@@ -62,6 +62,20 @@ class TestInitialWindowGeometry(unittest.TestCase):
         self.assertTrue(available.contains(geometry))
         self.assertGreater(geometry.y(), available.y())
 
+    def test_wrap_filename_adds_break_points(self):
+        name = (
+            "TLOTR.The.Return.of.the.King.2003.Extended.BluRay.1080p."
+            "DTSES6.1.x264-CHD.DVDRip.srt"
+        )
+        wrapped = self.gui.wrap_filename(name)
+        self.assertIn("\u200b", wrapped)
+        self.assertEqual(wrapped.replace("\u200b", ""), name)
+
+        long_word = "A" * 40
+        wrapped_word = self.gui.wrap_filename(long_word)
+        self.assertIn("\u200b", wrapped_word)
+        self.assertEqual(wrapped_word.replace("\u200b", ""), long_word)
+
 
 @unittest.skipIf(QApplication is None, "PyQt6 is required for window sizing tests")
 class TestScrollableTabContent(unittest.TestCase):
@@ -87,6 +101,26 @@ class TestScrollableTabContent(unittest.TestCase):
         self.assertEqual(content_layout.contentsMargins().right(), 10)
         scrollbar.setRange(0, 0)
         self.assertEqual(content_layout.contentsMargins().right(), 0)
+
+    def test_long_filename_does_not_force_wide_minimum(self):
+        import tempfile
+
+        long_name = (
+            "TLOTR.The.Return.of.the.King.2003.Extended.BluRay.1080p."
+            "DTSES6.1.x264-CHD.DVDRip.srt"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, long_name)
+            with open(path, "w", encoding="utf-8"):
+                pass
+
+            input_box = self.gui.InputBox(input_type="subtitle")
+            try:
+                input_box.set_file(path)
+                self.assertIn("\u200b", input_box.text())
+                self.assertLess(input_box.minimumSizeHint().width(), 250)
+            finally:
+                input_box.deleteLater()
 
 
 if __name__ == "__main__":

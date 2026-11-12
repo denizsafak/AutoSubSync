@@ -1,4 +1,4 @@
-import os, base64
+import os, base64, html
 import texts
 import platform
 import logging
@@ -75,6 +75,29 @@ def initial_window_geometry(available):
     x = available.x() + max(20, (available.width() - width) // 2)
     y = available.y() + max(40, (available.height() - height) // 2)
     return QRect(x, y, width, height)
+
+
+def wrap_filename(name, interval=16):
+    """Insert zero-width spaces so Qt can wrap long filenames.
+
+    Qt's rich text engine ignores CSS word-break/overflow-wrap, so a filename
+    without spaces is treated as one long word and forces the input box, and
+    with it the window minimum width, to grow. Zero-width spaces give Qt safe
+    break points without changing the displayed text.
+    """
+    wrapped = []
+    run = 0
+    for char in name:
+        wrapped.append(char)
+        if char in "._- ":
+            wrapped.append("\u200b")
+            run = 0
+        else:
+            run += 1
+            if run >= interval:
+                wrapped.append("\u200b")
+                run = 0
+    return "".join(wrapped)
 
 
 class InputBox(QLabel):
@@ -391,12 +414,14 @@ class InputBox(QLabel):
         img_data = base64.b64encode(buffer.data()).decode()
 
         # Update display
+        display_name = html.escape(wrap_filename(name), quote=False)
         self.setText(
-            f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%; word-break: break-all;"><b>{name}</b></span><br>{texts.FILE_SIZE}: {format_num(size)}'
+            f'<img src="data:image/png;base64,{img_data}"><br><span style="display: inline-block; max-width: 100%;"><b>{display_name}</b></span><br>{texts.FILE_SIZE}: {format_num(size)}'
         )
         self.setWordWrap(True)
         self._active_state_key = "active"
         self._apply_style()
+        self._notify_window_size_limits()
 
         # Show and position the clear button in the top right corner
         self.clear_btn.show()
@@ -425,6 +450,7 @@ class InputBox(QLabel):
         self._apply_style()
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
+        self._notify_window_size_limits()
 
         def restore_prev():
             # Only restore if file_path has not changed during error display
@@ -435,6 +461,7 @@ class InputBox(QLabel):
                 self._apply_style()
                 self.clear_btn.show()
                 self.goto_folder_btn.show()
+                self._notify_window_size_limits()
             # If file_path changed, do nothing (keep new file and state)
             elif not self.file_path:
                 self.reset_to_default()
@@ -462,6 +489,7 @@ class InputBox(QLabel):
         self._apply_style()
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
+        self._notify_window_size_limits()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -510,6 +538,14 @@ class InputBox(QLabel):
         else:
             s = f"QLabel#inputBox{{border:2px dashed {p['border']};background:{p['bg']};{base}}}QLabel#inputBox:hover{{border-color:{p['hover_border']};background:{p['hover_bg']};}}"
         self.setStyleSheet(s)
+
+    def _notify_window_size_limits(self):
+        """Ask the main window to recalculate its size limits after text changes."""
+        main_window = self.window()
+        if isinstance(main_window, autosubsyncapp) and hasattr(
+            main_window, "_update_size_limits"
+        ):
+            QTimer.singleShot(0, main_window._update_size_limits)
 
 
 class autosubsyncapp(QWidget):
