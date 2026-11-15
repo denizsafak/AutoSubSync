@@ -600,14 +600,37 @@ def show_other_options_dialog(self):
             )
             layout.addItem(spacer)
 
-    # Add a little breathing room above the Close button
-    layout.addSpacing(10)
+    button_layout = QVBoxLayout()
+    button_layout.setContentsMargins(0, 4, 0, 0)
+    button_layout.setSpacing(8)
+
+    if current_tool == "lapse":
+        from utils import open_lapse_cache_directory
+
+        btn_clear_lapse_cache = QPushButton(str(texts.CLEAR_LAPSE_CACHE))
+        btn_clear_lapse_cache.setFixedHeight(32)
+        btn_clear_lapse_cache.setAutoDefault(False)
+        btn_clear_lapse_cache.setDefault(False)
+        btn_clear_lapse_cache.setToolTip(str(texts.CLEAR_LAPSE_CACHE_TOOLTIP))
+        btn_clear_lapse_cache.clicked.connect(lambda: _clear_lapse_cache_dialog(dialog))
+        button_layout.addWidget(btn_clear_lapse_cache)
+
+        btn_open_logs_dir = QPushButton(str(texts.OPEN_LOGS_DIRECTORY))
+        btn_open_logs_dir.setFixedHeight(32)
+        btn_open_logs_dir.setAutoDefault(False)
+        btn_open_logs_dir.setDefault(False)
+        btn_open_logs_dir.clicked.connect(lambda: open_lapse_cache_directory(dialog))
+        button_layout.addWidget(btn_open_logs_dir)
 
     close_btn = QPushButton(str(texts.CLOSE_BUTTON))
     close_btn.setFixedHeight(32)
+    close_btn.setAutoDefault(False)
+    close_btn.setDefault(False)
     close_btn.clicked.connect(dialog.accept)
-    layout.addWidget(close_btn)
+    button_layout.addWidget(close_btn)
 
+    layout.addLayout(button_layout)
+    dialog.setFocus()
     dialog.exec()
 
 
@@ -828,6 +851,35 @@ def update_sync_tool_options(self, tool):
     # Ensure the + button stays on top
     if hasattr(self, "btn_add_args"):
         self.btn_add_args.raise_()
+
+
+def _clear_lapse_cache_dialog(parent):
+    """Prompt and clear Lapse's .spans cache files."""
+    from utils import count_lapse_cache_files, clear_lapse_cache
+
+    count = count_lapse_cache_files()
+    if count == 0:
+        QMessageBox.information(
+            parent,
+            str(texts.CLEAR_LAPSE_CACHE),
+            str(texts.CLEAR_LAPSE_CACHE_EMPTY),
+        )
+        return
+
+    reply = QMessageBox.question(
+        parent,
+        str(texts.CLEAR_LAPSE_CACHE),
+        str(texts.CLEAR_LAPSE_CACHE_CONFIRM).format(count=count),
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        QMessageBox.StandardButton.No,
+    )
+    if reply == QMessageBox.StandardButton.Yes:
+        deleted = clear_lapse_cache()
+        QMessageBox.information(
+            parent,
+            str(texts.CLEAR_LAPSE_CACHE),
+            str(texts.CLEAR_LAPSE_CACHE_SUCCESS).format(count=deleted),
+        )
 
 
 def update_args_tooltip(self):

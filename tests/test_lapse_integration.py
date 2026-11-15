@@ -721,8 +721,26 @@ class TestLapseIntegration(unittest.TestCase):
 
             # Switch back to lapse and test opening other options dialog
             w.update_sync_tool_options("lapse")
-            with patch("PyQt6.QtWidgets.QDialog.exec"):
+            self.assertNotIn("clear_lapse_cache", w.tool_option_widgets)
+            opened_dialogs = []
+
+            def _capture_exec(dlg):
+                opened_dialogs.append(dlg)
+                return 0
+
+            with patch("PyQt6.QtWidgets.QDialog.exec", new=_capture_exec):
                 w.show_other_options_dialog()
+
+            self.assertEqual(len(opened_dialogs), 1)
+            import texts as _texts
+            dialog_buttons = opened_dialogs[0].findChildren(QPushButton)
+            btn_texts = [b.text() for b in dialog_buttons]
+            self.assertIn(str(_texts.CLEAR_LAPSE_CACHE), btn_texts)
+            self.assertIn(str(_texts.OPEN_LOGS_DIRECTORY), btn_texts)
+            for b in dialog_buttons:
+                self.assertEqual(b.height(), 32)
+                self.assertFalse(b.autoDefault())
+                self.assertFalse(b.isDefault())
 
             # Verify that encoding menu has standard QActions
             self.assertTrue(hasattr(w, "encoding_disabled_action"))
@@ -1625,6 +1643,130 @@ class TestLapseIntegration(unittest.TestCase):
             self.assertTrue(fragments)
         finally:
             log_win.close()
+
+    def test_clear_lapse_cache_only_removes_spans_files(self):
+        """Verify clear_lapse_cache deletes .spans files in lapse cache dir without touching other files."""
+        import utils
+        import texts
+        from constants import LANGUAGES
+
+        for key in (
+            "CLEAR_LAPSE_CACHE",
+            "CLEAR_LAPSE_CACHE_TOOLTIP",
+            "CLEAR_LAPSE_CACHE_CONFIRM",
+            "CLEAR_LAPSE_CACHE_EMPTY",
+            "CLEAR_LAPSE_CACHE_SUCCESS",
+            "ALSO_CLEAR_LAPSE_CACHE",
+        ):
+            tdict = getattr(texts, key)
+            for lang_code in LANGUAGES.values():
+                self.assertIn(lang_code, tdict._translations, f"Missing {lang_code} in {key}")
+
+        fake_xdg = os.path.join(self.temp_dir, "xdg_cache")
+        lapse_cache = os.path.join(fake_xdg, "lapse")
+        os.makedirs(lapse_cache, exist_ok=True)
+        span1 = os.path.join(lapse_cache, "ec12f3cc24493f04.spans")
+        span2 = os.path.join(lapse_cache, "aaaaaaaaaaaaaaaa.spans")
+        words1 = os.path.join(lapse_cache, "ec12f3cc24493f04.spans.ggml-base.words")
+        tmp1 = os.path.join(lapse_cache, "bbbbbbbbbbbbbbbb.spans.tmp")
+        keep_file = os.path.join(lapse_cache, "notes.txt")
+        keep_words = os.path.join(lapse_cache, "unrelated.words")
+        for p in (span1, span2, words1, tmp1, keep_file, keep_words):
+            with open(p, "w", encoding="utf-8") as f:
+                f.write("data")
+
+        with patch.dict(os.environ, {"XDG_CACHE_HOME": fake_xdg, "HOME": self.temp_dir}, clear=False), \
+             patch("os.path.expanduser", return_value=self.temp_dir), \
+             patch("sys.platform", "linux"):
+            with patch("utils.open_folder") as mock_open_folder:
+                utils.open_lapse_cache_directory()
+                mock_open_folder.assert_called_once_with(lapse_cache, None)
+            self.assertEqual(utils.count_lapse_cache_files(), 4)
+            deleted = utils.clear_lapse_cache()
+            self.assertEqual(deleted, 4)
+            self.assertEqual(utils.count_lapse_cache_files(), 0)
+            self.assertFalse(os.path.exists(span1))
+            self.assertFalse(os.path.exists(span2))
+            self.assertFalse(os.path.exists(words1))
+            self.assertFalse(os.path.exists(tmp1))
+            self.assertTrue(os.path.exists(keep_file))
+            self.assertTrue(os.path.exists(keep_words))
+
+        # Verify platform-specific directory resolution matches lapse engine/main.cpp
+        custom_env = os.path.join(self.temp_dir, "custom_lapse_env")
+        with patch.dict(os.environ, {"LAPSE_CACHE": custom_env, "LOCALAPPDATA": "/win/local", "USERPROFILE": "/win/user"}, clear=False), \
+             patch("sys.platform", "win32"):
+            win_dirs = utils.get_lapse_cache_directories()
+            self.assertEqual(win_dirs[0], os.path.normpath(custom_env))
+            self.assertIn(os.path.normpath(os.path.join("/win/local", "lapse", "cache")), win_dirs)
+            self.assertIn(os.path.normpath(os.path.join("/win/user", ".cache", "lapse")), win_dirs)
+
+        with patch.dict(os.environ, {"HOME": self.temp_dir}, clear=True), \
+             patch("os.path.expanduser", return_value=self.temp_dir), \
+             patch("sys.platform", "darwin"):
+            mac_dirs = utils.get_lapse_cache_directories()
+            self.assertEqual(mac_dirs, [os.path.normpath(os.path.join(self.temp_dir, ".cache", "lapse"))])
+
+    def test_clear_logs_directory_optional_lapse_cache_checkbox(self):
+        """Verify Clear all logs dialog has an unchecked Lapse cache checkbox that clears .spans when checked."""
+        import utils
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+
+        fake_logs = os.path.join(self.temp_dir, "app_logs")
+        fake_xdg = os.path.join(self.temp_dir, "xdg_cache2")
+        lapse_cache = os.path.join(fake_xdg, "lapse")
+        os.makedirs(fake_logs, exist_ok=True)
+        os.makedirs(lapse_cache, exist_ok=True)
+
+        log_file = os.path.join(fake_logs, "sync.log")
+        span_file = os.path.join(lapse_cache, "1111222233334444.spans")
+        for p in (log_file, span_file):
+            with open(p, "w", encoding="utf-8") as f:
+                f.write("data")
+
+        # 1. Default unchecked: clears logs, preserves lapse cache
+        checkbox_states = []
+
+        def _exec_unchecked(msg_box):
+            cb = msg_box.checkBox()
+            self.assertIsNotNone(cb)
+            checkbox_states.append(cb.isChecked())
+            return QMessageBox.StandardButton.Yes
+
+        with patch("utils.get_logs_directory", return_value=fake_logs), \
+             patch.dict(os.environ, {"XDG_CACHE_HOME": fake_xdg, "HOME": self.temp_dir}, clear=False), \
+             patch("os.path.expanduser", return_value=self.temp_dir), \
+             patch("platformdirs.user_cache_dir", return_value=lapse_cache), \
+             patch.object(QMessageBox, "exec", new=_exec_unchecked), \
+             patch.object(QMessageBox, "information"):
+            utils.clear_logs_directory()
+
+        self.assertEqual(checkbox_states, [False])
+        self.assertFalse(os.path.exists(fake_logs))
+        self.assertTrue(os.path.exists(span_file))
+
+        # 2. Checked by user: clears both logs and lapse cache
+        os.makedirs(fake_logs, exist_ok=True)
+        with open(log_file, "w", encoding="utf-8") as f:
+            f.write("data")
+
+        def _exec_checked(msg_box):
+            cb = msg_box.checkBox()
+            cb.setChecked(True)
+            return QMessageBox.StandardButton.Yes
+
+        with patch("utils.get_logs_directory", return_value=fake_logs), \
+             patch.dict(os.environ, {"XDG_CACHE_HOME": fake_xdg, "HOME": self.temp_dir}, clear=False), \
+             patch("os.path.expanduser", return_value=self.temp_dir), \
+             patch("platformdirs.user_cache_dir", return_value=lapse_cache), \
+             patch.object(QMessageBox, "exec", new=_exec_checked), \
+             patch.object(QMessageBox, "information"):
+            utils.clear_logs_directory()
+
+        self.assertFalse(os.path.exists(fake_logs))
+        self.assertFalse(os.path.exists(span_file))
 
 
 if __name__ == "__main__":

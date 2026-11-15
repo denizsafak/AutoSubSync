@@ -459,6 +459,7 @@ Before uninstalling, you may want to cleanup your settings and logs. Open AutoSu
 
 - `Settings` → `Open config file directory` to locate your configuration files and databases. **(You may want to back up these files if you plan to reinstall AutoSubSync later.)**
 - `Settings` → `Open logs directory` to delete log files.
+- Select `lapse` as the sync tool, open `Other options` (tune icon), and click `Clear Lapse cache` to delete Lapse's cached `.spans` and `.words` files.
 
 Then, follow the appropriate method below based on how you installed AutoSubSync:
 

@@ -1006,7 +1006,7 @@ def open_logs_directory(parent=None):
 
 def clear_logs_directory(parent=None):
     """Delete logs directory after user confirmation."""
-    from PyQt6.QtWidgets import QMessageBox
+    from PyQt6.QtWidgets import QMessageBox, QCheckBox
 
     try:
         logs_dir = get_logs_directory()
@@ -1029,21 +1029,35 @@ def clear_logs_directory(parent=None):
             )
             return
 
-        # Ask for confirmation with file count
-        reply = QMessageBox.question(
-            parent,
-            texts.DELETE_LOGS_DIRECTORY_TITLE,
-            texts.DELETE_LOGS_DIRECTORY_CONFIRMATION.format(total_files=total_files),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
+        # Ask for confirmation with file count and optional Lapse cache cleanup
+        lapse_cache_count = count_lapse_cache_files()
+        msg_box = QMessageBox(parent)
+        msg_box.setIcon(QMessageBox.Icon.Question)
+        msg_box.setWindowTitle(str(texts.DELETE_LOGS_DIRECTORY_TITLE))
+        msg_box.setText(
+            str(texts.DELETE_LOGS_DIRECTORY_CONFIRMATION).format(total_files=total_files)
         )
+        msg_box.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        msg_box.setDefaultButton(QMessageBox.StandardButton.No)
 
-        if reply == QMessageBox.StandardButton.Yes:
+        lapse_checkbox = QCheckBox(
+            str(texts.ALSO_CLEAR_LAPSE_CACHE).format(count=lapse_cache_count)
+        )
+        lapse_checkbox.setChecked(False)
+        msg_box.setCheckBox(lapse_checkbox)
+
+        if msg_box.exec() == QMessageBox.StandardButton.Yes:
             import shutil
 
             # Remove the entire directory
             shutil.rmtree(logs_dir)
             logger.info("Logs directory cleared.")
+
+            if lapse_checkbox.isChecked():
+                deleted_cache = clear_lapse_cache()
+                logger.info(f"Lapse cache cleared ({deleted_cache} files).")
 
             QMessageBox.information(
                 parent, texts.LOGS_DIRECTORY_CLEARED_TITLE, texts.LOGS_DIRECTORY_CLEARED
@@ -2575,3 +2589,115 @@ def extract_pgs_timings_to_srt(
         return tmp_path, f"Detected PGS stream {stream}", len(timings)
     except Exception as e:
         return None, f"PGS timing extraction failed: {e}", 0
+
+
+def _is_lapse_cache_file(filename):
+    """Return True if filename matches a cache file created by lapse (.spans, .words, or .spans.tmp)."""
+    return (
+        filename.endswith(".spans")
+        or (".spans." in filename and filename.endswith(".words"))
+        or filename.endswith(".spans.tmp")
+    )
+
+
+def get_lapse_cache_directories():
+    """Return candidate directories where lapse stores its cache files.
+
+    Mirrors cache_dir() in Schwponaco-org/lapse engine/main.cpp:
+    - LAPSE_CACHE (explicit override)
+    - Windows: %LOCALAPPDATA%/lapse/cache, then %USERPROFILE%/.cache/lapse
+    - Linux/macOS: $XDG_CACHE_HOME/lapse, then ~/.cache/lapse
+    """
+    import sys
+
+    candidates = []
+    lapse_cache_env = os.environ.get("LAPSE_CACHE")
+    if lapse_cache_env:
+        candidates.append(lapse_cache_env)
+
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            candidates.append(os.path.join(local_app_data, "lapse", "cache"))
+        user_profile = os.environ.get("USERPROFILE")
+        if user_profile:
+            candidates.append(os.path.join(user_profile, ".cache", "lapse"))
+    else:
+        xdg_cache = os.environ.get("XDG_CACHE_HOME")
+        if xdg_cache:
+            candidates.append(os.path.join(xdg_cache, "lapse"))
+        candidates.append(os.path.join(os.path.expanduser("~"), ".cache", "lapse"))
+
+    seen = set()
+    unique = []
+    for path in candidates:
+        norm = os.path.normpath(path)
+        if norm not in seen:
+            seen.add(norm)
+            unique.append(norm)
+    return unique
+
+
+def count_lapse_cache_files():
+    """Return the number of cache files (.spans / .words) currently stored by lapse."""
+    count = 0
+    for cache_dir in get_lapse_cache_directories():
+        if not os.path.isdir(cache_dir):
+            continue
+        try:
+            with os.scandir(cache_dir) as entries:
+                count += sum(
+                    1
+                    for entry in entries
+                    if entry.is_file() and _is_lapse_cache_file(entry.name)
+                )
+        except OSError:
+            pass
+    return count
+
+
+def clear_lapse_cache():
+    """Delete all cache files (.spans / .words / .spans.tmp) stored by lapse and return deleted count."""
+    deleted = 0
+    for cache_dir in get_lapse_cache_directories():
+        if not os.path.isdir(cache_dir):
+            continue
+        try:
+            with os.scandir(cache_dir) as entries:
+                for entry in entries:
+                    if entry.is_file() and _is_lapse_cache_file(entry.name):
+                        try:
+                            os.remove(entry.path)
+                            deleted += 1
+                        except OSError as e:
+                            logger.warning("Failed to remove lapse cache file %s: %s", entry.path, e)
+        except OSError as e:
+            logger.warning("Failed to scan lapse cache dir %s: %s", cache_dir, e)
+    return deleted
+
+
+def open_lapse_cache_directory(parent=None):
+    """Open the directory where lapse stores its cache files."""
+    candidates = get_lapse_cache_directories()
+    target_dir = None
+
+    for cache_dir in candidates:
+        if os.path.isdir(cache_dir):
+            try:
+                with os.scandir(cache_dir) as entries:
+                    if any(
+                        entry.is_file() and _is_lapse_cache_file(entry.name)
+                        for entry in entries
+                    ):
+                        target_dir = cache_dir
+                        break
+            except OSError:
+                pass
+            if target_dir is None:
+                target_dir = cache_dir
+
+    if target_dir is None:
+        target_dir = candidates[0] if candidates else os.path.join(os.path.expanduser("~"), ".cache", "lapse")
+        os.makedirs(target_dir, exist_ok=True)
+
+    open_folder(target_dir, parent)
