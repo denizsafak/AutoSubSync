@@ -99,6 +99,9 @@ def shift_subtitle(
         try:
             if fmt in ["srt", "vtt"]:
                 parts = re.split(r"[:,.]", time_str)
+                # WebVTT allows the hours to be left out (00:01.000)
+                if fmt == "vtt" and len(parts) == 3:
+                    parts = ["0", *parts]
                 h, m, s, ms = map(int, parts)
                 return (h * 3600 + m * 60 + s) * 1000 + ms
             elif fmt == "sbv":
@@ -197,7 +200,7 @@ def shift_subtitle(
         ),
         ".vtt": lambda line: (
             re.sub(
-                r"(\d{2}:\d{2}:\d{2}[,\.]\d{3}) --> (\d{2}:\d{2}:\d{2}[,\.]\d{3})",
+                r"((?:\d{2,}:)?\d{2}:\d{2}[,\.]\d{3}) --> ((?:\d{2,}:)?\d{2}:\d{2}[,\.]\d{3})",
                 lambda m: f"{shift_timestamp(m.group(1), 'vtt')} --> {shift_timestamp(m.group(2), 'vtt')}",
                 line,
             )

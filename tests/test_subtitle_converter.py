@@ -82,6 +82,19 @@ Second VTT line
         self.assertIn("00:00:01,000 --> 00:00:04,000", srt_content)
         self.assertIn("Hello VTT world", srt_content)
 
+    def test_convert_vtt_without_hours_to_srt(self):
+        vtt_file = os.path.join(self.temp_dir, "short.vtt")
+        with open(vtt_file, "w", encoding="utf-8") as f:
+            f.write("WEBVTT\n\n00:01.000 --> 00:04.000\nHello\n\n01:02:03.000 --> 01:02:05.000\nLate\n")
+
+        out_srt = os.path.join(self.temp_dir, "short.srt")
+        convert_vtt_to_srt(vtt_file, out_srt)
+
+        with open(out_srt, "r", encoding="utf-8") as f:
+            srt_content = f.read()
+        self.assertIn("00:00:01,000 --> 00:00:04,000\nHello", srt_content)
+        self.assertIn("01:02:03,000 --> 01:02:05,000\nLate", srt_content)
+
     def test_convert_sbv_to_srt(self):
         sbv_content = """0:00:01.000,0:00:04.000
 Hello SBV world

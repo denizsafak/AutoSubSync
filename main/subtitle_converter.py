@@ -305,10 +305,12 @@ def convert_vtt_to_srt(input_file: str, output_file: str) -> None:
             tag_pattern = re.compile(r"</?(?!" + "|".join(allowed_tags) + r")\w+[^>]*>")
             for line in vtt:
                 match = re.match(
-                    r"(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})", line
+                    r"((?:\d{2,}:)?\d{2}:\d{2}\.\d{3}) --> ((?:\d{2,}:)?\d{2}:\d{2}\.\d{3})",
+                    line,
                 )
                 if match:
-                    start, end = match.groups()
+                    # SRT needs the hours, which WebVTT allows to be left out
+                    start, end = (t if t.count(":") == 2 else f"00:{t}" for t in match.groups())
                     srt.write(f"{srt_counter}\n")
                     srt.write(
                         f"{start.replace('.', ',')} --> {end.replace('.', ',')}\n"
