@@ -602,6 +602,8 @@ class autosubsyncapp(QWidget):
             from utils import initialize_static_ffmpeg
 
             QTimer.singleShot(100, lambda: initialize_static_ffmpeg(self))
+            if self.config.get("always_on_top", DEFAULT_OPTIONS["always_on_top"]):
+                QTimer.singleShot(120, lambda: self.apply_always_on_top(True))
 
     def apply_theme(self, theme):
         from PyQt6.QtGui import QPalette, QColor
@@ -734,6 +736,30 @@ class autosubsyncapp(QWidget):
             self.update_restore_defaults_icon(theme)
         self.update_settings_icon(theme)
 
+    def apply_always_on_top(self, enabled):
+        """Apply or clear the cross-platform always-on-top window state."""
+        from utils import set_window_always_on_top
+
+        return set_window_always_on_top(self, enabled)
+
+    def toggle_always_on_top(self, checked):
+        """Persist and apply the always-on-top setting."""
+        enabled = bool(checked)
+        applied = self.apply_always_on_top(enabled)
+        if enabled and not applied:
+            update_config(self, "always_on_top", False)
+            if hasattr(self, "always_on_top_action"):
+                self.always_on_top_action.blockSignals(True)
+                self.always_on_top_action.setChecked(False)
+                self.always_on_top_action.blockSignals(False)
+            QMessageBox.information(
+                self,
+                str(texts.ALWAYS_ON_TOP),
+                str(texts.ALWAYS_ON_TOP_UNSUPPORTED_WAYLAND),
+            )
+            return
+        update_config(self, "always_on_top", enabled)
+
     def update_settings_icon(self, theme=None):
         """Update the main settings button icon according to the active theme."""
         if not hasattr(self, "settings_btn"):
@@ -758,12 +784,17 @@ class autosubsyncapp(QWidget):
         screen = self.screen() or QApplication.primaryScreen()
         self.setGeometry(initial_window_geometry(screen.availableGeometry()))
         # Some window managers only expose maximize when the hint is present.
-        self.setWindowFlags(
+        flags = (
             self.windowFlags()
             | Qt.WindowType.WindowMinimizeButtonHint
             | Qt.WindowType.WindowMaximizeButtonHint
             | Qt.WindowType.WindowCloseButtonHint
         )
+        if self.config.get("always_on_top", DEFAULT_OPTIONS["always_on_top"]):
+            flags |= Qt.WindowType.WindowStaysOnTopHint
+        else:
+            flags &= ~Qt.WindowType.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
         outer_layout = QVBoxLayout()
         outer_layout.setContentsMargins(15, 15, 15, 15)
         self.tab_widget = QTabWidget(self)
@@ -1054,6 +1085,14 @@ class autosubsyncapp(QWidget):
         self.settings_menu.addAction(self.reset_action)
 
         self.settings_menu.addSeparator()
+
+        self.always_on_top_action = QAction(texts.ALWAYS_ON_TOP, self)
+        self.always_on_top_action.setCheckable(True)
+        self.always_on_top_action.setChecked(
+            bool(self.config.get("always_on_top", DEFAULT_OPTIONS["always_on_top"]))
+        )
+        self.always_on_top_action.triggered.connect(self.toggle_always_on_top)
+        self.settings_menu.addAction(self.always_on_top_action)
 
         # Add About option
         self.about_action = QAction(texts.ABOUT, self)

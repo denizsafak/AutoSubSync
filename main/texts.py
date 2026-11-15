@@ -9317,6 +9317,58 @@ ALSO_CLEAR_LAPSE_CACHE = {
     "ur_PK": "Lapse کیش بھی صاف کریں ({count} فائلیں)",
 }
 
+ALWAYS_ON_TOP = {
+    "en_US": "Always on top",
+    "es_ES": "Siempre visible",
+    "tr_TR": "Her zaman üstte",
+    "zh_CN": "窗口置顶",
+    "zh_TW": "視窗置頂",
+    "ru_RU": "Поверх всех окон",
+    "pl_PL": "Zawsze na wierzchu",
+    "uk_UA": "Завжди поверх інших вікон",
+    "ja_JP": "常に手前に表示",
+    "ko_KR": "항상 위에 표시",
+    "hi_IN": "हमेशा शीर्ष पर रखें",
+    "bn_BD": "সর্বদা উপরে রাখুন",
+    "it_IT": "Sempre in primo piano",
+    "fr_FR": "Toujours au premier plan",
+    "de_DE": "Immer im Vordergrund",
+    "pt_PT": "Sempre visível",
+    "ar_SA": "دائمًا في المقدمة",
+    "vi_VN": "Luôn hiển thị trên cùng",
+    "fa_IR": "همیشه در بالا",
+    "id_ID": "Selalu di atas",
+    "ms_MY": "Sentiasa di atas",
+    "th_TH": "อยู่ด้านบนเสมอ",
+    "ur_PK": "ہمیشہ اوپر رکھیں",
+}
+
+ALWAYS_ON_TOP_UNSUPPORTED_WAYLAND = {
+    "en_US": "Your active Wayland desktop environment does not allow apps to set Always on Top automatically. Use your window titlebar menu (e.g. Alt+Space) or launch AutoSubSync under XWayland (QT_QPA_PLATFORM=xcb).",
+    "es_ES": "Su entorno de escritorio Wayland activo no permite que las aplicaciones activen «Siempre visible» automáticamente. Use el menú de la barra de título o inicie AutoSubSync con XWayland (QT_QPA_PLATFORM=xcb).",
+    "tr_TR": "Etkin Wayland masaüstü ortamınız uygulamaların «Her zaman üstte» durumunu otomatik olarak ayarlamasına izin vermiyor. Pencere başlık çubuğu menüsünü (Alt+Boşluk) kullanın veya AutoSubSync'i XWayland (QT_QPA_PLATFORM=xcb) ile başlatın.",
+    "zh_CN": "当前 Wayland 桌面环境不允许应用程序自动设置“窗口置顶”。请使用窗口标题栏菜单（例如 Alt+Space）或通过 XWayland（QT_QPA_PLATFORM=xcb）启动 AutoSubSync。",
+    "zh_TW": "目前使用的 Wayland 桌面環境不允許應用程式自動設定「視窗置頂」。請使用視窗標題列選單（例如 Alt+Space）或透過 XWayland（QT_QPA_PLATFORM=xcb）啟動 AutoSubSync。",
+    "ru_RU": "Текущая среда рабочего стола Wayland не разрешает приложениям автоматически включать режим «Поверх всех окон». Используйте меню заголовка окна (Alt+Space) или запустите AutoSubSync через XWayland (QT_QPA_PLATFORM=xcb).",
+    "pl_PL": "Aktywne środowisko Wayland nie zezwala aplikacjom na automatyczne ustawianie trybu „Zawsze na wierzchu”. Użyj menu paska tytułu (Alt+Spacja) lub uruchom AutoSubSync pod XWayland (QT_QPA_PLATFORM=xcb).",
+    "uk_UA": "Поточне середовище Wayland не дозволяє програмам автоматично вмикати режим «Завжди поверх інших вікон». Скористайтеся меню заголовка вікна (Alt+Space) або запустіть AutoSubSync через XWayland (QT_QPA_PLATFORM=xcb).",
+    "ja_JP": "現在使用中の Wayland デスクトップ環境では、アプリから「常に手前に表示」を自動設定できません。ウィンドウのタイトルバーメニュー（Alt+Space など）を使うか、XWayland（QT_QPA_PLATFORM=xcb）で AutoSubSync を起動してください。",
+    "ko_KR": "현재 Wayland 데스크톱 환경에서는 앱이 '항상 위에 표시'를 자동으로 설정할 수 없습니다. 창 제목 표시줄 메뉴(예: Alt+Space)를 사용하거나 XWayland(QT_QPA_PLATFORM=xcb)로 AutoSubSync를 실행하세요.",
+    "hi_IN": "आपका सक्रिय Wayland डेस्कटॉप वातावरण ऐप्स को स्वचालित रूप से 'हमेशा शीर्ष पर' सेट करने की अनुमति नहीं देता है। विंडो टाइटल बार मेनू (Alt+Space) उपयोग करें या AutoSubSync को XWayland (QT_QPA_PLATFORM=xcb) के साथ चलाएं।",
+    "bn_BD": "আপনার সক্রিয় Wayland ডেস্কটপ পরিবেশ অ্যাপগুলোকে স্বয়ংক্রিয়ভাবে 'সর্বদা উপরে রাখুন' সেট করতে দেয় না। উইন্ডো টাইটেলবার মেনু (Alt+Space) ব্যবহার করুন অথবা XWayland (QT_QPA_PLATFORM=xcb) দিয়ে AutoSubSync চালু করুন।",
+    "it_IT": "L'ambiente desktop Wayland attivo non consente alle app di impostare automaticamente 'Sempre in primo piano'. Usa il menu della barra del titolo (Alt+Spazio) o avvia AutoSubSync con XWayland (QT_QPA_PLATFORM=xcb).",
+    "fr_FR": "Votre environnement Wayland actuel ne permet pas aux applications d'activer automatiquement « Toujours au premier plan ». Utilisez le menu de la barre de titre (Alt+Espace) ou lancez AutoSubSync sous XWayland (QT_QPA_PLATFORM=xcb).",
+    "de_DE": "Ihre aktive Wayland-Desktopumgebung erlaubt es Apps nicht, „Immer im Vordergrund“ automatisch zu setzen. Nutzen Sie das Titelleistenmenü (Alt+Leertaste) oder starten Sie AutoSubSync mit XWayland (QT_QPA_PLATFORM=xcb).",
+    "pt_PT": "O seu ambiente de trabalho Wayland ativo não permite que as aplicações definam «Sempre visível» automaticamente. Utilize o menu da barra de título ou inicie o AutoSubSync em XWayland (QT_QPA_PLATFORM=xcb).",
+    "ar_SA": "لا تسمح بيئة Wayland النشطة للتطبيقات بتعيين خيار «دائمًا في المقدمة» تلقائيًا. استخدم قائمة شريط العنوان (Alt+Space) أو شغّل AutoSubSync عبر XWayland ‏(QT_QPA_PLATFORM=xcb).",
+    "vi_VN": "Môi trường Wayland hiện tại không cho phép ứng dụng tự động đặt «Luôn hiển thị trên cùng». Hãy dùng menu thanh tiêu đề (Alt+Space) hoặc chạy AutoSubSync với XWayland (QT_QPA_PLATFORM=xcb).",
+    "fa_IR": "محیط دسکتاپ Wayland فعال به برنامه‌ها اجازه تنظیم خودکار «همیشه در بالا» را نمی‌دهد. از منوی نوار عنوان پنجره (Alt+Space) استفاده کنید یا AutoSubSync را با XWayland ‏(QT_QPA_PLATFORM=xcb) اجرا نمایید.",
+    "id_ID": "Lingkungan desktop Wayland aktif Anda tidak mengizinkan aplikasi mengatur 'Selalu di atas' secara otomatis. Gunakan menu bilah judul jendela (Alt+Space) atau jalankan AutoSubSync dengan XWayland (QT_QPA_PLATFORM=xcb).",
+    "ms_MY": "Persekitaran desktop Wayland aktif anda tidak membenarkan aplikasi menetapkan 'Sentiasa di atas' secara automatik. Gunakan menu bar tajuk tetingkap (Alt+Space) atau jalankan AutoSubSync dengan XWayland (QT_QPA_PLATFORM=xcb).",
+    "th_TH": "สภาพแวดล้อม Wayland ที่ใช้งานอยู่ไม่อนุญาตให้แอปตั้งค่า 'อยู่ด้านบนเสมอ' โดยอัตโนมัติ โปรดใช้เมนูแถบชื่อหน้าต่าง (Alt+Space) หรือเปิด AutoSubSync ผ่าน XWayland (QT_QPA_PLATFORM=xcb)",
+    "ur_PK": "آپ کا فعال Wayland ڈیسک ٹاپ ماحول ایپس کو خودکار طور پر 'ہمیشہ اوپر رکھیں' سیٹ کرنے کی اجازت نہیں دیتا۔ ونڈو ٹائٹل بار مینو (Alt+Space) استعمال کریں یا AutoSubSync کو XWayland ‏(QT_QPA_PLATFORM=xcb) کے ساتھ چلائیں۔",
+}
+
 for name, obj in list(globals().items()):
     if isinstance(obj, dict) and name != "TranslationDict":
         globals()[name] = TranslationDict(obj)

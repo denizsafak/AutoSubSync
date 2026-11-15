@@ -152,6 +152,7 @@ DEFAULT_OPTIONS = {
     "output_subtitle_encoding": "same_as_input",
     "add_ms_prefix_to_filename": True,
     "keep_log_records": True,
+    "always_on_top": False,
     "theme": "system",
     "skip_previously_processed_videos": True,
     "auto_rename_bracket_paths": False,

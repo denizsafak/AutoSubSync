@@ -2701,3 +2701,345 @@ def open_lapse_cache_directory(parent=None):
         os.makedirs(target_dir, exist_ok=True)
 
     open_folder(target_dir, parent)
+
+
+def _set_windows_always_on_top(win_id, enabled):
+    """Toggle HWND_TOPMOST on Windows without recreating the window."""
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    user32.SetWindowPos.argtypes = [
+        wintypes.HWND,
+        wintypes.HWND,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_uint,
+    ]
+    user32.SetWindowPos.restype = wintypes.BOOL
+
+    hwnd = wintypes.HWND(int(win_id))
+    hwnd_insert_after = wintypes.HWND(-1 if enabled else -2)
+    flags = 0x0001 | 0x0002 | 0x0010  # SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+    return bool(user32.SetWindowPos(hwnd, hwnd_insert_after, 0, 0, 0, 0, flags))
+
+
+def _set_macos_always_on_top(window, enabled):
+    """Toggle floating window level on macOS without recreating the widget."""
+    import ctypes
+    import ctypes.util
+
+    objc_path = ctypes.util.find_library("objc") or "/usr/lib/libobjc.A.dylib"
+    objc = ctypes.cdll.LoadLibrary(objc_path)
+    objc.sel_registerName.argtypes = [ctypes.c_char_p]
+    objc.sel_registerName.restype = ctypes.c_void_p
+
+    msg_send_addr = ctypes.cast(objc.objc_msgSend, ctypes.c_void_p).value
+    get_window_msg = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)(
+        msg_send_addr
+    )
+    set_level_msg = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_long)(
+        msg_send_addr
+    )
+
+    ns_view = ctypes.c_void_p(int(window.winId()))
+    ns_window = get_window_msg(ns_view, objc.sel_registerName(b"window"))
+    if not ns_window:
+        return False
+
+    # NSFloatingWindowLevel = 3, NSNormalWindowLevel = 0
+    set_level_msg(ns_window, objc.sel_registerName(b"setLevel:"), 3 if enabled else 0)
+    return True
+
+
+def _set_x11_always_on_top(win_id, enabled):
+    """Send _NET_WM_STATE_ABOVE EWMH ClientMessage on X11/XWayland without recreating the window."""
+    import ctypes
+    import ctypes.util
+
+    x11_path = ctypes.util.find_library("X11")
+    if not x11_path:
+        return False
+    x11 = ctypes.cdll.LoadLibrary(x11_path)
+
+    class _XClientMessageEvent(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("window", ctypes.c_ulong),
+            ("message_type", ctypes.c_ulong),
+            ("format", ctypes.c_int),
+            ("data", ctypes.c_long * 5),
+        ]
+
+    class _XEvent(ctypes.Union):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("xclient", _XClientMessageEvent),
+            ("pad", ctypes.c_long * 24),
+        ]
+
+    x11.XOpenDisplay.restype = ctypes.c_void_p
+    x11.XDefaultRootWindow.argtypes = [ctypes.c_void_p]
+    x11.XDefaultRootWindow.restype = ctypes.c_ulong
+    x11.XInternAtom.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+    x11.XInternAtom.restype = ctypes.c_ulong
+    x11.XSendEvent.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_ulong,
+        ctypes.c_int,
+        ctypes.c_long,
+        ctypes.POINTER(_XEvent),
+    ]
+    x11.XFlush.argtypes = [ctypes.c_void_p]
+    x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
+
+    dpy = x11.XOpenDisplay(None)
+    if not dpy:
+        return False
+    try:
+        root = x11.XDefaultRootWindow(dpy)
+        wm_state = x11.XInternAtom(dpy, b"_NET_WM_STATE", 0)
+        above = x11.XInternAtom(dpy, b"_NET_WM_STATE_ABOVE", 0)
+        ev = _XEvent()
+        ev.xclient.type = 33  # ClientMessage
+        ev.xclient.display = dpy
+        ev.xclient.window = int(win_id)
+        ev.xclient.message_type = wm_state
+        ev.xclient.format = 32
+        ev.xclient.data[0] = 1 if enabled else 0  # _NET_WM_STATE_ADD / _REMOVE
+        ev.xclient.data[1] = above
+        ev.xclient.data[2] = 0
+        ev.xclient.data[3] = 1  # source indication: normal application
+        ev.xclient.data[4] = 0
+        # SubstructureRedirectMask | SubstructureNotifyMask
+        sent = x11.XSendEvent(dpy, root, 0, (1 << 20) | (1 << 19), ctypes.byref(ev))
+        x11.XFlush(dpy)
+        return bool(sent)
+    finally:
+        x11.XCloseDisplay(dpy)
+
+
+def _set_kwin_always_on_top(pid, title, enabled):
+    """Toggle KWin keepAbove on KDE Wayland/X11 via a transient KWin script."""
+    import json
+    import re
+    import shutil
+    import subprocess
+    import tempfile
+
+    qdbus_bin = shutil.which("qdbus6") or shutil.which("qdbus")
+    gdbus_bin = shutil.which("gdbus")
+    if not qdbus_bin and not gdbus_bin:
+        return False
+
+    state_literal = "true" if enabled else "false"
+    title_literal = json.dumps(title or "")
+    js = (
+        'var wins = typeof workspace.windowList === "function" '
+        "? workspace.windowList() : workspace.clientList();\n"
+        "var matched = false;\n"
+        "for (var i = 0; i < wins.length; i++) {\n"
+        "    var w = wins[i];\n"
+        f"    if (w.pid === {int(pid)} && !w.popupWindow && (w.normalWindow || w.caption === {title_literal})) {{\n"
+        f"        w.keepAbove = {state_literal};\n"
+        "        matched = true;\n"
+        "    }\n"
+        "}\n"
+        f"if (!matched && {title_literal}) {{\n"
+        "    for (var i = 0; i < wins.length; i++) {\n"
+        f"        if (!wins[i].popupWindow && wins[i].caption === {title_literal}) {{\n"
+        f"            wins[i].keepAbove = {state_literal};\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+    )
+
+    plugin = f"autosubsync_keepabove_{int(pid)}"
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".js", encoding="utf-8", delete=False) as f:
+            f.write(js)
+            tmp_path = f.name
+
+        if qdbus_bin:
+            r1 = subprocess.run(
+                [qdbus_bin, "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.loadScript", tmp_path, plugin],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if r1.returncode != 0:
+                return False
+            sid = r1.stdout.strip()
+            if sid and sid.lstrip("-").isdigit() and int(sid) >= 0:
+                subprocess.run(
+                    [qdbus_bin, "org.kde.KWin", f"/Scripting/Script{sid}", "org.kde.kwin.Script.run"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                )
+            else:
+                subprocess.run(
+                    [qdbus_bin, "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.start"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                )
+            subprocess.run(
+                [qdbus_bin, "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.unloadScript", plugin],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            return True
+
+        r1 = subprocess.run(
+            [
+                gdbus_bin, "call", "--session",
+                "--dest", "org.kde.KWin",
+                "--object-path", "/Scripting",
+                "--method", "org.kde.kwin.Scripting.loadScript",
+                tmp_path, plugin,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if r1.returncode != 0:
+            return False
+        m = re.search(r"(-?\d+)", r1.stdout)
+        if m and int(m.group(1)) >= 0:
+            subprocess.run(
+                [
+                    gdbus_bin, "call", "--session",
+                    "--dest", "org.kde.KWin",
+                    "--object-path", f"/Scripting/Script{m.group(1)}",
+                    "--method", "org.kde.kwin.Script.run",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+        else:
+            subprocess.run(
+                [
+                    gdbus_bin, "call", "--session",
+                    "--dest", "org.kde.KWin",
+                    "--object-path", "/Scripting",
+                    "--method", "org.kde.kwin.Scripting.start",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+        subprocess.run(
+            [
+                gdbus_bin, "call", "--session",
+                "--dest", "org.kde.KWin",
+                "--object-path", "/Scripting",
+                "--method", "org.kde.kwin.Scripting.unloadScript",
+                plugin,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        return True
+    except Exception:
+        return False
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
+
+def _set_wayland_always_on_top(pid, title, enabled):
+    """Apply always-on-top on supported Wayland compositors without recreating the surface."""
+    import shutil
+    import subprocess
+
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+    if "kde" in desktop or os.environ.get("KDE_FULL_SESSION") or shutil.which("qdbus6") or shutil.which("qdbus"):
+        if _set_kwin_always_on_top(pid, title, enabled):
+            return True
+
+    if os.environ.get("SWAYSOCK") and shutil.which("swaymsg"):
+        try:
+            state = "enable" if enabled else "disable"
+            res = subprocess.run(
+                ["swaymsg", f"[pid={int(pid)}]", "sticky", state],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if res.returncode == 0:
+                return True
+        except Exception:
+            pass
+
+    return False
+
+
+def set_window_always_on_top(window, enabled):
+    """Set or clear always-on-top across Windows, macOS, X11, and Wayland without reopening visible windows."""
+    import sys
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QGuiApplication
+
+    enabled = bool(enabled)
+    was_visible = bool(window.isVisible())
+    platform_name = (QGuiApplication.platformName() or "").lower()
+
+    if not was_visible:
+        window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, enabled)
+        return True
+
+    if sys.platform == "win32":
+        try:
+            if _set_windows_always_on_top(window.winId(), enabled):
+                return True
+        except Exception as e:
+            logger.debug("Windows SetWindowPos always-on-top failed: %s", e)
+
+    if sys.platform == "darwin":
+        try:
+            if _set_macos_always_on_top(window, enabled):
+                return True
+        except Exception as e:
+            logger.debug("macOS setLevel always-on-top failed: %s", e)
+        handle = window.windowHandle()
+        if handle is not None:
+            handle.setFlag(Qt.WindowType.WindowStaysOnTopHint, enabled)
+            return True
+
+    if platform_name == "xcb":
+        try:
+            if _set_x11_always_on_top(window.winId(), enabled):
+                return True
+        except Exception as e:
+            logger.debug("X11 _NET_WM_STATE_ABOVE failed: %s", e)
+
+    if platform_name == "wayland":
+        ok = _set_wayland_always_on_top(os.getpid(), window.windowTitle(), enabled)
+        if not ok:
+            logger.warning(
+                "Current Wayland compositor does not allow programmatic always-on-top."
+            )
+        # Never call setWindowFlag on a live Wayland QWidget: Qt destroys and reopens the window
+        # while the compositor still ignores WindowStaysOnTopHint.
+        return ok
+
+    # Offscreen tests or non-Wayland fallback
+    window.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, enabled)
+    if was_visible:
+        window.show()
+        if enabled:
+            window.raise_()
+    return True
