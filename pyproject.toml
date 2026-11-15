@@ -109,6 +109,7 @@ exclude = [
     "linux_packaging.py",
     "PROMPTS.md",
     "main/resources/ffmpeg_download.py",
+    "main/resources/whisper",
     "*.AppImage",
     "*.zip",
     "*.tar.gz",
@@ -124,6 +125,7 @@ exclude = [
     "main/resources/ffmpeg-bin",
     "main/resources/ffmpeg_download.py",
     "main/resources/lapse",
+    "main/resources/whisper",
 ]
 
 [tool.hatch.version]

@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 from constants import SYNC_TOOLS, COLORS, DEFAULT_OPTIONS, SUBTITLE_EXTENSIONS
 from utils import (
+    ensure_whisper_with_dialog,
     match_subtitle_encoding,
     update_config,
 )
@@ -545,6 +546,29 @@ def start_sync_process(app):
         if not items:
             return
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
+        if tool == "lapse" and app.config.get(
+            "lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False)
+        ):
+            from resources import whisper_download
+
+            extra_args = app.config.get("lapse_arguments", "")
+            has_custom_whisper = "--whisper" in extra_args.split() or any(
+                t.startswith("--whisper=") for t in extra_args.split()
+            )
+            if not has_custom_whisper and whisper_download.needs_download():
+                if getattr(app, "_whisper_download_in_progress", False):
+                    return
+                app._whisper_download_in_progress = True
+
+                def _after_whisper_download(success):
+                    app._whisper_download_in_progress = False
+                    if success:
+                        start_sync_process(app)
+                    elif hasattr(app, "restore_auto_sync_tab"):
+                        app.restore_auto_sync_tab()
+
+                ensure_whisper_with_dialog(app, callback=_after_whisper_download)
+                return
         (
             current_item_idx,
             batch_success_count,

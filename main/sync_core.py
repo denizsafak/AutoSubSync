@@ -405,6 +405,16 @@ def build_cmd(
                 if penalty != default_penalty:
                     cmd.append("auto")
                     cmd.append(str(penalty))
+        if config.get(
+            "lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False)
+        ) and not _is_flag_in_extra("--whisper", extra_tokens):
+            from resources import whisper_download
+
+            model_path = (
+                config.get("_lapse_whisper_model") or whisper_download.installed_model()
+            )
+            if model_path:
+                cmd.extend(["--whisper", model_path])
     return _append_opts(cmd, tool, config)
 
 
@@ -997,6 +1007,30 @@ def run_sync(
                         exe = lapse_download.download()
                 except Exception as e:
                     logger.error(f"Failed to download lapse: {e}")
+                if effective_config.get(
+                    "lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False)
+                ):
+                    extra_str = effective_config.get("lapse_arguments", "").strip()
+                    try:
+                        import shlex
+
+                        extra_tokens = shlex.split(extra_str)
+                    except Exception:
+                        extra_tokens = extra_str.split()
+                    if not _is_flag_in_extra("--whisper", extra_tokens):
+                        try:
+                            from resources import whisper_download
+
+                            _, model_path = whisper_download.ensure_whisper(
+                                log_cb=lambda m: callbacks._log(m, "grey")
+                            )
+                            effective_config["_lapse_whisper_model"] = model_path
+                        except Exception as e:
+                            err_msg = f"Failed to prepare Whisper for LAPSE: {e}"
+                            callbacks._error(err_msg)
+                            return SyncResult(
+                                False, None, current_tool, err_msg, None, _elapsed(start)
+                            )
             if not exe or not (os.path.isfile(exe) or shutil.which(exe)):
                 msg = str(texts.NO_EXECUTABLE_FOUND).format(
                     tool=current_tool, os=current_os

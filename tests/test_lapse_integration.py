@@ -64,14 +64,15 @@ class TestLapseIntegration(unittest.TestCase):
 
     def test_build_cmd_default_mode(self):
         config = dict(DEFAULT_OPTIONS)
-        cmd = sync_core.build_cmd(
-            "lapse",
-            "/usr/bin/lapse",
-            self.video_path,
-            self.sub_path,
-            os.path.join(self.temp_dir, "out.srt"),
-            config=config,
-        )
+        with patch("resources.whisper_download.installed_model", return_value=None):
+            cmd = sync_core.build_cmd(
+                "lapse",
+                "/usr/bin/lapse",
+                self.video_path,
+                self.sub_path,
+                os.path.join(self.temp_dir, "out.srt"),
+                config=config,
+            )
         expected = [
             "/usr/bin/lapse",
             self.video_path,
@@ -125,7 +126,6 @@ class TestLapseIntegration(unittest.TestCase):
     def test_build_cmd_flags_and_arguments(self):
         config = dict(DEFAULT_OPTIONS)
         config["lapse_no_cache"] = True
-        config["lapse_full_scan"] = True
         config["lapse_arguments"] = "--audio-track 2"
 
         cmd = sync_core.build_cmd(
@@ -137,12 +137,11 @@ class TestLapseIntegration(unittest.TestCase):
             config=config,
         )
         self.assertIn("--no-cache", cmd)
-        self.assertIn("--full-scan", cmd)
         self.assertIn("--audio-track", cmd)
         self.assertIn("2", cmd)
 
     def test_run_sync_auto_downloads_lapse_when_missing(self):
-        config = dict(DEFAULT_OPTIONS)
+        config = dict(DEFAULT_OPTIONS, lapse_use_whisper=False)
         out_sub = os.path.join(self.temp_dir, "synced_lapse.srt")
         fake_downloaded_bin = os.path.join(self.temp_dir, "downloaded_lapse")
         with open(fake_downloaded_bin, "w") as f:
@@ -168,7 +167,7 @@ class TestLapseIntegration(unittest.TestCase):
                 mock_dl.assert_called_once()
 
     def test_run_sync_with_lapse_success(self):
-        config = dict(DEFAULT_OPTIONS)
+        config = dict(DEFAULT_OPTIONS, lapse_use_whisper=False)
         out_sub = os.path.join(self.temp_dir, "synced_lapse.srt")
 
         def fake_run_executable(cmd, callbacks, *, sync_tool, process_holder=None):
@@ -231,6 +230,7 @@ class TestLapseIntegration(unittest.TestCase):
             lapse_snap=True,
             lapse_confidence=12,
             lapse_audio_track=1,
+            lapse_sub_track=2,
             lapse_min_shift=50,
         )
         cmd = sync_core.build_cmd("lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=config)
@@ -238,16 +238,18 @@ class TestLapseIntegration(unittest.TestCase):
             self.assertIn(flag, cmd)
         self.assertEqual(cmd[cmd.index("--confidence") + 1], "12")
         self.assertEqual(cmd[cmd.index("--audio-track") + 1], "1")
+        self.assertEqual(cmd[cmd.index("--sub-track") + 1], "2")
         self.assertEqual(cmd[cmd.index("--min-shift") + 1], "50")
 
         defaults = sync_core.build_cmd("lapse", "lapse", "v.mkv", "s.srt", "o.srt", config=dict(DEFAULT_OPTIONS))
-        for flag in ("--force", "--strict", "--snap", "--confidence", "--audio-track", "--min-shift"):
+        for flag in ("--force", "--strict", "--snap", "--confidence", "--audio-track", "--sub-track", "--min-shift"):
             self.assertNotIn(flag, defaults)
 
         # These defaults must match the LAPSE engine itself.
         lapse_options = SYNC_TOOLS["lapse"]["other_options"]
         self.assertEqual(lapse_options["confidence"]["default"], 8)
         self.assertEqual(lapse_options["audio_track"]["default"], -1)
+        self.assertEqual(lapse_options["sub_track"]["default"], -1)
         self.assertEqual(lapse_options["min_shift"]["default"], 1)
         self.assertEqual(lapse_options["min_shift"]["range"], [1, 1000])
 
@@ -415,7 +417,7 @@ class TestLapseIntegration(unittest.TestCase):
                 self.sub_path,
                 tool="lapse",
                 output=out_sub,
-                config=dict(DEFAULT_OPTIONS),
+                config=dict(DEFAULT_OPTIONS, lapse_use_whisper=False),
             )
         self.assertTrue(result.ok)
         self.assertTrue(os.path.exists(out_sub))
@@ -491,7 +493,7 @@ class TestLapseIntegration(unittest.TestCase):
                 self.sub_path,
                 tool="lapse",
                 output=out_sub,
-                config=dict(DEFAULT_OPTIONS),
+                config=dict(DEFAULT_OPTIONS, lapse_use_whisper=False),
             )
         self.assertTrue(result.ok)
         self.assertEqual(len(calls), 3)
@@ -631,10 +633,10 @@ class TestLapseIntegration(unittest.TestCase):
         from constants import SYNC_TOOLS, LANGUAGES
 
         lapse_other_options = SYNC_TOOLS["lapse"]["other_options"]
-        new_keys = ["force", "strict", "snap", "no_sidecar", "confidence", "audio_track", "min_shift"]
+        new_keys = ["force", "strict", "snap", "no_sidecar", "confidence", "audio_track", "sub_track", "min_shift"]
         self.assertEqual(
             list(lapse_other_options),
-            ["force", "strict", "snap", "no_sidecar", "confidence", "audio_track", "min_shift"],
+            ["force", "strict", "snap", "no_sidecar", "confidence", "audio_track", "sub_track", "min_shift"],
             "lapse other options must keep no_sidecar directly under snap",
         )
         for key in new_keys:
@@ -819,7 +821,7 @@ class TestLapseIntegration(unittest.TestCase):
                 self.sub_path,
                 tool="lapse",
                 output=out_sub,
-                config=dict(DEFAULT_OPTIONS),
+                config=dict(DEFAULT_OPTIONS, lapse_use_whisper=False),
             )
             # download should NOT be called during sync just because it is outdated
             mock_download.assert_not_called()
@@ -1152,6 +1154,68 @@ class TestLapseIntegration(unittest.TestCase):
                     f"Override note not found in dialog labels: {label_texts}",
                 )
 
+    def test_whisper_auto_download_only_when_enabled(self):
+        """Verify whisper_download.ensure_whisper is only called when lapse_use_whisper is True."""
+        from resources import whisper_download
+
+        self.assertFalse(DEFAULT_OPTIONS["lapse_use_whisper"])
+        lapse_opt_keys = list(SYNC_TOOLS["lapse"]["options"].keys())
+        self.assertLess(lapse_opt_keys.index("use_whisper"), lapse_opt_keys.index("no_cache"))
+
+        out_sub = os.path.join(self.temp_dir, "out_whisper.srt")
+        captured_cmds = []
+
+        def fake_run_executable(cmd, callbacks, *, sync_tool, process_holder=None):
+            captured_cmds.append(cmd)
+            with open(out_sub, "w", encoding="utf-8") as f:
+                f.write("1\n00:00:02,000 --> 00:00:04,000\nSynced text\n")
+            return 0
+
+        # Disabled by default: ensure_whisper must NOT be called
+        with patch.object(whisper_download, "ensure_whisper") as mock_ensure, \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_run_executable):
+            res = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="lapse",
+                output=out_sub,
+                config=dict(DEFAULT_OPTIONS),
+            )
+            self.assertTrue(res.ok)
+            mock_ensure.assert_not_called()
+            self.assertNotIn("--whisper", captured_cmds[-1])
+
+        # Enabled: ensure_whisper IS called and --whisper <model_path> is passed
+        fake_cli = os.path.join(self.temp_dir, "whisper-cli")
+        fake_model = os.path.join(self.temp_dir, "ggml-base.bin")
+        cfg_enabled = dict(DEFAULT_OPTIONS, lapse_use_whisper=True)
+        with patch.object(whisper_download, "ensure_whisper", return_value=(fake_cli, fake_model)) as mock_ensure, \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_run_executable):
+            res = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="lapse",
+                output=out_sub,
+                config=cfg_enabled,
+            )
+            self.assertTrue(res.ok)
+            mock_ensure.assert_called_once()
+            cmd = captured_cmds[-1]
+            self.assertIn("--whisper", cmd)
+            self.assertEqual(cmd[cmd.index("--whisper") + 1], fake_model)
+
+    def test_create_process_injects_lapse_whisper_cli_env(self):
+        """Verify create_process sets LAPSE_WHISPER_CLI when whisper-cli is installed."""
+        import utils
+        from resources import whisper_download
+
+        fake_cli = os.path.join(self.temp_dir, "whisper-cli")
+        with patch.object(whisper_download, "installed_cli", return_value=fake_cli), \
+             patch("subprocess.Popen") as mock_popen:
+            utils.create_process(["lapse", "v.mkv", "s.srt"])
+            env = mock_popen.call_args.kwargs["env"]
+            self.assertEqual(env["LAPSE_WHISPER_CLI"], fake_cli)
+
     def test_download_dialog_percentage_and_escape_guard(self):
         """Verify _create_download_dialog displays percentage progress and blocks Escape until finished."""
         from PyQt6.QtWidgets import QApplication
@@ -1212,6 +1276,41 @@ class TestLapseIntegration(unittest.TestCase):
         self.assertIn(0, reported)
         self.assertIn(100, reported)
         self.assertEqual(reported[-1], -1)
+
+    def test_truncated_downloads_fail_cleanly_without_leaving_corrupt_files(self):
+        """Verify half-completed downloads raise and never commit partial files."""
+        from resources import lapse_download, whisper_download
+
+        # 1. Whisper model truncated mid-stream: .part removed, final file absent
+        whisper_dir = os.path.join(self.temp_dir, "whisper_trunc")
+        model_resp = MagicMock()
+        model_resp.__enter__.return_value = model_resp
+        model_resp.headers = {"content-length": "1000"}
+        model_resp.iter_content.return_value = [b"half"]
+        with patch("resources.whisper_download.DIST_BIN_PATH", whisper_dir), \
+             patch("requests.get", return_value=model_resp):
+            with self.assertRaises(RuntimeError):
+                whisper_download.download_model("ggml-base.bin")
+        self.assertFalse(os.path.exists(os.path.join(whisper_dir, "ggml-base.bin")))
+        self.assertFalse(os.path.exists(os.path.join(whisper_dir, "ggml-base.bin.part")))
+
+        # 2. LAPSE archive truncated mid-stream: existing lapse preserved, staging removed
+        lapse_dir = os.path.join(self.temp_dir, "lapse_trunc")
+        os.makedirs(lapse_dir)
+        with open(os.path.join(lapse_dir, "lapse"), "w") as f:
+            f.write("existing")
+        lapse_resp = MagicMock()
+        lapse_resp.headers = {"content-length": "1000"}
+        lapse_resp.iter_content.return_value = [b"half"]
+        with patch("resources.lapse_download.DIST_BIN_PATH", lapse_dir), \
+             patch("resources.lapse_download.BINARY_NAME", "lapse"), \
+             patch("resources.lapse_download.get_archive_filename", return_value="a.tar.gz"), \
+             patch("requests.get", return_value=lapse_resp):
+            with self.assertRaises(RuntimeError):
+                lapse_download.download(progress_cb=lambda _pct: None)
+        with open(os.path.join(lapse_dir, "lapse")) as f:
+            self.assertEqual(f.read(), "existing")
+        self.assertFalse(os.path.exists(lapse_dir + ".new"))
 
 
 if __name__ == "__main__":

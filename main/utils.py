@@ -113,6 +113,24 @@ def create_process(cmd):
                 if found_lib:
                     env["LAPSE_ONNXRUNTIME"] = found_lib
 
+            # Resolve whisper-cli path if available
+            if "LAPSE_WHISPER_CLI" not in env:
+                try:
+                    from resources import whisper_download
+
+                    whisper_cli = whisper_download.installed_cli()
+                    if whisper_cli:
+                        env["LAPSE_WHISPER_CLI"] = whisper_cli
+                        if platform.system() == "Linux":
+                            whisper_dir = os.path.dirname(whisper_cli)
+                            ld_path = env.get("LD_LIBRARY_PATH", "")
+                            if whisper_dir and whisper_dir not in ld_path.split(":"):
+                                env["LD_LIBRARY_PATH"] = (
+                                    f"{whisper_dir}:{ld_path}" if ld_path else whisper_dir
+                                )
+                except Exception:
+                    pass
+
         kwargs = {
             "shell": False,
             "stdout": subprocess.PIPE,
@@ -1782,6 +1800,80 @@ def _perform_lapse_update(parent, remote_version):
 
     threading.Thread(target=download_thread, daemon=True).start()
 
+
+def ensure_whisper_with_dialog(parent, callback=None):
+    """Ensure whisper-cli and ggml-base.bin are downloaded, showing a modal progress dialog.
+
+    Uses a non-closable modal QDialog with percentage progress so canceling a
+    sync does not interrupt the Whisper download.
+    """
+    from resources import whisper_download
+
+    if not whisper_download.needs_download():
+        if callback:
+            callback(True)
+        return
+
+    from PyQt6.QtWidgets import QMessageBox
+    from PyQt6.QtCore import QObject, pyqtSignal
+
+    class WhisperDownloadSignals(QObject):
+        status = pyqtSignal(str)
+        progress = pyqtSignal(int)
+        finished = pyqtSignal(bool, str)
+
+    dialog, label, _progress_bar, set_progress = _create_download_dialog(
+        parent,
+        "Downloading Whisper",
+        "Preparing Whisper speech filter (whisper-cli & ggml-base.bin)...",
+    )
+    signals = WhisperDownloadSignals(dialog)
+    dialog._signals = signals
+
+    def on_status(msg):
+        label.setText(msg)
+        if hasattr(parent, "log_window") and parent.log_window:
+            parent.log_window.append_message(msg, color="grey")
+
+    def on_finished(success, error_msg):
+        dialog.finish_and_close()
+        if success:
+            if hasattr(parent, "log_window") and parent.log_window:
+                parent.log_window.append_message(
+                    "Whisper speech filter ready (whisper-cli & ggml-base.bin).",
+                    color="green",
+                )
+        else:
+            if hasattr(parent, "log_window") and parent.log_window:
+                parent.log_window.append_message(
+                    f"Whisper download failed: {error_msg}",
+                    color="red",
+                )
+            QMessageBox.warning(
+                parent,
+                "Downloading Whisper",
+                f"Failed to download Whisper components:\n{error_msg}",
+            )
+        if callback:
+            callback(success)
+
+    signals.status.connect(on_status)
+    signals.progress.connect(set_progress)
+    signals.finished.connect(on_finished)
+    dialog.show()
+
+    def download_thread():
+        try:
+            whisper_download.ensure_whisper(
+                log_cb=signals.status.emit,
+                progress_cb=signals.progress.emit,
+            )
+            signals.finished.emit(True, "")
+        except Exception as e:
+            logger.error(f"Failed to download Whisper components: {e}")
+            signals.finished.emit(False, str(e))
+
+    threading.Thread(target=download_thread, daemon=True).start()
 
 
 def update_folder_label(label, folder_path=""):

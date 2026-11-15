@@ -34,6 +34,7 @@ main/AutoSubSync_logs
 main/resources/ffmpeg-bin/
 main/resources/ffsubsync-bin/
 main/resources/lapse/
+main/resources/whisper/
 main/resources/versions.json
 test_subtitles/
 PROMPTS.md
