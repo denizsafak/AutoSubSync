@@ -295,7 +295,6 @@ class LogWindow(QWidget):
         if color:
             fmt.setForeground(QColor(color))
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        cursor.setCharFormat(fmt)
         if overwrite:
             if not message:
                 return
@@ -306,11 +305,13 @@ class LogWindow(QWidget):
                     QTextCursor.MoveMode.KeepAnchor,
                 )
                 cursor.removeSelectedText()
-            cursor.insertText(str(message))
+            cursor.setCharFormat(fmt)
+            cursor.insertText(str(message), fmt)
         else:
+            cursor.setCharFormat(fmt)
             if self._last_line_is_update:
-                cursor.insertText("\n")
-            cursor.insertText(str(message) + end)
+                cursor.insertText("\n", fmt)
+            cursor.insertText(str(message) + end, fmt)
         self._last_line_is_update = overwrite
         # Always auto-scroll unless user has scrolled up
         if at_bottom or not self._user_scrolled_up or txt.document().blockCount() <= 30:
@@ -349,14 +350,16 @@ class LogWindow(QWidget):
         self._position_scroll_button()
 
     def update_progress(self, value, current=None, total=None):
-        self.progress_bar.setValue(value)
-        if self.progress_bar.isHidden():
-            self.progress_bar.setVisible(True)
-
+        clamped = max(0, min(100, int(round(float(value)))))
+        if self.progress_bar.minimum() != 0 or self.progress_bar.maximum() != 100:
+            self.progress_bar.setRange(0, 100)
         if total and total > 1 and current:
             self.progress_bar.setFormat(f"%p% ({current}/{total})")
         else:
             self.progress_bar.setFormat("%p%")
+        self.progress_bar.setValue(clamped)
+        if self.progress_bar.isHidden():
+            self.progress_bar.setVisible(True)
 
     def handle_sync_completion(
         self, success, output, post_success_callback=None, needs_review=False

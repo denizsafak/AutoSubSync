@@ -9,6 +9,7 @@ import platform
 import signal
 import time
 import shutil
+from typing import Optional
 import texts
 
 try:
@@ -519,9 +520,8 @@ def get_logs_directory():
     from constants import PROGRAM_NAME
 
     logs_dir = os.path.join(tempfile.gettempdir(), PROGRAM_NAME)
-    # Create the directory if it doesn't exist
-    if not os.path.exists(logs_dir):
-        os.makedirs(logs_dir)
+    # Create the directory if it doesn't exist (thread/process-safe)
+    os.makedirs(logs_dir, exist_ok=True)
 
     return logs_dir
 
@@ -2307,7 +2307,7 @@ def check_pgs_subtitles_usable(reference: str) -> tuple[bool, str]:
     try:
         from ffsubsync.speech_transformers import find_pgs_stream
 
-        ffmpeg_dir = os.path.dirname(FFPROBE_EXECUTABLE) if FFPROBE_EXECUTABLE else None
+        ffmpeg_dir = (os.path.dirname(FFPROBE_EXECUTABLE) or None) if FFPROBE_EXECUTABLE else None
         stream = find_pgs_stream(reference, ffmpeg_path=ffmpeg_dir)
         if not stream:
             return False, "No PGS (hdmv_pgs_subtitle) subtitle stream found"
@@ -2315,3 +2315,263 @@ def check_pgs_subtitles_usable(reference: str) -> tuple[bool, str]:
         return True, f"Detected PGS stream {stream}"
     except Exception as e:
         return False, f"PGS probe check failed: {e}"
+
+
+def _accumulate_pgs_packet(
+    pts_str,
+    dur_str,
+    size_str,
+    results: list[tuple[float, float]],
+    current_start: Optional[float],
+) -> tuple[Optional[float], Optional[float]]:
+    """Accumulate a single PGS packet into cue (start, end) intervals.
+
+    Handles both duration-bearing packets and Matroska Show/Clear pairs.
+    Returns (updated_current_start, parsed_pts_or_None).
+    """
+    if pts_str is None or size_str is None:
+        return current_start, None
+    try:
+        pts = float(pts_str)
+        size = int(size_str)
+        dur = float(dur_str) if dur_str not in (None, "N/A", "") else None
+    except (ValueError, TypeError):
+        return current_start, None
+
+    if dur is not None and size > 50:
+        results.append((pts, pts + dur))
+        current_start = None
+    elif size > 50:
+        if current_start is not None and pts > current_start:
+            results.append((current_start, min(pts, current_start + 7.0)))
+        current_start = pts
+    else:
+        # Clear packet (size <= 50)
+        if current_start is not None and pts > current_start:
+            results.append((current_start, pts))
+            current_start = None
+
+    return current_start, pts
+
+
+def extract_pgs_packet_timings(
+    fname: str,
+    stream: str,
+    ffprobe_cmd: str,
+    *,
+    duration_sec: Optional[float] = None,
+    progress_cb=None,
+    is_cancelled=None,
+    process_holder: Optional[dict] = None,
+) -> Optional[list[tuple[float, float]]]:
+    """Extract (start_sec, end_sec) cue intervals from a PGS stream via ffprobe.
+
+    Handles both duration-bearing packets and standard Matroska Show/Clear pairs.
+    Streams CSV lines incrementally when progress/cancellation hooks are supplied
+    and ffmpeg.probe is not monkeypatched.
+    """
+    import ffmpeg
+
+    probe_stream = stream[2:] if stream.startswith("0:") else stream
+    results: list[tuple[float, float]] = []
+    current_start: Optional[float] = None
+
+    use_streaming = (
+        (progress_cb is not None or is_cancelled is not None or process_holder is not None)
+        and getattr(ffmpeg.probe, "__module__", "") == "ffmpeg._probe"
+    )
+
+    if use_streaming:
+        cmd = [
+            ffprobe_cmd,
+            "-v",
+            "error",
+            "-show_packets",
+            "-select_streams",
+            probe_stream,
+            "-show_entries",
+            "packet=pts_time,duration_time,size",
+            "-of",
+            "csv=p=0",
+            fname,
+        ]
+        proc = None
+        last_pct = -1
+        try:
+            proc = create_process(cmd)
+            if process_holder is not None:
+                process_holder["process"] = proc
+            if proc.stdout is not None:
+                for raw_line in proc.stdout:
+                    if is_cancelled and is_cancelled():
+                        terminate_process_safely(proc)
+                        return None
+                    line = (
+                        raw_line.decode("utf-8", errors="replace").strip()
+                        if isinstance(raw_line, bytes)
+                        else str(raw_line).strip()
+                    )
+                    if not line:
+                        continue
+                    parts = line.split(",")
+                    if len(parts) < 3:
+                        continue
+                    current_start, pts = _accumulate_pgs_packet(
+                        parts[0].strip(),
+                        parts[1].strip(),
+                        parts[2].strip(),
+                        results,
+                        current_start,
+                    )
+                    if (
+                        pts is not None
+                        and progress_cb
+                        and duration_sec
+                        and duration_sec > 0
+                    ):
+                        pct = min(99, max(0, int((pts / duration_sec) * 100)))
+                        if pct > last_pct:
+                            last_pct = pct
+                            progress_cb(float(pct))
+            if proc.stdout is not None:
+                proc.stdout.close()
+            proc.wait()
+            if is_cancelled and is_cancelled():
+                return None
+            if progress_cb and results:
+                progress_cb(100.0)
+        except Exception:
+            if proc is not None and proc.poll() is None:
+                terminate_process_safely(proc)
+            return None
+        finally:
+            if process_holder is not None and process_holder.get("process") is proc:
+                process_holder["process"] = None
+    else:
+        try:
+            probe_data = ffmpeg.probe(
+                fname,
+                cmd=ffprobe_cmd,
+                show_packets=None,
+                select_streams=probe_stream,
+                show_entries="packet=pts_time,duration_time,size",
+            )
+        except Exception:
+            return None
+
+        for packet in probe_data.get("packets", []):
+            current_start, _ = _accumulate_pgs_packet(
+                packet.get("pts_time"),
+                packet.get("duration_time"),
+                packet.get("size"),
+                results,
+                current_start,
+            )
+
+    if current_start is not None:
+        results.append((current_start, current_start + 3.0))
+
+    return results if results else None
+
+
+def _format_srt_timestamp(seconds: float) -> str:
+    """Format seconds as an SRT timestamp (HH:MM:SS,mmm)."""
+    total_ms = max(0, int(round(float(seconds) * 1000)))
+    hours, rem = divmod(total_ms, 3_600_000)
+    minutes, rem = divmod(rem, 60_000)
+    secs, millis = divmod(rem, 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+
+
+def extract_pgs_timings_to_srt(
+    reference: str,
+    *,
+    stream: Optional[str] = None,
+    min_cues: int = 1,
+    duration_sec: Optional[float] = None,
+    progress_cb=None,
+    is_cancelled=None,
+    process_holder: Optional[dict] = None,
+) -> tuple[Optional[str], str, int]:
+    """Extract PGS subtitle packet timings from a video into a temporary SRT file.
+
+    Avoids OCR by writing placeholder text with the exact PGS cue timestamps so
+    timing-based sync engines (such as alass and LAPSE) can align against them.
+
+    Returns:
+        tuple of (temp_srt_path_or_None, reason_or_stream_info, cue_count)
+    """
+    from constants import is_remote_url, FFPROBE_EXECUTABLE
+
+    if is_cancelled and is_cancelled():
+        return None, "Cancelled", 0
+
+    if not reference or is_remote_url(reference):
+        return None, "Remote URLs or empty paths do not support PGS timing extraction", 0
+
+    if not os.path.exists(reference):
+        return None, "Reference file does not exist", 0
+
+    try:
+        from ffsubsync.speech_transformers import find_pgs_stream
+        from ffsubsync.ffmpeg_utils import ffmpeg_bin_path
+
+        ffmpeg_dir = (os.path.dirname(FFPROBE_EXECUTABLE) or None) if FFPROBE_EXECUTABLE else None
+        if not stream:
+            stream = find_pgs_stream(reference, ffmpeg_path=ffmpeg_dir)
+        if not stream:
+            return None, "No PGS (hdmv_pgs_subtitle) subtitle stream found", 0
+
+        ffprobe_cmd = ffmpeg_bin_path("ffprobe", False, ffmpeg_resources_path=ffmpeg_dir)
+        timings = extract_pgs_packet_timings(
+            reference,
+            stream,
+            ffprobe_cmd,
+            duration_sec=duration_sec,
+            progress_cb=progress_cb,
+            is_cancelled=is_cancelled,
+            process_holder=process_holder,
+        )
+        if is_cancelled and is_cancelled():
+            return None, "Cancelled", 0
+        if not timings:
+            return None, f"No usable PGS timing packets in stream {stream}", 0
+
+        if len(timings) < min_cues:
+            return (
+                None,
+                f"Only {len(timings)} PGS cues in stream {stream} (minimum {min_cues} required)",
+                len(timings),
+            )
+
+        tmp_path = None
+        try:
+            temp_dir = get_logs_directory()
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                suffix=".srt",
+                prefix="autosubsync_pgs_",
+                dir=temp_dir,
+                encoding="utf-8",
+                delete=False,
+            ) as tmp:
+                tmp_path = tmp.name
+                for idx, (start_sec, end_sec) in enumerate(timings, 1):
+                    s = max(0.0, float(start_sec))
+                    e = max(float(end_sec), s + 0.05)
+                    tmp.write(
+                        f"{idx}\n"
+                        f"{_format_srt_timestamp(s)} --> {_format_srt_timestamp(e)}\n"
+                        "PGS\n\n"
+                    )
+        except Exception:
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+            raise
+
+        return tmp_path, f"Detected PGS stream {stream}", len(timings)
+    except Exception as e:
+        return None, f"PGS timing extraction failed: {e}", 0

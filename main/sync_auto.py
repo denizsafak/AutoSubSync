@@ -7,7 +7,6 @@ from pathlib import Path
 import texts
 from PyQt6.QtCore import pyqtSignal, QObject, QTimer
 from PyQt6.QtWidgets import (
-    QApplication,
     QDialog,
     QDialogButtonBox,
     QLabel,
@@ -345,17 +344,19 @@ def handle_completion(app, ok, out, in_path):
 class SyncSignals(QObject):
     finished = pyqtSignal(bool, object, bool)  # success, output path, needs review
     progress = pyqtSignal(str, bool)
+    colored_progress = pyqtSignal(str, object, bool)
     progress_percent = pyqtSignal(float)
     error = pyqtSignal(str)
     log = pyqtSignal(str, object)
+    pair_header = pyqtSignal(str, str)  # reference, subtitle
 
 
 class SyncProcess:
     """Qt adapter around sync_core.run_sync().
 
     Preserves the original signal-based public API used by the GUI: run_sync()
-    spawns a worker thread, emits progress/error/finished signals, and supports
-    cancel() from the UI thread.
+    and prepare_and_run() spawn a worker thread, emit progress/log/error/finished
+    signals, and support cancel() from the UI thread.
     """
 
     def __init__(self, app):
@@ -366,9 +367,27 @@ class SyncProcess:
                 self.app, msg, COLORS.get(color.upper()) if color else None
             )
         )
+        self.signals.colored_progress.connect(
+            lambda msg, color, is_overwrite: append_log(
+                self.app,
+                msg,
+                COLORS.get(color.upper()) if color else None,
+                overwrite=is_overwrite,
+            )
+        )
+        self.signals.pair_header.connect(self._append_pair_header)
         self.should_cancel = False
         self._process_lock = threading.Lock()
-        self._process_holder = {}  # populated by sync_core: {"process": Popen, "module_proc": Process}
+        self._process_holder = {}  # populated by extraction/sync: {"process": Popen, "module_proc": Process}
+        self._extraction = None
+
+    def _append_pair_header(self, reference, subtitle):
+        if hasattr(self.app, "log_window"):
+            self.app.log_window.append_message(f"{texts.REFERENCE_LABEL} ", end="")
+            self.app.log_window.append_message(reference, color=COLORS["GREY"])
+            self.app.log_window.append_message(f"{texts.SUBTITLE_LABEL} ", end="")
+            self.app.log_window.append_message(subtitle, color=COLORS["GREY"])
+            self.app.log_window.append_message("")
 
     # Back-compat aliases for any external readers (no external consumers found,
     # but kept to avoid surprising attribute access on the legacy class shape).
@@ -404,34 +423,197 @@ class SyncProcess:
 
         threading.Thread(target=_cancel, daemon=True).start()
 
-    def run_sync(self, reference, subtitle, tool="ffsubsync", output=None):
+    def run_sync(self, reference, subtitle, tool="ffsubsync", output=None, pgs_checked=False):
         if hasattr(self.app, "log_window"):
-            self.app.log_window.append_message(f"{texts.REFERENCE_LABEL} ", end="")
-            self.app.log_window.append_message(reference, color=COLORS["GREY"])
-            self.app.log_window.append_message(f"{texts.SUBTITLE_LABEL} ", end="")
-            self.app.log_window.append_message(subtitle, color=COLORS["GREY"])
-            self.app.log_window.append_message("")
+            self._append_pair_header(reference, subtitle)
             self.app.log_window.cancel_button.setEnabled(True)
         threading.Thread(
-            target=self._run, args=(reference, subtitle, tool, output), daemon=True
+            target=self._run, args=(reference, subtitle, tool, output, pgs_checked), daemon=True
         ).start()
 
-    def _run(self, reference, subtitle, tool, output):
+    def prepare_and_run(
+        self,
+        original_ref_path,
+        original_sub_path,
+        output_dir,
+        tool,
+        converted_files_to_clean,
+    ):
+        """Prepare subtitle/video reference with live UI streaming, then run sync."""
+        if hasattr(self.app, "log_window"):
+            self.app.log_window.cancel_button.setEnabled(True)
+        threading.Thread(
+            target=self._prepare_and_run,
+            args=(
+                original_ref_path,
+                original_sub_path,
+                output_dir,
+                tool,
+                converted_files_to_clean,
+            ),
+            daemon=True,
+        ).start()
+
+    def _prepare_and_run(
+        self,
+        original_ref_path,
+        original_sub_path,
+        output_dir,
+        tool,
+        converted_files_to_clean,
+    ):
+        try:
+            def convert_if_needed(file_path):
+                if not file_path:
+                    return None
+                ext = os.path.splitext(file_path)[-1].lower()
+                supported = SYNC_TOOLS[tool].get("supported_formats", [])
+                if ext in SUBTITLE_EXTENSIONS and ext not in supported:
+                    converted, msgs = convert_to_srt(file_path, output_dir)
+                    for msg in msgs:
+                        self.signals.log.emit(msg, "grey")
+                    if converted:
+                        if not self.app.config.get(
+                            "keep_converted_subtitles",
+                            DEFAULT_OPTIONS["keep_converted_subtitles"],
+                        ):
+                            converted_files_to_clean.append(converted)
+                        return converted
+                    self.signals.log.emit(
+                        texts.CONVERSION_FAILED_FOR_FILE.format(
+                            filename=os.path.basename(file_path)
+                        ),
+                        "red",
+                    )
+                    return None
+                return file_path
+
+            subtitle_path = convert_if_needed(original_sub_path)
+            subtitle_was_converted = (
+                subtitle_path != original_sub_path and subtitle_path is not None
+            )
+            if self.should_cancel:
+                self.signals.finished.emit(False, None, False)
+                return
+
+            tracker = sync_core.SyncProgressTracker(
+                on_progress=self.signals.progress_percent.emit,
+                tool=tool,
+                config=self.app.config,
+            )
+            tracker.start()
+
+            extraction = None
+            if subtitle_path:
+                extraction = prepare_sync_reference(
+                    original_ref_path,
+                    subtitle_path,
+                    output_dir,
+                    tool=tool,
+                    config=self.app.config,
+                    on_log=lambda msg, color="grey", overwrite=False: (
+                        self.signals.colored_progress.emit(msg, color, True)
+                        if overwrite
+                        else self.signals.log.emit(msg, color)
+                    ),
+                    on_progress=tracker.handle_prep_progress,
+                    on_stage=tracker.handle_prep_stage,
+                    is_cancelled=lambda: self.should_cancel,
+                    process_holder=self._process_holder,
+                )
+                self._extraction = extraction
+
+            if self.should_cancel or (extraction and extraction.cancelled):
+                cleanup_extracted_subtitles(extraction)
+                self._extraction = None
+                self.signals.finished.emit(False, None, False)
+                return
+
+            reference_to_process = (
+                extraction.effective_reference if extraction else original_ref_path
+            )
+            reference_path = convert_if_needed(reference_to_process)
+            if self.should_cancel or not reference_path or not subtitle_path:
+                cleanup_extracted_subtitles(extraction)
+                self._extraction = None
+                self.signals.finished.emit(False, None, False)
+                return
+
+            final_output_path = determine_output_path(
+                self.app, original_ref_path, original_sub_path, subtitle_was_converted
+            )
+            cb = sync_core.SyncCallbacks(
+                on_log=lambda msg, color: self.signals.log.emit(msg, color),
+                on_progress=self.signals.progress_percent.emit,
+                on_subprocess_line=lambda line, is_overwrite: self.signals.progress.emit(
+                    line, is_overwrite
+                ),
+                on_error=lambda msg: self.signals.error.emit(msg),
+                is_cancelled=lambda: self.should_cancel,
+                progress_tracker=tracker,
+            )
+            tool_local, _, _ = sync_core.get_tool_with_fallback(
+                reference_path, config=self.app.config, callbacks=cb
+            )
+            if self.should_cancel:
+                cleanup_extracted_subtitles(extraction)
+                self._extraction = None
+                self.signals.finished.emit(False, None, False)
+                return
+
+            tracker.tool = tool_local
+            self.signals.pair_header.emit(reference_path, subtitle_path)
+            pgs_checked = bool(extraction and extraction.pgs_checked)
+            run_config = (
+                {**self.app.config, "_pgs_already_checked": True}
+                if pgs_checked
+                else self.app.config
+            )
+            result = sync_core.run_sync(
+                reference_path,
+                subtitle_path,
+                tool=tool_local,
+                output=final_output_path,
+                config=run_config,
+                callbacks=cb,
+                process_holder=self._process_holder,
+            )
+            self.signals.finished.emit(result.ok, result.output_path, result.needs_review)
+        except Exception as e:
+            logger.exception("Error in prepare_and_run: %s", e)
+            if not self.should_cancel:
+                self.signals.error.emit(f"{texts.ERROR_PREFIX} {e}")
+            cleanup_extracted_subtitles(self._extraction)
+            self._extraction = None
+            self.signals.finished.emit(False, None, False)
+
+    def _run(self, reference, subtitle, tool, output, pgs_checked=False):
+        tracker = sync_core.SyncProgressTracker(
+            on_progress=self.signals.progress_percent.emit,
+            tool=tool,
+            config=self.app.config,
+        )
         cb = sync_core.SyncCallbacks(
             on_log=lambda msg, color: self.signals.log.emit(msg, color),
-            on_progress=lambda percent: self.signals.progress_percent.emit(percent),
+            on_progress=self.signals.progress_percent.emit,
             on_subprocess_line=lambda line, is_overwrite: self.signals.progress.emit(
                 line, is_overwrite
             ),
             on_error=lambda msg: self.signals.error.emit(msg),
             is_cancelled=lambda: self.should_cancel,
+            progress_tracker=tracker,
+        )
+        run_config = (
+            {**self.app.config, "_pgs_already_checked": True}
+            if pgs_checked
+            else self.app.config
         )
         result = sync_core.run_sync(
             reference,
             subtitle,
             tool=tool,
             output=output,
-            config=self.app.config,
+            config=run_config,
             callbacks=cb,
             process_holder=self._process_holder,
         )
@@ -736,95 +918,14 @@ def start_sync_process(app):
             output_dir = os.path.dirname(
                 determine_output_path(app, original_ref_path, original_sub_path)
             )
-
-            def convert_if_needed(file_path):
-                ext = os.path.splitext(file_path)[-1].lower()
-                supported = SYNC_TOOLS[tool].get("supported_formats", [])
-                if ext in SUBTITLE_EXTENSIONS and ext not in supported:
-                    converted, msgs = convert_to_srt(file_path, output_dir)
-                    for msg in msgs:
-                        append_log(app, msg, COLORS["GREY"])
-                    if converted:
-                        if not app.config.get(
-                            "keep_converted_subtitles",
-                            DEFAULT_OPTIONS["keep_converted_subtitles"],
-                        ):
-                            converted_files_to_clean.append(converted)
-                        return converted
-                    append_log(
-                        app,
-                        texts.CONVERSION_FAILED_FOR_FILE.format(
-                            filename=os.path.basename(file_path)
-                        ),
-                        COLORS["RED"],
-                    )
-                    return None
-                return file_path
-
-            # Convert subtitle file first if needed
-            subtitle_path = convert_if_needed(original_sub_path)
-            subtitle_was_converted = (
-                subtitle_path != original_sub_path and subtitle_path is not None
-            )
-
-            # Prepare the reference through the shared GUI/CLI extraction workflow.
-            extraction_result, extraction_done = [None], threading.Event()
-
-            if subtitle_path:
-                def run_extraction():
-                    try:
-                        extraction_result[0] = prepare_sync_reference(
-                            original_ref_path,
-                            subtitle_path,
-                            output_dir,
-                            tool=tool,
-                            config=app.config,
-                        )
-                    except Exception as e:
-                        logger.exception(f"Extraction failed: {e}")
-                    finally:
-                        extraction_done.set()
-
-                threading.Thread(target=run_extraction, daemon=True).start()
-                while not extraction_done.is_set():
-                    QApplication.processEvents()
-                    time.sleep(0.05)
-                for message in extraction_result[0].messages:
-                    append_log(app, f"{message}", COLORS["GREY"])
-
-            extraction = extraction_result[0]
-            reference_to_process = (
-                extraction.effective_reference if extraction else original_ref_path
-            )
-            reference_path = convert_if_needed(reference_to_process)
             current_item_idx += 1
-            if not reference_path or not subtitle_path:
-                cleanup_extracted_subtitles(extraction)
-                if app.batch_mode_enabled and total_items > 1:
-                    batch_fail_count += 1
-                    failed_pairs.append(
-                        (original_idx, original_ref_path, original_sub_path)
-                    )
-                    update_progress(
-                        app,
-                        int((original_idx + 1) * 100 / total_items),
-                        original_idx + 1,
-                        total_items,
-                    )
-                    process_next_item()
-                else:
-                    app.log_window.handle_sync_completion(False, None)
-                return
-            final_output_path = determine_output_path(
-                app, original_ref_path, original_sub_path, subtitle_was_converted
-            )
-            tool_local, tool_info, tool_type = get_tool_with_fallback(
-                app, reference_path
-            )
+
             proc = SyncProcess(app)
             app._current_sync_process = proc
             if hasattr(app, "_batch_state"):
                 app._batch_state["current_process"] = proc
+            item_number = current_item_idx
+            is_multi_batch = bool(app.batch_mode_enabled and total_items > 1)
             proc.signals.progress.connect(
                 lambda msg, is_overwrite: append_log(app, msg, overwrite=is_overwrite)
             )
@@ -832,27 +933,16 @@ def start_sync_process(app):
                 lambda msg: append_log(app, msg, COLORS["RED"], end="\n\n")
             )
             proc.signals.progress_percent.connect(
-                lambda percent: (
+                lambda percent, idx=item_number: (
                     update_progress(
                         app,
                         (
-                            int(
-                                (current_item_idx - 1) * 100 / total_items
-                                + percent / total_items
-                            )
-                            if app.batch_mode_enabled and total_items > 1
-                            else int(percent)
+                            int(((idx - 1) * 100 + percent) / total_items)
+                            if is_multi_batch
+                            else int(round(percent))
                         ),
-                        (
-                            current_item_idx
-                            if app.batch_mode_enabled and total_items > 1
-                            else None
-                        ),
-                        (
-                            total_items
-                            if app.batch_mode_enabled and total_items > 1
-                            else None
-                        ),
+                        idx if is_multi_batch else None,
+                        total_items if is_multi_batch else None,
                     )
                     if percent is not None
                     else None
@@ -871,7 +961,7 @@ def start_sync_process(app):
                     "should_cancel", False
                 ):
                     cleanup_files(converted_files_to_clean)
-                    cleanup_extracted_subtitles(extraction)
+                    cleanup_extracted_subtitles(proc._extraction)
                     return
                 ok = handle_completion(app, ok, out, original_sub_path)
                 if ok:
@@ -888,7 +978,7 @@ def start_sync_process(app):
                         (original_idx, original_ref_path, original_sub_path)
                     )
                 cleanup_files(converted_files_to_clean)
-                cleanup_extracted_subtitles(extraction)
+                cleanup_extracted_subtitles(proc._extraction)
                 update_progress(
                     app,
                     int((original_idx + 1) * 100 / total_items),
@@ -909,7 +999,7 @@ def start_sync_process(app):
                 """Report the outcome of a single (non-batch) sync to the log window."""
                 ok = handle_completion(app, ok, out, original_sub_path)
                 cleanup_files(converted_files_to_clean)
-                cleanup_extracted_subtitles(extraction)
+                cleanup_extracted_subtitles(proc._extraction)
                 # Pass sync tracking callback to be called after success message but before saved to
                 post_success_cb = (
                     (lambda: _mark_item_as_processed(app, original_ref_path))
@@ -924,7 +1014,13 @@ def start_sync_process(app):
                 proc.signals.finished.connect(batch_completion_handler)
             else:
                 proc.signals.finished.connect(single_completion_handler)
-            proc.run_sync(reference_path, subtitle_path, tool_local, final_output_path)
+            proc.prepare_and_run(
+                original_ref_path,
+                original_sub_path,
+                output_dir,
+                tool,
+                converted_files_to_clean,
+            )
 
         process_next_item()
     except Exception as e:

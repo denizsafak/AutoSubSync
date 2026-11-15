@@ -154,7 +154,7 @@ def _patch_ffsubsync_pgs_timings():
     try:
         import ffsubsync.speech_transformers as st
         from ffsubsync.ffmpeg_utils import ffmpeg_bin_path
-        import ffmpeg
+        from utils import extract_pgs_packet_timings
         from typing import List, Tuple, Optional
     except Exception:
         return
@@ -173,51 +173,61 @@ def _patch_ffsubsync_pgs_timings():
         ffprobe_cmd = ffmpeg_bin_path(
             "ffprobe", gui_mode, ffmpeg_resources_path=ffmpeg_path
         )
-        probe_stream = stream[2:] if stream.startswith("0:") else stream
-        try:
-            probe_data = ffmpeg.probe(
-                fname,
-                cmd=ffprobe_cmd,
-                show_packets=None,
-                select_streams=probe_stream,
-                show_entries="packet=pts_time,duration_time,size",
-            )
-        except Exception:
-            return None
-
-        results: List[Tuple[float, float]] = []
-        current_start = None
-
-        for packet in probe_data.get("packets", []):
-            pts_str = packet.get("pts_time")
-            dur_str = packet.get("duration_time")
-            size_str = packet.get("size")
-            if pts_str is None or size_str is None:
-                continue
+        duration_sec = None
+        if os.path.isfile(fname):
             try:
-                pts = float(pts_str)
-                size = int(size_str)
-                dur = float(dur_str) if dur_str not in (None, "N/A") else None
-            except (ValueError, TypeError):
-                continue
+                dur_out = subprocess.check_output(
+                    [
+                        ffprobe_cmd,
+                        "-v",
+                        "error",
+                        "-show_entries",
+                        "format=duration",
+                        "-of",
+                        "default=nw=1:nk=1",
+                        fname,
+                    ],
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                )
+                val = float(dur_out.decode("utf-8", errors="replace").strip())
+                if val > 0:
+                    duration_sec = val
+            except Exception:
+                pass
 
-            if dur is not None and size > 50:
-                results.append((pts, pts + dur))
-                current_start = None
-            elif size > 50:
-                if current_start is not None and pts > current_start:
-                    results.append((current_start, min(pts, current_start + 7.0)))
-                current_start = pts
-            else:
-                # Clear packet (size <= 50)
-                if current_start is not None and pts > current_start:
-                    results.append((current_start, pts))
-                    current_start = None
+        if duration_sec is not None:
+            last_pct = [-1]
 
-        if current_start is not None:
-            results.append((current_start, current_start + 3.0))
+            def _pgs_progress_cb(pct: float) -> None:
+                pct_int = int(pct)
+                if pct_int > last_pct[0]:
+                    last_pct[0] = pct_int
+                    try:
+                        sys.stdout.write(f"\rScanning PGS subtitles... {pct_int}%\r")
+                        sys.stdout.flush()
+                    except Exception:
+                        pass
 
-        return results if results else None
+            try:
+                timings = extract_pgs_packet_timings(
+                    fname,
+                    stream,
+                    ffprobe_cmd,
+                    duration_sec=duration_sec,
+                    progress_cb=_pgs_progress_cb,
+                )
+                if last_pct[0] >= 0:
+                    try:
+                        sys.stdout.write("\n")
+                        sys.stdout.flush()
+                    except Exception:
+                        pass
+                return timings
+            except TypeError:
+                pass
+
+        return extract_pgs_packet_timings(fname, stream, ffprobe_cmd)
 
     st._get_pgs_timings_via_ffprobe = _robust_get_pgs_timings
     st._is_patched_pgs_timings = True

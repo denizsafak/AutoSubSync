@@ -1312,6 +1312,320 @@ class TestLapseIntegration(unittest.TestCase):
             self.assertEqual(f.read(), "existing")
         self.assertFalse(os.path.exists(lapse_dir + ".new"))
 
+    def test_pgs_option_defaults_and_existing_embedded_option(self):
+        """Verify ffsubsync enables PGS by default while alass and lapse reuse check_video_for_subtitles."""
+        self.assertIs(SYNC_TOOLS["ffsubsync"]["options"]["use_pgs_subtitles"]["default"], True)
+        self.assertIs(DEFAULT_OPTIONS["ffsubsync_use_pgs_subtitles"], True)
+        for tool_name in ("alass", "lapse"):
+            opts = SYNC_TOOLS[tool_name]["options"]
+            self.assertNotIn("use_pgs_subtitles", opts)
+            self.assertIn("check_video_for_subtitles", opts)
+            self.assertIs(opts["check_video_for_subtitles"]["default"], True)
+
+    def test_extract_pgs_timings_to_srt_formats_and_min_cues(self):
+        """Verify extract_pgs_timings_to_srt parses Show/Clear PGS packets and writes clean SRT."""
+        import utils
+
+        fake_video = os.path.join(self.temp_dir, "movie.mkv")
+        with open(fake_video, "wb") as f:
+            f.write(b"fake")
+
+        fake_probe_data = {
+            "packets": [
+                {"pts_time": "1.250", "duration_time": "N/A", "size": "1200"},
+                {"pts_time": "3.500", "duration_time": "N/A", "size": "16"},
+                {"pts_time": "5.000", "duration_time": "2.000", "size": "950"},
+            ]
+        }
+
+        with patch("ffsubsync.speech_transformers.find_pgs_stream", return_value="0:s:0"), \
+             patch("ffmpeg.probe", return_value=fake_probe_data):
+            srt_path, reason, count = utils.extract_pgs_timings_to_srt(fake_video, min_cues=1)
+            try:
+                self.assertIsNotNone(srt_path)
+                self.assertEqual(os.path.dirname(srt_path), utils.get_logs_directory())
+                self.assertIn("0:s:0", reason)
+                self.assertEqual(count, 2)
+                with open(srt_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                self.assertIn("00:00:01,250 --> 00:00:03,500", content)
+                self.assertIn("00:00:05,000 --> 00:00:07,000", content)
+                self.assertNotIn("[", content)
+            finally:
+                if srt_path and os.path.exists(srt_path):
+                    os.unlink(srt_path)
+
+            srt_path2, reason2, count2 = utils.extract_pgs_timings_to_srt(fake_video, min_cues=10)
+            self.assertIsNone(srt_path2)
+            self.assertEqual(count2, 2)
+            self.assertIn("minimum 10", reason2)
+
+    def test_run_sync_uses_extracted_pgs_srt_for_alass_via_embedded_option_and_cleans_up(self):
+        """Verify alass uses temp PGS SRT when alass_check_video_for_subtitles is enabled, cleans up, and falls back."""
+        out_sub = os.path.join(self.temp_dir, "out_pgs_alass.srt")
+        temp_pgs = os.path.join(self.temp_dir, "pgs_alass.srt")
+        with open(temp_pgs, "w", encoding="utf-8") as f:
+            f.write("1\n00:00:01,000 --> 00:00:03,000\nPGS\n\n")
+
+        captured_cmds = []
+
+        def fake_run_exec(cmd, callbacks, *, sync_tool, process_holder=None):
+            captured_cmds.append(list(cmd))
+            with open(out_sub, "w", encoding="utf-8") as out_f:
+                out_f.write("1\n00:00:01,000 --> 00:00:03,000\nSynced\n")
+            return 0
+
+        # Enabled by default via alass_check_video_for_subtitles=True
+        with patch("utils.extract_pgs_timings_to_srt", return_value=(temp_pgs, "Detected PGS stream 0:s:0", 12)), \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_run_exec):
+            res = sync_core.run_sync(
+                self.video_path, self.sub_path, tool="alass", output=out_sub, config=dict(DEFAULT_OPTIONS)
+            )
+        self.assertTrue(res.ok)
+        self.assertEqual(captured_cmds[0][1], temp_pgs)
+        self.assertFalse(os.path.exists(temp_pgs), "Temp PGS SRT must be cleaned up")
+
+        # Fallback to original video when no PGS timings exist
+        captured_cmds.clear()
+        with patch("utils.extract_pgs_timings_to_srt", return_value=(None, "No PGS stream", 0)), \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_run_exec):
+            res_fb = sync_core.run_sync(
+                self.video_path, self.sub_path, tool="alass", output=out_sub, config=dict(DEFAULT_OPTIONS)
+            )
+        self.assertTrue(res_fb.ok)
+        self.assertEqual(captured_cmds[0][1], self.video_path)
+
+        # Disabled when alass_check_video_for_subtitles=False
+        captured_cmds.clear()
+        with patch("utils.extract_pgs_timings_to_srt") as mock_pgs, \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_run_exec):
+            res_off = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="alass",
+                output=out_sub,
+                config=dict(DEFAULT_OPTIONS, alass_check_video_for_subtitles=False),
+            )
+        self.assertTrue(res_off.ok)
+        mock_pgs.assert_not_called()
+        self.assertEqual(captured_cmds[0][1], self.video_path)
+
+        # LAPSE handles PGS natively (must NOT create a temp PGS SRT)
+        with patch("utils.extract_pgs_timings_to_srt") as mock_pgs_lapse, \
+             patch("resources.lapse_download.installed", return_value="lapse"), \
+             patch("os.path.isfile", return_value=True), \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_run_exec):
+            res_lapse = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="lapse",
+                output=out_sub,
+                config=dict(DEFAULT_OPTIONS, lapse_use_whisper=False),
+            )
+        self.assertTrue(res_lapse.ok)
+        mock_pgs_lapse.assert_not_called()
+
+    def test_prepare_sync_reference_scans_pgs_directly_after_embedded_scan_for_alass(self):
+        """Verify alass scans/extracts PGS during embedded scan when present, skips when absent, and avoids re-scan."""
+        import subtitle_extractor
+        import texts
+
+        pgs_temp = os.path.join(self.temp_dir, "prep_pgs.srt")
+        with open(pgs_temp, "w", encoding="utf-8") as f:
+            f.write("1\n00:00:01,000 --> 00:00:02,000\nPGS\n\n")
+
+        # 1) Header probe shows an hdmv_pgs_subtitle stream at s:0
+        with patch.object(
+            subtitle_extractor,
+            "_extract_subtitles_with_streams",
+            return_value=(None, None, [], [("2", "hdmv_pgs_subtitle", "eng")]),
+        ), patch(
+            "utils.extract_pgs_timings_to_srt",
+            return_value=(pgs_temp, "Detected PGS stream 0:s:0", 1454),
+        ) as mock_extract_pgs:
+            prep = subtitle_extractor.prepare_sync_reference(
+                self.video_path,
+                self.sub_path,
+                self.temp_dir,
+                tool="alass",
+                config=dict(DEFAULT_OPTIONS),
+            )
+            mock_extract_pgs.assert_called_once_with(
+                self.video_path, stream="0:s:0", min_cues=1
+            )
+            self.assertEqual(prep.effective_reference, pgs_temp)
+            self.assertTrue(prep.pgs_checked)
+            self.assertIsNotNone(prep.pgs_used_message)
+            self.assertEqual(prep.messages[0], str(texts.CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES))
+            self.assertEqual(prep.messages[1], str(texts.CHECKING_VIDEO_FOR_PGS_SUBTITLES))
+            self.assertEqual(prep.messages[2], prep.pgs_used_message)
+            self.assertNotIn(str(texts.EXTRACTION_NO_COMPATIBLE_SUBTITLES), prep.messages)
+
+            subtitle_extractor.cleanup_extracted_subtitles(prep)
+            self.assertFalse(os.path.exists(pgs_temp))
+
+        # 2) Header probe shows no PGS stream -> zero packet scan or Checking for PGS log
+        with patch.object(
+            subtitle_extractor,
+            "_extract_subtitles_with_streams",
+            return_value=(None, None, [], []),
+        ), patch("utils.extract_pgs_timings_to_srt") as mock_extract_pgs_none:
+            prep_none = subtitle_extractor.prepare_sync_reference(
+                self.video_path,
+                self.sub_path,
+                self.temp_dir,
+                tool="alass",
+                config=dict(DEFAULT_OPTIONS),
+            )
+            mock_extract_pgs_none.assert_not_called()
+            self.assertEqual(prep_none.effective_reference, self.video_path)
+            self.assertTrue(prep_none.pgs_checked)
+            self.assertNotIn(str(texts.CHECKING_VIDEO_FOR_PGS_SUBTITLES), prep_none.messages)
+            self.assertIn(str(texts.EXTRACTION_NO_COMPATIBLE_SUBTITLES), prep_none.messages)
+
+        # 3) _pgs_already_checked prevents run_sync from re-scanning PGS
+        out_sub = os.path.join(self.temp_dir, "out_no_rescan.srt")
+
+        def fake_exec(cmd, callbacks, *, sync_tool, process_holder=None):
+            with open(out_sub, "w", encoding="utf-8") as out_f:
+                out_f.write("1\n00:00:01,000 --> 00:00:02,000\nSynced\n")
+            return 0
+
+        with patch("utils.extract_pgs_timings_to_srt") as mock_rescan, \
+             patch.object(sync_core, "run_executable_tool", side_effect=fake_exec):
+            res = sync_core.run_sync(
+                self.video_path,
+                self.sub_path,
+                tool="alass",
+                output=out_sub,
+                config={**DEFAULT_OPTIONS, "_pgs_already_checked": True},
+            )
+        self.assertTrue(res.ok)
+        mock_rescan.assert_not_called()
+
+    def test_streaming_embedded_extraction_and_pgs_progress(self):
+        """Verify live on_log/on_progress streaming during embedded extraction and PGS packet CSV scan."""
+        import shutil
+        import subprocess
+        import subtitle_extractor
+        import texts
+        import utils
+
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            return
+
+        # Build a real tiny MKV containing one SRT subtitle stream
+        sub_src = os.path.join(self.temp_dir, "embedded_src.srt")
+        mkv_path = os.path.join(self.temp_dir, "stream_test.mkv")
+        with open(sub_src, "w", encoding="utf-8") as f:
+            f.write(
+                "1\n00:00:00,500 --> 00:00:02,500\n"
+                "This is a longer test subtitle cue so packet size exceeds fifty bytes for timing extraction.\n\n"
+            )
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=black:s=64x64:d=4",
+                "-i",
+                sub_src,
+                "-c:v",
+                "libx264",
+                "-t",
+                "4",
+                "-c:s",
+                "srt",
+                mkv_path,
+            ],
+            capture_output=True,
+            check=True,
+        )
+
+        logged_events = []
+        progress_values = []
+        holder = {}
+        prep = subtitle_extractor.prepare_sync_reference(
+            mkv_path,
+            self.sub_path,
+            self.temp_dir,
+            tool="alass",
+            config=dict(DEFAULT_OPTIONS),
+            on_log=lambda m, c="grey", ow=False: logged_events.append((m, c, ow)),
+            on_progress=lambda p: progress_values.append(p),
+            process_holder=holder,
+        )
+        try:
+            self.assertTrue(prep.enabled)
+            self.assertNotEqual(prep.effective_reference, mkv_path)
+            self.assertTrue(os.path.exists(prep.effective_reference))
+            non_ow = [m for m, _c, ow in logged_events if not ow]
+            self.assertEqual(non_ow[0], str(texts.CHECKING_VIDEO_FOR_EMBEDDED_SUBTITLES))
+            self.assertTrue(any("Found 1 compatible" in m for m in non_ow), non_ow)
+            self.assertTrue(any(p >= 50.0 for p in progress_values), progress_values)
+            self.assertIsNone(holder.get("process"))
+        finally:
+            subtitle_extractor.cleanup_extracted_subtitles(prep)
+
+        # Verify real ffprobe CSV streaming extracts subtitle packet intervals & reports progress
+        timings_pcts = []
+        timings = utils.extract_pgs_packet_timings(
+            mkv_path,
+            "0:s:0",
+            "ffprobe",
+            duration_sec=4.0,
+            progress_cb=lambda p: timings_pcts.append(p),
+        )
+        self.assertIsNotNone(timings)
+        self.assertEqual(timings, [(0.5, 2.5)])
+        self.assertTrue(any(p >= 100.0 for p in timings_pcts), timings_pcts)
+
+    def test_overwrite_progress_preserves_grey_color(self):
+        """Overwriting log lines via LogWindow or SyncProcess.colored_progress keeps grey color."""
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtGui import QColor
+        from constants import COLORS
+        from gui_log_window import LogWindow
+        import sync_auto
+
+        app_qt = QApplication.instance() or QApplication([])
+        log_win = LogWindow()
+        try:
+            class _FakeApp:
+                def __init__(self, lw):
+                    self.log_window = lw
+
+            fake_app = _FakeApp(log_win)
+            proc = sync_auto.SyncProcess(fake_app)
+
+            proc.signals.log.emit("Checking video for embedded subtitles...", "grey")
+            proc.signals.colored_progress.emit("Extracting embedded subtitles... 10%", "grey", True)
+            proc.signals.colored_progress.emit("Extracting embedded subtitles... 50%", "grey", True)
+            proc.signals.colored_progress.emit("Extracting embedded subtitles... 100%", "grey", True)
+            app_qt.processEvents()
+
+            doc = log_win.log_text.document()
+            self.assertIn("Extracting embedded subtitles... 100%", doc.toPlainText())
+            self.assertNotIn("50%", doc.toPlainText())
+
+            expected_grey = QColor(COLORS["GREY"])
+            target_block = doc.lastBlock()
+            self.assertEqual(target_block.text(), "Extracting embedded subtitles... 100%")
+            it = target_block.begin()
+            fragments = []
+            while not it.atEnd():
+                frag = it.fragment()
+                if frag.isValid():
+                    fragments.append(frag)
+                    self.assertEqual(frag.charFormat().foreground().color(), expected_grey)
+                it += 1
+            self.assertTrue(fragments)
+        finally:
+            log_win.close()
+
 
 if __name__ == "__main__":
     unittest.main()

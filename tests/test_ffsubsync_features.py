@@ -51,7 +51,7 @@ def test_ffsubsync_options_order_and_schema():
 
     assert "use_pgs_subtitles" in options
     assert options["use_pgs_subtitles"]["type"] == "checkbox"
-    assert options["use_pgs_subtitles"]["default"] is False
+    assert options["use_pgs_subtitles"]["default"] is True
     assert options["use_pgs_subtitles"]["argument"] == "--pgs-ref-stream"
 
     assert "multi_segment_sync" in options
@@ -60,7 +60,7 @@ def test_ffsubsync_options_order_and_schema():
 
     # Check that default options dictionary contains them
     assert DEFAULT_OPTIONS["ffsubsync_split_penalty"] == -1
-    assert DEFAULT_OPTIONS["ffsubsync_use_pgs_subtitles"] is False
+    assert DEFAULT_OPTIONS["ffsubsync_use_pgs_subtitles"] is True
     assert DEFAULT_OPTIONS["ffsubsync_multi_segment_sync"] is False
 
 
@@ -75,9 +75,9 @@ def test_ffsubsync_command_builder_defaults():
         "out.srt",
         config=config,
     )
-    # Default options should not append extra split or pgs flags
+    # Default options enable --pgs-ref-stream and leave split/multi-segment off
     assert "--split-penalty" not in cmd
-    assert "--pgs-ref-stream" not in cmd
+    assert "--pgs-ref-stream" in cmd
     assert "--multi-segment-sync" not in cmd
 
 
@@ -101,11 +101,11 @@ def test_ffsubsync_command_builder_split_penalty():
 def test_ffsubsync_command_builder_flags():
     """Verify boolean flags for ffsubsync."""
     config = dict(DEFAULT_OPTIONS)
-    config["ffsubsync_use_pgs_subtitles"] = True
+    config["ffsubsync_use_pgs_subtitles"] = False
     config["ffsubsync_multi_segment_sync"] = True
 
     cmd = build_cmd("ffsubsync", None, "video.mp4", "in.srt", "out.srt", config=config)
-    assert "--pgs-ref-stream" in cmd
+    assert "--pgs-ref-stream" not in cmd
     assert "--multi-segment-sync" in cmd
 
 

@@ -259,9 +259,10 @@ def _prepare_reference(reference, subtitle, output_target, tool, config, args):
         tool=tool,
         config=config,
         override=getattr(args, "embedded_subtitles", None),
+        on_log=lambda msg, _color=None, overwrite=False: (
+            log.info("%s", msg) if not overwrite else None
+        ),
     )
-    for message in prepared.messages:
-        log.info("%s", message)
     return prepared
 
 
@@ -297,13 +298,14 @@ def cmd_sync(args) -> int:
     prepared = _prepare_reference(
         args.video, args.subtitle, output_path, tool, config, args
     )
+    run_config = {**config, "_pgs_already_checked": True} if prepared.pgs_checked else config
     try:
         result = run_sync(
             prepared.effective_reference,
             args.subtitle,
             tool=tool,
             output=output_path,
-            config=config,
+            config=run_config,
             callbacks=callbacks,
         )
     finally:

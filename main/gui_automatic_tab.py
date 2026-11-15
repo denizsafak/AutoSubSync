@@ -189,7 +189,12 @@ def format_option_tooltip(option_data, option_name=None):
     argument = option_data.get("argument", "")
     tooltip = str(option_data.get("tooltip", "")).strip()
     default = option_data.get("default", None)
-    is_inverted_bool = isinstance(default, bool) and default is True and bool(argument)
+    is_inverted_bool = (
+        isinstance(default, bool)
+        and default is True
+        and bool(argument)
+        and str(argument).startswith("--no-")
+    )
 
     if default is not None:
         if isinstance(default, bool):

@@ -57,6 +57,205 @@ class SyncResult:
     needs_review: bool = False
 
 
+class SyncProgressTracker:
+    """Map multi-stage preparation and tool execution onto a monotonic 0..100 curve.
+
+    A single subtitle conversion often runs multiple sequential phases that each
+    emit their own 0..100% counters (e.g., embedded subtitle extraction, PGS
+    packet scanning, alass FPS guessing, and alass synchronization). Without
+    coordination the UI progress bar repeatedly jumps back to 0%. This tracker
+    allocates bounded sub-ranges for each observed phase and enforces strict
+    monotonic progress from 0 to 100 for the conversion.
+    """
+
+    def __init__(
+        self,
+        on_progress: Optional[Callable[[float], None]] = None,
+        *,
+        tool: str = "ffsubsync",
+        config: Optional[dict] = None,
+    ):
+        self._on_progress = on_progress
+        self.tool = tool
+        self.config = config or {}
+        self._started = False
+        self._current = 0.0
+        self._phase = "init"
+        self._phase_start = 0.0
+        self._phase_end = 100.0
+
+    @property
+    def current(self) -> float:
+        return self._current
+
+    def _emit(self, value: float, force: bool = False) -> None:
+        clamped = max(0.0, min(100.0, float(value)))
+        if force or clamped > self._current:
+            self._current = max(self._current, clamped)
+            if self._on_progress is not None:
+                self._on_progress(self._current)
+
+    def start(self) -> None:
+        """Emit initial 0% progress once at the start of a conversion."""
+        if not self._started:
+            self._started = True
+            self._emit(0.0, force=True)
+
+    def begin_phase(self, phase: str, end_pct: float) -> None:
+        """Anchor a new phase from the current progress up to ``end_pct``."""
+        self.start()
+        self._phase = phase
+        self._phase_start = self._current
+        self._phase_end = max(self._current, min(100.0, float(end_pct)))
+
+    def update_phase(self, local_pct: float) -> None:
+        """Translate a phase-local 0..100 percentage into overall conversion progress."""
+        self.start()
+        local = max(0.0, min(100.0, float(local_pct)))
+        mapped = self._phase_start + (self._phase_end - self._phase_start) * (local / 100.0)
+        self._emit(mapped)
+
+    def advance_to(self, pct: float) -> None:
+        """Advance monotonically to a milestone percentage."""
+        self.start()
+        self._emit(pct)
+
+    def finish(self, success: bool = True) -> None:
+        """Mark the conversion complete (reaches 100% on success)."""
+        if success:
+            self.start()
+            self._emit(100.0)
+
+    def handle_prep_stage(self, stage: str) -> None:
+        """Advance or open phase budgets for pre-sync preparation steps."""
+        if stage == "probe_streams":
+            self.advance_to(2.0)
+        elif stage == "extract_embedded":
+            self.begin_phase("extract_embedded", 85.0)
+        elif stage == "extract_embedded_done":
+            self.advance_to(88.0)
+        elif stage == "pgs_scan":
+            self.begin_phase("pgs_scan", 85.0)
+        elif stage == "pgs_scan_done":
+            self.advance_to(88.0)
+        elif stage == "audio_convert":
+            self.begin_phase("audio_convert", min(20.0, max(self._current + 12.0, 15.0)))
+        elif stage == "audio_convert_done":
+            self.advance_to(max(self._current, 15.0))
+
+    def handle_prep_progress(self, local_pct: float) -> None:
+        """Map a local 0..100 prep percentage into the active prep phase."""
+        if self._phase not in ("extract_embedded", "pgs_scan", "prep"):
+            self.begin_phase("prep", 85.0)
+        self.update_phase(local_pct)
+
+    def handle_tool_output(
+        self, tool: str, line: str, raw_percent: Optional[float]
+    ) -> None:
+        """Interpret tool output milestones and percentages within the remaining budget."""
+        self.start()
+        lower = (line or "").lower()
+
+        if tool == "alass":
+            if "extracting audio from reference file" in lower:
+                self.advance_to(max(self._current, 12.0))
+            elif "guessing framerate ratio" in lower:
+                # Reserve ~35% of remaining headroom for FPS guessing and ~64% for sync
+                fps_end = self._current + (99.0 - self._current) * 0.35
+                self.begin_phase("alass_fps", fps_end)
+            elif "synchronizing '" in lower:
+                self.begin_phase("alass_sync", 99.0)
+            elif "shifted block of" in lower:
+                self.advance_to(99.5)
+
+            if raw_percent is not None:
+                if self._phase not in ("alass_fps", "alass_sync"):
+                    self.begin_phase("alass_sync", 99.0)
+                self.update_phase(raw_percent)
+            return
+
+        if tool == "ffsubsync":
+            if "checking video for subtitles stream" in lower:
+                self.advance_to(max(self._current, 5.0))
+            elif "reading pgs timings" in lower:
+                self.begin_phase("ffsubsync_pgs", 82.0)
+            elif "extracting speech segments from reference" in lower:
+                self.advance_to(max(self._current, 8.0))
+                if self._phase != "ffsubsync_pgs":
+                    self.begin_phase("ffsubsync_speech", 82.0)
+            elif "extracting speech segments from subtitles" in lower:
+                self.advance_to(max(self._current, 88.0))
+            elif "computing alignments" in lower:
+                self.advance_to(max(self._current, 93.0))
+            elif "writing output to" in lower:
+                self.advance_to(max(self._current, 98.0))
+
+            if raw_percent is not None:
+                if "scanning pgs subtitles" in lower:
+                    if self._phase != "ffsubsync_pgs":
+                        self.begin_phase("ffsubsync_pgs", 82.0)
+                elif self._phase != "ffsubsync_speech":
+                    end = 88.0 if self._phase == "ffsubsync_pgs" else 82.0
+                    self.begin_phase("ffsubsync_speech", end)
+                self.update_phase(raw_percent)
+            return
+
+        if tool == "lapse":
+            if (
+                "reusing the subtitle track" in lower
+                or "reusing the speech" in lower
+            ):
+                self.advance_to(max(self._current, 15.0))
+            elif "listening for words with" in lower:
+                self.advance_to(max(self._current, 60.0))
+            elif "whisper heard" in lower:
+                self.advance_to(max(self._current, 75.0))
+            elif "could not read this audio" in lower:
+                self.begin_phase(
+                    "lapse_ffmpeg", min(65.0, max(self._current + 8.0, 20.0))
+                )
+
+            if raw_percent is not None:
+                if "checking the file in slices" in lower:
+                    if self._phase != "lapse_slices":
+                        slices_end = self._current + (99.0 - self._current) * 0.55
+                        self.begin_phase("lapse_slices", slices_end)
+                elif "looking for cuts" in lower:
+                    if self._phase != "lapse_cuts":
+                        self.begin_phase("lapse_cuts", 99.0)
+                elif self._phase == "lapse_ffmpeg":
+                    self.begin_phase("lapse_retry", 55.0)
+                elif self._phase not in (
+                    "lapse_listen",
+                    "lapse_slices",
+                    "lapse_cuts",
+                    "lapse_retry",
+                ):
+                    self.begin_phase("lapse_listen", 55.0)
+                self.update_phase(raw_percent)
+            return
+
+        if tool == "autosubsync":
+            if "extracting audio using ffmpeg" in lower:
+                self.advance_to(max(self._current, 15.0))
+            elif "computing features for" in lower:
+                self.advance_to(max(self._current, 35.0))
+            elif "extracted features of size" in lower:
+                self.advance_to(max(self._current, 55.0))
+            elif "computing best fit with" in lower:
+                self.advance_to(max(self._current, 75.0))
+            elif "quality of fit:" in lower:
+                self.advance_to(max(self._current, 90.0))
+            elif "fit complete." in lower:
+                self.advance_to(max(self._current, 96.0))
+            elif lower.strip() == "success!":
+                self.advance_to(99.0)
+            return
+
+        if raw_percent is not None:
+            self.update_phase(raw_percent)
+
+
 @dataclass
 class SyncCallbacks:
     """Optional hooks for progress reporting, logging, error reporting, and cancellation.
@@ -70,6 +269,7 @@ class SyncCallbacks:
     on_subprocess_line: Optional[Callable[[str, bool], None]] = None
     on_error: Optional[Callable[[str], None]] = None
     is_cancelled: Optional[Callable[[], bool]] = None
+    progress_tracker: Optional[SyncProgressTracker] = None
 
     def _log(self, msg, color=None):
         if self.on_log:
@@ -78,6 +278,12 @@ class SyncCallbacks:
     def _progress(self, percent):
         if self.on_progress:
             self.on_progress(percent)
+
+    def _emit_tool_progress(self, sync_tool: str, cleaned: str, raw_percent: Optional[float]):
+        if self.progress_tracker is not None:
+            self.progress_tracker.handle_tool_output(sync_tool, cleaned, raw_percent)
+        elif raw_percent is not None:
+            self._progress(raw_percent)
 
     def _subprocess_line(self, line, is_overwrite):
         if self.on_subprocess_line:
@@ -110,12 +316,64 @@ def shorten_progress_bar(line: str) -> str:
     return line
 
 
+_LAPSE_PROGRESS_PREFIX_RE = re.compile(
+    r"^(Listening to the audio|Checking the file in slices|Looking for cuts)\s+\d{1,3}(?:\.\d+)?\s*%$"
+)
+
+
+def _resolve_line_overwrite(
+    sync_tool: str, cleaned: str, is_overwrite: bool, last_prefix: Optional[str]
+):
+    """Mark repeatable lapse percentage rows for in-place overwrite even when newline-delimited."""
+    if sync_tool == "lapse" and cleaned:
+        match = _LAPSE_PROGRESS_PREFIX_RE.match(cleaned)
+        if match:
+            return True, match.group(1)
+        return is_overwrite, None
+    return is_overwrite, last_prefix
+
+
+def _extract_progress_percent(cleaned_lines: list, sync_tool: str) -> Optional[float]:
+    """Extract a validated 0..100 progress percentage specific to ``sync_tool``.
+
+    Tool-specific matching avoids mistaking filenames (e.g. ``100%.mkv``) or
+    warning messages (e.g. ``differ by 42%``) for progress bar updates.
+    """
+    if sync_tool == "alass":
+        pattern = re.compile(r"\]\s*(\d{1,3}(?:\.\d+)?)\s*%")
+    elif sync_tool == "ffsubsync":
+        pattern = re.compile(
+            r"(?:^|\|)\s*(\d{1,3}(?:\.\d+)?)\s*%\|"
+            r"|Scanning PGS subtitles\.\.\.\s*(\d{1,3}(?:\.\d+)?)\s*%"
+        )
+    elif sync_tool == "lapse":
+        pattern = re.compile(
+            r"(?:Listening to the audio|Checking the file in slices|Looking for cuts|Scanning[^\r\n]*?)\s+(\d{1,3}(?:\.\d+)?)\s*%"
+            r"|^\s*(\d{1,3}(?:\.\d+)?)\s*%$"
+        )
+    else:
+        pattern = re.compile(r"^\s*(\d{1,3}(?:\.\d+)?)\s*%$")
+
+    for line in reversed(cleaned_lines):
+        match = pattern.search(line)
+        if not match:
+            continue
+        raw = next((g for g in match.groups() if g is not None), None)
+        if raw is None:
+            continue
+        try:
+            val = float(raw)
+        except ValueError:
+            continue
+        if 0.0 <= val <= 100.0:
+            return val
+    return None
+
+
 def process_output(message: str, sync_tool: str):
     """Clean a chunk of subprocess output and extract its percent-complete value."""
     if not message:
         return "", None
-    percent_match = re.search(r"(\d{1,3}(?:\.\d+)?)\s*%", message)
-    percent = float(percent_match.group(1)) if percent_match else None
     lines = message.split("\n")
     cleaned_lines = []
     for line in lines:
@@ -138,6 +396,7 @@ def process_output(message: str, sync_tool: str):
             cleaned_lines.append(shorten_progress_bar(stripped))
         else:
             cleaned_lines.append(stripped)
+    percent = _extract_progress_percent(cleaned_lines, sync_tool)
     return "\n".join(cleaned_lines), percent
 
 
@@ -405,9 +664,11 @@ def build_cmd(
                 if penalty != default_penalty:
                     cmd.append("auto")
                     cmd.append(str(penalty))
-        if config.get(
-            "lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False)
-        ) and not _is_flag_in_extra("--whisper", extra_tokens):
+        if (
+            config.get("lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False))
+            and os.path.splitext(reference)[1].lower() not in SUBTITLE_EXTENSIONS
+            and not _is_flag_in_extra("--whisper", extra_tokens)
+        ):
             from resources import whisper_download
 
             model_path = (
@@ -478,6 +739,12 @@ def _append_opts(cmd, tool: str, config: dict, extra_tokens: list = None):
             if not _is_flag_in_extra("--max-duration-seconds", extra_tokens):
                 if val is not None and val > 0:
                     cmd.extend(["--max-duration-seconds", str(val)])
+            continue
+
+        if tool == "ffsubsync" and name == "use_pgs_subtitles":
+            if not _is_flag_in_extra(["--pgs-ref-stream", "--pgsstream"], extra_tokens):
+                if val:
+                    cmd.append(arg)
             continue
 
         if tool == "alass" and name == "split_penalty":
@@ -623,8 +890,8 @@ def run_module_tool(
                 cleaned, percent = process_output(msg[1], sync_tool)
                 if cleaned:
                     callbacks._subprocess_line(cleaned, msg[2])
-                if percent is not None:
-                    callbacks._progress(percent)
+                if cleaned or percent is not None:
+                    callbacks._emit_tool_progress(sync_tool, cleaned, percent)
             elif msg[0] == "error":
                 callbacks._error(msg[1])
             elif msg[0] == "finished":
@@ -652,59 +919,73 @@ def run_executable_tool(
         process_holder["process"] = process
     buffer = b""
     last_was_cr = False
-    while True:
-        if callbacks._cancelled():
-            break
-        chunk = process.stdout.read(128)
-        if not chunk:
-            break
-        buffer += chunk
+    last_progress_prefix = None
+    try:
         while True:
-            cr_pos = buffer.find(b"\r")
-            lf_pos = buffer.find(b"\n")
-            if cr_pos == -1 and lf_pos == -1:
+            if callbacks._cancelled():
                 break
-
-            if cr_pos != -1 and lf_pos == cr_pos + 1:
-                # CRLF (\r\n): standard Windows newline
-                part = buffer[:cr_pos]
-                buffer = buffer[cr_pos + 2 :]
-                is_overwrite = last_was_cr
-                last_was_cr = False
-            elif cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
-                if cr_pos == len(buffer) - 1:
-                    # Trailing \r at end of chunk: wait for next read to see if \n follows
+            chunk = process.stdout.read(128)
+            if not chunk:
+                break
+            buffer += chunk
+            while True:
+                cr_pos = buffer.find(b"\r")
+                lf_pos = buffer.find(b"\n")
+                if cr_pos == -1 and lf_pos == -1:
                     break
-                part = buffer[:cr_pos]
-                buffer = buffer[cr_pos + 1 :]
-                is_overwrite = True
-                last_was_cr = True
-            elif lf_pos != -1:
-                # LF (\n): standard Unix newline
-                part = buffer[:lf_pos]
-                buffer = buffer[lf_pos + 1 :]
-                is_overwrite = last_was_cr
-                last_was_cr = False
-            else:
-                break
 
+                if cr_pos != -1 and lf_pos == cr_pos + 1:
+                    # CRLF (\r\n): standard Windows newline
+                    part = buffer[:cr_pos]
+                    buffer = buffer[cr_pos + 2 :]
+                    is_overwrite = last_was_cr
+                    last_was_cr = False
+                elif cr_pos != -1 and (lf_pos == -1 or cr_pos < lf_pos):
+                    if cr_pos == len(buffer) - 1:
+                        # Trailing \r at end of chunk: wait for next read to see if \n follows
+                        break
+                    part = buffer[:cr_pos]
+                    buffer = buffer[cr_pos + 1 :]
+                    is_overwrite = True
+                    last_was_cr = True
+                elif lf_pos != -1:
+                    # LF (\n): standard Unix newline
+                    part = buffer[:lf_pos]
+                    buffer = buffer[lf_pos + 1 :]
+                    is_overwrite = last_was_cr
+                    last_was_cr = False
+                else:
+                    break
+
+                cleaned, percent = process_output(
+                    part.decode(default_encoding, errors="replace"), sync_tool
+                )
+                effective_overwrite, last_progress_prefix = _resolve_line_overwrite(
+                    sync_tool, cleaned, is_overwrite, last_progress_prefix
+                )
+                if cleaned:
+                    callbacks._subprocess_line(cleaned, effective_overwrite)
+                if cleaned or percent is not None:
+                    callbacks._emit_tool_progress(sync_tool, cleaned, percent)
+
+        if buffer and not callbacks._cancelled():
             cleaned, percent = process_output(
-                part.decode(default_encoding, errors="replace"), sync_tool
+                buffer.decode(default_encoding, errors="replace").rstrip("\r\n"),
+                sync_tool,
+            )
+            effective_overwrite, last_progress_prefix = _resolve_line_overwrite(
+                sync_tool, cleaned, last_was_cr, last_progress_prefix
             )
             if cleaned:
-                callbacks._subprocess_line(cleaned, is_overwrite)
-            if percent is not None:
-                callbacks._progress(percent)
-
-    if buffer and not callbacks._cancelled():
-        cleaned, percent = process_output(
-            buffer.decode(default_encoding, errors="replace").rstrip("\r\n"),
-            sync_tool,
-        )
-        if cleaned:
-            callbacks._subprocess_line(cleaned, last_was_cr)
-        if percent is not None:
-            callbacks._progress(percent)
+                callbacks._subprocess_line(cleaned, effective_overwrite)
+            if cleaned or percent is not None:
+                callbacks._emit_tool_progress(sync_tool, cleaned, percent)
+    finally:
+        if process.stdout is not None:
+            try:
+                process.stdout.close()
+            except OSError:
+                pass
     return process.wait() if not callbacks._cancelled() else 1
 
 
@@ -734,6 +1015,14 @@ def run_sync(
     callbacks = callbacks or SyncCallbacks()
     start = time.monotonic()
     needs_review = False
+    tracker = callbacks.progress_tracker
+    if tracker is None and callbacks.on_progress is not None:
+        tracker = SyncProgressTracker(
+            callbacks.on_progress, tool=tool, config=config
+        )
+        callbacks.progress_tracker = tracker
+    if tracker is not None:
+        tracker.start()
 
     # LAPSE prints its verdict as a trailing [solid]/[unsure]/[nothing] tag on
     # stdout, and autosubsync warns on stderr when the fit quality is below
@@ -858,9 +1147,13 @@ def run_sync(
             ),
             "grey",
         )
+        if tracker is not None:
+            tracker.handle_prep_stage("audio_convert")
         converted_ref = convert_audio_to_mp4(
             reference, callbacks=callbacks, process_holder=process_holder
         )
+        if tracker is not None:
+            tracker.handle_prep_stage("audio_convert_done")
         if not converted_ref:
             err_msg = str(texts.CONVERSION_FAILED_FOR_FILE).format(
                 filename=os.path.basename(reference)
@@ -932,25 +1225,90 @@ def run_sync(
         except Exception as e:
             logger.error(f"Failed to create backup: {e}")
 
-    # If ffsubsync with PGS subtitles is enabled, verify the reference contains usable PGS timings
-    if current_tool == "ffsubsync" and effective_config.get("ffsubsync_use_pgs_subtitles", False):
-        callbacks._log(str(texts.CHECKING_VIDEO_FOR_PGS_SUBTITLES), "grey")
-        from utils import check_pgs_subtitles_usable
-        usable, reason = check_pgs_subtitles_usable(effective_reference)
-        if not usable:
-            callbacks._log(
-                f"PGS subtitles enabled, but reference has no usable PGS stream ({reason}). "
-                "Falling back to audio voice activity detection.",
-                "orange",
-            )
-            logger.info(
-                "No usable PGS stream in reference (%s). Skipping --pgs-ref-stream.",
-                reason,
-            )
+    # Verify or extract embedded PGS subtitle timings when applicable
+    is_local_video_ref = (
+        not ref_is_url
+        and ref_ext not in AUDIO_EXTENSIONS
+        and os.path.splitext(effective_reference)[1].lower() not in SUBTITLE_EXTENSIONS
+    )
+    if current_tool == "ffsubsync" and effective_config.get(
+        "ffsubsync_use_pgs_subtitles",
+        DEFAULT_OPTIONS.get("ffsubsync_use_pgs_subtitles", True),
+    ):
+        if not is_local_video_ref:
             effective_config["ffsubsync_use_pgs_subtitles"] = False
         else:
-            callbacks._log(f"Using PGS subtitles as reference ({reason}).", "green")
-            logger.info("Found usable PGS stream in reference: %s", reason)
+            callbacks._log(str(texts.CHECKING_VIDEO_FOR_PGS_SUBTITLES), "grey")
+            from utils import check_pgs_subtitles_usable
+
+            usable, reason = check_pgs_subtitles_usable(effective_reference)
+            if not usable:
+                callbacks._log(
+                    str(texts.NO_USABLE_PGS_FALLBACK_AUDIO_VAD).format(reason=reason),
+                    "grey",
+                )
+                logger.info(
+                    "No usable PGS stream in reference (%s). Skipping --pgs-ref-stream.",
+                    reason,
+                )
+                effective_config["ffsubsync_use_pgs_subtitles"] = False
+            else:
+                callbacks._log(
+                    str(texts.USING_PGS_SUBTITLES_AS_REFERENCE).format(reason=reason),
+                    "green",
+                )
+                logger.info("Found usable PGS stream in reference: %s", reason)
+    elif (
+        current_tool == "alass"
+        and is_local_video_ref
+        and not effective_config.get("_pgs_already_checked")
+        and effective_config.get(
+            "alass_check_video_for_subtitles",
+            DEFAULT_OPTIONS.get("alass_check_video_for_subtitles", True),
+        )
+    ):
+        callbacks._log(str(texts.CHECKING_VIDEO_FOR_PGS_SUBTITLES), "grey")
+        from utils import extract_pgs_timings_to_srt
+
+        if tracker is not None:
+            tracker.handle_prep_stage("pgs_scan")
+            pgs_srt, reason, cue_count = extract_pgs_timings_to_srt(
+                effective_reference,
+                min_cues=1,
+                progress_cb=tracker.handle_prep_progress,
+                is_cancelled=callbacks.is_cancelled,
+                process_holder=process_holder,
+            )
+            tracker.handle_prep_stage("pgs_scan_done")
+        else:
+            pgs_srt, reason, cue_count = extract_pgs_timings_to_srt(
+                effective_reference, min_cues=1
+            )
+        if pgs_srt:
+            effective_reference = pgs_srt
+            converted_files_to_clean.append(pgs_srt)
+            callbacks._log(
+                str(texts.USING_EMBEDDED_PGS_SUBTITLES_AS_REFERENCE).format(
+                    reason=reason, cue_count=cue_count
+                ),
+                "green",
+            )
+            logger.info(
+                "Using temporary PGS reference SRT '%s' (%s; %d cues)",
+                pgs_srt,
+                reason,
+                cue_count,
+            )
+        else:
+            callbacks._log(
+                str(texts.NO_USABLE_PGS_FALLBACK_VIDEO_AUDIO).format(reason=reason),
+                "grey",
+            )
+            logger.info(
+                "No usable PGS timings extracted from '%s' (%s). Using video audio.",
+                effective_reference,
+                reason,
+            )
 
     effective_output = output
     use_temp_output = False
@@ -1007,8 +1365,12 @@ def run_sync(
                         exe = lapse_download.download()
                 except Exception as e:
                     logger.error(f"Failed to download lapse: {e}")
-                if effective_config.get(
-                    "lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False)
+                if (
+                    effective_config.get(
+                        "lapse_use_whisper", DEFAULT_OPTIONS.get("lapse_use_whisper", False)
+                    )
+                    and os.path.splitext(effective_reference)[1].lower()
+                    not in SUBTITLE_EXTENSIONS
                 ):
                     extra_str = effective_config.get("lapse_arguments", "").strip()
                     try:
@@ -1064,7 +1426,10 @@ def run_sync(
                 and not callbacks._cancelled()
             ):
                 # LAPSE only ships some containers and codecs, ffmpeg can read the rest
-                callbacks._log("Lapse could not read this audio, converting it with ffmpeg...", "grey")
+                fallback_msg = "Lapse could not read this audio, converting it with ffmpeg..."
+                callbacks._log(fallback_msg, "grey")
+                if tracker is not None:
+                    tracker.handle_tool_output("lapse", fallback_msg, None)
                 audio_fd, audio = tempfile.mkstemp(suffix=".flac")
                 os.close(audio_fd)
                 converted_files_to_clean.append(audio)
@@ -1177,6 +1542,8 @@ def run_sync(
             msg = str(texts.TOOL_FAILED_WITH_CODE).format(tool=tool, code=rc)
             callbacks._error(msg)
             return SyncResult(False, None, current_tool, msg, rc, _elapsed(start))
+        if tracker is not None:
+            tracker.finish(True)
         return SyncResult(
             True, output, current_tool, "ok", rc, _elapsed(start), False, needs_review
         )
