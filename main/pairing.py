@@ -29,7 +29,12 @@ def effective_basename(file_path: str) -> str:
     """Strip extension and a trailing language tag (e.g. .en, .eng, _es-ES)."""
     base = os.path.splitext(os.path.basename(file_path))[0]
     for tag_length in [4, 3, 2]:
-        if len(base) > tag_length and base[-(tag_length + 1)] in ["_", ".", "-"]:
+        # Only letters can be a language tag; "Show_01" or "Friends.101" end in an episode number
+        if (
+            len(base) > tag_length
+            and base[-(tag_length + 1)] in ["_", ".", "-"]
+            and base[-tag_length:].isalpha()
+        ):
             return base[: -(tag_length + 1)]
     return base
 
