@@ -189,6 +189,7 @@ def format_option_tooltip(option_data, option_name=None):
     argument = option_data.get("argument", "")
     tooltip = str(option_data.get("tooltip", "")).strip()
     default = option_data.get("default", None)
+    is_inverted_bool = isinstance(default, bool) and default is True and bool(argument)
 
     if default is not None:
         if isinstance(default, bool):
@@ -200,12 +201,15 @@ def format_option_tooltip(option_data, option_name=None):
         else:
             def_disp = str(default)
         default_label_str = getattr(texts, "DEFAULT_LABEL", "Default")
-        default_suffix = f"\n({default_label_str}: {def_disp})"
-        tooltip = f"{tooltip}{default_suffix}" if tooltip else f"({default_label_str}: {def_disp})"
+        if is_inverted_bool:
+            default_suffix = f"\n({default_label_str}: {def_disp}; {argument} when disabled)"
+        else:
+            default_suffix = f"\n({default_label_str}: {def_disp})"
+        tooltip = f"{tooltip}{default_suffix}" if tooltip else default_suffix.lstrip("\n")
 
-    if argument and tooltip:
+    if argument and not is_inverted_bool and tooltip:
         return f"{argument}: {tooltip}"
-    elif argument:
+    elif argument and not is_inverted_bool:
         return argument
     return tooltip
 

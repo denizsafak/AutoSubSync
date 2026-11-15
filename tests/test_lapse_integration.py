@@ -989,6 +989,15 @@ class TestLapseIntegration(unittest.TestCase):
                     f"Option '{opt_name}' for tool '{tool_name}' missing default value in tooltip: '{tooltip}'",
                 )
 
+    def test_inverted_boolean_tooltip_does_not_prefix_negated_flag(self):
+        """Verify inverted boolean options (default=True with argument) clarify when the flag is passed."""
+        from gui_automatic_tab import format_option_tooltip
+
+        opt_data = SYNC_TOOLS["lapse"]["options"]["check_video_for_subtitles"]
+        tooltip = format_option_tooltip(opt_data, "check_video_for_subtitles")
+        self.assertFalse(tooltip.startswith("--no-embedded:"))
+        self.assertIn("--no-embedded when disabled", tooltip)
+
     def test_restore_to_defaults_resets_options_and_preserves_additional_args(self):
         """Verify that restore_current_tool_defaults asks confirmation, restores all options, and preserves user-set additional arguments."""
         from PyQt6.QtWidgets import QApplication, QMessageBox

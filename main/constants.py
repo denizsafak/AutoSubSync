@@ -453,7 +453,7 @@ SYNC_TOOLS = {
                     "zh_TW": "多段抽樣同步（快速模式）",
                 },
                 "tooltip": {
-                    "en_US": "Sample short segments spread across the reference video and compute a weighted median offset. Significantly speeds up sync for long videos or remote URLs.",
+                    "en_US": "Sample short segments spread across the reference and run speech detection only on those instead of the whole file. Significantly speeds up sync for long videos or remote URLs.",
                     "es_ES": "Muestrea segmentos cortos distribuidos a lo largo del vídeo y calcula una mediana ponderada. Acelera significativamente la sincronización de vídeos largos o URL remotas.",
                     "tr_TR": "Referans video boyunca dağıtılmış kısa parçaları örnekler ve ağırlıklı medyan ofseti hesaplar. Uzun videolar veya uzak URL'ler için senkronizasyonu önemli ölçüde hızlandırır.",
                     "zh_CN": "在参考视频中抽取分布的多段短片段并计算加权中位数偏移量。显著加快长视频或远程 URL 的同步速度。",
