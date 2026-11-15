@@ -1291,6 +1291,7 @@ class UpdateSignals(QObject):
 class LapseUpdateSignals(QObject):
     update_available = pyqtSignal(str, str)
     update_complete = pyqtSignal(bool, str)
+    progress = pyqtSignal(int)
     up_to_date = pyqtSignal(str)
     check_failed = pyqtSignal(str)
 
@@ -1664,22 +1665,91 @@ def _show_lapse_update_dialog(parent, remote_version, local_version):
         _perform_lapse_update(parent, remote_version)
 
 
-def _perform_lapse_update(parent, remote_version):
-    from PyQt6.QtWidgets import QProgressDialog, QMessageBox
+def _create_download_dialog(parent, title, initial_text):
+    """Create a non-closable modal download dialog with percentage/indeterminate progress."""
+    from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
     from PyQt6.QtCore import Qt
 
-    progress = QProgressDialog(parent)
-    progress.setWindowTitle(str(texts.UPDATE_AVAILABLE_TITLE))
-    progress.setLabelText(str(texts.UPDATING_LAPSE))
-    progress.setRange(0, 0)
-    progress.setCancelButton(None)
-    progress.setWindowModality(Qt.WindowModality.WindowModal)
-    progress.show()
+    class _NonClosableDialog(QDialog):
+        def __init__(self, dlg_parent=None):
+            super().__init__(dlg_parent)
+            self._allow_close = False
 
-    signals = LapseUpdateSignals()
+        def keyPressEvent(self, event):
+            if event.key() == Qt.Key.Key_Escape and not self._allow_close:
+                event.ignore()
+                return
+            super().keyPressEvent(event)
+
+        def closeEvent(self, event):
+            if not self._allow_close:
+                event.ignore()
+                return
+            super().closeEvent(event)
+
+        def finish_and_close(self):
+            self._allow_close = True
+            self.accept()
+
+    dialog = _NonClosableDialog(parent)
+    dialog.setWindowTitle(str(title))
+    dialog.setWindowFlags(
+        dialog.windowFlags()
+        & ~Qt.WindowType.WindowContextHelpButtonHint
+        & ~Qt.WindowType.WindowCloseButtonHint
+    )
+    dialog.setWindowModality(
+        Qt.WindowModality.WindowModal if parent else Qt.WindowModality.ApplicationModal
+    )
+    dialog.setMinimumWidth(420)
+
+    layout = QVBoxLayout(dialog)
+    layout.setContentsMargins(20, 20, 20, 20)
+    layout.setSpacing(14)
+
+    label = QLabel(str(initial_text))
+    label.setWordWrap(True)
+    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(label)
+
+    progress_bar = QProgressBar()
+    progress_bar.setRange(0, 0)
+    progress_bar.setTextVisible(False)
+    layout.addWidget(progress_bar)
+
+    def set_progress(pct):
+        if 0 <= pct <= 100:
+            if progress_bar.maximum() != 100:
+                progress_bar.setRange(0, 100)
+                progress_bar.setTextVisible(True)
+                progress_bar.setFormat("%p%")
+            progress_bar.setValue(pct)
+        else:
+            if progress_bar.maximum() != 0 or progress_bar.minimum() != 0:
+                progress_bar.setRange(0, 0)
+                progress_bar.setTextVisible(False)
+
+    return dialog, label, progress_bar, set_progress
+
+
+def _perform_lapse_update(parent, remote_version):
+    from PyQt6.QtWidgets import QMessageBox
+
+    dialog, label, _progress_bar, set_progress = _create_download_dialog(
+        parent, texts.UPDATE_AVAILABLE_TITLE, texts.UPDATING_LAPSE
+    )
+    signals = LapseUpdateSignals(dialog)
+    dialog._signals = signals
+
+    def on_progress(pct):
+        set_progress(pct)
+        if pct < 0 and label.text() == str(texts.UPDATING_LAPSE):
+            pass
+        elif 0 <= pct <= 100:
+            label.setText(f"{texts.UPDATING_LAPSE} ({pct}%)")
 
     def on_complete(success, message):
-        progress.close()
+        dialog.finish_and_close()
         if success:
             QMessageBox.information(
                 parent,
@@ -1693,13 +1763,15 @@ def _perform_lapse_update(parent, remote_version):
                 str(texts.LAPSE_UPDATE_FAILED).format(error=message),
             )
 
+    signals.progress.connect(on_progress)
     signals.update_complete.connect(on_complete)
+    dialog.show()
 
     def download_thread():
         try:
             from resources import lapse_download
 
-            downloaded = lapse_download.download()
+            downloaded = lapse_download.download(progress_cb=signals.progress.emit)
             if downloaded and os.path.isfile(downloaded):
                 signals.update_complete.emit(True, remote_version)
             else:
@@ -1709,6 +1781,7 @@ def _perform_lapse_update(parent, remote_version):
             signals.update_complete.emit(False, str(e))
 
     threading.Thread(target=download_thread, daemon=True).start()
+
 
 
 def update_folder_label(label, folder_path=""):
@@ -1804,6 +1877,7 @@ class DownloadSignals(QObject):
 
     finished = pyqtSignal(bool, str)  # success, JSON-encoded list of [component, error] pairs
     status = pyqtSignal(str)          # current status label text
+    progress = pyqtSignal(int)        # 0-100 percentage, or -1 for indeterminate
 
 
 FFmpegDownloadSignals = DownloadSignals  # backward compatibility alias
@@ -1883,8 +1957,7 @@ def initialize_static_ffmpeg(parent=None, callback=None):
         return True
 
     # --- Show combined download dialog ---
-    from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
-    from PyQt6.QtCore import Qt, QThread
+    from PyQt6.QtCore import QThread
 
     class DownloadThread(QThread):
         """Background thread that downloads missing dependencies sequentially."""
@@ -1901,6 +1974,7 @@ def initialize_static_ffmpeg(parent=None, callback=None):
             # --- FFmpeg ---
             if self.do_ffmpeg:
                 self.signals.status.emit(texts.DOWNLOADING_FFMPEG_FIRST_RUN)
+                self.signals.progress.emit(-1)
                 try:
                     import static_ffmpeg
                     from static_ffmpeg import run as ffmpeg_run
@@ -1923,7 +1997,55 @@ def initialize_static_ffmpeg(parent=None, callback=None):
                             except OSError as e:
                                 logger.warning(f"Could not remove installed.crumb: {e}")
 
-                    ffmpeg_path, ffprobe_path = ffmpeg_run.get_or_fetch_platform_executables_else_raise()
+                    orig_download_file = getattr(ffmpeg_run, "download_file", None)
+
+                    def _download_with_progress(url, local_path):
+                        timeout = getattr(ffmpeg_run, "TIMEOUT", 600)
+                        part_path = local_path + ".part"
+                        try:
+                            with requests.get(url, stream=True, timeout=timeout) as req:
+                                req.raise_for_status()
+                                try:
+                                    total = int(req.headers.get("content-length") or 0)
+                                except (AttributeError, TypeError, ValueError):
+                                    total = 0
+                                downloaded = 0
+                                last_pct = -1
+                                self.signals.progress.emit(0 if total > 0 else -1)
+                                with open(part_path, "wb") as f:
+                                    for chunk in req.iter_content(chunk_size=262144):
+                                        if not chunk:
+                                            continue
+                                        f.write(chunk)
+                                        downloaded += len(chunk)
+                                        if total > 0:
+                                            pct = min(100, int(downloaded * 100 / total))
+                                            if pct != last_pct:
+                                                last_pct = pct
+                                                self.signals.progress.emit(pct)
+                                if total > 0 and downloaded < total:
+                                    raise RuntimeError(
+                                        f"Incomplete FFmpeg download: received {downloaded} of {total} bytes"
+                                    )
+                                if total <= 0:
+                                    self.signals.progress.emit(100)
+                            os.replace(part_path, local_path)
+                        except Exception:
+                            if os.path.exists(part_path):
+                                os.unlink(part_path)
+                            raise
+                        self.signals.progress.emit(-1)  # Extraction phase
+                        return local_path
+
+                    try:
+                        if callable(orig_download_file):
+                            ffmpeg_run.download_file = _download_with_progress
+                        ffmpeg_path, ffprobe_path = (
+                            ffmpeg_run.get_or_fetch_platform_executables_else_raise()
+                        )
+                    finally:
+                        if callable(orig_download_file):
+                            ffmpeg_run.download_file = orig_download_file
 
                     if not os.path.isfile(ffmpeg_path) or not os.path.isfile(ffprobe_path):
                         errors.append(["ffmpeg", "FFmpeg download failed — files not found after download"])
@@ -1941,7 +2063,9 @@ def initialize_static_ffmpeg(parent=None, callback=None):
                 try:
                     from resources import lapse_download
 
-                    downloaded = lapse_download.download()
+                    downloaded = lapse_download.download(
+                        progress_cb=self.signals.progress.emit
+                    )
                     if downloaded and os.path.isfile(downloaded):
                         logger.info(f"Using lapse (downloaded): {downloaded}")
                     else:
@@ -1959,42 +2083,23 @@ def initialize_static_ffmpeg(parent=None, callback=None):
     else:
         dialog_title = texts.DOWNLOADING_LAPSE
 
-    # Build the dialog
-    dialog = QDialog(parent)
-    dialog.setWindowTitle(dialog_title)
-    dialog.setWindowFlags(
-        dialog.windowFlags()
-        & ~Qt.WindowType.WindowContextHelpButtonHint
-        & ~Qt.WindowType.WindowCloseButtonHint
-    )
-    dialog.setModal(True)
-    dialog.setFixedSize(400, 120)
-
-    layout = QVBoxLayout(dialog)
-    layout.setContentsMargins(20, 20, 20, 20)
-    layout.setSpacing(15)
-
-    label = QLabel(
+    initial_text = (
         texts.DOWNLOADING_FFMPEG_FIRST_RUN if needs_ffmpeg else texts.DOWNLOADING_LAPSE_FIRST_RUN
     )
-    label.setWordWrap(True)
-    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(label)
-
-    progress = QProgressBar()
-    progress.setRange(0, 0)  # Indeterminate
-    progress.setTextVisible(False)
-    layout.addWidget(progress)
+    dialog, label, _progress_bar, set_progress = _create_download_dialog(
+        parent, dialog_title, initial_text
+    )
 
     # Wire up signals
-    dl_signals = DownloadSignals()
+    dl_signals = DownloadSignals(dialog)
+    dialog._signals = dl_signals
     thread = DownloadThread(dl_signals, needs_ffmpeg, needs_lapse)
 
     def on_status(msg):
         label.setText(msg)
 
     def on_finished(success, error_data):
-        dialog.accept()
+        dialog.finish_and_close()
         try:
             errors = json.loads(error_data)
         except Exception:
@@ -2020,6 +2125,7 @@ def initialize_static_ffmpeg(parent=None, callback=None):
             callback(success)
 
     dl_signals.status.connect(on_status)
+    dl_signals.progress.connect(set_progress)
     dl_signals.finished.connect(on_finished)
 
     thread.start()

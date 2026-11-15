@@ -14,10 +14,10 @@ import requests
 script_dir = os.path.dirname(os.path.abspath(__file__))
 LAPSE_RELEASES_URL = "https://github.com/Schwponaco-org/lapse/releases/latest"
 BINARY_NAME = "lapse.exe" if platform.system() == "Windows" else "lapse"
-# A packaged app can be read-only or signed, so its updates live in the user's data folder
+# A packaged or system-wide PyPI install can be read-only, so updates fall back to the user's data folder
 DIST_BIN_PATH = (
     os.path.join(platformdirs.user_data_dir("AutoSubSync", appauthor=False), "lapse")
-    if getattr(sys, "frozen", False)
+    if getattr(sys, "frozen", False) or not os.access(script_dir, os.W_OK)
     else os.path.join(script_dir, "lapse")
 )
 
@@ -101,7 +101,45 @@ def is_outdated(exe):
     return not found or (latest is not None and found != latest)
 
 
-def download():
+def _read_response_bytes(response, progress_cb=None):
+    """Read response bytes, streaming chunks to report percentage progress when available."""
+    try:
+        total = int(response.headers.get("content-length") or 0)
+    except (AttributeError, TypeError, ValueError):
+        total = 0
+
+    if progress_cb is not None:
+        chunks = []
+        downloaded = 0
+        last_pct = -1
+        if total > 0:
+            progress_cb(0)
+            last_pct = 0
+        else:
+            progress_cb(-1)
+        for chunk in response.iter_content(chunk_size=262144):
+            if not chunk:
+                continue
+            chunks.append(chunk)
+            downloaded += len(chunk)
+            if total > 0:
+                pct = min(100, int(downloaded * 100 / total))
+                if pct != last_pct:
+                    last_pct = pct
+                    progress_cb(pct)
+        if chunks:
+            if total > 0 and downloaded < total:
+                raise RuntimeError(
+                    f"Incomplete download: received {downloaded} of {total} bytes"
+                )
+            if total <= 0:
+                progress_cb(100)
+            return b"".join(chunks)
+    return response.content
+
+
+def download(progress_cb=None):
+    staging = DIST_BIN_PATH + ".new"
     try:
         archive_name = get_archive_filename()
         download_url = f"{LAPSE_RELEASES_URL}/download/{archive_name}"
@@ -111,10 +149,11 @@ def download():
         response.raise_for_status()
 
         # Unpack beside the old version so a bad download can't take it away
-        staging = DIST_BIN_PATH + ".new"
         shutil.rmtree(staging, ignore_errors=True)
         os.makedirs(staging)
-        content_bytes = response.content
+        content_bytes = _read_response_bytes(response, progress_cb=progress_cb)
+        if progress_cb is not None:
+            progress_cb(-1)  # Extraction phase (indeterminate)
 
         if archive_name.endswith(".tar.gz") or archive_name.endswith(".tgz"):
             with tarfile.open(fileobj=io.BytesIO(content_bytes), mode="r:gz") as tar:
@@ -165,6 +204,7 @@ def download():
         print(f"Downloaded and extracted lapse to {dest_path}")
         return dest_path
     except Exception as e:
+        shutil.rmtree(staging, ignore_errors=True)
         print(f"Error occurred while downloading lapse: {e}")
         raise
 

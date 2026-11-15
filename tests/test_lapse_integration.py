@@ -1152,6 +1152,67 @@ class TestLapseIntegration(unittest.TestCase):
                     f"Override note not found in dialog labels: {label_texts}",
                 )
 
+    def test_download_dialog_percentage_and_escape_guard(self):
+        """Verify _create_download_dialog displays percentage progress and blocks Escape until finished."""
+        from PyQt6.QtWidgets import QApplication
+        from PyQt6.QtGui import QKeyEvent
+        from PyQt6.QtCore import Qt, QEvent
+        import utils
+
+        _app = QApplication.instance() or QApplication(["-platform", "offscreen"])
+        dialog, _label, bar, set_progress = utils._create_download_dialog(
+            None, "Test Download", "Downloading..."
+        )
+        self.assertEqual(bar.minimum(), 0)
+        self.assertEqual(bar.maximum(), 0)
+        self.assertFalse(bar.isTextVisible())
+
+        set_progress(42)
+        self.assertEqual(bar.maximum(), 100)
+        self.assertTrue(bar.isTextVisible())
+        self.assertEqual(bar.value(), 42)
+
+        set_progress(-1)
+        self.assertEqual(bar.maximum(), 0)
+        self.assertFalse(bar.isTextVisible())
+
+        dialog.show()
+        esc_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Escape, Qt.KeyboardModifier.NoModifier)
+        QApplication.sendEvent(dialog, esc_event)
+        self.assertTrue(dialog.isVisible())
+
+        dialog.finish_and_close()
+        self.assertFalse(dialog.isVisible())
+
+    def test_lapse_download_reports_percentage_progress(self):
+        """Verify lapse_download.download reports 0..100 percentages when Content-Length is known."""
+        import io, tarfile
+        from resources import lapse_download
+
+        target = os.path.join(self.temp_dir, "lapse_pct")
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w:gz") as tar:
+            info = tarfile.TarInfo("lapse-x/lapse")
+            info.size = 3
+            tar.addfile(info, io.BytesIO(b"new"))
+        raw = archive.getvalue()
+        mid = len(raw) // 2
+
+        resp = MagicMock()
+        resp.headers = {"content-length": str(len(raw))}
+        resp.iter_content.return_value = [raw[:mid], raw[mid:]]
+
+        reported = []
+        with patch("resources.lapse_download.DIST_BIN_PATH", target), \
+             patch("resources.lapse_download.BINARY_NAME", "lapse"), \
+             patch("resources.lapse_download.get_archive_filename", return_value="a.tar.gz"), \
+             patch("requests.get", return_value=resp):
+            lapse_download.download(progress_cb=reported.append)
+
+        self.assertIn(0, reported)
+        self.assertIn(100, reported)
+        self.assertEqual(reported[-1], -1)
+
 
 if __name__ == "__main__":
     unittest.main()
