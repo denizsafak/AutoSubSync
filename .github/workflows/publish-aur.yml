@@ -57,7 +57,11 @@ jobs:
           appimage_sha="$2"
           git clone ssh://aur@aur.archlinux.org/autosubsync-bin.git aur
           cd aur
-          sed -i "s/^pkgver=.*/pkgver=${version}/" PKGBUILD
+          current_pkgver=$(grep -E '^pkgver=' PKGBUILD | head -n1 | cut -d= -f2)
+          if [ "$current_pkgver" != "$version" ]; then
+            sed -i "s/^pkgver=.*/pkgver=${version}/" PKGBUILD
+            sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
+          fi
           if [ -n "$appimage_sha" ]; then
             desktop_sha=$(sha256sum autosubsync.desktop | awk '{print $1}')
             sha_line=$(grep -n '^sha256sums=(' PKGBUILD | cut -d: -f1)
