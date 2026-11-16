@@ -27,7 +27,7 @@ keywords = [
 dependencies = [
     "PyQt6",
     "rich",
-    "faust-cchardet; python_version < '3.13'",
+    "faust-cchardet>=3.2.0",
     "charset-normalizer",
     "chardet",
     "requests",

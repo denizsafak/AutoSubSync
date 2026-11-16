@@ -150,7 +150,7 @@ DEFAULT_OPTIONS = {
     "sync_extracted_tracks_against_audio": True,
     "keep_converted_subtitles": False,
     "keep_converted_audio_files": False,
-    "output_subtitle_encoding": "same_as_input",
+    "output_subtitle_encoding": "utf_8_sig",
     "add_ms_prefix_to_filename": True,
     "keep_log_records": True,
     "always_on_top": False,

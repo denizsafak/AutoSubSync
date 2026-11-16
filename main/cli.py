@@ -222,7 +222,11 @@ def _build_callbacks(json_mode: bool, prefix: str = ""):
 
 def _apply_output_encoding(input_subtitle: str, output_path: str, config: dict) -> None:
     """Re-encode the output subtitle to match the configured target encoding."""
-    enc = config.get("output_subtitle_encoding", "same_as_input")
+    from constants import DEFAULT_OPTIONS
+
+    enc = config.get(
+        "output_subtitle_encoding", DEFAULT_OPTIONS["output_subtitle_encoding"]
+    )
     if enc == "disabled":
         return
     from utils import match_subtitle_encoding
@@ -720,7 +724,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     s.add_argument(
         "--encoding",
-        help='Output encoding (utf_8, latin_1, ..., "same_as_input", or "disabled")',
+        help='Output encoding (utf_8_sig, utf_8, latin_1, ..., "same_as_input", or "disabled")',
     )
     g = s.add_mutually_exclusive_group()
     g.add_argument(

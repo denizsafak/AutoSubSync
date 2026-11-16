@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import codecs
 import json
 import tempfile
 import threading
@@ -250,20 +252,203 @@ def create_backup(file_path):
     return backup_file
 
 
+_AMBIGUOUS_WESTERN_ENCODINGS = frozenset(
+    {"windows-1252", "cp1252", "iso-8859-1", "iso8859-1", "latin-1", "latin1"}
+)
+_LANGUAGE_LEGACY_ENCODINGS = {
+    "Turkish": "cp1254",
+}
+_DETECTOR_ENCODING_ALIASES = {
+    "windows-874": "cp874",
+    "dos-874": "cp874",
+    "x-mac-cyrillic": "mac_cyrillic",
+    "x-mac-turkish": "mac_turkish",
+    "x-mac-icelandic": "mac_iceland",
+    "x-mac-roman": "mac_roman",
+    "macintosh": "mac_roman",
+    "csmacintosh": "mac_roman",
+    "x-mac-greek": "mac_greek",
+    "x-mac-ce": "mac_latin2",
+    "x-mac-centraleurroman": "mac_latin2",
+    "maclatin2": "mac_latin2",
+    "x-sjis": "shift_jis",
+    "x-euc-jp": "euc_jp",
+    "uhc": "cp949",
+}
+_ALASS_ENCODING_ALIASES = {
+    "cp949": "windows-949",
+    "uhc": "windows-949",
+    "ms949": "windows-949",
+    "cp874": "windows-874",
+    "cp857": "windows-1254",
+    "mac_turkish": "windows-1254",
+    "utf-8-sig": "utf-8",
+    "utf_8_sig": "utf-8",
+    "utf_8": "utf-8",
+    "latin_1": "iso-8859-1",
+    "latin-1": "iso-8859-1",
+    "mac_cyrillic": "x-mac-cyrillic",
+    "mac_roman": "x-mac-roman",
+    "euc_jp": "euc-jp",
+    "euc_kr": "euc-kr",
+}
+_WESTERN_LANGUAGES = frozenset(
+    {
+        "English",
+        "French",
+        "German",
+        "Spanish",
+        "Portuguese",
+        "Italian",
+        "Dutch",
+        "Danish",
+        "Norwegian",
+        "Swedish",
+        "Finnish",
+        "Icelandic",
+    }
+)
+_NON_REENCODABLE_EXTENSIONS = frozenset({".idx", ".sup"})
+_XML_SUBTITLE_EXTENSIONS = frozenset({".ttml", ".dfxp", ".itt"})
+
+
+def _canonical_encoding(encoding_name: str) -> str:
+    """Return canonical Python codec name for comparison."""
+    try:
+        return codecs.lookup(encoding_name).name
+    except LookupError:
+        return encoding_name.strip().lower().replace("_", "-")
+
+
+def _normalize_detected_encoding(raw_name: str) -> str:
+    """Normalize detector-reported encoding names to valid Python codec names."""
+    norm = raw_name.strip().lower()
+    return _DETECTOR_ENCODING_ALIASES.get(norm, norm)
+
+
+def _is_valid_encoding_for_bytes(raw_data: bytes, encoding: str) -> Optional[str]:
+    """Return normalized encoding if raw_data decodes strictly with it, else None."""
+    candidate = _normalize_detected_encoding(encoding)
+    # TIS-620 / ISO-8859-11 leave 0x80..0x9F as C1 control codes; Windows-874 (CP874) maps them to punctuation.
+    if candidate in ("tis-620", "iso-8859-11", "iso8859-11") and any(
+        0x80 <= b <= 0x9F for b in raw_data
+    ):
+        candidate = "cp874"
+    try:
+        codecs.lookup(candidate)
+        raw_data.decode(candidate)
+        return candidate
+    except (UnicodeDecodeError, LookupError):
+        return None
+
+
+def _has_binary_nul_bytes(raw_data: bytes) -> bool:
+    """Return True if raw_data contains NUL bytes not explained by UTF-16/UTF-32."""
+    if raw_data.startswith(
+        (
+            codecs.BOM_UTF16_LE,
+            codecs.BOM_UTF16_BE,
+            codecs.BOM_UTF32_LE,
+            codecs.BOM_UTF32_BE,
+        )
+    ):
+        return False
+    return b"\x00" in raw_data[:4096]
+
+
 def detect_encoding(file_path):
     with open(file_path, "rb") as f:
         raw_data = f.read()
-    detected_encoding = None
-    for detectors in (cchardet, charset_normalizer, chardet):
+
+    if raw_data.startswith(codecs.BOM_UTF8):
+        return "utf-8-sig"
+    if raw_data.startswith((codecs.BOM_UTF32_LE, codecs.BOM_UTF32_BE)):
+        return "utf-32"
+    if raw_data.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+        return "utf-16"
+
+    # Strict UTF-8 fast-path for non-ASCII content prevents short/sparse UTF-8 files
+    # in any script worldwide from being misclassified as legacy 8-bit encodings.
+    if any(b >= 0x80 for b in raw_data):
         try:
-            result = detectors.detect(raw_data)["encoding"]
+            raw_data.decode("utf-8")
+            return "utf-8"
+        except UnicodeDecodeError:
+            pass
+
+    encoding = None
+    for detectors in (cchardet, chardet, charset_normalizer):
+        if detectors is None:
+            continue
+        try:
+            res = detectors.detect(raw_data)
+            result = res.get("encoding") if isinstance(res, dict) else None
+            confidence = res.get("confidence") if isinstance(res, dict) else None
         except Exception:
             continue
-        if result is not None:
-            detected_encoding = result
-            break
-    encoding = detected_encoding if detected_encoding else "utf-8"
-    return encoding.lower()
+        if result is None:
+            continue
+
+        candidate = _is_valid_encoding_for_bytes(raw_data, result)
+        if candidate is None:
+            continue
+
+        # Text with NUL bytes cannot be ASCII / UTF-8 / 8-bit; let UTF-16/32 detectors win
+        if b"\x00" in raw_data and not _canonical_encoding(candidate).startswith(
+            ("utf-16", "utf-32")
+        ):
+            continue
+
+        # cchardet can misclassify short Western European texts as Korean Johab
+        if detectors is cchardet and candidate == "johab" and (confidence or 0) < 0.9:
+            continue
+
+        # Without cchardet, chardet occasionally returns MacLatin2 at very low confidence
+        # on English/Western CP1252 punctuation (smart quotes/em-dashes).
+        if (
+            detectors is chardet
+            and candidate == "mac_latin2"
+            and (confidence or 0) < 0.2
+            and charset_normalizer is not None
+        ):
+            try:
+                best = charset_normalizer.from_bytes(raw_data).best()
+                if best is not None and best.language in _WESTERN_LANGUAGES:
+                    if _is_valid_encoding_for_bytes(raw_data, "cp1252"):
+                        encoding = "cp1252"
+                        break
+            except Exception:
+                pass
+
+        encoding = candidate
+        break
+
+    if encoding is None:
+        encoding = "utf-8"
+
+    # Cross-check ambiguous Western encodings against language-aware detectors so
+    # Turkish CP1254/ISO-8859-9 files are not labeled Windows-1252/Latin-1.
+    if encoding in _AMBIGUOUS_WESTERN_ENCODINGS:
+        if charset_normalizer is not None:
+            try:
+                best = charset_normalizer.from_bytes(raw_data).best()
+                if best is not None:
+                    mapped = _LANGUAGE_LEGACY_ENCODINGS.get(best.language)
+                    if mapped and _is_valid_encoding_for_bytes(raw_data, mapped):
+                        return mapped
+            except Exception:
+                pass
+        if chardet is not None:
+            try:
+                ch = chardet.detect(raw_data)
+                if (ch.get("language") or "").lower() == "tr" and ch.get("encoding"):
+                    tr_enc = _is_valid_encoding_for_bytes(raw_data, ch["encoding"])
+                    if tr_enc:
+                        return tr_enc
+            except Exception:
+                pass
+
+    return encoding
 
 
 def levenshtein_distance(s1, s2):
@@ -287,9 +472,17 @@ def find_closest_encoding(unsupported_encoding):
     from alass_encodings import enc_list
 
     """Return the encoding from enc_list closest to unsupported_encoding."""
+    norm = unsupported_encoding.strip().lower()
+    if norm in _ALASS_ENCODING_ALIASES:
+        alias = _ALASS_ENCODING_ALIASES[norm]
+        if alias in enc_list:
+            return alias
+    hyphenated = norm.replace("_", "-")
+    if hyphenated in enc_list:
+        return hyphenated
     return min(
         enc_list,
-        key=lambda enc: levenshtein_distance(enc.lower(), unsupported_encoding.lower()),
+        key=lambda enc: levenshtein_distance(enc.lower(), norm),
     )
 
 
@@ -322,6 +515,17 @@ def match_subtitle_encoding(
                 log_window.append_message(msg, color=COLORS["ORANGE"])
             return False
 
+        # Skip image/index/binary subtitle formats (e.g., VobSub .idx/.sub, PGS .sup)
+        out_ext = os.path.splitext(output_subtitle_path)[1].lower()
+        if out_ext in _NON_REENCODABLE_EXTENSIONS:
+            logger.info(f"Skipping encoding modification for non-text format: {out_ext}")
+            return True
+        with open(output_subtitle_path, "rb") as f:
+            out_raw_head = f.read(4096)
+        if _has_binary_nul_bytes(out_raw_head):
+            logger.info("Skipping encoding modification for binary subtitle output")
+            return True
+
         # Detect encodings
         input_encoding = detect_encoding(input_subtitle_path)
         output_encoding = detect_encoding(output_subtitle_path)
@@ -340,8 +544,8 @@ def match_subtitle_encoding(
         # if log_window:
         #     log_window.append_message(f"Checking subtitle encodings...", color=COLORS["GREY"])
 
-        # If encodings are the same, no action needed
-        if final_encoding.lower() == output_encoding.lower():
+        # If encodings are canonically the same, no action needed
+        if _canonical_encoding(final_encoding) == _canonical_encoding(output_encoding):
             msg = "Subtitle encodings matched"
             logger.info(msg)
             # if log_window:
@@ -350,9 +554,7 @@ def match_subtitle_encoding(
 
         # Read output file content with detected encoding
         try:
-            with open(
-                output_subtitle_path, "r", encoding=output_encoding, errors="replace"
-            ) as f:
+            with open(output_subtitle_path, "r", encoding=output_encoding) as f:
                 content = f.read()
         except UnicodeDecodeError:
             warning_msg = texts.FAILED_TO_READ_OUTPUT_WITH_ENCODING.format(
@@ -361,16 +563,41 @@ def match_subtitle_encoding(
             logger.warning(warning_msg)
             if log_window:
                 log_window.append_message(warning_msg, color=COLORS["ORANGE"])
-            with open(
-                output_subtitle_path, "r", encoding="utf-8", errors="replace"
-            ) as f:
-                content = f.read()
+            try:
+                with open(output_subtitle_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                with open(
+                    output_subtitle_path, "r", encoding="utf-8", errors="replace"
+                ) as f:
+                    content = f.read()
 
-        # Write content back with target encoding
+        # Avoid duplicating a UTF-8 BOM if input was read without stripping it
+        if _canonical_encoding(final_encoding) == "utf-8-sig" and content.startswith(
+            "\ufeff"
+        ):
+            content = content[1:]
+
+        # Keep XML encoding declarations consistent when re-encoding XML subtitle formats
+        if out_ext in _XML_SUBTITLE_EXTENSIONS and content.lstrip().startswith("<?xml"):
+            xml_enc = (
+                "UTF-8"
+                if _canonical_encoding(final_encoding) in ("utf-8", "utf-8-sig")
+                else _canonical_encoding(final_encoding).upper()
+            )
+            content = re.sub(
+                r'^(\s*<\?xml\b[^>]*?\bencoding\s*=\s*["\'])([^"\']+)(["\'])',
+                rf"\g<1>{xml_enc}\g<3>",
+                content,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+
+        # Write content back with target encoding (strictly validate before overwriting
+        # so unrepresentable characters are never silently replaced with '?')
         try:
-            with open(
-                output_subtitle_path, "w", encoding=final_encoding, errors="replace"
-            ) as f:
+            content.encode(final_encoding)
+            with open(output_subtitle_path, "w", encoding=final_encoding) as f:
                 f.write(content)
             success_msg = texts.CHANGED_OUTPUT_SUBTITLE_ENCODING.format(
                 output_encoding=output_encoding, final_encoding=final_encoding
@@ -401,11 +628,11 @@ def get_available_encodings():
     # Dictionary mapping Python codec names to their display names
     codec_display_names = {
         # Most common encodings listed first for easy access
+        "utf_8_sig": str(texts.UTF8_WITH_BOM_RECOMMENDED),
         "utf_8": "UTF-8",
         "latin_1": "ISO-8859-1 (Latin-1)",
         "ascii": "ASCII",
         "cp1252": "Windows-1252",
-        "utf_8_sig": "UTF-8 with BOM",
         "utf_16": "UTF-16",
         "utf_16_le": "UTF-16 LE",
         "utf_16_be": "UTF-16 BE",
@@ -507,9 +734,9 @@ def get_available_encodings():
 
     # Define the order of most common encodings
     common_encodings = [
-        "ascii",
-        "utf_8",
         "utf_8_sig",
+        "utf_8",
+        "ascii",
         "utf_16",
         "utf_16_le",
         "utf_16_be",

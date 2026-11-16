@@ -710,6 +710,32 @@ SAME_AS_INPUT_SUBTITLE = {
     "ur_PK": "ان پٹ سب ٹائٹل جیسا ہی",
 }
 
+UTF8_WITH_BOM_RECOMMENDED = {
+    "en_US": "UTF-8 with BOM (Recommended)",
+    "es_ES": "UTF-8 con BOM (Recomendado)",
+    "tr_TR": "UTF-8 with BOM (Önerilen)",
+    "zh_CN": "UTF-8 with BOM（推荐）",
+    "zh_TW": "UTF-8 with BOM（推薦）",
+    "ru_RU": "UTF-8 с BOM (Рекомендуется)",
+    "pl_PL": "UTF-8 z BOM (Zalecane)",
+    "uk_UA": "UTF-8 з BOM (Рекомендовано)",
+    "ja_JP": "UTF-8 with BOM（推奨）",
+    "ko_KR": "UTF-8 (BOM 포함) (권장)",
+    "hi_IN": "UTF-8 with BOM (अनुशंसित)",
+    "bn_BD": "UTF-8 with BOM (প্রস্তাবিত)",
+    "it_IT": "UTF-8 con BOM (Consigliato)",
+    "fr_FR": "UTF-8 avec BOM (Recommandé)",
+    "de_DE": "UTF-8 mit BOM (Empfohlen)",
+    "pt_PT": "UTF-8 com BOM (Recomendado)",
+    "ar_SA": "UTF-8 مع BOM (موصى به)",
+    "vi_VN": "UTF-8 có BOM (Khuyên dùng)",
+    "fa_IR": "UTF-8 با BOM (پیشنهادی)",
+    "id_ID": "UTF-8 dengan BOM (Disarankan)",
+    "ms_MY": "UTF-8 dengan BOM (Disyorkan)",
+    "th_TH": "UTF-8 with BOM (แนะนำ)",
+    "ur_PK": "UTF-8 with BOM (تجویز کردہ)",
+}
+
 BACKUP_SUBTITLES_BEFORE_OVERWRITING = {
     "en_US": "Backup subtitles before overwriting",
     "es_ES": "Hacer copia de seguridad de los subtítulos antes de sobrescribir",
