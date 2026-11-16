@@ -1182,6 +1182,230 @@ class TestPortableModeGUI(unittest.TestCase):
         finally:
             self._cleanup_window(win, tmpdir, patches)
 
+    def test_auto_tab_two_files_and_completed_or_cancelled_sync_do_not_block_portable(self):
+        import sync_auto
+
+        status_off = {
+            "supported": True,
+            "usable": True,
+            "active": False,
+            "reason": "ok",
+            "base_dir": "/tmp/fake_usb",
+            "portable_dir": "/tmp/fake_usb/AutoSubSync_data",
+        }
+        win, tmpdir, patches = self._create_window(status_off)
+        try:
+            v_path = os.path.join(tmpdir.name, "movie.mkv")
+            s_path = os.path.join(tmpdir.name, "movie.srt")
+            with open(v_path, "wb") as f:
+                f.write(b"0")
+            with open(s_path, "w", encoding="utf-8") as f:
+                f.write("1\n00:00:01,000 --> 00:00:02,000\nhi\n")
+
+            # Adding 2 files in normal mode must not mark any operation as active.
+            win.video_ref_input.set_file(v_path)
+            win.subtitle_input.set_file(s_path)
+            self.assertFalse(win._is_operation_in_progress())
+
+            # Adding 2 files in batch mode must not mark any operation as active.
+            if not win.batch_mode_enabled:
+                win.toggle_batch_mode()
+            win.batch_tree_view.add_files_or_folders([v_path, s_path])
+            self.app.processEvents()
+            self.assertFalse(win._is_operation_in_progress())
+
+            # Switch back to normal mode and simulate a single sync run -> finish -> go back.
+            if win.batch_mode_enabled:
+                win.toggle_batch_mode()
+            win.video_ref_input.set_file(v_path)
+            win.subtitle_input.set_file(s_path)
+            win.config["sync_tool"] = "ffsubsync"
+            win.show_log_window()
+
+            def fake_prepare(self_proc, ref, sub, out_dir, tool, cleaned):
+                self_proc.signals.finished.emit(True, s_path, False)
+
+            with patch.object(sync_auto.SyncProcess, "prepare_and_run", fake_prepare):
+                sync_auto.start_sync_process(win)
+                self.app.processEvents()
+
+            self.assertFalse(hasattr(win, "_batch_state"))
+            self.assertFalse(hasattr(win, "_current_sync_process"))
+            self.assertFalse(win._is_operation_in_progress())
+
+            # Return to automatic tab with 2 files still populated; toggling portable must work.
+            win.restore_auto_sync_tab()
+            self.assertFalse(win._is_operation_in_progress())
+
+            # Toggling portable mode must open confirmation (not PORTABLE_MODE_BUSY warning).
+            with patch("gui.get_portable_migration_info", return_value={
+                "status": status_off,
+                "portable_dir": status_off["portable_dir"],
+                "target_exists": False,
+                "has_downloaded_tools": False,
+                "tools_size_bytes": 0,
+                "config_file_count": 0,
+                "log_file_count": 0,
+                "lapse_cache_count": 0,
+            }), patch("gui.QMessageBox.warning") as warn_mock, patch(
+                "gui.QMessageBox.exec", return_value=QMessageBox.StandardButton.No
+            ):
+                win.toggle_portable_mode(True)
+                warn_mock.assert_not_called()
+
+            # Simulate cancelling a single sync before it finishes.
+            win.show_log_window()
+
+            def noop_prepare(self_proc, ref, sub, out_dir, tool, cleaned):
+                pass
+
+            with patch.object(sync_auto.SyncProcess, "prepare_and_run", noop_prepare):
+                sync_auto.start_sync_process(win)
+            self.assertTrue(win._is_operation_in_progress())
+
+            with patch.object(sync_auto.SyncProcess, "cancel"):
+                win.log_window.cancel_clicked.emit()
+                self.app.processEvents()
+            self.assertFalse(hasattr(win, "_batch_state"))
+            self.assertFalse(win._is_operation_in_progress())
+
+            # Simulate early empty-items return in batch mode after reset_for_new_sync().
+            if not win.batch_mode_enabled:
+                win.toggle_batch_mode()
+            win.batch_tree_view.get_all_valid_pairs = lambda: []
+            win.show_log_window()
+            sync_auto.start_sync_process(win)
+            self.assertFalse(win.log_window.cancel_button.isVisible())
+            win.restore_auto_sync_tab()
+            self.assertFalse(win._is_operation_in_progress())
+        finally:
+            self._cleanup_window(win, tmpdir, patches)
+
+
+class TestPortableLapseCacheMigration(unittest.TestCase):
+    def test_lapse_cache_roundtrip_on_unix_and_windows(self):
+        for plat, env_factory in (
+            (
+                "linux",
+                lambda td: {
+                    "XDG_CACHE_HOME": os.path.join(td, "xdg_cache"),
+                    "HOME": os.path.join(td, "home"),
+                },
+            ),
+            (
+                "win32",
+                lambda td: {
+                    "LOCALAPPDATA": os.path.join(td, "LocalAppData"),
+                    "USERPROFILE": os.path.join(td, "UserProfile"),
+                },
+            ),
+        ):
+            with self.subTest(platform=plat), tempfile.TemporaryDirectory() as td:
+                env_vars = env_factory(td)
+                base_dir = os.path.join(td, "usb")
+                portable_dir = os.path.join(base_dir, "AutoSubSync_data")
+                sys_cfg = os.path.join(td, "sys_cfg")
+                sys_data = os.path.join(td, "sys_data")
+                sys_logs = os.path.join(td, "sys_logs")
+                os.makedirs(sys_cfg, exist_ok=True)
+                os.makedirs(sys_data, exist_ok=True)
+                os.makedirs(sys_logs, exist_ok=True)
+
+                if plat == "win32":
+                    primary_cache = os.path.join(
+                        env_vars["LOCALAPPDATA"], "lapse", "cache"
+                    )
+                    secondary_cache = os.path.join(
+                        env_vars["USERPROFILE"], ".cache", "lapse"
+                    )
+                else:
+                    primary_cache = os.path.join(
+                        env_vars["XDG_CACHE_HOME"], "lapse"
+                    )
+                    secondary_cache = os.path.join(
+                        env_vars["HOME"], ".cache", "lapse"
+                    )
+                os.makedirs(primary_cache, exist_ok=True)
+                os.makedirs(secondary_cache, exist_ok=True)
+
+                spans_file = os.path.join(primary_cache, "ec12f3cc24493f04.spans")
+                words_file = os.path.join(
+                    secondary_cache, "ec12f3cc24493f04.spans.ggml-base.words"
+                )
+                tmp_file = os.path.join(primary_cache, "partial.spans.tmp")
+                with open(spans_file, "wb") as f:
+                    f.write(b"SPANS_DATA_V1")
+                with open(words_file, "wb") as f:
+                    f.write(b"WORDS_DATA_V1")
+                with open(tmp_file, "wb") as f:
+                    f.write(b"INCOMPLETE")
+
+                status_off = {
+                    "supported": True,
+                    "usable": True,
+                    "active": False,
+                    "reason": "ok",
+                    "base_dir": base_dir,
+                    "portable_dir": portable_dir,
+                }
+                status_on = dict(status_off, active=True)
+
+                with patch.dict(os.environ, env_vars, clear=False), patch.object(
+                    sys, "platform", plat
+                ), patch.object(
+                    os.path, "expanduser", side_effect=lambda p: p.replace("~", env_vars.get("HOME", td))
+                ), patch.object(
+                    utils, "get_system_config_dir", return_value=sys_cfg
+                ), patch.object(
+                    utils, "get_system_data_dir", return_value=sys_data
+                ), patch.object(
+                    utils, "get_system_logs_directory", return_value=sys_logs
+                ):
+                    with patch.object(
+                        utils, "get_portable_mode_status", return_value=status_off
+                    ):
+                        info = utils.get_portable_migration_info(True)
+                        self.assertEqual(info["lapse_cache_count"], 2)
+                        utils.migrate_portable_mode(True, move_tools=False)
+
+                    p_cache = utils.get_portable_lapse_cache_dir(portable_dir)
+                    self.assertTrue(
+                        os.path.isfile(os.path.join(p_cache, "ec12f3cc24493f04.spans"))
+                    )
+                    self.assertTrue(
+                        os.path.isfile(
+                            os.path.join(
+                                p_cache, "ec12f3cc24493f04.spans.ggml-base.words"
+                            )
+                        )
+                    )
+                    self.assertFalse(
+                        os.path.exists(os.path.join(p_cache, "partial.spans.tmp"))
+                    )
+                    self.assertFalse(os.path.exists(spans_file))
+                    self.assertFalse(os.path.exists(words_file))
+
+                    # Disabling portable mode (even with move_tools=False) migrates cache back.
+                    with patch.object(
+                        utils, "get_portable_mode_status", return_value=status_on
+                    ):
+                        info_off = utils.get_portable_migration_info(False)
+                        self.assertEqual(info_off["lapse_cache_count"], 2)
+                        utils.migrate_portable_mode(False, move_tools=False)
+
+                    self.assertFalse(os.path.exists(portable_dir))
+                    with open(
+                        os.path.join(primary_cache, "ec12f3cc24493f04.spans"), "rb"
+                    ) as f:
+                        self.assertEqual(f.read(), b"SPANS_DATA_V1")
+                    with open(
+                        os.path.join(
+                            primary_cache, "ec12f3cc24493f04.spans.ggml-base.words"
+                        ),
+                        "rb",
+                    ) as f:
+                        self.assertEqual(f.read(), b"WORDS_DATA_V1")
+
 
 if __name__ == "__main__":
     unittest.main()

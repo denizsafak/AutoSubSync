@@ -1011,6 +1011,58 @@ def _collect_portable_tool_pairs(enable, portable_dir, system_data_dir):
     return pairs
 
 
+def _collect_portable_lapse_cache_pairs(enable, portable_dir):
+    """Return list of (src_path, dst_path) pairs for LAPSE .spans/.words cache files."""
+    pairs = []
+    if not portable_dir:
+        return pairs
+
+    portable_cache = get_portable_lapse_cache_dir(portable_dir)
+    sys_cache_dirs = _get_system_lapse_cache_directories()
+    if not sys_cache_dirs:
+        return pairs
+
+    if enable:
+        seen_names = set()
+        for src_dir in sys_cache_dirs:
+            if not src_dir or not os.path.isdir(src_dir):
+                continue
+            try:
+                with os.scandir(src_dir) as entries:
+                    for entry in sorted(entries, key=lambda e: e.name):
+                        fname = entry.name
+                        if (
+                            fname not in seen_names
+                            and entry.is_file()
+                            and _is_lapse_cache_file(fname)
+                            and not fname.endswith(".tmp")
+                        ):
+                            seen_names.add(fname)
+                            pairs.append(
+                                (entry.path, os.path.join(portable_cache, fname))
+                            )
+            except OSError:
+                pass
+    else:
+        primary_sys_cache = sys_cache_dirs[0]
+        if portable_cache and os.path.isdir(portable_cache):
+            try:
+                with os.scandir(portable_cache) as entries:
+                    for entry in sorted(entries, key=lambda e: e.name):
+                        fname = entry.name
+                        if (
+                            entry.is_file()
+                            and _is_lapse_cache_file(fname)
+                            and not fname.endswith(".tmp")
+                        ):
+                            pairs.append(
+                                (entry.path, os.path.join(primary_sys_cache, fname))
+                            )
+            except OSError:
+                pass
+    return pairs
+
+
 def get_portable_migration_info(enable):
     """Inspect files involved in toggling portable mode without modifying disk state."""
     status = get_portable_mode_status()
@@ -1048,6 +1100,7 @@ def get_portable_migration_info(enable):
     )
     src_logs = sys_logs_dir if enable else (os.path.join(portable_dir, "logs") if portable_dir else None)
     log_pairs = list(_iter_portable_log_files(src_logs))
+    cache_pairs = _collect_portable_lapse_cache_pairs(bool(enable), portable_dir)
 
     return {
         "status": status,
@@ -1057,6 +1110,7 @@ def get_portable_migration_info(enable):
         "tools_size_bytes": tools_size_bytes,
         "config_file_count": len(config_pairs),
         "log_file_count": len(log_pairs),
+        "lapse_cache_count": len(cache_pairs),
     }
 
 
@@ -1153,6 +1207,10 @@ def migrate_portable_mode(
 
     for src, fname in _iter_portable_log_files(src_logs_dir):
         dst = os.path.join(dst_logs_dir, fname)
+        if overwrite_target or not os.path.exists(dst):
+            copy_plan.append((src, dst, enable))
+
+    for src, dst in _collect_portable_lapse_cache_pairs(enable, portable_dir):
         if overwrite_target or not os.path.exists(dst):
             copy_plan.append((src, dst, enable))
 
@@ -1260,6 +1318,8 @@ def migrate_portable_mode(
                 os.path.join(sys_data_dir, "whisper"),
             ):
                 _remove_empty_dirs_bottom_up(tool_dir)
+        for cache_dir in _get_system_lapse_cache_directories():
+            _remove_empty_dirs_bottom_up(cache_dir)
     else:
         _rmtree_force(portable_dir)
         if os.path.exists(portable_dir):
@@ -3243,6 +3303,38 @@ def _is_lapse_cache_file(filename):
     )
 
 
+def _get_system_lapse_cache_directories():
+    """Return non-portable OS cache directories where lapse stores its cache files."""
+    import sys
+
+    candidates = []
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            candidates.append(os.path.join(local_app_data, "lapse", "cache"))
+        user_profile = os.environ.get("USERPROFILE")
+        if user_profile:
+            candidates.append(os.path.join(user_profile, ".cache", "lapse"))
+        if not candidates:
+            candidates.append(
+                os.path.join(os.path.expanduser("~"), ".cache", "lapse")
+            )
+    else:
+        xdg_cache = os.environ.get("XDG_CACHE_HOME")
+        if xdg_cache:
+            candidates.append(os.path.join(xdg_cache, "lapse"))
+        candidates.append(os.path.join(os.path.expanduser("~"), ".cache", "lapse"))
+
+    seen = set()
+    unique = []
+    for path in candidates:
+        norm = os.path.normpath(path)
+        if norm not in seen:
+            seen.add(norm)
+            unique.append(norm)
+    return unique
+
+
 def get_lapse_cache_directories():
     """Return candidate directories where lapse stores its cache files.
 
@@ -3252,8 +3344,6 @@ def get_lapse_cache_directories():
     - Windows: %LOCALAPPDATA%/lapse/cache, then %USERPROFILE%/.cache/lapse
     - Linux/macOS: $XDG_CACHE_HOME/lapse, then ~/.cache/lapse
     """
-    import sys
-
     candidates = []
     lapse_cache_env = os.environ.get("LAPSE_CACHE")
     if lapse_cache_env:
@@ -3263,18 +3353,8 @@ def get_lapse_cache_directories():
         portable_cache = get_portable_lapse_cache_dir()
         if portable_cache:
             candidates.append(portable_cache)
-    elif sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        if local_app_data:
-            candidates.append(os.path.join(local_app_data, "lapse", "cache"))
-        user_profile = os.environ.get("USERPROFILE")
-        if user_profile:
-            candidates.append(os.path.join(user_profile, ".cache", "lapse"))
     else:
-        xdg_cache = os.environ.get("XDG_CACHE_HOME")
-        if xdg_cache:
-            candidates.append(os.path.join(xdg_cache, "lapse"))
-        candidates.append(os.path.join(os.path.expanduser("~"), ".cache", "lapse"))
+        candidates.extend(_get_system_lapse_cache_directories())
 
     seen = set()
     unique = []

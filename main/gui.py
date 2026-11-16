@@ -829,7 +829,10 @@ class autosubsyncapp(QWidget):
             return True
         if getattr(self, "_whisper_download_in_progress", False):
             return True
-        if getattr(self, "_batch_state", None):
+        batch_state = getattr(self, "_batch_state", None)
+        if isinstance(batch_state, dict) and not batch_state.get(
+            "should_cancel", False
+        ):
             return True
         if getattr(self, "sync_worker", None) is not None:
             return True
@@ -837,7 +840,11 @@ class autosubsyncapp(QWidget):
         cancel_btn = (
             getattr(log_win, "cancel_button", None) if log_win is not None else None
         )
-        if cancel_btn is not None and cancel_btn.isVisible():
+        if (
+            cancel_btn is not None
+            and log_win.isVisible()
+            and cancel_btn.isVisible()
+        ):
             return True
         return False
 

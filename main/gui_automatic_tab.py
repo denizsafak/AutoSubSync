@@ -967,6 +967,8 @@ def restore_auto_sync_tab(self):
         self, "_stored_auto_tab_index"
     ):
         # First remove the log window tab
+        if hasattr(self, "log_window") and hasattr(self.log_window, "cancel_button"):
+            self.log_window.cancel_button.setVisible(False)
         log_tab_index = self.tab_widget.indexOf(self.log_window)
         if log_tab_index >= 0:
             self.tab_widget.removeTab(log_tab_index)

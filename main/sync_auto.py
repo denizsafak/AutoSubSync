@@ -708,6 +708,14 @@ class LogWindowStream:
             self._last_was_cr = False
 
 
+def _clear_auto_sync_state(app):
+    """Clear automatic-tab sync tracking attributes after completion or cancel."""
+    if hasattr(app, "_batch_state"):
+        del app._batch_state
+    if hasattr(app, "_current_sync_process"):
+        del app._current_sync_process
+
+
 def start_sync_process(app):
     try:
         if hasattr(app, "log_window"):
@@ -726,6 +734,11 @@ def start_sync_process(app):
             ]
         )
         if not items:
+            _clear_auto_sync_state(app)
+            if hasattr(app, "log_window") and hasattr(
+                app.log_window, "cancel_button"
+            ):
+                app.log_window.cancel_button.setVisible(False)
             return
         tool = app.config.get("sync_tool", DEFAULT_OPTIONS["sync_tool"])
         if tool == "lapse" and app.config.get(
@@ -800,6 +813,7 @@ def start_sync_process(app):
             def cancel_single():
                 if hasattr(app, "_current_sync_process"):
                     app._current_sync_process.cancel()
+                _clear_auto_sync_state(app)
                 app.restore_auto_sync_tab()
 
             app.log_window.cancel_clicked.disconnect()
@@ -813,8 +827,7 @@ def start_sync_process(app):
                 "should_cancel", False
             ):
                 logger.info("Batch sync cancelled by user")
-                if hasattr(app, "_batch_state"):
-                    del app._batch_state
+                _clear_auto_sync_state(app)
                 return
             if current_item_idx >= len(items):
                 if app.batch_mode_enabled and total_items > 1:
@@ -869,8 +882,7 @@ def start_sync_process(app):
                             append_log(app, f"{texts.SUBTITLE_LABEL} ", end="")
                             append_log(app, s, COLORS["ORANGE"], end="\n\n")
                     app.log_window.finish_batch_sync()
-                if hasattr(app, "_batch_state"):
-                    del app._batch_state
+                _clear_auto_sync_state(app)
                 return
             it = items[current_item_idx]
             original_idx = current_item_idx
@@ -904,6 +916,7 @@ def start_sync_process(app):
                         )
                         process_next_item()
                     else:
+                        _clear_auto_sync_state(app)
                         app.log_window.handle_sync_completion(False, None)
                     return
             if app.batch_mode_enabled and len(items) > 1:
@@ -962,6 +975,7 @@ def start_sync_process(app):
                 ):
                     cleanup_files(converted_files_to_clean)
                     cleanup_extracted_subtitles(proc._extraction)
+                    _clear_auto_sync_state(app)
                     return
                 ok = handle_completion(app, ok, out, original_sub_path)
                 if ok:
@@ -1000,6 +1014,7 @@ def start_sync_process(app):
                 ok = handle_completion(app, ok, out, original_sub_path)
                 cleanup_files(converted_files_to_clean)
                 cleanup_extracted_subtitles(proc._extraction)
+                _clear_auto_sync_state(app)
                 # Pass sync tracking callback to be called after success message but before saved to
                 post_success_cb = (
                     (lambda: _mark_item_as_processed(app, original_ref_path))
@@ -1026,8 +1041,7 @@ def start_sync_process(app):
     except Exception as e:
         logger.exception(f"Error starting sync: {e}")
         append_log(app, f"{texts.ERROR_PREFIX} {e}", COLORS["RED"])
-        if hasattr(app, "_batch_state"):
-            del app._batch_state
+        _clear_auto_sync_state(app)
         if hasattr(app, "log_window") and hasattr(app.log_window, "handle_sync_completion"):
             app.log_window.handle_sync_completion(False, None)
 
