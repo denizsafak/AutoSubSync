@@ -14,12 +14,42 @@ import requests
 script_dir = os.path.dirname(os.path.abspath(__file__))
 LAPSE_RELEASES_URL = "https://github.com/Schwponaco-org/lapse/releases/latest"
 BINARY_NAME = "lapse.exe" if platform.system() == "Windows" else "lapse"
-# A packaged or system-wide PyPI install can be read-only, so updates fall back to the user's data folder
-DIST_BIN_PATH = (
-    os.path.join(platformdirs.user_data_dir("AutoSubSync", appauthor=False), "lapse")
-    if getattr(sys, "frozen", False) or not os.access(script_dir, os.W_OK)
-    else os.path.join(script_dir, "lapse")
-)
+def _default_dist_bin_path():
+    # A packaged or system-wide PyPI install can be read-only, so updates fall back to the user's data folder
+    return (
+        os.path.join(platformdirs.user_data_dir("AutoSubSync", appauthor=False), "lapse")
+        if getattr(sys, "frozen", False) or not os.access(script_dir, os.W_OK)
+        else os.path.join(script_dir, "lapse")
+    )
+
+
+DIST_BIN_PATH = _default_dist_bin_path()
+_INITIAL_DIST_BIN_PATH = DIST_BIN_PATH
+
+
+def _get_utils_module():
+    try:
+        import utils
+        return utils
+    except ImportError:
+        try:
+            from .. import utils
+            return utils
+        except ImportError:
+            return None
+
+
+def get_dist_bin_path():
+    """Return the active directory for downloaded lapse binaries."""
+    # Preserve test or caller overrides applied directly to DIST_BIN_PATH
+    if DIST_BIN_PATH != _INITIAL_DIST_BIN_PATH:
+        return DIST_BIN_PATH
+    utils = _get_utils_module()
+    if utils is not None and utils.is_portable_mode():
+        portable_dir = utils.get_portable_lapse_bin_dir()
+        if portable_dir:
+            return portable_dir
+    return _default_dist_bin_path()
 
 
 def get_archive_filename():
@@ -57,8 +87,8 @@ def get_binary_filename():
 
 
 def ensure_silero_vad():
-    """Ensure silero_vad.onnx exists in DIST_BIN_PATH, downloading if necessary."""
-    silero_path = os.path.join(DIST_BIN_PATH, "silero_vad.onnx")
+    """Ensure silero_vad.onnx exists in the active lapse bin path, downloading if necessary."""
+    silero_path = os.path.join(get_dist_bin_path(), "silero_vad.onnx")
     if os.path.isfile(silero_path):
         return silero_path
     download()
@@ -77,8 +107,17 @@ def latest_version():
 
 def installed(bundled):
     """The binary to run: an update if we have one, otherwise the one shipped with the app."""
-    exe = os.path.join(DIST_BIN_PATH, BINARY_NAME)
-    return bundled if bundled and os.path.isfile(bundled) and not os.path.isfile(exe) else exe
+    exe = os.path.join(get_dist_bin_path(), BINARY_NAME)
+    if bundled and os.path.isfile(bundled) and not os.path.isfile(exe):
+        return bundled
+    if os.name != "nt" and os.path.isfile(exe) and not os.access(exe, os.X_OK):
+        try:
+            os.chmod(
+                exe, os.stat(exe).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
+        except OSError:
+            pass
+    return exe
 
 
 def current_version(exe):
@@ -139,7 +178,9 @@ def _read_response_bytes(response, progress_cb=None):
 
 
 def download(progress_cb=None):
-    staging = DIST_BIN_PATH + ".new"
+    dist_bin_path = get_dist_bin_path()
+    os.makedirs(os.path.dirname(dist_bin_path), exist_ok=True)
+    staging = dist_bin_path + ".new"
     try:
         archive_name = get_archive_filename()
         download_url = f"{LAPSE_RELEASES_URL}/download/{archive_name}"
@@ -197,10 +238,10 @@ def download(progress_cb=None):
                 if not os.path.exists(std_so):
                     shutil.copy2(full, std_so)
 
-        if os.path.isdir(DIST_BIN_PATH):
-            shutil.rmtree(DIST_BIN_PATH)
-        os.replace(staging, DIST_BIN_PATH)
-        dest_path = os.path.join(DIST_BIN_PATH, BINARY_NAME)
+        if os.path.isdir(dist_bin_path):
+            shutil.rmtree(dist_bin_path)
+        os.replace(staging, dist_bin_path)
+        dest_path = os.path.join(dist_bin_path, BINARY_NAME)
         print(f"Downloaded and extracted lapse to {dest_path}")
         return dest_path
     except Exception as e:
@@ -211,7 +252,7 @@ def download(progress_cb=None):
 
 if __name__ == "__main__":
     try:
-        if is_outdated(os.path.join(DIST_BIN_PATH, BINARY_NAME)):
+        if is_outdated(os.path.join(get_dist_bin_path(), BINARY_NAME)):
             download()
     except Exception:
         exit(1)

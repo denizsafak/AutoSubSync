@@ -30,6 +30,8 @@ from PyQt6.QtCore import (
     QBuffer,
     QEvent,
     QRect,
+    QThread,
+    pyqtSignal,
 )
 from PyQt6.QtGui import (
     QIcon,
@@ -41,6 +43,7 @@ from PyQt6.QtGui import (
 )
 
 from utils import *
+from utils import _create_download_dialog
 from constants import *
 
 # Import batch mode functionality
@@ -58,6 +61,61 @@ logger = logging.getLogger(__name__)
 
 
 MIN_WINDOW_HEIGHT_WHEN_SCROLLING = 400
+
+
+class _SettingsMenu(QMenu):
+    """QMenu subclass that handles clicks on disabled actions with help callbacks."""
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            action = self.actionAt(event.position().toPoint())
+            if action is not None and not action.isEnabled():
+                cb = getattr(action, "_disabled_trigger_cb", None)
+                if callable(cb):
+                    self.close()
+                    cb()
+                    event.accept()
+                    return
+        super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
+            action = self.activeAction()
+            if action is not None and not action.isEnabled():
+                cb = getattr(action, "_disabled_trigger_cb", None)
+                if callable(cb):
+                    self.close()
+                    cb()
+                    event.accept()
+                    return
+        super().keyPressEvent(event)
+
+
+class _PortableMigrationWorker(QThread):
+    """Execute portable mode data migration off the GUI thread."""
+
+    progress = pyqtSignal(int)
+    succeeded = pyqtSignal()
+    failed = pyqtSignal(str)
+
+    def __init__(self, enable, overwrite_target=True, move_tools=True, parent=None):
+        super().__init__(parent)
+        self.enable = bool(enable)
+        self.overwrite_target = bool(overwrite_target)
+        self.move_tools = bool(move_tools)
+
+    def run(self):
+        try:
+            migrate_portable_mode(
+                self.enable,
+                overwrite_target=self.overwrite_target,
+                move_tools=self.move_tools,
+                progress_cb=self.progress.emit,
+            )
+        except Exception as exc:
+            self.failed.emit(str(exc))
+            return
+        self.succeeded.emit()
 
 
 def initial_window_geometry(available):
@@ -760,6 +818,173 @@ class autosubsyncapp(QWidget):
             return
         update_config(self, "always_on_top", enabled)
 
+    def _set_portable_action_checked(self, checked):
+        if hasattr(self, "portable_mode_action"):
+            self.portable_mode_action.blockSignals(True)
+            self.portable_mode_action.setChecked(bool(checked))
+            self.portable_mode_action.blockSignals(False)
+
+    def _is_operation_in_progress(self):
+        if getattr(self, "_portable_migration_worker", None) is not None:
+            return True
+        if getattr(self, "_whisper_download_in_progress", False):
+            return True
+        if getattr(self, "_batch_state", None):
+            return True
+        if getattr(self, "sync_worker", None) is not None:
+            return True
+        log_win = getattr(self, "log_window", None)
+        cancel_btn = (
+            getattr(log_win, "cancel_button", None) if log_win is not None else None
+        )
+        if cancel_btn is not None and cancel_btn.isVisible():
+            return True
+        return False
+
+    def show_portable_mode_unavailable_info(self):
+        """Inform the user why portable mode is unavailable and where it is supported."""
+        status = get_portable_mode_status()
+        reason = status.get("reason", "not_frozen")
+        base_dir = status.get("base_dir") or ""
+        if reason == "translocated":
+            msg = str(texts.PORTABLE_MODE_UNSUPPORTED_TRANSLOCATED)
+        elif reason == "system_install":
+            msg = str(texts.PORTABLE_MODE_UNSUPPORTED_SYSTEM_INSTALL).format(
+                path=base_dir
+            )
+        elif reason == "not_writable":
+            msg = str(texts.PORTABLE_MODE_UNSUPPORTED_READONLY).format(path=base_dir)
+        else:
+            msg = str(texts.PORTABLE_MODE_UNSUPPORTED_NOT_FROZEN)
+        QMessageBox.information(self, str(texts.PORTABLE_MODE), msg)
+
+    def toggle_portable_mode(self, checked):
+        """Confirm, migrate data, and restart when toggling portable mode."""
+        status = get_portable_mode_status()
+        was_active = getattr(self, "_portable_mode_active", bool(status["active"]))
+        enable = bool(checked)
+
+        if not status["usable"]:
+            self._set_portable_action_checked(was_active)
+            self.show_portable_mode_unavailable_info()
+            return
+
+        if enable == was_active:
+            return
+
+        if self._is_operation_in_progress():
+            self._set_portable_action_checked(was_active)
+            QMessageBox.warning(
+                self,
+                str(texts.PORTABLE_MODE),
+                str(texts.PORTABLE_MODE_BUSY),
+            )
+            return
+
+        info = get_portable_migration_info(enable)
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle(str(texts.PORTABLE_MODE))
+
+        move_tools_cb = None
+        if info["has_downloaded_tools"]:
+            move_tools_cb = QCheckBox(
+                str(texts.PORTABLE_MODE_MOVE_TOOLS_CHECKBOX).format(
+                    size=format_num(info["tools_size_bytes"])
+                ),
+                box,
+            )
+            move_tools_cb.setChecked(True)
+            box.setCheckBox(move_tools_cb)
+
+        overwrite_target = True
+        if info["target_exists"]:
+            box.setText(
+                (
+                    str(texts.PORTABLE_MODE_TARGET_EXISTS_ENABLE)
+                    if enable
+                    else str(texts.PORTABLE_MODE_TARGET_EXISTS_DISABLE)
+                ).format(path=info["portable_dir"])
+            )
+            overwrite_btn = box.addButton(
+                str(texts.PORTABLE_MODE_OVERWRITE_AND_MOVE),
+                QMessageBox.ButtonRole.AcceptRole,
+            )
+            keep_btn = box.addButton(
+                str(
+                    texts.PORTABLE_MODE_USE_EXISTING_PORTABLE
+                    if enable
+                    else texts.PORTABLE_MODE_KEEP_SYSTEM_DATA
+                ),
+                QMessageBox.ButtonRole.ActionRole,
+            )
+            box.addButton(QMessageBox.StandardButton.Cancel)
+            box.setDefaultButton(keep_btn)
+            box.exec()
+            clicked = box.clickedButton()
+            if clicked == overwrite_btn:
+                overwrite_target = True
+            elif clicked == keep_btn:
+                overwrite_target = False
+            else:
+                self._set_portable_action_checked(was_active)
+                return
+        else:
+            box.setText(
+                (
+                    str(texts.PORTABLE_MODE_ENABLE_CONFIRM)
+                    if enable
+                    else str(texts.PORTABLE_MODE_DISABLE_CONFIRM)
+                ).format(path=info["portable_dir"])
+            )
+            box.setStandardButtons(
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            box.setDefaultButton(QMessageBox.StandardButton.Yes)
+            if box.exec() != QMessageBox.StandardButton.Yes:
+                self._set_portable_action_checked(was_active)
+                return
+
+        move_tools = (
+            bool(move_tools_cb.isChecked()) if move_tools_cb is not None else True
+        )
+
+        dialog, _label, _bar, set_progress = _create_download_dialog(
+            self,
+            str(texts.PORTABLE_MODE),
+            str(texts.PORTABLE_MODE_MIGRATING),
+        )
+        worker = _PortableMigrationWorker(
+            enable,
+            overwrite_target=overwrite_target,
+            move_tools=move_tools,
+            parent=self,
+        )
+        self._portable_migration_worker = worker
+        worker.progress.connect(set_progress)
+
+        def _on_success():
+            worker.wait(5000)
+            self._portable_migration_worker = None
+            dialog.finish_and_close()
+            restart_application()
+
+        def _on_failed(err_msg):
+            worker.wait(5000)
+            self._portable_migration_worker = None
+            dialog.finish_and_close()
+            self._set_portable_action_checked(was_active)
+            QMessageBox.critical(
+                self,
+                str(texts.PORTABLE_MODE),
+                str(texts.PORTABLE_MODE_MIGRATION_FAILED).format(error=err_msg),
+            )
+
+        worker.succeeded.connect(_on_success)
+        worker.failed.connect(_on_failed)
+        worker.start()
+        dialog.exec()
+
     def update_settings_icon(self, theme=None):
         """Update the main settings button icon according to the active theme."""
         if not hasattr(self, "settings_btn"):
@@ -810,7 +1035,7 @@ class autosubsyncapp(QWidget):
         self.settings_btn.move(self.width() - 36 - 15, 15)
 
         # Create settings menu
-        self.settings_menu = QMenu(self)
+        self.settings_menu = _SettingsMenu(self)
 
         # Add Language submenu
         self.language_menu = self.settings_menu.addMenu(texts.LANGUAGE)
@@ -1085,6 +1310,20 @@ class autosubsyncapp(QWidget):
         self.settings_menu.addAction(self.reset_action)
 
         self.settings_menu.addSeparator()
+
+        portable_status = get_portable_mode_status()
+        self._portable_mode_active = bool(portable_status["active"])
+        self.portable_mode_action = QAction(texts.PORTABLE_MODE, self)
+        self.portable_mode_action.setCheckable(True)
+        self.portable_mode_action.setChecked(self._portable_mode_active)
+        if portable_status["usable"]:
+            self.portable_mode_action.triggered.connect(self.toggle_portable_mode)
+        else:
+            self.portable_mode_action.setEnabled(False)
+            self.portable_mode_action._disabled_trigger_cb = (
+                self.show_portable_mode_unavailable_info
+            )
+        self.settings_menu.addAction(self.portable_mode_action)
 
         self.always_on_top_action = QAction(texts.ALWAYS_ON_TOP, self)
         self.always_on_top_action.setCheckable(True)

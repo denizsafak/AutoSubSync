@@ -132,6 +132,13 @@ def create_process(cmd):
                 except Exception:
                     pass
 
+            # Keep LAPSE's disk cache inside the portable folder when portable mode is active
+            if "LAPSE_CACHE" not in env and is_portable_mode():
+                portable_cache = get_portable_lapse_cache_dir()
+                if portable_cache:
+                    os.makedirs(portable_cache, exist_ok=True)
+                    env["LAPSE_CACHE"] = portable_cache
+
         kwargs = {
             "shell": False,
             "stdout": subprocess.PIPE,
@@ -500,14 +507,237 @@ def get_available_encodings():
     return result
 
 
+PORTABLE_DIR_NAME = "AutoSubSync_data"
+
+_PORTABLE_CONFIG_EXACT_FILES = (
+    "config.json",
+    "config.json.bak",
+    "processed_items.db",
+    "processed_items.db-wal",
+    "processed_items.db-shm",
+    "processed_items.db-journal",
+    "library_folders.db",
+    "library_folders.db-wal",
+    "library_folders.db-shm",
+    "library_folders.db-journal",
+)
+
+
+def _get_portable_platform_tag():
+    """Return normalized '<os>-<arch>' tag for portable binary subdirectories."""
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    if machine in ("x86_64", "x64", "amd64"):
+        arch = "amd64"
+    elif machine in ("aarch64", "armv8l", "arm64"):
+        arch = "arm64"
+    else:
+        arch = machine or "unknown"
+    return f"{system}-{arch}"
+
+
+def _is_directory_writable(directory):
+    """Return True if a directory exists and files can be created and deleted inside it."""
+    if not directory or not os.path.isdir(directory):
+        return False
+    tmp_path = None
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".autosubsync_write_test_")
+        os.close(fd)
+        return True
+    except OSError:
+        return False
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+
+def _is_system_install_directory(directory):
+    """Heuristic for system-managed read-only install directories."""
+    if not directory:
+        return False
+    norm = os.path.normcase(os.path.abspath(directory))
+    system = platform.system()
+    if system == "Linux":
+        return (
+            norm == "/opt/autosubsync"
+            or norm.startswith("/opt/autosubsync/")
+            or norm.startswith("/usr/")
+        )
+    if system == "Darwin":
+        norm_lower = norm.lower()
+        return (
+            norm_lower == "/applications"
+            or norm_lower.startswith("/applications/")
+            or norm_lower.startswith("/system/")
+        )
+    if system == "Windows":
+        import ntpath
+
+        norm_win = ntpath.normcase(ntpath.normpath(directory))
+        for env_var in ("ProgramFiles", "ProgramFiles(x86)", "ProgramW6432"):
+            pf = os.environ.get(env_var)
+            if pf:
+                pf_norm = ntpath.normcase(ntpath.normpath(pf))
+                if norm_win == pf_norm or norm_win.startswith(pf_norm + ntpath.sep):
+                    return True
+    return False
+
+
+def get_portable_mode_status():
+    """Inspect whether portable mode is supported, usable, and active for this launch."""
+    appimage = os.environ.get("APPIMAGE")
+    if appimage:
+        base_dir = os.path.dirname(os.path.abspath(appimage))
+    elif getattr(sys, "frozen", False):
+        exe_abs = os.path.abspath(sys.executable)
+        exe_real = os.path.realpath(exe_abs)
+        exe_resolved = exe_real if os.path.islink(exe_abs) else exe_abs
+        if platform.system() == "Darwin":
+            if "/AppTranslocation/" in exe_abs or "/AppTranslocation/" in exe_real:
+                return {
+                    "supported": False,
+                    "usable": False,
+                    "active": False,
+                    "reason": "translocated",
+                    "base_dir": None,
+                    "portable_dir": None,
+                }
+            exe_dir = os.path.dirname(exe_resolved)
+            contents_dir = os.path.dirname(exe_dir)
+            bundle_dir = os.path.dirname(contents_dir)
+            if (
+                os.path.basename(exe_dir) == "MacOS"
+                and os.path.basename(contents_dir) == "Contents"
+                and bundle_dir.lower().endswith(".app")
+            ):
+                base_dir = os.path.dirname(bundle_dir)
+            else:
+                base_dir = exe_dir
+        else:
+            if platform.system() == "Linux" and _is_system_install_directory(os.path.dirname(exe_real)):
+                return {
+                    "supported": False,
+                    "usable": False,
+                    "active": False,
+                    "reason": "system_install",
+                    "base_dir": os.path.dirname(exe_real),
+                    "portable_dir": None,
+                }
+            base_dir = os.path.dirname(exe_resolved)
+    else:
+        return {
+            "supported": False,
+            "usable": False,
+            "active": False,
+            "reason": "not_frozen",
+            "base_dir": None,
+            "portable_dir": None,
+        }
+
+    if _is_system_install_directory(base_dir):
+        return {
+            "supported": False,
+            "usable": False,
+            "active": False,
+            "reason": "system_install",
+            "base_dir": base_dir,
+            "portable_dir": None,
+        }
+
+    portable_dir = os.path.join(base_dir, PORTABLE_DIR_NAME)
+    active = os.path.isdir(portable_dir)
+    base_writable = _is_directory_writable(base_dir)
+    portable_writable = _is_directory_writable(portable_dir) if active else base_writable
+    writable = base_writable and portable_writable
+
+    reason = "ok" if writable else "not_writable"
+
+    return {
+        "supported": True,
+        "usable": writable,
+        "active": active,
+        "reason": reason,
+        "base_dir": base_dir,
+        "portable_dir": portable_dir,
+    }
+
+
+def is_portable_mode():
+    """Return True when running in portable mode (AutoSubSync_data next to executable)."""
+    return bool(get_portable_mode_status()["active"])
+
+
+def get_portable_data_dir():
+    """Return the active portable data directory, or None when not in portable mode."""
+    status = get_portable_mode_status()
+    return status["portable_dir"] if status["active"] else None
+
+
+def get_system_config_dir():
+    """Return the standard OS user config directory for AutoSubSync."""
+    from constants import PROGRAM_NAME
+    from platformdirs import user_config_dir
+
+    return user_config_dir(PROGRAM_NAME, appauthor=False, roaming=True)
+
+
+def get_system_data_dir():
+    """Return the standard OS user data directory for AutoSubSync."""
+    from constants import PROGRAM_NAME
+    from platformdirs import user_data_dir
+
+    return user_data_dir(PROGRAM_NAME, appauthor=False)
+
+
+def get_system_logs_directory():
+    """Return the standard OS temp-based logs directory for AutoSubSync."""
+    from constants import PROGRAM_NAME
+
+    return os.path.join(tempfile.gettempdir(), PROGRAM_NAME)
+
+
+def get_portable_lapse_cache_dir(portable_dir=None):
+    """Return the portable LAPSE cache directory."""
+    pdir = portable_dir or get_portable_data_dir()
+    return os.path.join(pdir, "cache", "lapse") if pdir else None
+
+
+def get_portable_lapse_bin_dir(portable_dir=None):
+    """Return the OS/arch-scoped portable LAPSE binary directory."""
+    pdir = portable_dir or get_portable_data_dir()
+    return (
+        os.path.join(pdir, "bin", "lapse", _get_portable_platform_tag())
+        if pdir
+        else None
+    )
+
+
+def get_portable_whisper_bin_dir(portable_dir=None):
+    """Return the OS/arch-scoped portable whisper-cli binary directory."""
+    pdir = portable_dir or get_portable_data_dir()
+    return (
+        os.path.join(pdir, "bin", "whisper", _get_portable_platform_tag())
+        if pdir
+        else None
+    )
+
+
+def get_portable_whisper_model_dir(portable_dir=None):
+    """Return the shared portable directory for Whisper model weights."""
+    pdir = portable_dir or get_portable_data_dir()
+    return os.path.join(pdir, "bin", "whisper") if pdir else None
+
+
 def get_user_config_path():
     global _config_path_cache, _config_path_logged
     if _config_path_cache is not None:
         return _config_path_cache
-    from constants import PROGRAM_NAME
-    from platformdirs import user_config_dir
 
-    config_dir = user_config_dir(PROGRAM_NAME, appauthor=False, roaming=True)
+    config_dir = get_portable_data_dir() if is_portable_mode() else get_system_config_dir()
     os.makedirs(config_dir, exist_ok=True)
     _config_path_cache = os.path.join(config_dir, "config.json")
     if not _config_path_logged:
@@ -517,9 +747,11 @@ def get_user_config_path():
 
 
 def get_logs_directory():
-    from constants import PROGRAM_NAME
-
-    logs_dir = os.path.join(tempfile.gettempdir(), PROGRAM_NAME)
+    portable_dir = get_portable_data_dir()
+    if portable_dir:
+        logs_dir = os.path.join(portable_dir, "logs")
+    else:
+        logs_dir = get_system_logs_directory()
     # Create the directory if it doesn't exist (thread/process-safe)
     os.makedirs(logs_dir, exist_ok=True)
 
@@ -632,12 +864,412 @@ def clear_config_cache():
     Clear the config cache to force reload on next access.
     Useful when config needs to be reloaded from disk.
     """
-    global _config_cache, _locale_cache
+    global _config_cache, _locale_cache, _config_path_cache, _config_path_logged
 
     with _config_cache_lock:
         _config_cache = None
         _locale_cache = None
+        _config_path_cache = None
+        _config_path_logged = False
     logger.debug("Config cache cleared")
+
+
+def _iter_portable_config_files(config_dir):
+    """Yield (src_path, filename) for AutoSubSync config and DB files in config_dir."""
+    if not config_dir or not os.path.isdir(config_dir):
+        return
+    try:
+        entries = sorted(os.listdir(config_dir))
+    except OSError:
+        return
+    for name in entries:
+        if name in _PORTABLE_CONFIG_EXACT_FILES or name.startswith("config.json.corrupt."):
+            src = os.path.join(config_dir, name)
+            if os.path.isfile(src):
+                yield src, name
+
+
+def _iter_portable_log_files(logs_dir):
+    """Yield (src_path, filename) for persistent sync log files in logs_dir."""
+    if not logs_dir or not os.path.isdir(logs_dir):
+        return
+    try:
+        entries = sorted(os.listdir(logs_dir))
+    except OSError:
+        return
+    for name in entries:
+        if name.startswith("autosubsync_pgs_"):
+            continue
+        src = os.path.join(logs_dir, name)
+        if os.path.isfile(src):
+            yield src, name
+
+
+def _iter_files_recursive(root_dir):
+    """Yield (src_path, rel_path) for regular files (following valid symlinks) under root_dir."""
+    if not root_dir or not os.path.isdir(root_dir):
+        return
+    for dirpath, _dirnames, filenames in os.walk(root_dir, followlinks=True):
+        for fname in sorted(filenames):
+            if (
+                fname.endswith(".part")
+                or ".migrating." in fname
+                or ".pre_migrate_bak." in fname
+            ):
+                continue
+            src = os.path.join(dirpath, fname)
+            if os.path.isfile(src):
+                rel = os.path.relpath(src, root_dir)
+                yield src, rel
+
+
+def _handle_rmtree_readonly(func, path, _exc):
+    import stat
+
+    try:
+        os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+    except OSError:
+        pass
+    func(path)
+
+
+def _rmtree_force(path):
+    """Remove a directory tree even when Windows read-only attributes are present."""
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=_handle_rmtree_readonly)
+    else:
+        shutil.rmtree(path, onerror=_handle_rmtree_readonly)
+
+
+def _remove_empty_dirs_bottom_up(root_dir):
+    """Remove empty nested subdirectories and root_dir itself if completely empty."""
+    if not root_dir or not os.path.isdir(root_dir):
+        return
+    for dirpath, _dirnames, _filenames in os.walk(root_dir, topdown=False):
+        try:
+            if not os.listdir(dirpath):
+                os.rmdir(dirpath)
+        except OSError:
+            pass
+
+
+def _ensure_portable_executable_mode(path):
+    """Ensure copied UNIX executables and shared libraries keep execute bits."""
+    if os.name == "nt":
+        return
+    base = os.path.basename(path)
+    if (
+        base in ("lapse", "whisper-cli")
+        or base.endswith((".so", ".dylib"))
+        or ".so." in base
+    ):
+        import stat
+
+        try:
+            mode = os.stat(path).st_mode
+            if not (mode & stat.S_IXUSR):
+                os.chmod(
+                    path, mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+                )
+        except OSError:
+            pass
+
+
+def _collect_portable_tool_pairs(enable, portable_dir, system_data_dir):
+    """Return list of (src_path, dst_path) pairs for downloaded LAPSE / Whisper tools."""
+    pairs = []
+    if enable:
+        src_lapse = os.path.join(system_data_dir, "lapse")
+        dst_lapse = get_portable_lapse_bin_dir(portable_dir)
+        for src, rel in _iter_files_recursive(src_lapse):
+            pairs.append((src, os.path.join(dst_lapse, rel)))
+
+        src_whisper = os.path.join(system_data_dir, "whisper")
+        dst_whisper_bin = get_portable_whisper_bin_dir(portable_dir)
+        dst_whisper_model = get_portable_whisper_model_dir(portable_dir)
+        for src, rel in _iter_files_recursive(src_whisper):
+            if rel == os.path.basename(rel) and rel.lower().endswith(".bin"):
+                pairs.append((src, os.path.join(dst_whisper_model, rel)))
+            else:
+                pairs.append((src, os.path.join(dst_whisper_bin, rel)))
+    else:
+        src_lapse = get_portable_lapse_bin_dir(portable_dir)
+        dst_lapse = os.path.join(system_data_dir, "lapse")
+        for src, rel in _iter_files_recursive(src_lapse):
+            pairs.append((src, os.path.join(dst_lapse, rel)))
+
+        src_whisper_model = get_portable_whisper_model_dir(portable_dir)
+        src_whisper_bin = get_portable_whisper_bin_dir(portable_dir)
+        dst_whisper = os.path.join(system_data_dir, "whisper")
+        if src_whisper_model and os.path.isdir(src_whisper_model):
+            for fname in sorted(os.listdir(src_whisper_model)):
+                src = os.path.join(src_whisper_model, fname)
+                if os.path.isfile(src) and fname.lower().endswith(".bin"):
+                    pairs.append((src, os.path.join(dst_whisper, fname)))
+        for src, rel in _iter_files_recursive(src_whisper_bin):
+            pairs.append((src, os.path.join(dst_whisper, rel)))
+    return pairs
+
+
+def get_portable_migration_info(enable):
+    """Inspect files involved in toggling portable mode without modifying disk state."""
+    status = get_portable_mode_status()
+    portable_dir = status.get("portable_dir")
+    sys_config_dir = get_system_config_dir()
+    sys_data_dir = get_system_data_dir()
+    sys_logs_dir = get_system_logs_directory()
+
+    if enable:
+        dst_config_dir = portable_dir
+    else:
+        dst_config_dir = sys_config_dir
+
+    key_files = ("config.json", "processed_items.db", "library_folders.db")
+    target_exists = bool(
+        dst_config_dir
+        and os.path.isdir(dst_config_dir)
+        and any(os.path.isfile(os.path.join(dst_config_dir, k)) for k in key_files)
+    )
+
+    tool_pairs = (
+        _collect_portable_tool_pairs(bool(enable), portable_dir, sys_data_dir)
+        if portable_dir
+        else []
+    )
+    tools_size_bytes = 0
+    for src, _dst in tool_pairs:
+        try:
+            tools_size_bytes += os.path.getsize(src)
+        except OSError:
+            pass
+
+    config_pairs = list(
+        _iter_portable_config_files(sys_config_dir if enable else portable_dir)
+    )
+    src_logs = sys_logs_dir if enable else (os.path.join(portable_dir, "logs") if portable_dir else None)
+    log_pairs = list(_iter_portable_log_files(src_logs))
+
+    return {
+        "status": status,
+        "portable_dir": portable_dir,
+        "target_exists": target_exists,
+        "has_downloaded_tools": len(tool_pairs) > 0,
+        "tools_size_bytes": tools_size_bytes,
+        "config_file_count": len(config_pairs),
+        "log_file_count": len(log_pairs),
+    }
+
+
+def _close_database_managers():
+    """Close open SQLite connections before migrating database files."""
+    try:
+        from processed_items_manager import close_processed_items_manager
+
+        close_processed_items_manager()
+    except Exception as e:
+        logger.warning(f"Failed to close processed items manager: {e}")
+
+    try:
+        from gui_load_library import close_library_folders_manager
+
+        close_library_folders_manager()
+    except Exception as e:
+        logger.warning(f"Failed to close library folders manager: {e}")
+
+
+def migrate_portable_mode(
+    enable,
+    *,
+    overwrite_target=True,
+    move_tools=True,
+    progress_cb=None,
+):
+    """Migrate user data between system directories and the portable directory.
+
+    Closes open SQLite connections, copies files safely with size verification,
+    cleans up migrated source files only after verification, and resets config caches.
+    """
+    status = get_portable_mode_status()
+    if not status["usable"]:
+        raise RuntimeError(f"Portable mode is not usable ({status['reason']})")
+
+    portable_dir = status["portable_dir"]
+    enable = bool(enable)
+    if not enable and not os.path.isdir(portable_dir):
+        return
+
+    sys_config_dir = get_system_config_dir()
+    sys_data_dir = get_system_data_dir()
+    sys_logs_dir = get_system_logs_directory()
+    portable_logs_dir = os.path.join(portable_dir, "logs")
+
+    _close_database_managers()
+
+    if enable:
+        src_config_dir = sys_config_dir
+        dst_config_dir = portable_dir
+        src_logs_dir = sys_logs_dir
+        dst_logs_dir = portable_logs_dir
+    else:
+        src_config_dir = portable_dir
+        dst_config_dir = sys_config_dir
+        src_logs_dir = portable_logs_dir
+        dst_logs_dir = sys_logs_dir
+
+    copy_plan = []  # list of (src, dst, remove_src_after)
+
+    config_files = dict((fname, src) for src, fname in _iter_portable_config_files(src_config_dir))
+    sqlite_dbs = ("processed_items.db", "library_folders.db")
+    sqlite_suffixes = ("-wal", "-shm", "-journal")
+    db_copied = {}
+    stale_dst_cleanup = []
+
+    for db_name in sqlite_dbs:
+        dst_db = os.path.join(dst_config_dir, db_name)
+        src_db = config_files.get(db_name)
+        if src_db is not None and (overwrite_target or not os.path.exists(dst_db)):
+            db_copied[db_name] = True
+            copy_plan.append((src_db, dst_db, enable))
+            for suf in sqlite_suffixes:
+                comp_name = db_name + suf
+                src_comp = config_files.get(comp_name)
+                dst_comp = os.path.join(dst_config_dir, comp_name)
+                if src_comp is not None:
+                    copy_plan.append((src_comp, dst_comp, enable))
+                elif os.path.lexists(dst_comp):
+                    stale_dst_cleanup.append(dst_comp)
+        else:
+            db_copied[db_name] = False
+
+    sqlite_all = set(sqlite_dbs) | {
+        db_name + suf for db_name in sqlite_dbs for suf in sqlite_suffixes
+    }
+    for src, fname in _iter_portable_config_files(src_config_dir):
+        if fname in sqlite_all:
+            continue
+        dst = os.path.join(dst_config_dir, fname)
+        if overwrite_target or not os.path.exists(dst):
+            copy_plan.append((src, dst, enable))
+
+    for src, fname in _iter_portable_log_files(src_logs_dir):
+        dst = os.path.join(dst_logs_dir, fname)
+        if overwrite_target or not os.path.exists(dst):
+            copy_plan.append((src, dst, enable))
+
+    if move_tools:
+        for src, dst in _collect_portable_tool_pairs(enable, portable_dir, sys_data_dir):
+            if overwrite_target or not os.path.exists(dst):
+                copy_plan.append((src, dst, enable))
+
+    total_bytes = 0
+    for src, _dst, _rm in copy_plan:
+        try:
+            total_bytes += max(1, os.path.getsize(src))
+        except OSError:
+            total_bytes += 1
+
+    portable_existed_before = os.path.isdir(portable_dir)
+    created_dsts = []
+    backed_up_dsts = []
+    copied_bytes = 0
+    last_pct = -1
+
+    if progress_cb is not None:
+        progress_cb(0 if copy_plan else 100)
+
+    try:
+        if enable:
+            os.makedirs(portable_dir, exist_ok=True)
+            os.makedirs(portable_logs_dir, exist_ok=True)
+
+        for src, dst, _rm in copy_plan:
+            dst_parent = os.path.dirname(dst)
+            os.makedirs(dst_parent, exist_ok=True)
+            tmp_dst = f"{dst}.migrating.{os.getpid()}"
+            bak_dst = f"{dst}.pre_migrate_bak.{os.getpid()}"
+            try:
+                shutil.copy2(src, tmp_dst)
+                src_size = os.path.getsize(src)
+                tmp_size = os.path.getsize(tmp_dst)
+                if tmp_size != src_size:
+                    raise IOError(
+                        f"Verification failed copying {os.path.basename(src)}: "
+                        f"expected {src_size} bytes, got {tmp_size}"
+                    )
+                if os.path.lexists(dst):
+                    os.replace(dst, bak_dst)
+                    backed_up_dsts.append((dst, bak_dst))
+                else:
+                    created_dsts.append(dst)
+                os.replace(tmp_dst, dst)
+                _ensure_portable_executable_mode(dst)
+            finally:
+                if os.path.lexists(tmp_dst):
+                    try:
+                        os.remove(tmp_dst)
+                    except OSError:
+                        pass
+
+            copied_bytes += max(1, src_size)
+            if progress_cb is not None and total_bytes > 0:
+                pct = min(100, int(copied_bytes * 100 / total_bytes))
+                if pct != last_pct:
+                    last_pct = pct
+                    progress_cb(pct)
+
+        for stale_dst in stale_dst_cleanup:
+            if os.path.lexists(stale_dst):
+                bak_dst = f"{stale_dst}.pre_migrate_bak.{os.getpid()}"
+                os.replace(stale_dst, bak_dst)
+                backed_up_dsts.append((stale_dst, bak_dst))
+
+        for _dst, bak_dst in backed_up_dsts:
+            if os.path.lexists(bak_dst):
+                try:
+                    os.remove(bak_dst)
+                except OSError:
+                    pass
+    except Exception:
+        for dst, bak_dst in reversed(backed_up_dsts):
+            try:
+                if os.path.lexists(bak_dst):
+                    os.replace(bak_dst, dst)
+            except OSError:
+                pass
+        for dst in reversed(created_dsts):
+            try:
+                if os.path.lexists(dst):
+                    os.remove(dst)
+            except OSError:
+                pass
+        if enable and not portable_existed_before and os.path.isdir(portable_dir):
+            shutil.rmtree(portable_dir, ignore_errors=True)
+        raise
+
+    # All copies succeeded and verified; now remove migrated sources.
+    if enable:
+        for src, _dst, rm_src in copy_plan:
+            if rm_src and os.path.exists(src):
+                try:
+                    os.remove(src)
+                except OSError as e:
+                    logger.warning(f"Failed to remove migrated source file {src}: {e}")
+        if move_tools:
+            for tool_dir in (
+                os.path.join(sys_data_dir, "lapse"),
+                os.path.join(sys_data_dir, "whisper"),
+            ):
+                _remove_empty_dirs_bottom_up(tool_dir)
+    else:
+        _rmtree_force(portable_dir)
+        if os.path.exists(portable_dir):
+            raise RuntimeError(
+                f"Could not remove portable folder: {portable_dir}"
+            )
+
+    clear_config_cache()
+    if progress_cb is not None:
+        progress_cb(100)
 
 
 def restart_application():
@@ -689,12 +1321,22 @@ def restart_application():
         elif getattr(sys, "frozen", False):
             # Frozen executable (PyInstaller on Windows/macOS/Linux)
             # sys.executable is the frozen executable itself
-            subprocess.Popen(
-                [sys.executable] + sys.argv[1:],
-                start_new_session=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            env = os.environ.copy()
+            if "LD_LIBRARY_PATH_ORIG" in env:
+                env["LD_LIBRARY_PATH"] = env["LD_LIBRARY_PATH_ORIG"]
+            args = [a for a in sys.argv[1:] if not a.startswith("-psn_")]
+            popen_kwargs = {
+                "env": env,
+                "stdout": subprocess.DEVNULL,
+                "stderr": subprocess.DEVNULL,
+            }
+            if platform.system() == "Windows":
+                popen_kwargs["creationflags"] = getattr(
+                    subprocess, "DETACHED_PROCESS", 0
+                ) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+            else:
+                popen_kwargs["start_new_session"] = True
+            subprocess.Popen([sys.executable] + args, **popen_kwargs)
         else:
             # Python script or pip-installed entry point
             # sys.argv[0] contains the script/entry point path
@@ -1997,8 +2639,9 @@ def _needs_lapse_download():
         from resources import lapse_download
 
         lapse_bin = "lapse.exe" if platform.system() == "Windows" else "lapse"
-        lapse_path = os.path.join(lapse_download.DIST_BIN_PATH, lapse_bin)
-        silero_path = os.path.join(lapse_download.DIST_BIN_PATH, "silero_vad.onnx")
+        dist_bin_path = lapse_download.get_dist_bin_path()
+        lapse_path = os.path.join(dist_bin_path, lapse_bin)
+        silero_path = os.path.join(dist_bin_path, "silero_vad.onnx")
         return not (os.path.isfile(lapse_path) and os.path.isfile(silero_path))
     except Exception as e:
         logger.debug(f"Could not check lapse download status: {e}")
@@ -2604,6 +3247,7 @@ def get_lapse_cache_directories():
     """Return candidate directories where lapse stores its cache files.
 
     Mirrors cache_dir() in Schwponaco-org/lapse engine/main.cpp:
+    - Portable mode: <portable_dir>/cache/lapse (plus explicit LAPSE_CACHE)
     - LAPSE_CACHE (explicit override)
     - Windows: %LOCALAPPDATA%/lapse/cache, then %USERPROFILE%/.cache/lapse
     - Linux/macOS: $XDG_CACHE_HOME/lapse, then ~/.cache/lapse
@@ -2615,7 +3259,11 @@ def get_lapse_cache_directories():
     if lapse_cache_env:
         candidates.append(lapse_cache_env)
 
-    if sys.platform == "win32":
+    if is_portable_mode():
+        portable_cache = get_portable_lapse_cache_dir()
+        if portable_cache:
+            candidates.append(portable_cache)
+    elif sys.platform == "win32":
         local_app_data = os.environ.get("LOCALAPPDATA")
         if local_app_data:
             candidates.append(os.path.join(local_app_data, "lapse", "cache"))

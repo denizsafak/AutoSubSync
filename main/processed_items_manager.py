@@ -275,14 +275,6 @@ class ProcessedItemsManager:
                 logger.error(f"Error getting processed count: {e}")
                 return 0
 
-    def close(self):
-        """Close the database connection."""
-        if self._conn:
-            with self._db_lock:
-                self._conn.close()
-                self._conn = None
-                logger.info("Processed items database connection closed.")
-
     def import_from_database(self, import_path: str) -> Tuple[int, int]:
         """
         Import items from another processed items database.
@@ -354,8 +346,27 @@ class ProcessedItemsManager:
             logger.error(f"Failed to import from database {import_path}: {e}")
             return (-1, -1)
 
+    def close(self) -> None:
+        """Close the SQLite connection so database files can be moved or deleted."""
+        with self._db_lock:
+            if self._conn is not None:
+                try:
+                    self._conn.close()
+                except Exception as e:
+                    logger.warning(f"Error closing processed items database: {e}")
+                self._conn = None
+            self._initialized = False
+
 
 # Convenience function to get the singleton instance
 def get_processed_items_manager() -> ProcessedItemsManager:
     """Get the singleton ProcessedItemsManager instance."""
     return ProcessedItemsManager()
+
+
+def close_processed_items_manager() -> None:
+    """Close and reset the singleton ProcessedItemsManager if instantiated."""
+    with ProcessedItemsManager._lock:
+        if ProcessedItemsManager._instance is not None:
+            ProcessedItemsManager._instance.close()
+            ProcessedItemsManager._instance = None

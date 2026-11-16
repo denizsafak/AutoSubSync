@@ -15,12 +15,54 @@ BINARY_NAME = "whisper-cli.exe" if platform.system() == "Windows" else "whisper-
 DEFAULT_MODEL_NAME = "ggml-base.bin"
 MODEL_URL = f"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/{DEFAULT_MODEL_NAME}"
 
-# A packaged or system-wide PyPI install can be read-only, so downloads fall back to the user's data folder
-DIST_BIN_PATH = (
-    os.path.join(platformdirs.user_data_dir("AutoSubSync", appauthor=False), "whisper")
-    if getattr(sys, "frozen", False) or not os.access(script_dir, os.W_OK)
-    else os.path.join(script_dir, "whisper")
-)
+def _default_dist_bin_path():
+    # A packaged or system-wide PyPI install can be read-only, so downloads fall back to the user's data folder
+    return (
+        os.path.join(platformdirs.user_data_dir("AutoSubSync", appauthor=False), "whisper")
+        if getattr(sys, "frozen", False) or not os.access(script_dir, os.W_OK)
+        else os.path.join(script_dir, "whisper")
+    )
+
+
+DIST_BIN_PATH = _default_dist_bin_path()
+_INITIAL_DIST_BIN_PATH = DIST_BIN_PATH
+
+
+def _get_utils_module():
+    try:
+        import utils
+        return utils
+    except ImportError:
+        try:
+            from .. import utils
+            return utils
+        except ImportError:
+            return None
+
+
+def get_dist_bin_path():
+    """Return the active directory for downloaded whisper-cli binaries."""
+    # Preserve test or caller overrides applied directly to DIST_BIN_PATH
+    if DIST_BIN_PATH != _INITIAL_DIST_BIN_PATH:
+        return DIST_BIN_PATH
+    utils = _get_utils_module()
+    if utils is not None and utils.is_portable_mode():
+        portable_dir = utils.get_portable_whisper_bin_dir()
+        if portable_dir:
+            return portable_dir
+    return _default_dist_bin_path()
+
+
+def get_model_dir():
+    """Return the directory where the shared ggml model is stored."""
+    if DIST_BIN_PATH != _INITIAL_DIST_BIN_PATH:
+        return DIST_BIN_PATH
+    utils = _get_utils_module()
+    if utils is not None and utils.is_portable_mode():
+        portable_model_dir = utils.get_portable_whisper_model_dir()
+        if portable_model_dir:
+            return portable_model_dir
+    return get_dist_bin_path()
 
 
 def _norm_machine():
@@ -53,8 +95,19 @@ def get_archive_filename():
 
 def installed_cli():
     """Return path to an installed whisper-cli binary, or None if not found."""
-    local_cli = os.path.join(DIST_BIN_PATH, BINARY_NAME)
+    local_cli = os.path.join(get_dist_bin_path(), BINARY_NAME)
     if os.path.isfile(local_cli):
+        if os.name != "nt" and not os.access(local_cli, os.X_OK):
+            try:
+                os.chmod(
+                    local_cli,
+                    os.stat(local_cli).st_mode
+                    | stat.S_IXUSR
+                    | stat.S_IXGRP
+                    | stat.S_IXOTH,
+                )
+            except OSError:
+                pass
         return local_cli
     found = shutil.which(BINARY_NAME)
     if found:
@@ -68,7 +121,7 @@ def installed_cli():
 
 def installed_model(model_name=DEFAULT_MODEL_NAME):
     """Return path to the downloaded whisper ggml model, or None if missing."""
-    model_path = os.path.join(DIST_BIN_PATH, model_name)
+    model_path = os.path.join(get_model_dir(), model_name)
     return model_path if os.path.isfile(model_path) and os.path.getsize(model_path) > 0 else None
 
 
@@ -157,13 +210,15 @@ def download_cli(log_cb=None, progress_cb=None):
     if progress_cb is not None:
         progress_cb(-1)  # Extraction phase (indeterminate)
 
-    os.makedirs(DIST_BIN_PATH, exist_ok=True)
-    staging = DIST_BIN_PATH + ".cli.new"
+    dist_bin_path = get_dist_bin_path()
+    os.makedirs(dist_bin_path, exist_ok=True)
+    staging = dist_bin_path + ".cli.new"
     shutil.rmtree(staging, ignore_errors=True)
     os.makedirs(staging)
 
     try:
         if archive_name.endswith(".tar.gz") or archive_name.endswith(".tgz"):
+            deferred_links = []
             with tarfile.open(fileobj=io.BytesIO(content_bytes), mode="r:gz") as tar:
                 for member in tar.getmembers():
                     if not _is_runtime_file(member.name):
@@ -174,8 +229,14 @@ def download_cli(log_cb=None, progress_cb=None):
                         target_base = os.path.basename(member.linkname)
                         if os.path.exists(dest) or os.path.islink(dest):
                             os.unlink(dest)
-                        os.symlink(target_base, dest)
+                        try:
+                            os.symlink(target_base, dest)
+                        except OSError:
+                            # Filesystems such as FAT32/exFAT disallow symlinks; resolve via copy after extraction
+                            deferred_links.append((dest, target_base))
                     elif member.isfile():
+                        if os.path.islink(dest):
+                            os.unlink(dest)
                         f = tar.extractfile(member)
                         if f is not None:
                             with open(dest, "wb") as out:
@@ -185,6 +246,17 @@ def download_cli(log_cb=None, progress_cb=None):
                                     dest,
                                     os.stat(dest).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
                                 )
+            if deferred_links:
+                link_map = {os.path.basename(dest): target for dest, target in deferred_links}
+                for dest, target_base in deferred_links:
+                    seen = set()
+                    cur = target_base
+                    while cur in link_map and cur not in seen:
+                        seen.add(cur)
+                        cur = link_map[cur]
+                    target_path = os.path.join(staging, cur)
+                    if os.path.isfile(target_path) and not os.path.exists(dest):
+                        shutil.copy2(target_path, dest)
         elif archive_name.endswith(".zip"):
             with zipfile.ZipFile(io.BytesIO(content_bytes)) as zf:
                 for info in zf.infolist():
@@ -201,19 +273,20 @@ def download_cli(log_cb=None, progress_cb=None):
 
         for entry in os.listdir(staging):
             src = os.path.join(staging, entry)
-            dst = os.path.join(DIST_BIN_PATH, entry)
+            dst = os.path.join(dist_bin_path, entry)
             if os.path.islink(dst) or os.path.isfile(dst):
                 os.unlink(dst)
             shutil.move(src, dst)
-        return os.path.join(DIST_BIN_PATH, BINARY_NAME)
+        return os.path.join(dist_bin_path, BINARY_NAME)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
 
 
 def download_model(model_name=DEFAULT_MODEL_NAME, log_cb=None, progress_cb=None):
-    """Stream-download the whisper ggml model into DIST_BIN_PATH atomically."""
-    os.makedirs(DIST_BIN_PATH, exist_ok=True)
-    dest = os.path.join(DIST_BIN_PATH, model_name)
+    """Stream-download the whisper ggml model into the active model dir atomically."""
+    model_dir = get_model_dir()
+    os.makedirs(model_dir, exist_ok=True)
+    dest = os.path.join(model_dir, model_name)
     part = dest + ".part"
     url = f"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/{model_name}"
     if log_cb:

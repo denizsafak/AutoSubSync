@@ -201,10 +201,29 @@ class LibraryFoldersManager:
             logger.error(f"Failed to check folder existence: {e}")
             return False
 
+    def close(self) -> None:
+        """Close the SQLite connection so database files can be moved or deleted."""
+        with self._db_lock:
+            if self._conn is not None:
+                try:
+                    self._conn.close()
+                except Exception as e:
+                    logger.warning(f"Error closing library folders database: {e}")
+                self._conn = None
+            self._initialized = False
+
 
 def get_library_folders_manager() -> LibraryFoldersManager:
     """Get the singleton instance of LibraryFoldersManager."""
     return LibraryFoldersManager()
+
+
+def close_library_folders_manager() -> None:
+    """Close and reset the singleton LibraryFoldersManager if instantiated."""
+    with LibraryFoldersManager._lock:
+        if LibraryFoldersManager._instance is not None:
+            LibraryFoldersManager._instance.close()
+            LibraryFoldersManager._instance = None
 
 
 class LibraryManagerDialog(QDialog):

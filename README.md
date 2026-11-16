@@ -228,7 +228,7 @@ Synchronize subtitles with video or audio files using one of four available sync
 - **[ffsubsync](https://github.com/smacke/ffsubsync)** – Analyzes the audio track of the video and aligns subtitles to match the speech. Works well for most content.
 - **[autosubsync](https://github.com/oseiskar/autosubsync)** – Uses machine learning to detect speech patterns and synchronize subtitles accordingly.
 - **[alass](https://github.com/kaegi/alass)** – Can align subtitles using either audio analysis or a reference subtitle file. Generally faster than other tools, and most of the time produces accurate results.
-- **[lapse](https://github.com/Schwponaco-org/lapse)** – Language-Agnostic Playback Synchronization Engine. A fast C++ engine built on FFmpeg, libfvad/Silero VAD, and FFTW3. Supports video, audio, and subtitle references, linear drift correction, and split mode for cuts. AutoSubSync keeps LAPSE updated automatically and stores downloaded updates in your user data folder.
+- **[lapse](https://github.com/Schwponaco-org/lapse)** – Language-Agnostic Playback Synchronization Engine. A fast C++ engine built on FFmpeg, libfvad/Silero VAD, and FFTW3. Supports video, audio, and subtitle references, linear drift correction, and split mode for cuts. AutoSubSync keeps LAPSE updated automatically and stores downloaded updates in your user data folder (or `AutoSubSync_data` when Portable mode is enabled).
 
 In addition to video files, you can use an audio file or a correctly-timed reference subtitle file as the source. Audio references are converted to a temporary MP4 automatically; enable `Keep converted audio files` in Settings to keep the converted file. Supported audio references include MP3, M4A, AAC, FLAC, OGG/OGA, OPUS, WAV, WMA, AIFF/AIF, APE, and MKA. Reference subtitles are useful when you have subtitles in one language that are already synchronized and want to sync subtitles in another language to match.
 
@@ -404,6 +404,23 @@ Change the language from `Settings` → `Language`. The interface will update af
 
 ---
 
+### Portable Mode
+
+Run AutoSubSync from a USB drive or any writable folder without leaving files in host OS directories. When enabled (`Settings` → `Portable mode`), AutoSubSync creates an `AutoSubSync_data` folder next to the executable and restarts, storing everything there:
+
+- `config.json`, `processed_items.db`, and `library_folders.db`
+- `logs/` (sync logs) and `cache/lapse/` (LAPSE `.spans` cache)
+- `bin/lapse/<os>-<arch>/` and `bin/whisper/<os>-<arch>/` (downloaded binaries per platform, safe to share one USB drive across Windows, Linux, and macOS)
+- `bin/whisper/ggml-base.bin` (shared Whisper model weights)
+
+**Supported releases:** Windows ZIP (`.exe` folder), Linux `AppImage` (next to the `.AppImage`) and `tar.gz`, and writable macOS `.app` bundles (next to `AutoSubSync.app`).
+
+**Not available (greyed out):** PyPI (`assy`), running from source (`main.py`), `.deb` or system-wide installs (`/opt/autosubsync`, `/usr`, `/Applications`, `Program Files`), macOS App Translocation, and read-only folders. Clicking the greyed-out item explains why it is unavailable there.
+
+Toggling Portable mode ON or OFF automatically migrates your configuration, databases, logs, and (optionally) downloaded LAPSE / Whisper files, then restarts AutoSubSync.
+
+---
+
 ## `Settings`
 
 Access settings via the gear icon in the **top right** corner.
@@ -428,6 +445,8 @@ Access settings via the gear icon in the **top right** corner.
 | **Remember the changes** | When enabled, saves your current settings and restores them when AutoSubSync is reopened. |
 | **Check for updates at startup** | Automatically check for new versions of AutoSubSync and LAPSE when AutoSubSync starts. |
 | **Reset to default settings** | Restore all application settings to their original default values. |
+| **Portable mode** | Store configuration, databases, logs, LAPSE cache, and downloaded LAPSE / Whisper files in `AutoSubSync_data` next to the executable instead of system folders. Unchecked by default; greyed out in unsupported environments (click for details). |
+| **Always on top** | Keep the AutoSubSync window above other windows. |
 | **About** | Display application version, credits, and links to the project repository. |
 
 ---
@@ -498,9 +517,9 @@ sudo apt remove autosubsync
 <details>
 <summary><strong>If using AppImage or standalone binary</strong></summary>
 
-- **Linux:** Delete the `AppImage` file from your system.
-- **macOS:** Delete the `.app` file from your Applications or wherever you placed it.
-- **Windows:** Delete the folder that contains the extracted files (including the `.exe`).
+- **Linux:** Delete the `AppImage` file (and `AutoSubSync_data` next to it if Portable mode was used).
+- **macOS:** Delete the `.app` file from your Applications or wherever you placed it (and `AutoSubSync_data` next to it if Portable mode was used).
+- **Windows:** Delete the folder that contains the extracted files (including the `.exe`, and `AutoSubSync_data` if present).
 </details>
 
 <details>
