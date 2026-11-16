@@ -29,7 +29,14 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
 )
 from PyQt6.QtCore import Qt, QSize
-from constants import COLORS, DEFAULT_OPTIONS, SYNC_TOOLS, AUTOMATIC_SAVE_MAP
+from constants import (
+    COLORS,
+    DEFAULT_OPTIONS,
+    SYNC_TOOLS,
+    AUTOMATIC_SAVE_MAP,
+    is_video_extension,
+)
+from gui_embedded_subtitles import extract_embedded_subtitles_workflow
 from utils import (
     update_config,
     handle_save_location_dropdown,
@@ -67,6 +74,10 @@ def attach_functions_to_autosubsyncapp(autosubsyncapp_class):
     autosubsyncapp_class.update_other_options_icon = update_other_options_icon
     autosubsyncapp_class.update_restore_defaults_icon = update_restore_defaults_icon
     autosubsyncapp_class.restore_current_tool_defaults = restore_current_tool_defaults
+    autosubsyncapp_class.update_embedded_subtitle_button = update_embedded_subtitle_button
+    autosubsyncapp_class.extract_embedded_subtitle_for_normal_mode = (
+        extract_embedded_subtitle_for_normal_mode
+    )
 
 
 class OneStepSlider(QSlider):
@@ -246,6 +257,9 @@ def setup_auto_sync_tab(self):
         texts.DRAG_DROP_SUBTITLE_OR_BROWSE,
         texts.INPUT_SUBTITLE_LABEL,
         input_type="subtitle",
+    )
+    self.subtitle_input.set_embedded_subtitle_handler(
+        self.extract_embedded_subtitle_for_normal_mode
     )
 
     # Simply add layout to container
@@ -681,6 +695,36 @@ def show_auto_sync_inputs(self):
         self.auto_sync_input_layout.addWidget(self.subtitle_input, 1)
         self.video_ref_input.show()
         self.subtitle_input.show()
+
+    self.update_embedded_subtitle_button()
+
+
+def update_embedded_subtitle_button(self):
+    """Show the embedded subtitle button in normal mode when only a video is loaded."""
+    if not hasattr(self, "subtitle_input") or not hasattr(self, "video_ref_input"):
+        return
+    ref_path = getattr(self.video_ref_input, "file_path", None)
+    sub_path = getattr(self.subtitle_input, "file_path", None)
+    available = (
+        not getattr(self, "batch_mode_enabled", False)
+        and bool(ref_path)
+        and not sub_path
+        and is_video_extension(ref_path)
+        and os.path.isfile(ref_path)
+    )
+    self.subtitle_input.set_embedded_subtitle_available(available)
+
+
+def extract_embedded_subtitle_for_normal_mode(self):
+    """Scan the loaded video, let the user extract one subtitle, and assign it."""
+    if not hasattr(self, "video_ref_input") or not hasattr(self, "subtitle_input"):
+        return
+    video_path = getattr(self.video_ref_input, "file_path", None)
+    extracted = extract_embedded_subtitles_workflow(
+        self, video_path, allow_multiple=False
+    )
+    if extracted:
+        self.subtitle_input.set_file(extracted[0])
 
 
 def update_auto_sync_ui_for_batch(self):

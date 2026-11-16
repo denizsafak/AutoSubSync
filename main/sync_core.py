@@ -35,8 +35,10 @@ from utils import (
     find_closest_encoding,
     check_file_readable,
     check_file_writable,
+    pick_unique_path,
 )
 from subtitle_converter import convert_to_srt
+from subtitle_extractor import resolve_sync_config_for_subtitle
 from alass_encodings import enc_list
 
 logger = logging.getLogger(__name__)
@@ -492,35 +494,27 @@ def determine_output_path(
         "save_next_to_video_with_same_filename",
         "overwrite_input_subtitle",
     ):
-        base, ext = os.path.splitext(out_name)
-        counter = 2
-        while os.path.exists(output_path):
-            out_name = f"{base}_{counter}{ext}"
-            output_path = os.path.join(out_dir, out_name)
-            counter += 1
+        output_path = pick_unique_path(output_path)
     return output_path
 
 
 def _pick_audio_mp4_target(stem: str) -> Optional[str]:
     """Pick the target path for a converted audio .mp4 without overwriting.
 
-    Walks the candidates stem.mp4, stem_2.mp4, stem_3.mp4, ... and returns
-    the first path that does not exist yet, mirroring the unbounded "_2",
-    "_3", ... numbering used for output subtitles in determine_output_path.
-    Any existing file at a candidate name is left untouched and skipped,
-    no matter how many there are.
+    Walks the candidates stem.mp4, stem_2.mp4, stem_3.mp4, ... via
+    ``pick_unique_path`` and returns the first path that does not exist yet,
+    leaving any existing file untouched.
     """
-    candidate = f"{stem}.mp4"
-    counter = 2
-    while os.path.exists(candidate):
+    base_candidate = f"{stem}.mp4"
+    chosen = pick_unique_path(base_candidate)
+    if chosen != base_candidate:
         logger.info(
-            "Existing file '%s' will not be overwritten; trying the next "
-            "numbered name for the converted audio",
-            candidate,
+            "Existing file '%s' will not be overwritten; using numbered "
+            "name '%s' for the converted audio",
+            base_candidate,
+            chosen,
         )
-        candidate = f"{stem}_{counter}.mp4"
-        counter += 1
-    return candidate
+    return chosen
 
 
 def convert_audio_to_mp4(
@@ -1190,7 +1184,11 @@ def run_sync(
         ):
             converted_files_to_clean.append(converted)
 
-    effective_config = dict(config or DEFAULT_OPTIONS)
+    effective_config = resolve_sync_config_for_subtitle(
+        reference,
+        subtitle,
+        dict(config or DEFAULT_OPTIONS),
+    )
 
     if not output:
         output = determine_output_path(

@@ -208,6 +208,35 @@ def terminate_process_safely(process):
     threading.Thread(target=_terminate, daemon=True).start()
 
 
+def pick_unique_path(base_path: str, reserved: Optional[set[str]] = None) -> str:
+    """Return a non-colliding file path by appending _2, _3, ... before the extension.
+
+    Walks ``stem.ext``, ``stem_2.ext``, ``stem_3.ext``, ... until a path that
+    neither exists on disk nor appears in ``reserved`` is found. When
+    ``reserved`` is supplied, the chosen path is added to it so multiple
+    files planned in a single operation never claim the same filename.
+    """
+    base, ext = os.path.splitext(base_path)
+    reserved_norm = (
+        {os.path.normcase(os.path.normpath(p)) for p in reserved}
+        if reserved
+        else set()
+    )
+
+    candidate = base_path
+    counter = 2
+    while (
+        os.path.lexists(candidate)
+        or os.path.normcase(os.path.normpath(candidate)) in reserved_norm
+    ):
+        candidate = f"{base}_{counter}{ext}"
+        counter += 1
+
+    if reserved is not None:
+        reserved.add(candidate)
+    return candidate
+
+
 def create_backup(file_path):
     base_name, ext = os.path.splitext(os.path.basename(file_path))
     backup_dir = os.path.dirname(file_path)

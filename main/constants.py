@@ -147,6 +147,7 @@ DEFAULT_OPTIONS = {
     "custom_suffix": "",
     "backup_subtitles_before_overwriting": True,
     "keep_extracted_subtitles": False,
+    "sync_extracted_tracks_against_audio": True,
     "keep_converted_subtitles": False,
     "keep_converted_audio_files": False,
     "output_subtitle_encoding": "same_as_input",
@@ -209,6 +210,13 @@ def is_remote_url(path) -> bool:
     if not path or not isinstance(path, str):
         return False
     return path.startswith(REMOTE_URL_PROTOCOLS)
+
+
+def is_video_extension(path) -> bool:
+    """Return True if path is a local path with a supported video extension."""
+    if not path or not isinstance(path, str) or is_remote_url(path):
+        return False
+    return os.path.splitext(path)[1].lower() in VIDEO_EXTENSIONS
 
 
 # Synchronization tools
@@ -3220,6 +3228,7 @@ REFERENCE_MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS
 EXTRACTABLE_SUBTITLE_EXTENSIONS = {
     "subrip": "srt",
     "ass": "ass",
+    "ssa": "ssa",
     "webvtt": "vtt",
     "mov_text": "srt",
 }

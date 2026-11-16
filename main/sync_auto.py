@@ -28,6 +28,7 @@ from subtitle_converter import convert_to_srt
 from subtitle_extractor import (
     cleanup_extracted_subtitles,
     prepare_sync_reference,
+    resolve_sync_config_for_subtitle,
 )
 
 logger = logging.getLogger(__name__)
@@ -496,10 +497,14 @@ class SyncProcess:
                 self.signals.finished.emit(False, None, False)
                 return
 
+            effective_config = resolve_sync_config_for_subtitle(
+                original_ref_path, original_sub_path, self.app.config
+            )
+
             tracker = sync_core.SyncProgressTracker(
                 on_progress=self.signals.progress_percent.emit,
                 tool=tool,
-                config=self.app.config,
+                config=effective_config,
             )
             tracker.start()
 
@@ -510,7 +515,7 @@ class SyncProcess:
                     subtitle_path,
                     output_dir,
                     tool=tool,
-                    config=self.app.config,
+                    config=effective_config,
                     on_log=lambda msg, color="grey", overwrite=False: (
                         self.signals.colored_progress.emit(msg, color, True)
                         if overwrite
@@ -553,7 +558,7 @@ class SyncProcess:
                 progress_tracker=tracker,
             )
             tool_local, _, _ = sync_core.get_tool_with_fallback(
-                reference_path, config=self.app.config, callbacks=cb
+                reference_path, config=effective_config, callbacks=cb
             )
             if self.should_cancel:
                 cleanup_extracted_subtitles(extraction)
@@ -563,11 +568,12 @@ class SyncProcess:
 
             tracker.tool = tool_local
             self.signals.pair_header.emit(reference_path, subtitle_path)
+            self._emit_extracted_track_audio_notice(effective_config)
             pgs_checked = bool(extraction and extraction.pgs_checked)
             run_config = (
-                {**self.app.config, "_pgs_already_checked": True}
+                {**effective_config, "_pgs_already_checked": True}
                 if pgs_checked
-                else self.app.config
+                else effective_config
             )
             result = sync_core.run_sync(
                 reference_path,
@@ -587,11 +593,26 @@ class SyncProcess:
             self._extraction = None
             self.signals.finished.emit(False, None, False)
 
+    def _emit_extracted_track_audio_notice(self, effective_config):
+        """Log a notice when an extracted subtitle is synced against video audio."""
+        if effective_config is not self.app.config:
+            self.signals.log.emit(
+                texts.SYNCING_EXTRACTED_TRACK_AGAINST_AUDIO_LOG.format(
+                    settings=texts.SETTINGS,
+                    option=texts.SYNC_EXTRACTED_TRACKS_AGAINST_AUDIO,
+                ),
+                "blue",
+            )
+
     def _run(self, reference, subtitle, tool, output, pgs_checked=False):
+        """Run a direct subtitle sync without the video extraction prep stage."""
+        effective_config = resolve_sync_config_for_subtitle(
+            reference, subtitle, self.app.config
+        )
         tracker = sync_core.SyncProgressTracker(
             on_progress=self.signals.progress_percent.emit,
             tool=tool,
-            config=self.app.config,
+            config=effective_config,
         )
         cb = sync_core.SyncCallbacks(
             on_log=lambda msg, color: self.signals.log.emit(msg, color),
@@ -603,10 +624,11 @@ class SyncProcess:
             is_cancelled=lambda: self.should_cancel,
             progress_tracker=tracker,
         )
+        self._emit_extracted_track_audio_notice(effective_config)
         run_config = (
-            {**self.app.config, "_pgs_already_checked": True}
+            {**effective_config, "_pgs_already_checked": True}
             if pgs_checked
-            else self.app.config
+            else effective_config
         )
         result = sync_core.run_sync(
             reference,

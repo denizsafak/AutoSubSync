@@ -234,6 +234,12 @@ class LogWindow(QWidget):
             bold=True,
             color=COLORS["GREEN"],
         )
+        self.append_message(f"{texts.SYNC_EXTRACTED_TRACKS_AGAINST_AUDIO}: ", end="")
+        self.append_message(
+            bool_display(get("sync_extracted_tracks_against_audio")),
+            bold=True,
+            color=COLORS["GREEN"],
+        )
         self.append_message(f"{texts.KEEP_CONVERTED_SUBTITLES}: ", end="")
         self.append_message(
             bool_display(get("keep_converted_subtitles")),

@@ -254,6 +254,83 @@ class InputBox(QLabel):
         """Reapply stylesheet when the widget is shown to ensure hover and state work correctly."""
         super().showEvent(event)
         self._apply_style()  # Force reapply the current stylesheet
+        self._position_corner_buttons()
+
+    def set_embedded_subtitle_handler(self, callback):
+        """Enable the bottom-right embedded subtitle extraction button on this InputBox."""
+        if not hasattr(self, "extract_embedded_btn"):
+            self.extract_embedded_btn = QPushButton(
+                texts.USE_EMBEDDED_SUBTITLE, self
+            )
+            self.extract_embedded_btn.setFixedHeight(28)
+            self.extract_embedded_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.extract_embedded_btn.setStyleSheet(
+                "font-size: 12px; padding: 2px 10px;"
+            )
+            self.extract_embedded_btn.setToolTip(
+                str(texts.EXTRACT_EMBEDDED_SUBTITLES_TOOLTIP)
+            )
+            self.extract_embedded_btn.hide()
+        else:
+            try:
+                self.extract_embedded_btn.clicked.disconnect()
+            except Exception:
+                pass
+        self.extract_embedded_btn.clicked.connect(callback)
+        self._embedded_subtitle_available = False
+
+    def set_embedded_subtitle_available(self, available: bool):
+        """Show or hide the embedded subtitle button based on current input state."""
+        self._embedded_subtitle_available = bool(available)
+        if not hasattr(self, "extract_embedded_btn"):
+            return
+        should_show = (
+            self._embedded_subtitle_available
+            and not self.file_path
+            and self._active_state_key == "default"
+        )
+        self.extract_embedded_btn.setVisible(should_show)
+        if should_show:
+            self.extract_embedded_btn.raise_()
+            self._position_corner_buttons()
+
+    def _notify_embedded_subtitle_state(self):
+        """Ask the main window to refresh embedded subtitle button availability."""
+        main_window = self.window()
+        if hasattr(main_window, "update_embedded_subtitle_button"):
+            main_window.update_embedded_subtitle_button()
+
+    def _position_corner_buttons(self):
+        """Position overlay corner action buttons and labels inside the InputBox."""
+        if hasattr(self, "clear_btn") and self.clear_btn.isVisible():
+            self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
+        if hasattr(self, "goto_folder_btn") and self.goto_folder_btn.isVisible():
+            self.goto_folder_btn.adjustSize()
+            self.goto_folder_btn.move(
+                self.width() - self.goto_folder_btn.width() - 10,
+                self.height() - self.goto_folder_btn.height() - 10,
+            )
+        if (
+            hasattr(self, "extract_embedded_btn")
+            and self.extract_embedded_btn.isVisible()
+        ):
+            self.extract_embedded_btn.adjustSize()
+            self.extract_embedded_btn.move(
+                self.width() - self.extract_embedded_btn.width() - 10,
+                self.height() - self.extract_embedded_btn.height() - 10,
+            )
+        if (
+            hasattr(self, "total_shifted_label")
+            and self.total_shifted_label.isVisible()
+        ):
+            self.total_shifted_label.move(
+                10, self.height() - self.total_shifted_label.height() - 10
+            )
+        # Position load_library_btn at top-right for batch input
+        if hasattr(self, "load_library_btn"):
+            self.load_library_btn.move(
+                self.width() - self.load_library_btn.width() - 10, 10
+            )
 
     def handle_file_dialog(self):
         if self.input_type == "subtitle":
@@ -412,6 +489,7 @@ class InputBox(QLabel):
             return
 
     def set_file(self, file_path):
+        """Validate and load a file path into this InputBox and update its buttons."""
         logger.info(f'Added: "{file_path}"')
         if not os.path.exists(file_path):
             self.show_error("File does not exist")
@@ -483,16 +561,16 @@ class InputBox(QLabel):
 
         # Show and position the clear button in the top right corner
         self.clear_btn.show()
-        self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
-        # Show and position the Go to folder button in the bottom left
+        # Show and position the Go to folder button in the bottom right
         self.goto_folder_btn.show()
         self.goto_folder_btn.setToolTip(file_path)
-        self.goto_folder_btn.move(
-            self.width() - self.goto_folder_btn.width() - 10,
-            self.height() - self.goto_folder_btn.height() - 10,
-        )
+        if hasattr(self, "extract_embedded_btn"):
+            self.extract_embedded_btn.hide()
+        self._position_corner_buttons()
+        self._notify_embedded_subtitle_state()
 
     def show_error(self, message):
+        """Temporarily display an error message inside the InputBox, then restore state."""
         logger.warning(f"{message}")
 
         # Cancel any existing error timer to prevent multiple resets
@@ -508,9 +586,12 @@ class InputBox(QLabel):
         self._apply_style()
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
+        if hasattr(self, "extract_embedded_btn"):
+            self.extract_embedded_btn.hide()
         self._notify_window_size_limits()
 
         def restore_prev():
+            """Restore the previous file display or empty default state after an error."""
             # Only restore if file_path has not changed during error display
             if self.file_path == prev_file_path and prev_file_path:
                 self.file_path = prev_file_path
@@ -519,6 +600,7 @@ class InputBox(QLabel):
                 self._apply_style()
                 self.clear_btn.show()
                 self.goto_folder_btn.show()
+                self._position_corner_buttons()
                 self._notify_window_size_limits()
             # If file_path changed, do nothing (keep new file and state)
             elif not self.file_path:
@@ -531,6 +613,7 @@ class InputBox(QLabel):
         self._error_timer.start(3000)
 
     def reset_to_default(self):
+        """Reset the InputBox to its empty default state and update action buttons."""
         logger.info("Resetting InputBox to default state.")
 
         # Hide manual sync message when file is removed
@@ -548,28 +631,12 @@ class InputBox(QLabel):
         self.clear_btn.hide()
         self.goto_folder_btn.hide()
         self._notify_window_size_limits()
+        self._notify_embedded_subtitle_state()
 
     def resizeEvent(self, event):
+        """Reposition overlay corner buttons when the InputBox is resized."""
         super().resizeEvent(event)
-        if hasattr(self, "clear_btn") and self.clear_btn.isVisible():
-            self.clear_btn.move(self.width() - self.clear_btn.width() - 10, 10)
-        if hasattr(self, "goto_folder_btn") and self.goto_folder_btn.isVisible():
-            self.goto_folder_btn.move(
-                self.width() - self.goto_folder_btn.width() - 10,
-                self.height() - self.goto_folder_btn.height() - 10,
-            )
-        if (
-            hasattr(self, "total_shifted_label")
-            and self.total_shifted_label.isVisible()
-        ):
-            self.total_shifted_label.move(
-                10, self.height() - self.total_shifted_label.height() - 10
-            )
-        # Position load_library_btn at top-right for batch input
-        if hasattr(self, "load_library_btn"):
-            self.load_library_btn.move(
-                self.width() - self.load_library_btn.width() - 10, 10
-            )
+        self._position_corner_buttons()
 
     def _on_load_library_clicked(self):
         """Handle load library button click."""
@@ -1194,6 +1261,23 @@ class autosubsyncapp(QWidget):
             lambda checked: update_config(self, "keep_extracted_subtitles", checked)
         )
         self.settings_menu.addAction(self.keep_extracted_subtitles_action)
+
+        self.sync_extracted_tracks_against_audio_action = QAction(
+            texts.SYNC_EXTRACTED_TRACKS_AGAINST_AUDIO, self
+        )
+        self.sync_extracted_tracks_against_audio_action.setCheckable(True)
+        self.sync_extracted_tracks_against_audio_action.setChecked(
+            self.config.get(
+                "sync_extracted_tracks_against_audio",
+                DEFAULT_OPTIONS["sync_extracted_tracks_against_audio"],
+            )
+        )
+        self.sync_extracted_tracks_against_audio_action.triggered.connect(
+            lambda checked: update_config(
+                self, "sync_extracted_tracks_against_audio", checked
+            )
+        )
+        self.settings_menu.addAction(self.sync_extracted_tracks_against_audio_action)
 
         self.keep_converted_subtitles_action = QAction(
             texts.KEEP_CONVERTED_SUBTITLES, self

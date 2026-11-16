@@ -234,6 +234,15 @@ In addition to video files, you can use an audio file or a correctly-timed refer
 
 Results that a tool is unsure about, or low-quality matches from autosubsync, are marked **Needs review** in orange instead of being reported as successful.
 
+### Extract & Sync Embedded Subtitles
+
+Extract embedded subtitle tracks directly from a video file and sync them:
+
+- **Normal Mode:** Load a video into `Video/Reference Subtitle` while the `Subtitle` field is empty, then click `Use embedded subtitle` to scan and pick a track to extract and load automatically.
+- **Batch Mode:** Right-click any top-level video item in the batch list and select `Use embedded subtitles` to pick and extract multiple tracks at once under that video.
+- Extracted subtitles are saved next to the video as `extracted_track<n>_<lang>.<ext>` (or `extracted_track<n>_subtitle.<ext>` when the language is unknown) without overwriting existing files (`_2`, `_3`, etc.). Keep the `extracted_track` filename prefix so AutoSubSync recognizes the file as an extracted track.
+- When syncing an `extracted_track...` subtitle against a video, AutoSubSync automatically syncs against the video's audio (skipping embedded subtitle reference checks and using `--vad webrtc` for `ffsubsync`) so a mistimed embedded track is not synced against itself. You can disable this behavior in `Settings -> Sync "extracted_track..." subtitles against audio`.
+
 ### Sync Tool Settings
 
 Each sync tool has its own settings on the Automatic tab. Use `Other options` for advanced tool-specific settings, and `Additional arguments` for custom command-line flags. Additional arguments take priority over the app's settings, so you won't pass the same option twice. Use `Restore to defaults` to reset the selected tool to its defaults while keeping your Additional arguments.
@@ -434,6 +443,7 @@ Access settings via the gear icon in the **top right** corner.
 | **Backup subtitles before overwriting** | When enabled, creates a backup copy of the original subtitle file before replacing it with the synchronized version. |
 | **Auto-rename files if needed** | When enabled (and `alass` is selected), AutoSubSync will automatically rename any file or folder path components that contain `[` or `]` (replacing them with `(` and `)`) to fix an error where `alass` cannot work with paths containing these characters. When disabled, AutoSubSync will display a 30-second prompt asking whether to rename the affected paths; if the prompt times out, the rename will be skipped. |
 | **Keep extracted subtitles** | When synchronizing against embedded video subtitles, keep the extracted subtitle files instead of deleting them after processing. |
+| **Sync "extracted_track..." subtitles against audio** | When enabled (default), subtitle files whose filename starts with `extracted_track` paired with a video are synced against the video's audio instead of its embedded subtitles (and `ffsubsync` uses `--vad webrtc`). |
 | **Keep converted subtitles** | When subtitle format conversion is required, keep the converted file instead of deleting it after processing. |
 | **Keep converted audio files** | When an audio reference is converted to MP4, keep the converted file instead of deleting it after processing. |
 | **Add "tool_" prefix to subtitles** | Add the name of the sync tool (e.g., `ffsubsync_`, `alass_`) to the beginning of the output subtitle filename. |

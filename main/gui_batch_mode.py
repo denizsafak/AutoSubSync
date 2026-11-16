@@ -31,6 +31,7 @@ from constants import (
     SUBTITLE_EXTENSIONS,
     COLORS,
     DEFAULT_OPTIONS,
+    is_video_extension,
 )
 from utils import update_config, open_filedialog, open_folder, load_config
 
@@ -1585,6 +1586,7 @@ class BatchTreeView(QTreeWidget):
             super().dropEvent(event)
 
     def contextMenuEvent(self, event):
+        """Build and show the batch tree right-click context menu for the clicked item."""
         menu = QMenu(self)
         selected_items = self.selectedItems()
         item_at_pos = self.itemAt(event.pos())
@@ -1627,9 +1629,15 @@ class BatchTreeView(QTreeWidget):
                 texts.ADD_SUBTITLE_TO_ITEM,
                 lambda: self.add_subtitle_to_item_dialog(item_at_pos),
             )
-            # Check if the top-level item is a subtitle file
             item_path = item_at_pos.data(0, Qt.ItemDataRole.UserRole)
-            if (
+            if item_path and is_video_extension(item_path):
+                menu.addAction(
+                    texts.USE_EMBEDDED_SUBTITLES,
+                    lambda _checked=False, item=item_at_pos: self.extract_embedded_subtitles_for_item(
+                        item
+                    ),
+                )
+            elif (
                 item_path
                 and os.path.splitext(item_path)[1].lower() in SUBTITLE_EXTENSIONS
             ):
@@ -2151,9 +2159,37 @@ class BatchTreeView(QTreeWidget):
             added += 1
 
         parent_item.setExpanded(True)
+        self._update_parent_item_style([parent_item])
         self._schedule_ui_update()
 
         return (added, skipped_same, skipped_dups)
+
+    def extract_embedded_subtitles_for_item(self, parent_item):
+        """Scan a top-level video item for embedded subtitles, extract selected ones, and attach them as children."""
+        if not parent_item or parent_item.parent():
+            QMessageBox.warning(
+                self.app_parent,
+                texts.SELECTION_ERROR_TITLE,
+                texts.SELECT_TOP_LEVEL_ITEM_MESSAGE,
+            )
+            return
+
+        video_path = parent_item.data(0, Qt.ItemDataRole.UserRole)
+        logger.info(
+            f"Extracting embedded subtitles for batch item: {os.path.basename(video_path) if video_path else None}"
+        )
+
+        from gui_embedded_subtitles import extract_embedded_subtitles_workflow
+
+        extracted_files = extract_embedded_subtitles_workflow(
+            self.app_parent or self,
+            video_path,
+            allow_multiple=True,
+        )
+        if not extracted_files or parent_item.treeWidget() is not self:
+            return
+
+        self.add_children_to_parent(parent_item, extracted_files)
 
     def add_subtitle_to_item_dialog(self, parent_item):
         logger.info(
