@@ -94,6 +94,23 @@ def format_sub_time(time_str: str) -> str:
         return "00:00:00,000"
 
 
+_ASS_OVERRIDE_TAGS = {
+    "\\i1": "<i>", "\\i0": "</i>",
+    "\\b1": "<b>", "\\b0": "</b>",
+    "\\u1": "<u>", "\\u0": "</u>",
+}
+
+
+def _ass_overrides_to_srt(text: str) -> str:
+    """Turn ASS override blocks like {\\i1}...{\\i0} into SRT tags and drop the rest ({\\an8}, {\\pos(...)})."""
+
+    def replace(match: re.Match) -> str:
+        tags = re.findall(r"\\[a-z]+\d*", match.group(1))
+        return "".join(_ASS_OVERRIDE_TAGS.get(tag, "") for tag in tags)
+
+    return re.sub(r"\{(\\[^}]*)\}", replace, text)
+
+
 def convert_ass_to_srt(input_file: str, output_file: str) -> None:
     """Convert ASS/SSA subtitle file to SRT format.
 
@@ -128,11 +145,15 @@ def convert_ass_to_srt(input_file: str, output_file: str) -> None:
                     text = parts[9].replace("\\N", "\n").strip()
 
                     # Replace ASS/SSA tags with SRT tags
+                    text = _ass_overrides_to_srt(text)
                     text = text.replace("{i}", "<i>").replace("{/i}", "</i>")
                     text = text.replace("{u}", "<u>").replace("{/u}", "</u>")
                     text = text.replace("{b}", "<b>").replace("{/b}", "</b>")
 
                     buffer = f"{srt_counter}\n{format_ass_time(start)} --> {format_ass_time(end)}\n{text}"
+                elif line.startswith("Comment:"):
+                    # Commented-out events are not shown
+                    continue
                 elif collecting:
                     line = line.strip()
                     # Replace ASS/SSA tags with SRT tags

@@ -60,6 +60,25 @@ Dialogue: 0,0:01:15.00,0:01:18.00,Default,,0,0,0,,Line 3\\Nwith line break
         self.assertIn("Line 2 standard text", srt_content)
         self.assertIn("Line 3\nwith line break", srt_content)
 
+    def test_convert_ass_override_tags_and_comment_lines(self):
+        ass_content = """[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\an8}{\\i1}Italic{\\i0} start and {\\b1}bold{\\b0}
+Comment: 0,0:00:03.50,0:00:04.00,Default,,0,0,0,,translator note, not shown
+Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,Next line
+"""
+        ass_file = os.path.join(self.temp_dir, "tags.ass")
+        with open(ass_file, "w", encoding="utf-8") as f:
+            f.write(ass_content)
+
+        out_srt = os.path.join(self.temp_dir, "tags.srt")
+        convert_ass_to_srt(ass_file, out_srt)
+        with open(out_srt, "r", encoding="utf-8") as f:
+            srt_content = f.read()
+
+        self.assertIn("00:00:01,000 --> 00:00:03,000\n<i>Italic</i> start and <b>bold</b>\n\n", srt_content)
+        self.assertNotIn("translator note", srt_content)
+
     def test_convert_vtt_to_srt(self):
         vtt_content = """WEBVTT
 
