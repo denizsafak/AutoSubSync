@@ -28,6 +28,9 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
             open(output_file, "w", encoding="utf-8") as srt,
         ):
             srt_counter = 1
+            # MicroDVD times are frame numbers; a first line "{1}{1}25.000"
+            # gives the frame rate (23.976 without it, as ffmpeg assumes)
+            fps = 23.976
 
             while True:
                 line = sub.readline().strip()
@@ -37,9 +40,15 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
                 match = re.match(r"\{(\d+)\}\{(\d+)\}(.*)", line)
                 if match:
                     start, end, text = match.groups()
+                    if srt_counter == 1 and start == end and start in ("0", "1"):
+                        try:
+                            fps = float(text)
+                            continue
+                        except ValueError:
+                            pass
                     text_lines = text.split("|")
-                    formatted_start = format_sub_time(start)
-                    formatted_end = format_sub_time(end)
+                    formatted_start = format_frame_time(int(start), fps)
+                    formatted_end = format_frame_time(int(end), fps)
 
                     srt.write(f"{srt_counter}\n")
                     srt.write(f"{formatted_start} --> {formatted_end}\n")
@@ -66,6 +75,15 @@ def convert_sub_to_srt(input_file: str, output_file: str) -> None:
                         srt_counter += 1
     except Exception as e:
         raise IOError(texts.ERROR_CONVERTING_SUBTITLE.format(error=str(e)))
+
+
+def format_frame_time(frame: int, fps: float) -> str:
+    """Format a MicroDVD frame number as an SRT time string."""
+    ms = round(frame * 1000 / fps)
+    s, ms = divmod(ms, 1000)
+    m, s = divmod(s, 60)
+    h, m = divmod(m, 60)
+    return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 
 def format_sub_time(time_str: str) -> str:
