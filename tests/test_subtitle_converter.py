@@ -13,6 +13,7 @@ from subtitle_converter import (
     convert_ass_to_srt,
     convert_vtt_to_srt,
     convert_sbv_to_srt,
+    convert_sub_to_srt,
 )
 
 
@@ -59,6 +60,19 @@ Dialogue: 0,0:01:15.00,0:01:18.00,Default,,0,0,0,,Line 3\\Nwith line break
         self.assertIn("00:01:10,000 --> 00:01:14,250", srt_content)
         self.assertIn("Line 2 standard text", srt_content)
         self.assertIn("Line 3\nwith line break", srt_content)
+
+    def test_convert_microdvd_frames(self):
+        sub_file = os.path.join(self.temp_dir, "frames.sub")
+        with open(sub_file, "w", encoding="utf-8") as f:
+            f.write("{1}{1}25.000\n{250}{500}Hello|world\n{1000}{1100}Second\n")
+
+        out_srt = os.path.join(self.temp_dir, "frames.srt")
+        convert_sub_to_srt(sub_file, out_srt)
+        with open(out_srt, "r", encoding="utf-8") as f:
+            srt_content = f.read()
+
+        self.assertTrue(srt_content.startswith("1\n00:00:10,000 --> 00:00:20,000\nHello\nworld\n\n"))
+        self.assertIn("2\n00:00:40,000 --> 00:00:44,000\nSecond", srt_content)
 
     def test_convert_vtt_to_srt(self):
         vtt_content = """WEBVTT
