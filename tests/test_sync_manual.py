@@ -31,6 +31,20 @@ class TestShiftSubtitle(unittest.TestCase):
         with open(out_file, "r", encoding="utf-8") as f:
             self.assertIn("00:00:03.000 --> 00:00:06.000", f.read())
 
+    def test_shift_dfxp_keeps_ttml_clock_times(self):
+        dfxp_file = os.path.join(self.temp_dir, "clock.dfxp")
+        with open(dfxp_file, "w", encoding="utf-8") as f:
+            f.write('<tt xmlns="http://www.w3.org/ns/ttml"><body><div>'
+                    '<p begin="00:00:03.000" end="00:00:04.5">Line</p></div></body></tt>')
+        out_file = os.path.join(self.temp_dir, "shifted.dfxp")
+
+        shift_subtitle(dfxp_file, 2000, out_file)
+
+        with open(out_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn('begin="00:00:05.000"', content)
+        self.assertIn('end="00:00:06.500"', content)
+
 
 if __name__ == "__main__":
     unittest.main()

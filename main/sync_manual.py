@@ -119,7 +119,7 @@ def shift_subtitle(
             elif fmt == "dfxp":
                 parts = re.split(r"[:.,]", time_str)
                 h, m, s = map(int, parts[:3])
-                ms_val = int(parts[3]) if len(parts) > 3 else 0
+                ms_val = int(parts[3].ljust(3, "0")[:3]) if len(parts) > 3 else 0
                 return (h * 3600 + m * 60 + s) * 1000 + ms_val
             elif fmt in ["ttml", "itt"]:
                 if ":" in time_str:
@@ -163,7 +163,8 @@ def shift_subtitle(
             f = ms_remainder // 40  # 25 fps
             return f"{h:02}:{m:02}:{s:02}:{f:02}"
         elif fmt == "dfxp":
-            return f"{h:02}:{m:02}:{s:02},{ms_remainder:03}"
+            # TTML clock time: a comma (SRT style) is not valid here
+            return f"{h:02}:{m:02}:{s:02}.{ms_remainder:03}"
         elif fmt in ["ttml", "itt"]:
             if original and ":" not in original:
                 # Seconds format
