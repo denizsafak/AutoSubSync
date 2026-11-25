@@ -218,10 +218,11 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
     except Exception as e:
         raise IOError(texts.ERROR_READING_FILE.format(error=str(e)))
     captions = [elem for elem in root.iter() if strip_namespace(elem.tag) == "p"]
+    tick_rate = float(root.attrib.get("{http://www.w3.org/ns/ttml#parameter}tickRate", 1))
     with open(output_file, "w", encoding="utf-8", errors="replace") as srt:
         for idx, caption in enumerate(captions, 1):
-            begin = format_ttml_time(caption.attrib.get("begin"))
-            end = format_ttml_time(caption.attrib.get("end"))
+            begin = format_ttml_time(caption.attrib.get("begin"), tick_rate)
+            end = format_ttml_time(caption.attrib.get("end"), tick_rate)
 
             def process_element(elem):
                 text = ""
@@ -271,17 +272,21 @@ def convert_ttml_or_dfxp_to_srt(input_file: str, output_file: str) -> None:
             srt.write(f"{text.strip()}\n\n")
 
 
-def format_ttml_time(timestamp: str) -> str:
+def format_ttml_time(timestamp: str, tick_rate: float = 1) -> str:
     """Format TTML timestamp to SRT time format.
 
     Args:
         timestamp: TTML timestamp string
+        tick_rate: ttp:tickRate of the document, for times in ticks ("10010000t")
 
     Returns:
         Formatted time string in SRT format
     """
-    # Remove 's' suffix if present
-    timestamp = timestamp.replace("s", "")
+    # Offset times: "1.5s", "1500ms", "2m", "1h", "10010000t"
+    offset = re.fullmatch(r"(\d+(?:\.\d+)?)(h|ms|m|s|t)", timestamp.strip())
+    if offset:
+        scale = {"h": 3600, "m": 60, "s": 1, "ms": 0.001, "t": 1 / tick_rate}[offset[2]]
+        timestamp = str(float(offset[1]) * scale)
     # Check for SMPTE format HH:MM:SS:FF
     if timestamp.count(":") == 3:
         try:

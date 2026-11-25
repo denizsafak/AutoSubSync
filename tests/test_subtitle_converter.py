@@ -148,6 +148,19 @@ Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Wrapper test
         self.assertTrue(os.path.exists(converted))
         self.assertTrue(converted.endswith(".srt"))
 
+    def test_convert_dfxp_offset_times(self):
+        dfxp_file = os.path.join(self.temp_dir, "ticks.dfxp")
+        with open(dfxp_file, "w", encoding="utf-8") as f:
+            f.write("""<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:tickRate="10000000"><body><div>
+<p begin="10010000t" end="30030000t">Ticks</p>
+<p begin="4500ms" end="5.25s">Offsets</p>
+</div></body></tt>""")
+        converted, _ = convert_to_srt(dfxp_file, self.temp_dir)
+        with open(converted, encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("00:00:01,001 --> 00:00:03,003", content)
+        self.assertIn("00:00:04,500 --> 00:00:05,250", content)
+
 
 if __name__ == "__main__":
     unittest.main()
